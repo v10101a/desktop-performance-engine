@@ -22,10 +22,14 @@ struct Meta: Decodable {
 // MARK: - Event parameter payloads
 
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "image"
+    let kind: String      // "color" | "text" | "code" | "image"
     let hex: String?
     let text: String?
     let path: String?
+    /// Optional fake window chrome: "browser" | "terminal" | "mac" | "mixed" | "none".
+    /// Drawn by us at any size — never a pixel-accurate imitation of real system UI.
+    let chrome: String?
+    let title: String?    // chrome bar text (browser shows it as the URL pill)
 }
 
 struct AnimateSpec: Decodable {
@@ -91,6 +95,55 @@ struct JiggleParams: Decodable {
     let frequency: Double?         // Hz, default 10
 }
 
+/// A "window zoetrope": animation frames encoded as rows of characters, each lit
+/// cell rendered by a pooled micro-window. The whole sprite can translate (gallop)
+/// via `velocity` while frames advance on the beat.
+struct SpriteParams: Decodable {
+    let id: String
+    let frames: [[String]]        // each frame = rows; any char except "." or " " is a lit cell
+    let cell: Double?             // cell width in points (default 30)
+    let cellAspect: Double?       // cell height = cell * aspect (default 0.72)
+    let gap: Double?              // spacing between cells (default 4)
+    let origin: [Double]          // [x, y] top-left origin, relative to `screen`
+    let screen: Int?
+    let velocity: [Double]?       // points/sec [vx, vy] in top-left space (+y down)
+    /// Arrival mode (overrides `velocity`): translate origin → `target` over
+    /// `travelBeats`/`travelSeconds` with `travelEasing` (default easeOut), then hold
+    /// there while frames keep cycling — run into frame, stay in frame.
+    let target: [Double]?
+    let travelBeats: Double?
+    let travelSeconds: Double?
+    let travelEasing: String?
+    /// Optional exit leg: in the final `exitBeats`/`exitSeconds` of the sprite's
+    /// duration, translate target → `exit` (default easing easeIn) — run out of frame.
+    let exit: [Double]?
+    let exitBeats: Double?
+    let exitSeconds: Double?
+    let exitEasing: String?
+    let beatsPerFrame: Double?    // default 0.5
+    let durationBeats: Double?    // nil (and no seconds) = run until closeWindow(id)
+    let durationSeconds: Double?
+    let chrome: String?           // "browser" | "terminal" | "mac" | "mixed" (default) | "none"
+    let colors: [String]?         // body colors cycled across the pool
+}
+
+/// Windows that trace the real cursor. `stamp` drops persistent breadcrumbs every
+/// `spacing` px of travel (a jump > 4×spacing is treated as pen-up: no stamps across
+/// it, so a cursor warping between letter strokes doesn't smear). `follow` is a
+/// comet tail of windows chasing the cursor with a staggered delay.
+struct CursorTrailParams: Decodable {
+    let id: String
+    let mode: String?             // "stamp" (default) | "follow"
+    let spacing: Double?          // stamp: px between breadcrumbs (default 28)
+    let count: Int?               // follow: tail length (default 8); stamp: max breadcrumbs (default 160)
+    let delay: Double?            // follow: seconds between successive windows (default 0.07)
+    let size: [Double]?           // [w, h] of each window (default [46, 34])
+    let chrome: String?           // as SpriteParams.chrome (default "mixed")
+    let colors: [String]?
+    let durationBeats: Double?    // sampling window; stamps persist after until closed
+    let durationSeconds: Double?
+}
+
 struct WallpaperParams: Decodable {
     let path: String?             // image file (absolute or relative to the timeline)
     let color: String?            // solid color, e.g. "#FF00AA" (used if no path)
@@ -109,6 +162,8 @@ enum EventAction {
     case rearrangeIcons(RearrangeIconsParams) // Phase 3
     case jiggle(JiggleParams)                 // Phase 4
     case wallpaper(WallpaperParams)           // Phase 4
+    case sprite(SpriteParams)                 // Phase 5
+    case cursorTrail(CursorTrailParams)       // Phase 5
 }
 
 /// A single authored event. `beat`/`t` are resolved to an absolute `fireTime`
@@ -147,6 +202,10 @@ struct TimelineEvent: Decodable {
             action = .jiggle(try c.decode(JiggleParams.self, forKey: .params))
         case "wallpaper":
             action = .wallpaper(try c.decode(WallpaperParams.self, forKey: .params))
+        case "sprite":
+            action = .sprite(try c.decode(SpriteParams.self, forKey: .params))
+        case "cursorTrail":
+            action = .cursorTrail(try c.decode(CursorTrailParams.self, forKey: .params))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: c,
                 debugDescription: "Unknown event type \"\(type)\"")

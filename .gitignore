@@ -15,6 +15,9 @@ song.wav
 *.mov
 *.mp4
 
+# Python (tools/)
+__pycache__/
+
 # macOS
 .DS_Store
 

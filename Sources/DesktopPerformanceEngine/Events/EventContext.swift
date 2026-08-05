@@ -41,6 +41,10 @@ final class EventContext {
             windows.beginJiggle(p, at: now, bpm: bpm)
         case .wallpaper(let p):
             wallpaper.set(p)
+        case .sprite(let p):
+            windows.beginSprite(p, at: now, bpm: bpm)
+        case .cursorTrail(let p):
+            windows.beginTrail(p, at: now, bpm: bpm)
         }
     }
 }

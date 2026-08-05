@@ -68,18 +68,32 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 `screen` (index into `NSScreen.screens`, default 0). Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
 stats readouts), `image` (`path` to any image; decoded off-thread + cached).
-Animations: `springIn`, `fadeIn`, `none`.
+Animations: `springIn`, `fadeIn`, `none`. Any content can add fake window `chrome`
+(`"browser" | "terminal" | "mac" | "mixed"`, plus a `title` shown in the bar/URL pill) —
+drawn by us at any size, deliberately stylized, never a pixel-accurate imitation of
+real system UI.
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
-`screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`. Present but disabled by
-default: `wallpaper`.
+`screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`.
+Present but disabled by default: `wallpaper`.
 
-The bundled default demo (`Resources/timeline.json`) is the high-speed **strobe**
-show (`examples/timeline_strobe.json`, ~720 events @150 BPM): color-window strobe,
-big text, monospaced code, system-stats readouts, absurd fake alerts, flying windows,
-jiggle, and a flash strobe — all at once. At this density it holds ~7 ms mean A/V drift.
+The bundled default demo (`Resources/timeline.json`) is **the show**
+(`examples/timeline_show.json`, ~35 s, regenerate with `python3 tools/generate_show.py`),
+four acts on one clock: the Muybridge **window-horse** runs in, gallops in place
+~2 s, runs out — as it leaves, the cursor glides over and **draws one long arrow**
+pointing down-right, stamped in little pages — then, from exactly the spot the
+arrow points at, the **chaos** builds elastically (small, slow, and close at
+first; accelerating, swelling, and flinging wider on a curve) until it tips over
+into the original full-speed **strobe** finale (`examples/timeline_strobe.json`,
+spliced in verbatim). ~8 ms mean A/V drift across all 786 events.
 
-Regenerate / tune it with the generator:
+The strobe also still runs standalone:
+
+```bash
+swift run DesktopPerformanceEngine examples/timeline_strobe.json
+```
+
+Regenerate / tune the strobe with its generator:
 
 ```bash
 python3 tools/generate_strobe.py                 # sanitized (placeholder stats, no local images)
@@ -140,6 +154,54 @@ Shakes a spawned window (`id`) with a decaying sinusoid, pump-synced so it's
 take-repeatable. `amplitude` (px, default 14), `frequency` (Hz, default 10),
 `durationBeats`/`durationSeconds`. The window settles exactly back to its origin.
 
+### `sprite`
+
+A **window zoetrope**: animation frames encoded as rows of characters (`"..XX.."` —
+any non-`.`/space char is a lit cell), each lit cell rendered by one pooled
+micro-window with fake chrome. Frames advance every `beatsPerFrame`; windows are
+assigned to cells nearest-previous-position first so they glide between poses.
+Motion: either constant `velocity` (`[vx, vy]` pt/s, gallop across), or the arrival
+system — `origin` → `target` over `travelBeats` (`travelEasing`, default easeOut),
+hold there galloping in place, then optionally `exit` over the final `exitBeats`
+(`exitEasing`, default easeIn): run into frame, stay in frame, run out of frame.
+`cell`/`cellAspect`/`gap` set cell geometry, `colors` cycles body colors,
+`durationBeats`/`durationSeconds` ends it (or `closeWindow` by `id`).
+
+Keep the max lit cells per frame around **~60 or under**: the pool moves every window
+each frame. Pools are **prewarmed at load** (creating dozens of NSPanels mid-show
+stalls the pump ~100 ms; see `WindowManager.prewarm`).
+
+The bundled demo is Muybridge's 1878 *Horse in Motion* — the first motion picture,
+replayed as browser windows:
+
+```bash
+python3 tools/generate_horse.py      # assets/muybridge_horse.gif → examples/timeline_horse.json
+SPAN=0.88 HOLD=20 COLS=19 python3 tools/generate_horse.py   # size / hold / grid overrides
+swift run DesktopPerformanceEngine examples/timeline_horse.json
+```
+
+### `cursorTrail`
+
+Windows that trace the real cursor (reads position only — no permission needed;
+works whether the cursor is choreographed or user-driven).
+
+- `mode: "stamp"` (default) — drop a persistent breadcrumb window every `spacing` px
+  of cursor travel. A jump > 4×spacing is treated as **pen-up** (no stamps across it),
+  so a cursor warping between letter strokes leaves clean words. Stamps persist after
+  the `durationBeats` sampling window until `closeWindow` by `id` (max `count`, default 160).
+- `mode: "follow"` — a comet tail: `count` windows chase the cursor, each delayed
+  `delay` s more than the last, fading down the tail.
+
+The spelling scene — the cursor handwrites "look" huge in a single-stroke plotter
+font, draws an actual arrow pointing down-right, then glides trail-off to the spot
+the arrow points at (in the full show, that's where the chaos erupts):
+
+```bash
+python3 tools/spell_path.py          # → examples/timeline_look.json (standalone)
+TEXT="oh no" python3 tools/spell_path.py    # any text the stroke font covers
+swift run DesktopPerformanceEngine examples/timeline_look.json
+```
+
 ### `wallpaper` (disabled by default)
 
 Swaps the desktop wallpaper (`path` to an image, or a solid `color` hex; `screen` or
@@ -179,7 +241,13 @@ can be layered on later against the same format.
   **disabled by default**: modern macOS can't reversibly restore Aerial/dynamic
   wallpapers via the public API, so it's opt-in (`meta.allowWallpaper`) to preserve the
   reversibility guarantee.
-- **Phase 5** — visual timeline/node editor.
+- **Phase 5 — done & verified.** Virus-homage sequences: `sprite` window-zoetrope
+  (Muybridge horse: run in → hold center → run out; pools prewarmed at load,
+  ~9 ms drift), `cursorTrail` stamp/follow modes with pen-up detection, fake
+  window chrome (browser/terminal/mac) at any size, single-stroke cursor
+  spelling generator. Self-tested via `--test-sprites`; sprite frames render
+  offscreen via `--snapshot=out.png timeline.json`.
+- **Phase 6** — visual timeline/node editor.
 
 ## License
 

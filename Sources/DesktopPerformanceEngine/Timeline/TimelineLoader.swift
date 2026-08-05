@@ -4,7 +4,12 @@ struct LoadedTimeline {
     let meta: Meta
     let events: [ResolvedEvent]   // sorted ascending by fireTime
 
-    var duration: Double { events.map(\.fireTime).max() ?? 0 }
+    /// End of the show: the last event fire time PLUS that event's own running
+    /// time (a sprite or trail fires once but plays for many beats).
+    var duration: Double {
+        events.map { $0.fireTime + TimelineLoader.intrinsicDuration(of: $0.action, bpm: meta.bpm) }
+              .max() ?? 0
+    }
 
     /// Whether the show touches desktop icons — gates the (permission-prompting)
     /// icon snapshot so timelines that don't use icons never ask for Automation.
@@ -19,6 +24,22 @@ struct LoadedTimeline {
 }
 
 enum TimelineLoader {
+    /// How long an event keeps running after it fires (0 for instant events).
+    /// Defaults mirror the executors' own defaults.
+    static func intrinsicDuration(of action: EventAction, bpm: Double) -> Double {
+        func secs(_ beats: Double?, _ seconds: Double?, or def: Double = 0) -> Double {
+            seconds ?? beats.map { $0 * 60.0 / bpm } ?? def
+        }
+        switch action {
+        case .sprite(let p):      return secs(p.durationBeats, p.durationSeconds)
+        case .cursorTrail(let p): return secs(p.durationBeats, p.durationSeconds)
+        case .cursorPath(let p):  return secs(p.durationBeats, p.durationSeconds, or: 60.0 / bpm)
+        case .moveWindow(let p):  return secs(p.durationBeats, p.durationSeconds)
+        case .jiggle(let p):      return secs(p.durationBeats, p.durationSeconds, or: 60.0 / bpm)
+        case .screenFlash(let p): return secs(p.durationBeats, p.durationSeconds, or: 0.2)
+        default:                  return 0
+        }
+    }
     /// Parse a JSON timeline and resolve every event to an absolute time in seconds.
     /// `beat` values are converted with the document BPM + offset; explicit `t`
     /// (seconds) wins when present.
