@@ -51,6 +51,9 @@ final class PerformanceEngine {
         context.bpm = tl.meta.bpm
         wallpaper.baseDir = timelineDir
         wallpaper.enabled = tl.meta.allowWallpaper ?? false
+        // Build sprite/trail window pools now, while nothing is playing — the
+        // window server digests dozens of new windows long before the clock runs.
+        windows.prewarm(for: tl.events)
     }
 
     var loadedInfo: String {
@@ -73,6 +76,9 @@ final class PerformanceEngine {
         guard let tl = timeline, !isPlaying else { return }
 
         restore.snapshotNow()
+        // Rebuild any pools a previous run consumed (no-op on first play; a panic
+        // wipe clears them). Still before the clock starts, so no mid-show stall.
+        windows.prewarm(for: tl.events)
         // Only touch (and prompt for) desktop icons if the show actually uses them.
         iconsArmed = tl.usesIcons
         if iconsArmed { icons.snapshot() }

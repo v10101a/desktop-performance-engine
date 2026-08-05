@@ -89,7 +89,7 @@ alerts = [
     ("UPDATE AVAILABLE", "reality.app 2.0 wants to install itself", ["not now", "never"]),
     ("MOUSE ESCAPED", "your cursor has left the building", ["catch it", "let it go"]),
     ("TOO MANY WINDOWS", "the windows are multiplying", ["close all", "open more"]),
-    ("SYSTEM HONESTY", "you have 4,000 unread thoughts", ["ignore", "panic"]),
+    ("SYSTEM", "you have 4,000 unread thoughts", ["ignore", "panic"]),
     ("DISK ALMOST FULL", "of screenshots, specifically", ["delete?", "hoard"]),
     ("ARE YOU STILL THERE?", "the desktop misses you", ["yes", "no"]),
     ("ACHIEVEMENT UNLOCKED", "witnessed maximum chaos", ["nice", "again"]),

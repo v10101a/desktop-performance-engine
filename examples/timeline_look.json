@@ -1,0 +1,294 @@
+{
+ "meta": {
+  "bpm": 120.0,
+  "beatOffset": 0.0
+ },
+ "events": [
+  {
+   "beat": 2.05,
+   "type": "cursorTrail",
+   "params": {
+    "id": "trace",
+    "mode": "stamp",
+    "spacing": 34,
+    "size": [
+     64,
+     46
+    ],
+    "chrome": "mixed",
+    "durationBeats": 12.35
+   }
+  },
+  {
+   "beat": 0,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      720,
+      450
+     ],
+     [
+      239,
+      171
+     ]
+    ],
+    "durationBeats": 2,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 2.3,
+   "type": "cursorPath",
+   "params": {
+    "path": "catmullRom",
+    "points": [
+     [
+      238.9,
+      171.0
+     ],
+     [
+      238.9,
+      495.0
+     ],
+     [
+      368.6,
+      495.0
+     ]
+    ],
+    "durationBeats": 1.33,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 3.884,
+   "type": "cursorPath",
+   "params": {
+    "path": "catmullRom",
+    "points": [
+     [
+      533.2,
+      171.0
+     ],
+     [
+      608.9,
+      225.0
+     ],
+     [
+      608.9,
+      441.0
+     ],
+     [
+      533.2,
+      495.0
+     ],
+     [
+      457.6,
+      441.0
+     ],
+     [
+      457.6,
+      225.0
+     ],
+     [
+      533.2,
+      171.0
+     ]
+    ],
+    "durationBeats": 2.36,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 6.498,
+   "type": "cursorPath",
+   "params": {
+    "path": "catmullRom",
+    "points": [
+     [
+      762.8,
+      171.0
+     ],
+     [
+      838.4,
+      225.0
+     ],
+     [
+      838.4,
+      441.0
+     ],
+     [
+      762.8,
+      495.0
+     ],
+     [
+      687.1,
+      441.0
+     ],
+     [
+      687.1,
+      225.0
+     ],
+     [
+      762.8,
+      171.0
+     ]
+    ],
+    "durationBeats": 2.36,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 9.111,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      927.5,
+      171.0
+     ],
+     [
+      927.5,
+      495.0
+     ]
+    ],
+    "durationBeats": 0.95,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 10.314,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      1067.8,
+      171.0
+     ],
+     [
+      927.5,
+      354.6
+     ]
+    ],
+    "durationBeats": 0.68,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 11.244,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      976.0,
+      311.4
+     ],
+     [
+      1067.8,
+      495.0
+     ]
+    ],
+    "durationBeats": 0.6,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 12.098,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      581.3,
+      565.0
+     ],
+     [
+      796.9,
+      733.4
+     ]
+    ],
+    "durationBeats": 0.8,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 13.102,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      766.5,
+      665.0
+     ],
+     [
+      796.9,
+      733.4
+     ]
+    ],
+    "durationBeats": 0.4,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 13.702,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      723.2,
+      720.4
+     ],
+     [
+      796.9,
+      733.4
+     ]
+    ],
+    "durationBeats": 0.4,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 14.802,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "points": [
+     [
+      797,
+      733
+     ],
+     [
+      944,
+      828
+     ]
+    ],
+    "durationBeats": 2,
+    "easing": "easeInOut",
+    "mode": "warp"
+   }
+  },
+  {
+   "beat": 20.802,
+   "type": "closeWindow",
+   "params": {
+    "id": "trace"
+   }
+  }
+ ]
+}

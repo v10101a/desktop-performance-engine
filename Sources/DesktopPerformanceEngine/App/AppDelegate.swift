@@ -5,15 +5,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var controller: MainWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Dev tool: render a still of the window content to PNG and quit.
+        // Dev tool: render a still of the window content to PNG and quit. With a
+        // timeline argument that contains a sprite, renders that sprite's frames.
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--snapshot=") }) {
             let path = String(arg.dropFirst("--snapshot=".count))
             do {
-                try StillRenderer.render(to: URL(fileURLWithPath: path))
+                if let tlPath = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("--") }),
+                   let sprite = AppDelegate.firstSprite(in: tlPath) {
+                    try StillRenderer.renderSprite(sprite, to: URL(fileURLWithPath: path))
+                } else {
+                    try StillRenderer.render(to: URL(fileURLWithPath: path))
+                }
                 NSLog("[DPE] snapshot written: \(path)")
             } catch {
                 NSLog("[DPE] snapshot error: \(error)")
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        if CommandLine.arguments.contains("--test-sprites") {
+            runSpriteSelfTest()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
             return
         }
@@ -76,6 +88,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// First sprite event in a timeline, for `--snapshot` sprite rendering.
+    static func firstSprite(in path: String) -> SpriteParams? {
+        guard let tl = try? TimelineLoader.load(from: URL(fileURLWithPath: path)) else { return nil }
+        for ev in tl.events {
+            if case .sprite(let p) = ev.action { return p }
+        }
+        return nil
+    }
+
+    /// Headless checks for the sprite/trail math: frame parsing, pool assignment
+    /// (deterministic + stable), and stamp pen-up gating.
+    private func runSpriteSelfTest() {
+        let frames = [["X.X", ".X.", "..."], [".X.", "X.X", "..X"]]
+        let offsets = WindowManager.spriteFrameOffsets(frames, strideX: 10, strideY: 10)
+        NSLog("[DPE] sprite parse: lit=\(offsets.map(\.count)) (expect [3, 4])")
+
+        // Assignment: every target gets a window; a window already near a target
+        // keeps it (stability), and repeated runs are identical (determinism).
+        let prev: [CGPoint?] = [CGPoint(x: 0, y: 0), CGPoint(x: 20, y: 0), nil, nil]
+        let targets = [CGPoint(x: 22, y: 2), CGPoint(x: 1, y: 1), CGPoint(x: 50, y: 50)]
+        let a = WindowManager.assignCells(targets: targets, previous: prev)
+        let b = WindowManager.assignCells(targets: targets, previous: prev)
+        let deterministic = zip(a, b).allSatisfy { $0 == $1 }
+        let assignedCount = a.compactMap { $0 }.count
+        let stable = a[0] == CGPoint(x: 1, y: 1) && a[1] == CGPoint(x: 22, y: 2)
+        NSLog("[DPE] sprite assign: deterministic=\(deterministic) assigned=\(assignedCount) (expect 3) stableNearest=\(stable)")
+
+        // Stamp gating: normal travel stamps, a warp-sized jump is pen-up (-1).
+        let s1 = WindowManager.stampCount(dist: 30, spacing: 28)
+        let s2 = WindowManager.stampCount(dist: 90, spacing: 28)
+        let s3 = WindowManager.stampCount(dist: 400, spacing: 28)
+        NSLog("[DPE] stamp gating: near=\(s1) (expect 1) fast=\(s2) (expect 3) jump=\(s3) (expect -1)")
+    }
+
     /// Headless checks for the icon layout math + parser, then a real snapshot probe
     /// (which reports whether Automation → Finder is granted).
     private func runIconSelfTest() {
@@ -133,7 +179,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Jiggle roundtrip
         let wm = WindowManager()
         wm.openWindow(OpenWindowParams(id: "j", screen: 0,
-                                       content: ContentSpec(kind: "color", hex: "#00FF88", text: nil, path: nil),
+                                       content: ContentSpec(kind: "color", hex: "#00FF88", text: nil, path: nil,
+                                                            chrome: nil, title: nil),
                                        frame: [400, 300, 200, 150], animate: AnimateSpec(kind: "none")))
         guard let base = wm.frameOrigin(id: "j") else { NSLog("[DPE] jiggle: no window"); return }
         wm.beginJiggle(JiggleParams(id: "j", durationBeats: nil, durationSeconds: 1.0, amplitude: 20, frequency: 8),

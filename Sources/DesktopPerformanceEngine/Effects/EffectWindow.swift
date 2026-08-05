@@ -35,12 +35,110 @@ private func decodeThumbnail(_ path: String, maxPixel: Int) -> NSImage? {
     return NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
 }
 
+// MARK: - Fake chrome
+
+/// Chrome kinds cycled by "mixed" so a pool of micro-windows gets visual variety.
+private let fakeChromeKinds = ["browser", "terminal", "mac"]
+
+/// Resolve an authored chrome value for the `index`-th window of a pool.
+func resolvedChromeKind(_ kind: String?, index: Int) -> String? {
+    guard let kind = kind, kind != "none" else { return nil }
+    if kind == "mixed" { return fakeChromeKinds[index % fakeChromeKinds.count] }
+    return kind
+}
+
+func fakeChromeBarHeight(for size: NSSize) -> CGFloat {
+    min(max(size.height * 0.26, 7), 22)
+}
+
+/// Deliberately stylized mini window chrome — traffic-light dots, a URL pill —
+/// drawn as plain layer views so it stays cheap and scales down to sprite-pixel
+/// size. Same ethos as the fake dialogs: playful, never a pixel-accurate imitation
+/// of real browser/system UI.
+func addFakeChrome(to view: NSView, size: NSSize, kind: String, title: String?) {
+    let barH = fakeChromeBarHeight(for: size)
+    let bar = NSView(frame: NSRect(x: 0, y: size.height - barH, width: size.width, height: barH))
+    bar.autoresizingMask = [.width, .minYMargin]
+    bar.wantsLayer = true
+
+    let barColor: NSColor
+    switch kind {
+    case "terminal": barColor = NSColor(hex: "#26262C") ?? .black
+    case "mac":      barColor = NSColor(hex: "#E8E8EC") ?? .lightGray
+    default:         barColor = NSColor(hex: "#D8D8E0") ?? .lightGray   // browser
+    }
+    bar.layer?.backgroundColor = barColor.cgColor
+
+    let d = min(max(barH * 0.42, 3), 7)
+    let dotColors = ["#FF5F57", "#FEBC2E", "#28C840"]
+    var dx = max(3, barH * 0.35)
+    for hex in dotColors {
+        let dot = NSView(frame: NSRect(x: dx, y: (barH - d) / 2, width: d, height: d))
+        dot.wantsLayer = true
+        dot.layer?.backgroundColor = (NSColor(hex: hex) ?? .gray).cgColor
+        dot.layer?.cornerRadius = d / 2
+        bar.addSubview(dot)
+        dx += d + max(2, d * 0.5)
+    }
+
+    // Room permitting: a URL pill (browser) or a tiny title. Skipped at micro sizes.
+    if barH >= 12, size.width >= 110 {
+        if kind == "browser" {
+            let pill = NSView(frame: NSRect(x: dx + 4, y: barH * 0.15,
+                                            width: size.width - dx - 12, height: barH * 0.7))
+            pill.wantsLayer = true
+            pill.layer?.backgroundColor = NSColor(white: 1, alpha: 0.9).cgColor
+            pill.layer?.cornerRadius = barH * 0.35
+            pill.autoresizingMask = [.width]
+            if size.width >= 150 {
+                let label = NSTextField(labelWithString: title ?? "about:blank")
+                label.font = .monospacedSystemFont(ofSize: max(7, barH * 0.5), weight: .regular)
+                label.textColor = NSColor(white: 0.35, alpha: 1)
+                label.lineBreakMode = .byTruncatingTail
+                label.frame = pill.bounds.insetBy(dx: 6, dy: 0)
+                label.autoresizingMask = [.width, .height]
+                pill.addSubview(label)
+            }
+            bar.addSubview(pill)
+        } else if let title = title {
+            let label = NSTextField(labelWithString: title)
+            label.font = .systemFont(ofSize: max(7, barH * 0.5), weight: .medium)
+            label.textColor = kind == "terminal" ? NSColor(hex: "#8CF2A6")! : NSColor(white: 0.3, alpha: 1)
+            label.alignment = .center
+            label.lineBreakMode = .byTruncatingTail
+            label.frame = NSRect(x: dx + 2, y: 0, width: size.width - 2 * (dx + 2), height: barH)
+            label.autoresizingMask = [.width]
+            bar.addSubview(label)
+        }
+    }
+    view.addSubview(bar)
+}
+
+/// Content view for a pooled micro-window (sprite pixel / trail breadcrumb).
+func makeMicroContentView(size: NSSize, bodyColor: NSColor, chrome: String?, title: String?) -> NSView {
+    let view = NSView(frame: NSRect(origin: .zero, size: size))
+    view.wantsLayer = true
+    view.layer?.backgroundColor = bodyColor.cgColor
+    view.layer?.cornerRadius = min(5, size.height * 0.18)
+    view.layer?.masksToBounds = true
+    view.layer?.borderWidth = 1
+    view.layer?.borderColor = NSColor(white: 0, alpha: 0.25).cgColor
+    if let kind = chrome { addFakeChrome(to: view, size: size, kind: kind, title: title) }
+    return view
+}
+
 // MARK: - Content builders (shared by live windows and the still renderer)
 
 /// Build the content view for a pure-visual window: solid color, big text, or image.
+/// An optional `chrome` draws a fake title bar and insets the body under it.
 func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
     let view = NSView(frame: NSRect(origin: .zero, size: size))
     view.wantsLayer = true
+    view.layer?.masksToBounds = true
+
+    let chromeKind = resolvedChromeKind(content.chrome, index: 0)
+    let barH = chromeKind != nil ? fakeChromeBarHeight(for: size) : 0
+    let body = NSRect(x: 0, y: 0, width: size.width, height: size.height - barH)
 
     switch content.kind {
     case "text":
@@ -51,7 +149,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         label.textColor = .white
         label.alignment = .center
         label.maximumNumberOfLines = 0
-        label.frame = view.bounds
+        label.frame = body
         label.autoresizingMask = [.width, .height]
         view.addSubview(label)
     case "code":
@@ -65,12 +163,12 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         label.isBezeled = false
         label.isEditable = false
         label.alignment = .left
-        label.frame = NSRect(x: 14, y: 12, width: size.width - 28, height: size.height - 24)
+        label.frame = NSRect(x: 14, y: 12, width: body.width - 28, height: body.height - 24)
         label.autoresizingMask = [.width, .height]
         view.addSubview(label)
     case "image":
         view.layer?.backgroundColor = (NSColor(hex: "#111116") ?? .darkGray).cgColor
-        let iv = NSImageView(frame: view.bounds)
+        let iv = NSImageView(frame: body)
         iv.imageScaling = .scaleProportionallyUpOrDown
         iv.autoresizingMask = [.width, .height]
         view.addSubview(iv)
@@ -79,6 +177,8 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#FF00AA") ?? .magenta).cgColor
         view.layer?.cornerRadius = 6
     }
+
+    if let kind = chromeKind { addFakeChrome(to: view, size: size, kind: kind, title: content.title) }
     return view
 }
 
@@ -177,6 +277,19 @@ final class EffectWindow: BaseEffectWindow {
         super.init(contentRect: contentRect)
         ignoresMouseEvents = true
         contentView = makeEffectContentView(content, size: contentRect.size)
+    }
+}
+
+/// A tiny pooled window used as a "pixel" by sprites and cursor trails.
+/// Click-through; shadow is optional because dozens of these move every frame and
+/// the window-server shadow recompute is the expensive part of moving them.
+final class MicroWindow: BaseEffectWindow {
+    init(size: NSSize, bodyColor: NSColor, chrome: String?, title: String?, shadow: Bool) {
+        super.init(contentRect: NSRect(origin: .zero, size: size))
+        ignoresMouseEvents = true
+        hasShadow = shadow
+        contentView = makeMicroContentView(size: size, bodyColor: bodyColor,
+                                           chrome: chrome, title: title)
     }
 }
 
