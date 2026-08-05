@@ -1,0 +1,24 @@
+# SwiftPM
+/.build/
+.swiftpm/
+Package.resolved
+
+# Assembled app bundle (produced by ./bundle.sh)
+/build/
+
+# Local, personalized timelines (run `PERSONALIZE=1 python3 tools/generate_strobe.py`
+# to bake in your own system stats / desktop images — keep those out of git)
+/examples/*.local.json
+
+# Media you drop in yourself
+song.wav
+*.mov
+*.mp4
+
+# macOS
+.DS_Store
+
+# Xcode (if you generate a project)
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
