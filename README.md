@@ -180,3 +180,7 @@ can be layered on later against the same format.
   wallpapers via the public API, so it's opt-in (`meta.allowWallpaper`) to preserve the
   reversibility guarantee.
 - **Phase 5** — visual timeline/node editor.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
