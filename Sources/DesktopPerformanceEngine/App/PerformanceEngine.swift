@@ -75,6 +75,14 @@ final class PerformanceEngine {
 
     var bpm: Double { timeline?.meta.bpm ?? 120 }
 
+    /// Structural markers from track analysis (for the scrubber). Empty if none.
+    var markers: [Marker] { timeline?.meta.markers ?? [] }
+
+    /// The marker at or before `t` (the section the playhead is currently in), if any.
+    func currentMarker(at t: Double) -> Marker? {
+        markers.last { $0.t <= t + 0.05 }
+    }
+
     /// Enable in-memory drift measurement (used by the `--autoplay` self-test).
     func enableFiringLog() {
         scheduler.logFiring = true

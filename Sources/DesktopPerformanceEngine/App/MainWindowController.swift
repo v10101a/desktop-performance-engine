@@ -1,6 +1,44 @@
 import AppKit
 import UniformTypeIdentifiers
 
+/// A thin strip of color-coded ticks (section boundaries / drops / breaks) aligned to
+/// the scrubber. Click a tick region to seek there.
+final class MarkerStrip: NSView {
+    var markers: [Marker] = [] { didSet { needsDisplay = true } }
+    var duration: Double = 1 { didSet { needsDisplay = true } }
+    var onSeek: ((Double) -> Void)?
+
+    override var isFlipped: Bool { true }
+    override var intrinsicContentSize: NSSize { NSSize(width: 420, height: 20) }
+
+    static func color(_ m: Marker) -> NSColor {
+        switch m.kind {
+        case "drop":            return .systemRed
+        case "break", "start":  return .systemGray
+        default:                return (m.label?.contains("high") == true) ? .systemTeal : .systemBlue
+        }
+    }
+
+    override func draw(_ dirty: NSRect) {
+        guard duration > 0 else { return }
+        let w = bounds.width, h = bounds.height
+        for m in markers {
+            let x = CGFloat(min(max(m.t / duration, 0), 1)) * w
+            MarkerStrip.color(m).setStroke()
+            let path = NSBezierPath()
+            path.lineWidth = (m.kind == "drop" || m.label?.contains("high") == true) ? 2.5 : 1
+            path.move(to: NSPoint(x: x, y: 2))
+            path.line(to: NSPoint(x: x, y: h - 2))
+            path.stroke()
+        }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        let x = convert(event.locationInWindow, from: nil).x
+        onSeek?(Double(min(max(x / bounds.width, 0), 1)) * duration)
+    }
+}
+
 /// Control surface: load / play / stop, a scrubbable timeline with a live playhead,
 /// and a position readout (time · beat · frame). The JSON timeline is still the
 /// authoring surface; this is transport + navigation.
@@ -14,6 +52,7 @@ final class MainWindowController: NSWindowController {
     private let infoLabel = NSTextField(labelWithString: "")
     private var playButton: NSButton!
     private var positionSlider: NSSlider!
+    private let markerStrip = MarkerStrip()
     private var scrubbing = false
 
     init(engine: PerformanceEngine) {
@@ -56,6 +95,16 @@ final class MainWindowController: NSWindowController {
         positionSlider.translatesAutoresizingMaskIntoConstraints = false
         positionSlider.widthAnchor.constraint(equalToConstant: 420).isActive = true
 
+        markerStrip.translatesAutoresizingMaskIntoConstraints = false
+        markerStrip.widthAnchor.constraint(equalToConstant: 420).isActive = true
+        markerStrip.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        markerStrip.onSeek = { [weak self] t in
+            guard let self = self else { return }
+            self.positionSlider.doubleValue = t
+            self.updatePosition(t)
+            self.engine.seek(to: t)
+        }
+
         playButton = NSButton(title: "Play", target: self, action: #selector(togglePlay))
         playButton.bezelStyle = .rounded
         playButton.keyEquivalent = " "
@@ -72,7 +121,7 @@ final class MainWindowController: NSWindowController {
         buttons.orientation = .horizontal
         buttons.spacing = 10
 
-        let stack = NSStackView(views: [timeLabel, positionSlider, frameLabel,
+        let stack = NSStackView(views: [timeLabel, positionSlider, markerStrip, frameLabel,
                                         statusLabel, infoLabel, buttons, hint])
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -92,6 +141,8 @@ final class MainWindowController: NSWindowController {
         infoLabel.stringValue = engine.loadedInfo
         positionSlider.maxValue = max(engine.duration, 0.01)
         positionSlider.doubleValue = engine.startPosition
+        markerStrip.duration = engine.duration
+        markerStrip.markers = engine.markers
         updatePosition(engine.startPosition)
     }
 
@@ -103,7 +154,12 @@ final class MainWindowController: NSWindowController {
         let frame = Int((t * fps).rounded(.down))
         let totalFrames = Int((dur * fps).rounded(.down))
         timeLabel.stringValue = "\(Self.clock(t)) / \(Self.clock(dur))"
-        frameLabel.stringValue = String(format: "beat %.1f · frame %d / %d", beat, frame, totalFrames)
+        var line = String(format: "beat %.1f · frame %d / %d", beat, frame, totalFrames)
+        if let m = engine.currentMarker(at: t) {
+            line += " · ⟩ \(m.label ?? "section")"
+            if let bar = m.bar { line += " (bar \(bar))" }
+        }
+        frameLabel.stringValue = line
     }
 
     private static func clock(_ s: Double) -> String {

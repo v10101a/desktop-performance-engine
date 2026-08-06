@@ -49,6 +49,24 @@ Large/copyrighted audio is git-ignored (`assets/*.wav` etc.) — keep it local.
 If no track is found, the engine synthesizes a **metronome click track** at the
 timeline's BPM so the show still runs on a real, sample-accurate clock.
 
+### Track analysis & markers
+
+`tools/analyze_track.py` estimates the track's **BPM** (onset-flux autocorrelation with a
+tempo prior that resolves ×2/×1.5 metrical errors) and finds **structural key points**
+(section boundaries / drops / breaks from RMS-energy novelty, snapped to downbeats):
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r tools/requirements-analysis.txt   # + ffmpeg
+.venv/bin/python tools/analyze_track.py "assets/track.mp3" markers.json
+```
+
+It writes `meta.analyzedBpm` and a `meta.markers` array (`{t, bar, label, kind}`, absolute
+seconds) into the timeline. The scrubber renders them as **color-coded ticks** (drop = red,
+high-energy = teal, section = blue, break/start = gray) — **click a tick to jump there** —
+and the readout shows the current section. Markers use absolute time, so they stay valid
+regardless of `meta.bpm`; the detected tempo is stored as `analyzedBpm` and does **not**
+re-time existing beat-based events (change `meta.bpm` yourself if you want that).
+
 ### Dev tools
 
 ```bash
