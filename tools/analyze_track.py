@@ -10,7 +10,7 @@ boundaries from RMS-energy novelty. Prints a report and writes a markers JSON.
 """
 import sys, os, json, subprocess, tempfile
 import numpy as np
-from scipy.signal import stft, find_peaks
+from scipy.signal import stft, find_peaks, butter, sosfilt
 from scipy.io import wavfile
 from scipy.ndimage import uniform_filter1d
 
@@ -107,6 +107,19 @@ def sections(y, sr, downbeat_times):
         marks.append({"t": round(b, 2), "bar": bar, "label": label, "kind": kind})
     return marks
 
+def detect_kicks(y, sr, fmax=90, min_gap=0.34, thresh=0.18):
+    """Kick onsets = strong transients in the sub-bass (<~90 Hz), which isolates the
+    kick thump from the (higher) bassline. Low-pass, take the energy envelope, pick
+    rising-edge peaks with a minimum spacing near a quarter-note and a firm threshold
+    so breakdown sections without a kick stay empty."""
+    sos = butter(4, fmax, btype="low", fs=sr, output="sos")
+    env = np.abs(sosfilt(sos, y))
+    env = uniform_filter1d(env, size=int(0.015 * sr))
+    onset = np.diff(env, prepend=env[0])
+    onset[onset < 0] = 0
+    pk, _ = find_peaks(onset, distance=int(min_gap * sr), height=thresh * onset.max())
+    return pk / sr
+
 def main():
     path = sys.argv[1]
     out = sys.argv[2] if len(sys.argv) > 2 else None
@@ -120,6 +133,8 @@ def main():
     off = int(np.argmax([ob[k::4].sum() for k in range(4)]))
     downbeats = beats[off::4]
     secs = sections(y, sr, downbeats)
+    kicks = detect_kicks(y, sr)
+    first_downbeat = float(downbeats[0]) if len(downbeats) else 0.0
 
     print(f"file      : {os.path.basename(path)}")
     print(f"duration  : {dur:.1f}s")
@@ -129,10 +144,13 @@ def main():
     for m in secs:
         bar = (np.argmin(np.abs(downbeats - m["t"])) + 1) if len(downbeats) else 0
         print(f"  {m['t']:7.2f}s  bar {bar:>3}  {m['label']}")
+    gaps = np.diff(kicks)
+    print(f"kicks     : {len(kicks)}   median gap {np.median(gaps):.3f}s "
+          f"(quarter-note @ {bpm:.1f} BPM = {60/bpm:.3f}s)   firstDownbeat {first_downbeat:.3f}s")
 
     markers = {"bpm": round(float(bpm), 1), "duration": round(dur, 2),
-               "downbeatOffsetBeats": off,
-               "markers": secs}
+               "downbeatOffsetBeats": off, "firstDownbeat": round(first_downbeat, 3),
+               "markers": secs, "kicks": [round(float(t), 3) for t in kicks]}
     if out:
         json.dump(markers, open(out, "w"), indent=2)
         print(f"\nwrote {out}")

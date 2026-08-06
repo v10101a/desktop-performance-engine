@@ -647,14 +647,19 @@ final class WindowManager {
 
     /// Interpret `[x, y, w, h]` as top-left origin relative to `screen`, converting
     /// to AppKit's bottom-left global coordinates.
+    /// `[x, y, w, h]`, top-left origin relative to `screen`. NEGATIVE x/y anchor to the
+    /// far edge (screen-size-independent): x < 0 measures from the right, y < 0 from the
+    /// bottom — so `[40, -40, …]` is "40 pt from the left, 40 pt up from the bottom"
+    /// (lower-left corner) regardless of resolution.
     private func rect(from frame: [Double], on screen: NSScreen, fallbackSize: NSSize? = nil) -> NSRect {
         let sf = screen.frame
         let x = frame.count > 0 ? frame[0] : 0
         let topY = frame.count > 1 ? frame[1] : 0
         let w = frame.count > 2 ? frame[2] : (fallbackSize?.width ?? 300)
         let h = frame.count > 3 ? frame[3] : (fallbackSize?.height ?? 200)
-        return NSRect(x: sf.minX + x,
-                      y: sf.maxY - topY - h,
-                      width: w, height: h)
+        let originX = x >= 0 ? sf.minX + x : sf.maxX + x - w
+        let originY = topY >= 0 ? sf.maxY - topY - h    // from top
+                                : sf.minY - topY         // from bottom (topY negative)
+        return NSRect(x: originX, y: originY, width: w, height: h)
     }
 }
