@@ -6,12 +6,12 @@
     "timelineLatency": 0.0
   },
   "events": [
-    { "beat": 0, "type": "openWindow", "params": { "id": "a", "content": { "kind": "color", "hex": "#FF2D95" }, "frame": [200, 200, 300, 220], "animate": { "kind": "springIn" } } },
+    { "beat": 0, "type": "openWindow", "params": { "id": "a", "content": { "kind": "color", "hex": "#020AF5" }, "frame": [200, 200, 300, 220], "animate": { "kind": "springIn" } } },
     { "beat": 1, "type": "openWindow", "params": { "id": "b", "content": { "kind": "text", "text": "SHAKE" }, "frame": [640, 260, 380, 180], "animate": { "kind": "fadeIn" } } },
     { "beat": 2, "type": "jiggle", "params": { "id": "a", "durationBeats": 2, "amplitude": 18, "frequency": 9 } },
     { "beat": 4, "type": "jiggle", "params": { "id": "b", "durationBeats": 1, "amplitude": 26, "frequency": 12 } },
     { "beat": 4, "type": "jiggle", "params": { "id": "a", "durationBeats": 1, "amplitude": 26, "frequency": 12 } },
-    { "beat": 6, "type": "screenFlash", "params": { "color": "#FFFFFF", "durationBeats": 0.4 } },
+    { "beat": 6, "type": "screenFlash", "params": { "color": "#F2F4FE", "durationBeats": 0.4 } },
     { "beat": 8, "type": "closeWindow", "params": { "id": "a" } },
     { "beat": 8, "type": "closeWindow", "params": { "id": "b" } }
   ]

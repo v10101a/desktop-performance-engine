@@ -47,7 +47,7 @@ enum StillRenderer {
         canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
 
         // color window with fake browser chrome
-        let color = makeEffectContentView(ContentSpec(kind: "color", hex: "#FF2D95", text: nil, path: nil,
+        let color = makeEffectContentView(ContentSpec(kind: "color", hex: "#020AF5", text: nil, path: nil,
                                                       chrome: "browser", title: "horse://gallop"),
                                           size: NSSize(width: 360, height: 260))
         color.frame = NSRect(x: 40, y: 320, width: 360, height: 260)
@@ -59,7 +59,7 @@ enum StillRenderer {
         text.frame = NSRect(x: 440, y: 360, width: 440, height: 200)
 
         // teal color window with terminal chrome
-        let teal = makeEffectContentView(ContentSpec(kind: "color", hex: "#25F4EE", text: nil, path: nil,
+        let teal = makeEffectContentView(ContentSpec(kind: "color", hex: "#68BDF8", text: nil, path: nil,
                                                      chrome: "terminal", title: "haunt.sh"),
                                          size: NSSize(width: 200, height: 200))
         teal.frame = NSRect(x: 900, y: 360, width: 200, height: 200)

@@ -39,7 +39,7 @@ final class WindowManager {
     private var flashOverlays: [Int: FlashWindow] = [:]
 
     /// Body colors cycled across micro-window pools when the event doesn't specify any.
-    static let defaultPoolColors = ["#FF2D95", "#40E8D0", "#FFD24A", "#B18CFF", "#F5F5F7"]
+    static let defaultPoolColors = ["#020AF5", "#F2F4FE", "#68BDF8", "#669DF6", "#C1C7D6", "#6C86E2"]
 
     /// A running window-zoetrope: pooled micro-windows repainted as animation frames.
     private final class Sprite {

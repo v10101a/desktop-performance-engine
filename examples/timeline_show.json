@@ -184,9 +184,9 @@
     "durationBeats": 15,
     "chrome": "mixed",
     "colors": [
-     "#FFFFFF",
-     "#FF2D95",
-     "#0078D7"
+     "#F2F4FE",
+     "#020AF5",
+     "#669DF6"
     ]
    }
   },
@@ -340,7 +340,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -362,7 +362,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -406,7 +406,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FFFFFF",
+     "hex": "#F2F4FE",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -450,7 +450,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -472,7 +472,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0078D7",
+     "hex": "#669DF6",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -516,7 +516,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0078D7",
+     "hex": "#669DF6",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -570,7 +570,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -602,7 +602,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FF2D95",
+     "hex": "#020AF5",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -624,7 +624,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FF2D95",
+     "hex": "#020AF5",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -668,7 +668,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -690,7 +690,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0078D7",
+     "hex": "#669DF6",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -703,7 +703,7 @@
    "beat": 30.149,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationBeats": 0.3
    }
   },
@@ -711,7 +711,7 @@
    "beat": 30.587,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationBeats": 0.3
    }
   },
@@ -728,7 +728,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0078D7",
+     "hex": "#669DF6",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -772,7 +772,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FF2D95",
+     "hex": "#020AF5",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -816,7 +816,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FFFFFF",
+     "hex": "#F2F4FE",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -851,7 +851,7 @@
    "beat": 33.143,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationBeats": 0.3
    }
   },
@@ -868,7 +868,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FFFFFF",
+     "hex": "#F2F4FE",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -890,7 +890,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0078D7",
+     "hex": "#669DF6",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -903,7 +903,7 @@
    "beat": 33.864,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationBeats": 0.3
    }
   },
@@ -920,7 +920,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#0B0E16",
+     "hex": "#091724",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -942,7 +942,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FF2D95",
+     "hex": "#020AF5",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -955,7 +955,7 @@
    "beat": 34.434,
    "type": "screenFlash",
    "params": {
-    "color": "#0078D7",
+    "color": "#669DF6",
     "durationBeats": 0.3
    }
   },
@@ -994,7 +994,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FFFFFF",
+     "hex": "#F2F4FE",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -1016,7 +1016,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FFFFFF",
+     "hex": "#F2F4FE",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -1038,7 +1038,7 @@
     ],
     "content": {
      "kind": "color",
-     "hex": "#FF2D95",
+     "hex": "#020AF5",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -1051,7 +1051,7 @@
    "beat": 35.169,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationBeats": 0.3
    }
   },
@@ -1059,7 +1059,7 @@
    "beat": 36.233,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationBeats": 0.6
    }
   },
@@ -1203,7 +1203,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      120,
@@ -1220,7 +1220,7 @@
    "t": 18.666,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -1231,7 +1231,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      293,
@@ -1251,7 +1251,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      466,
@@ -1288,7 +1288,7 @@
    "t": 18.816,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -1299,7 +1299,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      639,
@@ -1319,7 +1319,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      812,
@@ -1355,7 +1355,7 @@
    "t": 18.966,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -1366,7 +1366,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      985,
@@ -1386,7 +1386,7 @@
     "id": "m0",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      180,
@@ -1406,7 +1406,7 @@
     "id": "m1",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      440,
@@ -1426,7 +1426,7 @@
     "id": "m2",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      700,
@@ -1446,7 +1446,7 @@
     "id": "m3",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      960,
@@ -1466,7 +1466,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1158,
@@ -1523,7 +1523,7 @@
    "t": 19.116,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -1534,7 +1534,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      131,
@@ -1596,7 +1596,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      304,
@@ -1613,7 +1613,7 @@
    "t": 19.266,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -1624,7 +1624,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      477,
@@ -1677,7 +1677,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      650,
@@ -1694,7 +1694,7 @@
    "t": 19.416,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -1737,7 +1737,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      823,
@@ -1774,7 +1774,7 @@
    "t": 19.566,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -1785,7 +1785,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      996,
@@ -1838,7 +1838,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1169,
@@ -1895,7 +1895,7 @@
    "t": 19.716,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -1906,7 +1906,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      142,
@@ -1978,7 +1978,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      315,
@@ -2008,7 +2008,7 @@
    "t": 19.866,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -2019,7 +2019,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      488,
@@ -2079,7 +2079,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      661,
@@ -2138,7 +2138,7 @@
    "t": 20.016,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -2169,7 +2169,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      834,
@@ -2202,7 +2202,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1007,
@@ -2239,7 +2239,7 @@
    "t": 20.166,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -2270,7 +2270,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1180,
@@ -2362,7 +2362,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      153,
@@ -2379,7 +2379,7 @@
    "t": 20.316,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -2410,7 +2410,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      326,
@@ -2443,7 +2443,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      499,
@@ -2480,7 +2480,7 @@
    "t": 20.466,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -2543,7 +2543,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      672,
@@ -2583,7 +2583,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      845,
@@ -2600,7 +2600,7 @@
    "t": 20.616,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -2624,7 +2624,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1018,
@@ -2681,7 +2681,7 @@
    "t": 20.766,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -2692,7 +2692,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1191,
@@ -2794,7 +2794,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      164,
@@ -2844,7 +2844,7 @@
    "t": 20.916,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -2855,7 +2855,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      337,
@@ -2875,7 +2875,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      510,
@@ -2964,7 +2964,7 @@
    "t": 21.066,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -2975,7 +2975,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      683,
@@ -3028,7 +3028,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      856,
@@ -3045,7 +3045,7 @@
    "t": 21.216,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -3056,7 +3056,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1029,
@@ -3148,7 +3148,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1202,
@@ -3185,7 +3185,7 @@
    "t": 21.366,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -3196,7 +3196,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      175,
@@ -3269,7 +3269,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      348,
@@ -3286,7 +3286,7 @@
    "t": 21.516,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -3329,7 +3329,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      521,
@@ -3399,7 +3399,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      694,
@@ -3416,7 +3416,7 @@
    "t": 21.666,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -3460,7 +3460,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      867,
@@ -3480,7 +3480,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1040,
@@ -3510,7 +3510,7 @@
    "t": 21.816,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -3580,7 +3580,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1213,
@@ -3630,7 +3630,7 @@
    "t": 21.966,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -3641,7 +3641,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      186,
@@ -3681,7 +3681,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      359,
@@ -3750,7 +3750,7 @@
    "t": 22.116,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -3761,7 +3761,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      532,
@@ -3834,7 +3834,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      705,
@@ -3851,7 +3851,7 @@
    "t": 22.266,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -3882,7 +3882,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      878,
@@ -3944,7 +3944,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1051,
@@ -3981,7 +3981,7 @@
    "t": 22.416,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -4012,7 +4012,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1156,
@@ -4065,7 +4065,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      197,
@@ -4102,7 +4102,7 @@
    "t": 22.566,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -4145,7 +4145,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      370,
@@ -4165,7 +4165,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      543,
@@ -4202,7 +4202,7 @@
    "t": 22.716,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -4266,7 +4266,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      716,
@@ -4306,7 +4306,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      889,
@@ -4355,7 +4355,7 @@
    "t": 22.866,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -4366,7 +4366,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1062,
@@ -4439,7 +4439,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1235,
@@ -4476,7 +4476,7 @@
    "t": 23.016,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -4487,7 +4487,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      208,
@@ -4566,7 +4566,7 @@
    "t": 23.166,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -4577,7 +4577,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      381,
@@ -4610,7 +4610,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      554,
@@ -4667,7 +4667,7 @@
    "t": 23.316,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -4678,7 +4678,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      727,
@@ -4750,7 +4750,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      900,
@@ -4787,7 +4787,7 @@
    "t": 23.466,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -4798,7 +4798,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1073,
@@ -4871,7 +4871,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1164,
@@ -4908,7 +4908,7 @@
    "t": 23.616,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -4951,7 +4951,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      219,
@@ -4991,7 +4991,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      392,
@@ -5021,7 +5021,7 @@
    "t": 23.766,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -5032,7 +5032,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      565,
@@ -5092,7 +5092,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      738,
@@ -5151,7 +5151,7 @@
    "t": 23.916,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -5182,7 +5182,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      911,
@@ -5215,7 +5215,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1084,
@@ -5272,7 +5272,7 @@
    "t": 24.066,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -5303,7 +5303,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1243,
@@ -5375,7 +5375,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      230,
@@ -5392,7 +5392,7 @@
    "t": 24.216,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -5436,7 +5436,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      403,
@@ -5453,7 +5453,7 @@
    "t": 24.366,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -5464,7 +5464,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      576,
@@ -5556,7 +5556,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      749,
@@ -5573,7 +5573,7 @@
    "t": 24.516,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -5604,7 +5604,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      922,
@@ -5637,7 +5637,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1095,
@@ -5694,7 +5694,7 @@
    "t": 24.666,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -5737,7 +5737,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1172,
@@ -5807,7 +5807,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      241,
@@ -5857,7 +5857,7 @@
    "t": 24.816,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -5868,7 +5868,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      414,
@@ -5888,7 +5888,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      587,
@@ -5957,7 +5957,7 @@
    "t": 24.966,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -5988,7 +5988,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      760,
@@ -6041,7 +6041,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      933,
@@ -6058,7 +6058,7 @@
    "t": 25.116,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -6089,7 +6089,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1106,
@@ -6161,7 +6161,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1251,
@@ -6198,7 +6198,7 @@
    "t": 25.266,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -6222,7 +6222,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      252,
@@ -6282,7 +6282,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      425,
@@ -6299,7 +6299,7 @@
    "t": 25.416,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -6352,7 +6352,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      598,
@@ -6409,7 +6409,7 @@
    "t": 25.566,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -6420,7 +6420,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      771,
@@ -6473,7 +6473,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      944,
@@ -6523,7 +6523,7 @@
    "t": 25.716,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -6553,7 +6553,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1117,
@@ -6593,7 +6593,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1180,
@@ -6643,7 +6643,7 @@
    "t": 25.866,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -6654,7 +6654,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      263,
@@ -6694,7 +6694,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      436,
@@ -6763,7 +6763,7 @@
    "t": 26.016,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -6774,7 +6774,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      609,
@@ -6847,7 +6847,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      782,
@@ -6864,7 +6864,7 @@
    "t": 26.166,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -6895,7 +6895,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      955,
@@ -6977,7 +6977,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1128,
@@ -6994,7 +6994,7 @@
    "t": 26.316,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -7038,7 +7038,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1259,
@@ -7078,7 +7078,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      274,
@@ -7095,7 +7095,7 @@
    "t": 26.466,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -7158,7 +7158,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      447,
@@ -7178,7 +7178,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      620,
@@ -7195,7 +7195,7 @@
    "t": 26.616,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -7279,7 +7279,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      793,
@@ -7348,7 +7348,7 @@
    "t": 26.766,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -7359,7 +7359,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      966,
@@ -7399,7 +7399,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1139,
@@ -7449,7 +7449,7 @@
    "t": 26.916,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -7460,7 +7460,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1188,
@@ -7500,7 +7500,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      285,
@@ -7579,7 +7579,7 @@
    "t": 27.066,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -7590,7 +7590,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      458,
@@ -7623,7 +7623,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      631,
@@ -7680,7 +7680,7 @@
    "t": 27.216,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -7691,7 +7691,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      804,
@@ -7783,7 +7783,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      977,
@@ -7820,7 +7820,7 @@
    "t": 27.366,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -7844,7 +7844,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1150,
@@ -7884,7 +7884,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      123,
@@ -7921,7 +7921,7 @@
    "t": 27.516,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -7964,7 +7964,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      296,
@@ -8004,7 +8004,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      469,
@@ -8034,7 +8034,7 @@
    "t": 27.666,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -8045,7 +8045,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      642,
@@ -8137,7 +8137,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      815,
@@ -8164,7 +8164,7 @@
    "t": 27.816,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -8195,7 +8195,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      988,
@@ -8265,7 +8265,7 @@
    "t": 27.966,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -8276,7 +8276,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1161,
@@ -8316,7 +8316,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      134,
@@ -8385,7 +8385,7 @@
    "t": 28.116,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -8396,7 +8396,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      307,
@@ -8449,7 +8449,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      480,
@@ -8466,7 +8466,7 @@
    "t": 28.266,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -8477,7 +8477,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      653,
@@ -8569,7 +8569,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      826,
@@ -8586,7 +8586,7 @@
    "t": 28.416,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -8630,7 +8630,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      999,
@@ -8670,7 +8670,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1172,
@@ -8687,7 +8687,7 @@
    "t": 28.566,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -8760,7 +8760,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      145,
@@ -8820,7 +8820,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      318,
@@ -8850,7 +8850,7 @@
    "t": 28.716,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -8881,7 +8881,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      491,
@@ -8933,7 +8933,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      664,
@@ -8970,7 +8970,7 @@
    "t": 28.866,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -9001,7 +9001,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      837,
@@ -9054,7 +9054,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1010,
@@ -9091,7 +9091,7 @@
    "t": 29.016,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -9102,7 +9102,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1183,
@@ -9171,7 +9171,7 @@
    "t": 29.166,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -9182,7 +9182,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      156,
@@ -9235,7 +9235,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      329,
@@ -9292,7 +9292,7 @@
    "t": 29.316,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -9303,7 +9303,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      502,
@@ -9365,7 +9365,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      675,
@@ -9422,7 +9422,7 @@
    "t": 29.466,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -9446,7 +9446,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      848,
@@ -9506,7 +9506,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1021,
@@ -9536,7 +9536,7 @@
    "t": 29.616,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -9566,7 +9566,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1186,
@@ -9606,7 +9606,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      167,
@@ -9656,7 +9656,7 @@
    "t": 29.766,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -9667,7 +9667,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      340,
@@ -9739,7 +9739,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      513,
@@ -9776,7 +9776,7 @@
    "t": 29.916,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -9787,7 +9787,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      686,
@@ -9860,7 +9860,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      859,
@@ -9877,7 +9877,7 @@
    "t": 30.066,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -9905,7 +9905,7 @@
    "t": 30.116,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -9936,7 +9936,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1032,
@@ -9998,7 +9998,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1205,
@@ -10015,7 +10015,7 @@
    "t": 30.216,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -10059,7 +10059,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      178,
@@ -10096,7 +10096,7 @@
    "t": 30.296,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -10104,7 +10104,7 @@
    "t": 30.366,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -10115,7 +10115,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      351,
@@ -10187,7 +10187,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      524,
@@ -10204,7 +10204,7 @@
    "t": 30.476,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -10212,7 +10212,7 @@
    "t": 30.516,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -10236,7 +10236,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      697,
@@ -10316,7 +10316,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      870,
@@ -10346,7 +10346,7 @@
    "t": 30.656,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -10393,7 +10393,7 @@
    "t": 30.666,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -10424,7 +10424,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1043,
@@ -10444,7 +10444,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      1194,
@@ -10474,7 +10474,7 @@
    "t": 30.816,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -10502,7 +10502,7 @@
    "t": 30.836,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -10513,7 +10513,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      189,
@@ -10585,7 +10585,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      362,
@@ -10632,7 +10632,7 @@
    "t": 30.966,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -10643,7 +10643,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      535,
@@ -10660,7 +10660,7 @@
    "t": 31.016,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -10684,7 +10684,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      708,
@@ -10721,7 +10721,7 @@
    "t": 31.116,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -10752,7 +10752,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      881,
@@ -10801,7 +10801,7 @@
    "t": 31.196,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -10872,7 +10872,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1054,
@@ -10889,7 +10889,7 @@
    "t": 31.266,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -10913,7 +10913,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      1227,
@@ -10930,7 +10930,7 @@
    "t": 31.376,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -10961,7 +10961,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      200,
@@ -10998,7 +10998,7 @@
    "t": 31.416,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -11041,7 +11041,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      373,
@@ -11078,7 +11078,7 @@
    "t": 31.556,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -11099,7 +11099,7 @@
    "t": 31.566,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -11110,7 +11110,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      546,
@@ -11130,7 +11130,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      719,
@@ -11229,7 +11229,7 @@
    "t": 31.716,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -11240,7 +11240,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      892,
@@ -11257,7 +11257,7 @@
    "t": 31.736,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -11308,7 +11308,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1065,
@@ -11358,7 +11358,7 @@
    "t": 31.866,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -11369,7 +11369,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      1202,
@@ -11386,7 +11386,7 @@
    "t": 31.916,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -11449,7 +11449,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      211,
@@ -11486,7 +11486,7 @@
    "t": 32.016,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -11497,7 +11497,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      384,
@@ -11547,7 +11547,7 @@
    "t": 32.096,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -11558,7 +11558,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      557,
@@ -11575,7 +11575,7 @@
    "t": 32.166,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -11586,7 +11586,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      730,
@@ -11675,7 +11675,7 @@
    "t": 32.276,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.07
    }
   },
@@ -11686,7 +11686,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      903,
@@ -11723,7 +11723,7 @@
    "t": 32.316,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -11767,7 +11767,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1076,
@@ -11787,7 +11787,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      1249,
@@ -11804,7 +11804,7 @@
    "t": 32.456,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.07
    }
   },
@@ -11812,7 +11812,7 @@
    "t": 32.466,
    "type": "screenFlash",
    "params": {
-    "color": "#9B5DE5",
+    "color": "#C1C7D6",
     "durationSeconds": 0.08
    }
   },
@@ -11905,7 +11905,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      222,
@@ -11958,7 +11958,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      395,
@@ -11975,7 +11975,7 @@
    "t": 32.616,
    "type": "screenFlash",
    "params": {
-    "color": "#F15BB5",
+    "color": "#6C86E2",
     "durationSeconds": 0.08
    }
   },
@@ -12006,7 +12006,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      568,
@@ -12055,7 +12055,7 @@
    "t": 32.766,
    "type": "screenFlash",
    "params": {
-    "color": "#FF6B35",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -12066,7 +12066,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      741,
@@ -12126,7 +12126,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      914,
@@ -12176,7 +12176,7 @@
    "t": 32.916,
    "type": "screenFlash",
    "params": {
-    "color": "#01FFC3",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -12207,7 +12207,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1087,
@@ -12259,7 +12259,7 @@
     "id": "c4",
     "content": {
      "kind": "color",
-     "hex": "#9B5DE5"
+     "hex": "#C1C7D6"
     },
     "frame": [
      1210,
@@ -12296,7 +12296,7 @@
    "t": 33.066,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020AF5",
     "durationSeconds": 0.08
    }
   },
@@ -12307,7 +12307,7 @@
     "id": "c5",
     "content": {
      "kind": "color",
-     "hex": "#F15BB5"
+     "hex": "#6C86E2"
     },
     "frame": [
      233,
@@ -12380,7 +12380,7 @@
     "id": "c6",
     "content": {
      "kind": "color",
-     "hex": "#FF6B35"
+     "hex": "#020AF5"
     },
     "frame": [
      406,
@@ -12397,7 +12397,7 @@
    "t": 33.216,
    "type": "screenFlash",
    "params": {
-    "color": "#25F4EE",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -12408,7 +12408,7 @@
     "id": "c7",
     "content": {
      "kind": "color",
-     "hex": "#01FFC3"
+     "hex": "#F2F4FE"
     },
     "frame": [
      579,
@@ -12470,7 +12470,7 @@
     "id": "c0",
     "content": {
      "kind": "color",
-     "hex": "#FF2D95"
+     "hex": "#020AF5"
     },
     "frame": [
      752,
@@ -12487,7 +12487,7 @@
    "t": 33.366,
    "type": "screenFlash",
    "params": {
-    "color": "#FEE440",
+    "color": "#68BDF8",
     "durationSeconds": 0.08
    }
   },
@@ -12531,7 +12531,7 @@
     "id": "c1",
     "content": {
      "kind": "color",
-     "hex": "#25F4EE"
+     "hex": "#F2F4FE"
     },
     "frame": [
      925,
@@ -12571,7 +12571,7 @@
     "id": "c2",
     "content": {
      "kind": "color",
-     "hex": "#FEE440"
+     "hex": "#68BDF8"
     },
     "frame": [
      1098,
@@ -12601,7 +12601,7 @@
    "t": 33.516,
    "type": "screenFlash",
    "params": {
-    "color": "#00F5D4",
+    "color": "#669DF6",
     "durationSeconds": 0.08
    }
   },
@@ -12631,7 +12631,7 @@
     "id": "c3",
     "content": {
      "kind": "color",
-     "hex": "#00F5D4"
+     "hex": "#669DF6"
     },
     "frame": [
      1271,
@@ -12830,7 +12830,7 @@
    "t": 33.666,
    "type": "screenFlash",
    "params": {
-    "color": "#FFFFFF",
+    "color": "#F2F4FE",
     "durationSeconds": 0.2
    }
   },
@@ -12838,7 +12838,7 @@
    "t": 34.016,
    "type": "screenFlash",
    "params": {
-    "color": "#000000",
+    "color": "#091724",
     "durationSeconds": 0.6
    }
   }

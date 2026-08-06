@@ -27,6 +27,12 @@ final class Scheduler {
         driftMax = 0; driftSum = 0; driftCount = 0
     }
 
+    /// Move the cursor to the first event at or after `time` (events are sorted), so
+    /// playback resumes from a scrubbed position without firing everything before it.
+    func seek(to time: Double) {
+        cursor = events.firstIndex { $0.fireTime >= time } ?? events.count
+    }
+
     var isFinished: Bool { cursor >= events.count }
 
     func tick(now: Double, ctx: EventContext) {

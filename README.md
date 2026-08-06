@@ -33,11 +33,21 @@ once (Keychain Access ▸ Certificate Assistant) and run
 `SIGN_IDENTITY="Your Cert Name" ./bundle.sh`.
 
 Press **Play** to start; **PANIC / Stop** (or ⌃⌥⌘Esc anywhere) to stop and restore.
+The control window has a **scrubbable timeline** with a live playhead and a position
+readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to seek:
+while playing it jumps audio + visuals live; while stopped it sets where Play begins.
+Stop leaves the playhead where it is, so Play resumes from there.
 
-If no audio file is found, the engine synthesizes a **metronome click track** at the
-timeline's BPM so the show still runs on a real, sample-accurate clock (you'll hear
-clicks on the beat). Drop a `song.wav` (or set `meta.audioFile`) next to the timeline
-JSON to use real audio.
+### Backing track
+
+Set `meta.audioFile` in the timeline to your track — an absolute path, or a repo-
+relative one like `assets/track.wav`. It's resolved against the timeline dir, the
+working dir, and parents of the app/executable, so it works from both `swift run` and
+the packaged `.app`. Formats: anything AVAudioFile reads (wav/aiff/caf/m4a/mp3).
+Large/copyrighted audio is git-ignored (`assets/*.wav` etc.) — keep it local.
+
+If no track is found, the engine synthesizes a **metronome click track** at the
+timeline's BPM so the show still runs on a real, sample-accurate clock.
 
 ### Dev tools
 

@@ -12,8 +12,12 @@ final class AudioClock {
     private var file: AVAudioFile?
     private var clickBuffer: AVAudioPCMBuffer?
     private var prepared = false
+    private var sampleRate: Double = 44_100
+    private var baseOffset: Double = 0     // playback start position (for seeking)
 
     private(set) var usingSynthesizedClick = false
+    /// Total length of the loaded audio (file length, or the synthesized click track).
+    private(set) var audioDuration: Double = 0
 
     /// Output hardware latency — subtract so visuals line up with what's heard.
     var outputLatency: Double { engine.outputNode.presentationLatency }
@@ -34,6 +38,7 @@ final class AudioClock {
             clickBuffer = nil
             format = f.processingFormat
             usingSynthesizedClick = false
+            audioDuration = format.sampleRate > 0 ? Double(f.length) / format.sampleRate : 0
         } else {
             file = nil
             let fmt = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
@@ -42,7 +47,9 @@ final class AudioClock {
                                                     format: fmt)
             format = fmt
             usingSynthesizedClick = true
+            audioDuration = fallbackDuration
         }
+        sampleRate = format.sampleRate
 
         engine.connect(player, to: engine.mainMixerNode, format: format)
         engine.prepare()
@@ -50,14 +57,35 @@ final class AudioClock {
         prepared = true
     }
 
-    func play() {
+    /// Start (or restart) playback from `seconds` into the audio.
+    func play(from seconds: Double = 0) {
         guard prepared else { return }
-        if let file = file {
-            player.scheduleFile(file, at: nil, completionHandler: nil)
-        } else if let buffer = clickBuffer {
-            player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
-        }
+        baseOffset = max(0, seconds)
+        schedule(from: baseOffset)
         player.play()
+    }
+
+    /// Jump to a new position; `playing` keeps the transport running.
+    func seek(to seconds: Double, playing: Bool) {
+        guard prepared else { return }
+        player.stop()                 // resets the node's sampleTime to 0
+        baseOffset = max(0, seconds)
+        schedule(from: baseOffset)
+        if playing { player.play() }
+    }
+
+    private func schedule(from seconds: Double) {
+        if let file = file {
+            let startFrame = AVAudioFramePosition(seconds * sampleRate)
+            let remaining = file.length - startFrame
+            guard remaining > 0 else { return }
+            player.scheduleSegment(file, startingFrame: startFrame,
+                                   frameCount: AVAudioFrameCount(remaining), at: nil,
+                                   completionHandler: nil)
+        } else if let buffer = clickBuffer,
+                  let segment = AudioClock.slice(buffer, fromFrame: AVAudioFramePosition(seconds * sampleRate)) {
+            player.scheduleBuffer(segment, at: nil, options: [], completionHandler: nil)
+        }
     }
 
     func stop() {
@@ -67,13 +95,27 @@ final class AudioClock {
         prepared = false
     }
 
-    /// Seconds since playback started, derived from the render clock. `nil` before
-    /// the first render callback. Always starts near 0 for take-to-take repeatability.
+    /// Absolute playback position in seconds (start offset + rendered time). `nil`
+    /// before the first render callback.
     func currentTime() -> Double? {
         guard let nodeTime = player.lastRenderTime,
               let pt = player.playerTime(forNodeTime: nodeTime),
               pt.sampleRate > 0 else { return nil }
-        return Double(pt.sampleTime) / pt.sampleRate
+        return baseOffset + Double(pt.sampleTime) / pt.sampleRate
+    }
+
+    /// Copy a PCM buffer from `fromFrame` to the end (for seeking the click track).
+    private static func slice(_ buffer: AVAudioPCMBuffer, fromFrame: AVAudioFramePosition) -> AVAudioPCMBuffer? {
+        let start = max(0, min(Int(fromFrame), Int(buffer.frameLength)))
+        let count = Int(buffer.frameLength) - start
+        guard count > 0,
+              let out = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: AVAudioFrameCount(count)),
+              let src = buffer.floatChannelData, let dst = out.floatChannelData else { return nil }
+        out.frameLength = AVAudioFrameCount(count)
+        for ch in 0..<Int(buffer.format.channelCount) {
+            dst[ch].update(from: src[ch] + start, count: count)
+        }
+        return out
     }
 
     // MARK: - Synthesized metronome

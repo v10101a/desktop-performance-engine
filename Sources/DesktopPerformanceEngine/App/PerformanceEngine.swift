@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 /// Glue that wires the audio clock, display pump, scheduler, effect executors,
 /// state snapshot/restore, and the global panic hotkey together.
@@ -20,6 +21,10 @@ final class PerformanceEngine {
     private var iconsArmed = false
     private var wallpaperArmed = false
     private var lastFxUpdate = -1.0
+    private var audioDuration: Double = 0
+    /// Where the next play() starts, and where the scrubber sits. Tracks the playhead
+    /// while playing, so Stop leaves it in place (resume) and dragging it seeks.
+    private(set) var startPosition: Double = 0
 
     private(set) var isPlaying = false
 
@@ -51,6 +56,8 @@ final class PerformanceEngine {
         context.bpm = tl.meta.bpm
         wallpaper.baseDir = timelineDir
         wallpaper.enabled = tl.meta.allowWallpaper ?? false
+        audioDuration = PerformanceEngine.probeAudioDuration(resolveAudioURL(tl.meta.audioFile))
+        startPosition = 0
         // Build sprite/trail window pools now, while nothing is playing — the
         // window server digests dozens of new windows long before the clock runs.
         windows.prewarm(for: tl.events)
@@ -63,7 +70,10 @@ final class PerformanceEngine {
 
     var usingClickTrack: Bool { clock.usingSynthesizedClick }
 
-    var duration: Double { timeline?.duration ?? 0 }
+    /// Whole-piece length: the longer of the event timeline and the backing track.
+    var duration: Double { max(timeline?.duration ?? 0, audioDuration) }
+
+    var bpm: Double { timeline?.meta.bpm ?? 120 }
 
     /// Enable in-memory drift measurement (used by the `--autoplay` self-test).
     func enableFiringLog() {
@@ -85,21 +95,26 @@ final class PerformanceEngine {
         wallpaperArmed = tl.usesWallpaper && wallpaper.enabled
         if wallpaperArmed { wallpaper.snapshot() }
         scheduler.reset()
+        scheduler.seek(to: startPosition)
         lastFxUpdate = -1.0
 
         let audioURL = resolveAudioURL(tl.meta.audioFile)
         do {
             try clock.prepare(audioURL: audioURL,
                               fallbackBPM: tl.meta.bpm,
-                              fallbackDuration: tl.duration + 4)
+                              fallbackDuration: max(tl.duration, audioDuration) + 4)
         } catch {
             NSLog("[DPE] audio prepare failed: \(error)")
         }
 
+        NSLog(String(format: "[DPE] audio source: %@ · %.1fs",
+                     clock.usingSynthesizedClick ? "synth click track" : (tl.meta.audioFile ?? "?"),
+                     audioDuration))
+
         // Align what the eye sees with what the ear hears.
         offsetCorrection = (tl.meta.timelineLatency ?? 0) - clock.outputLatency
 
-        clock.play()
+        clock.play(from: startPosition)
         isPlaying = true
         pump.start { [weak self] in self?.step() }
     }
@@ -107,6 +122,15 @@ final class PerformanceEngine {
     private func step() {
         guard isPlaying, let raw = clock.currentTime() else { return }
         let now = raw + offsetCorrection
+
+        // End of the piece: stop, restore, rewind the playhead to the top.
+        if now >= duration {
+            startPosition = 0
+            stopAndRestore()
+            onTick?(0)
+            return
+        }
+
         // Fire events every tick (prompt), but throttle the per-frame effect updates
         // (window setFrame / cursor warp) to ~72 Hz so a 120 Hz ProMotion display
         // doesn't double the window-server traffic for no visible benefit.
@@ -116,7 +140,25 @@ final class PerformanceEngine {
             windows.update(now: now)
             lastFxUpdate = now
         }
+        startPosition = now       // playhead tracks; Stop leaves it here to resume
         onTick?(now)
+    }
+
+    /// Move the playhead. While playing, seeks audio + visuals live (clean slate at
+    /// the new position); while stopped, just sets where the next play() begins.
+    func seek(to target: Double) {
+        guard let tl = timeline else { return }
+        let t = max(0, min(target, duration))
+        startPosition = t
+        if isPlaying {
+            cursor.cancel()
+            windows.closeAll()
+            windows.prewarm(for: tl.events)
+            scheduler.seek(to: t)
+            clock.seek(to: t, playing: true)
+            lastFxUpdate = -1.0
+        }
+        onTick?(t)
     }
 
     /// Idempotent: safe to call from the panic hotkey, the UI, and app termination.
@@ -136,17 +178,37 @@ final class PerformanceEngine {
 
     // MARK: - Helpers
 
+    /// Locate the backing track. Handles an absolute path, or a repo-relative path
+    /// like "assets/track.wav" resolved against the timeline dir, the working dir, and
+    /// parents of the app/executable — so it works from `swift run` (cwd = repo) and
+    /// from the packaged .app (which lives under the repo tree at build/…).
     private func resolveAudioURL(_ name: String?) -> URL? {
-        guard let name = name else { return nil }
-        let url: URL
+        guard let name = name, !name.isEmpty else { return nil }
+        let fm = FileManager.default
         if name.hasPrefix("/") {
-            url = URL(fileURLWithPath: name)
-        } else if let dir = timelineDir {
-            url = dir.appendingPathComponent(name)
-        } else {
-            url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                .appendingPathComponent(name)
+            return fm.fileExists(atPath: name) ? URL(fileURLWithPath: name) : nil
         }
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        var bases: [URL] = []
+        if let dir = timelineDir { bases.append(dir) }
+        bases.append(URL(fileURLWithPath: fm.currentDirectoryPath))
+        if let res = Bundle.main.resourceURL { bases.append(res) }  // embedded copy in the .app
+        var walk = Bundle.main.bundleURL
+        for _ in 0..<7 { bases.append(walk); walk = walk.deletingLastPathComponent() }
+
+        let basename = (name as NSString).lastPathComponent
+        for base in bases {
+            for cand in [base.appendingPathComponent(name),                                   // <base>/assets/track.mp3
+                         base.appendingPathComponent("assets").appendingPathComponent(basename), // <base>/assets/track.mp3
+                         base.appendingPathComponent(basename)] {                              // <base>/track.mp3 (bundled flat)
+                if fm.fileExists(atPath: cand.path) { return cand }
+            }
+        }
+        return nil
+    }
+
+    private static func probeAudioDuration(_ url: URL?) -> Double {
+        guard let url = url, let f = try? AVAudioFile(forReading: url) else { return 0 }
+        let sr = f.processingFormat.sampleRate
+        return sr > 0 ? Double(f.length) / sr : 0
     }
 }

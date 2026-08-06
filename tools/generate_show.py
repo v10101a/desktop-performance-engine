@@ -71,7 +71,7 @@ while t < CHAOS_BEATS:
     roll = rng.random()
     flash_p = 0.0 if u < 0.55 else 0.06 + 0.30 * (u - 0.55) / 0.45
     if roll < flash_p:
-        add(beat, "screenFlash", {"color": rng.choice(["#FFFFFF", "#FF2D95", "#0078D7"]),
+        add(beat, "screenFlash", {"color": rng.choice(["#F2F4FE", "#020AF5", "#68BDF8"]),
             "durationBeats": 0.3})
     elif roll < flash_p + 0.46:
         add(beat, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), w, h],
@@ -106,7 +106,7 @@ while t < CHAOS_BEATS:
 
 # --- chaos wipe: one flash, clear the stage for the finale ---
 end = chaos_start + CHAOS_BEATS + 1
-add(end, "screenFlash", {"color": "#FFFFFF", "durationBeats": 0.6})
+add(end, "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.6})
 for i in range(14):
     add(end + 0.1, "closeWindow", {"id": f"w{i}"})
 for i in range(4):

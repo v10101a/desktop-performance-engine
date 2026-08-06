@@ -15,7 +15,7 @@ import json, os
 from PIL import Image
 
 # The pages: white, pink, BSOD blue.
-PALETTE = ["#FFFFFF", "#FF2D95", "#0078D7"]
+PALETTE = ["#F2F4FE", "#020AF5", "#68BDF8"]
 
 
 def build_frames(cols=19, thresh=110, fill=0.42):

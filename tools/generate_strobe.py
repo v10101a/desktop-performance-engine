@@ -2,7 +2,7 @@ import json, os, glob, subprocess, socket
 
 import os as _os
 bpm = 150
-palette = ["#FF2D95","#25F4EE","#FEE440","#00F5D4","#9B5DE5","#F15BB5","#FF6B35","#01FFC3"]
+palette = ["#020AF5","#F2F4FE","#68BDF8","#669DF6","#C1C7D6","#6C86E2"]
 W, H = 1500, 900
 
 # pacing (seconds between events per lane) — tune density vs sync here
@@ -176,7 +176,7 @@ while t < 15.0:
     t += P["flash"]; k += 1
 t, k = 11.5, 0
 while t < 14.0:
-    add(t, "screenFlash", {"color":"#FFFFFF" if k%2==0 else "#000000","durationSeconds":0.07})
+    add(t, "screenFlash", {"color":"#F2F4FE" if k%2==0 else "#091724","durationSeconds":0.07})
     t += 0.18; k += 1   # ~5.5Hz, out of worst seizure band
 
 # cursor zig-zag throughout
@@ -194,8 +194,8 @@ for j in range(2): add(15.05, "closeWindow", {"id":f"kd{j}"}); add(15.05, "close
 for j in range(3): add(15.05, "closeWindow", {"id":f"im{j}"})
 for j in range(4): add(15.05, "closeWindow", {"id":f"al{j}"})
 for j in range(P["flyers"]): add(15.05, "closeWindow", {"id":f"m{j}"})
-add(15.05, "screenFlash", {"color":"#FFFFFF","durationSeconds":0.2})
-add(15.4, "screenFlash", {"color":"#000000","durationSeconds":0.6})
+add(15.05, "screenFlash", {"color":"#F2F4FE","durationSeconds":0.2})
+add(15.4, "screenFlash", {"color":"#091724","durationSeconds":0.6})
 
 doc = {"meta":{"audioFile":"song.wav","bpm":bpm,"beatOffset":0.0,"timelineLatency":0.0}, "events": events}
 # repo-relative: tools/ -> repo root -> examples/

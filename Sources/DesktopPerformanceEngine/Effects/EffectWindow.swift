@@ -142,7 +142,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
 
     switch content.kind {
     case "text":
-        view.layer?.backgroundColor = NSColor.black.cgColor
+        view.layer?.backgroundColor = (NSColor(hex: "#091724") ?? .black).cgColor
         view.layer?.cornerRadius = 6
         let label = NSTextField(labelWithString: content.text ?? "")
         label.font = .systemFont(ofSize: 42, weight: .heavy)
@@ -174,7 +174,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         view.addSubview(iv)
         if let path = content.path { loadImageAsync(path, into: iv) }
     default: // "color"
-        view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#FF00AA") ?? .magenta).cgColor
+        view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#020AF5") ?? .systemBlue).cgColor
         view.layer?.cornerRadius = 6
     }
 

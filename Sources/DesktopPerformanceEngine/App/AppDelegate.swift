@@ -42,6 +42,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        if CommandLine.arguments.contains("--test-seek") {
+            controller = MainWindowController(engine: engine)   // keep-alive window
+            controller?.showWindow(nil)
+            if let url = Bundle.module.url(forResource: "timeline", withExtension: "json") {
+                try? engine.loadTimeline(at: url)
+            }
+            var last = 0.0
+            engine.onTick = { last = $0 }
+            engine.play()
+            let log = { (m: String) in NSLog("[DPE] seek-test: \(m)") }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                log(String(format: "playing pos=%.1f", last)); self.engine.seek(to: 90)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    log(String(format: "after seek→90 pos=%.1f (expect ~90)", last)); self.engine.seek(to: 5)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                        log(String(format: "after seek→5 pos=%.1f (expect ~5)", last))
+                        self.engine.stopAndRestore()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { NSApp.terminate(nil) }
+                    }
+                }
+            }
+            return
+        }
+
         controller = MainWindowController(engine: engine)
         controller?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)

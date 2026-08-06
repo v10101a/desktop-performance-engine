@@ -10,7 +10,7 @@
     { "beat": 2,  "type": "rearrangeIcons", "params": { "layout": "scatter", "seed": 7 } },
     { "beat": 6,  "type": "rearrangeIcons", "params": { "layout": "circle", "seed": 1 } },
     { "beat": 10, "type": "rearrangeIcons", "params": { "layout": "pile", "seed": 3 } },
-    { "beat": 12, "type": "screenFlash",    "params": { "color": "#FFFFFF", "durationBeats": 0.5 } },
+    { "beat": 12, "type": "screenFlash",    "params": { "color": "#F2F4FE", "durationBeats": 0.5 } },
     { "beat": 14, "type": "closeWindow",    "params": { "id": "w1" } }
   ]
 }

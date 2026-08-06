@@ -9,7 +9,7 @@
     { "beat": 0, "type": "openWindow", "params": { "id": "w1", "content": { "kind": "text", "text": "WATCH THE CURSOR" }, "frame": [400, 120, 640, 160], "animate": { "kind": "fadeIn" } } },
     { "beat": 1, "type": "cursorPath", "params": { "path": "catmullRom", "points": [[200, 300], [1000, 250], [600, 800], [1200, 700], [300, 500]], "durationBeats": 4, "easing": "easeInOut", "mode": "warp" } },
     { "beat": 5, "type": "cursorPath", "params": { "path": "linear", "points": [[300, 500], [1200, 200]], "durationBeats": 1, "easing": "easeOut", "mode": "warp" } },
-    { "beat": 6, "type": "screenFlash", "params": { "color": "#FFFFFF", "durationBeats": 0.4 } },
+    { "beat": 6, "type": "screenFlash", "params": { "color": "#F2F4FE", "durationBeats": 0.4 } },
     { "beat": 8, "type": "closeWindow", "params": { "id": "w1" } }
   ]
 }

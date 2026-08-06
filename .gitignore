@@ -10,8 +10,11 @@ Package.resolved
 # to bake in your own system stats / desktop images — keep those out of git)
 /examples/*.local.json
 
-# Media you drop in yourself
+# Keep the large raw master out of git; the compressed mp3 IS committed (licensed).
 song.wav
+assets/*.wav
+assets/*.aif
+assets/*.aiff
 *.mov
 *.mp4
 

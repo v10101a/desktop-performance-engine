@@ -35,6 +35,13 @@ if [ -d "$RESBUNDLE" ]; then
   cp -R "$RESBUNDLE" "$APP/Contents/Resources/"
 fi
 
+# Embed the compressed backing track(s) so the .app is self-contained and plays
+# anywhere, not just from inside the repo tree. The resolver checks Contents/Resources.
+# Only compressed formats — embedding raw .wav would re-bloat the bundle.
+for audio in assets/*.mp3 assets/*.m4a; do
+  [ -e "$audio" ] && cp "$audio" "$APP/Contents/Resources/"
+done
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
