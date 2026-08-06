@@ -100,7 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self = self else { return }
                 NSLog("[DPE] --autoplay: starting show")
                 self.engine.play()
-                let quitAfter = self.engine.duration + 2.5
+                let cap = ProcessInfo.processInfo.environment["DPE_AUTOPLAY_SECS"].flatMap(Double.init)
+                let quitAfter = cap ?? (self.engine.duration + 2.5)
                 DispatchQueue.main.asyncAfter(deadline: .now() + quitAfter) {
                     NSLog("[DPE] --autoplay: panic + restore")
                     self.engine.stopAndRestore()

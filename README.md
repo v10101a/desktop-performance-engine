@@ -49,6 +49,28 @@ Large/copyrighted audio is git-ignored (`assets/*.wav` etc.) — keep it local.
 If no track is found, the engine synthesizes a **metronome click track** at the
 timeline's BPM so the show still runs on a real, sample-accurate clock.
 
+### Track analysis & markers
+
+`tools/analyze_track.py` estimates the track's **BPM** (onset-flux autocorrelation with a
+tempo prior that resolves ×2/×1.5 metrical errors) and finds **structural key points**
+(section boundaries / drops / breaks from RMS-energy novelty, snapped to downbeats):
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r tools/requirements-analysis.txt   # + ffmpeg
+.venv/bin/python tools/analyze_track.py "assets/track.mp3" markers.json
+```
+
+It also detects **kick onsets** (sub-bass transients, isolated from the bassline) and the
+first downbeat. It writes `meta.markers` (`{t, bar, label, kind}`, absolute seconds) plus a
+`kicks` list into the analysis JSON. The scrubber renders them as **color-coded ticks** (drop = red,
+high-energy = teal, section = blue, break/start = gray) — **click a tick to jump there** —
+and the readout shows the current section. Markers use absolute time, so they stay valid
+regardless of `meta.bpm`.
+
+The default show is **regridded to the detected 128.5 BPM** with `beatOffset` set to the
+first downbeat, and blinks a `(kick)` window in the lower-left on every detected kick
+(absolute-time `openWindow`/`closeWindow` pairs, so they hit the real audio kicks).
+
 ### Dev tools
 
 ```bash
@@ -75,7 +97,9 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 ```
 
 `frame` is `[x, y, w, h]` in points, **top-left origin**, relative to the target
-`screen` (index into `NSScreen.screens`, default 0). Content kinds: `color` (`hex`),
+`screen` (index into `NSScreen.screens`, default 0). **Negative `x`/`y` anchor to the
+far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` from the
+bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner. Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
 stats readouts), `image` (`path` to any image; decoded off-thread + cached).
 Animations: `springIn`, `fadeIn`, `none`. Any content can add fake window `chrome`

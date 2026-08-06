@@ -7,11 +7,25 @@ struct TimelineDocument: Decodable {
     let events: [TimelineEvent]
 }
 
+/// A structural cue from track analysis (section boundary, drop, break, …). Rendered
+/// on the scrubber for navigation. Times are absolute seconds, so they're valid
+/// regardless of `meta.bpm`. See tools/analyze_track.py.
+struct Marker: Decodable {
+    let t: Double
+    let bar: Int?
+    let label: String?
+    let kind: String?
+}
+
 struct Meta: Decodable {
     let audioFile: String?
     let bpm: Double
     let beatOffset: Double?
     let timelineLatency: Double?
+    /// Tempo detected from the audio (informational; does not re-time beat events).
+    let analyzedBpm: Double?
+    /// Structural key points from track analysis.
+    let markers: [Marker]?
     /// Wallpaper swap is DISABLED by default: on modern macOS it can't be restored
     /// for Aerial/dynamic wallpapers and applies unreliably via the public API, which
     /// breaks the reversibility guarantee. Set true only if you accept that a `wallpaper`
