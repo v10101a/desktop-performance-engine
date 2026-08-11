@@ -141,12 +141,23 @@ far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` fr
 bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner. Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
 stats readouts), `image` (`path` to any image; decoded off-thread + cached),
-`livecode` (a running Strudel-style REPL — see below), `map` (a real Apple Maps
-flythrough — see below).
+`ascii` (see below), `livecode` (a running Strudel-style REPL — see below), `map`
+(a real Apple Maps flythrough — see below).
 Animations: `springIn`, `fadeIn`, `none`. Any content can add fake window `chrome`
 (`"browser" | "terminal" | "mac" | "mixed"`, plus a `title` shown in the bar/URL pill) —
 drawn by us at any size, deliberately stylized, never a pixel-accurate imitation of
 real system UI.
+
+### `ascii` content
+
+Renders monospaced ASCII art, auto-fit to the window. Either literal art via `text`
+(newlines with `\n`), or an image via `path` converted to ASCII: `cols` sets the grid
+width (default 80), `invert` flips the light/dark ramp, `ramp` overrides the character
+ramp (dark→light, default `" .:-=+*#%@"`), and `colorized: true` tints each glyph with
+its source pixel color. `hex` is the text color (default matrix-green `#8CF2A6`). Image
+conversion runs off the main thread and is cached, like the `image` kind. Works with
+`chrome`/`title` too. See `examples/timeline_ascii.json`; preview with
+`DPE_ASCII_DEMO=1 swift run DesktopPerformanceEngine --snapshot=ascii.png`.
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
 `screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,

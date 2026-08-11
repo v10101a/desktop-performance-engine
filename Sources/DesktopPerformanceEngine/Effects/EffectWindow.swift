@@ -380,6 +380,21 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         iv.autoresizingMask = [.width, .height]
         view.addSubview(iv)
         if let path = content.path { loadImageAsync(path, into: iv) }
+    case "ascii":
+        view.layer?.backgroundColor = (NSColor(hex: "#060A14") ?? .black).cgColor
+        view.layer?.cornerRadius = 6
+        let inset = NSRect(x: 6, y: 6, width: max(body.width - 12, 8), height: max(body.height - 12, 8))
+        let tv = makeAsciiTextView(frame: inset)
+        view.addSubview(tv)
+        let fg = NSColor(hex: content.hex ?? "#8CF2A6") ?? .green   // matrix-green default
+        let ramp = content.ramp ?? dpeAsciiRamp
+        if let path = content.path {
+            loadAsciiImageAsync(path: resolveResourcePath(path), cols: content.cols ?? 80,
+                                invert: content.invert ?? false, colorized: content.colorized ?? false,
+                                ramp: ramp, fg: fg, into: tv)
+        } else {
+            renderAscii(asciiArtFromText(content.text ?? ""), into: tv, fg: fg)
+        }
     default: // "color"
         view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#020AF5") ?? .systemBlue).cgColor
         view.layer?.cornerRadius = 6

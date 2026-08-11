@@ -27,7 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--snapshot=") }) {
             let path = String(arg.dropFirst("--snapshot=".count))
             do {
-                if let tlPath = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("--") }),
+                if ProcessInfo.processInfo.environment["DPE_ASCII_DEMO"] == "1" {
+                    try StillRenderer.renderAsciiDemo(to: URL(fileURLWithPath: path))
+                } else if let tlPath = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("--") }),
                    let sprite = AppDelegate.firstSprite(in: tlPath) {
                     try StillRenderer.renderSprite(sprite, to: URL(fileURLWithPath: path))
                 } else {

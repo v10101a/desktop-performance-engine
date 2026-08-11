@@ -1,0 +1,18 @@
+{
+  "meta": { "audioFile": "song.wav", "bpm": 120, "beatOffset": 0.0, "timelineLatency": 0.0 },
+  "events": [
+    { "beat": 0, "type": "openWindow", "params": { "id": "a1",
+      "content": { "kind": "ascii", "text": " /\\_/\\\n( o.o )\n > ^ <\n ASCII", "hex": "#8CF2A6", "chrome": "terminal", "title": "cat.sh" },
+      "frame": [120, 120, 340, 300], "animate": { "kind": "fadeIn" } } },
+    { "beat": 2, "type": "openWindow", "params": { "id": "a2",
+      "content": { "kind": "ascii", "path": "assets/muybridge_horse.gif", "cols": 90, "colorized": true, "chrome": "browser", "title": "horse.ascii" },
+      "frame": [520, 120, 470, 430], "animate": { "kind": "springIn" } } },
+    { "beat": 4, "type": "openWindow", "params": { "id": "a3",
+      "content": { "kind": "ascii", "path": "assets/muybridge_horse.gif", "cols": 90, "invert": true, "hex": "#68BDF8", "chrome": "terminal", "title": "horse -invert" },
+      "frame": [1030, 160, 420, 390], "animate": { "kind": "fadeIn" } } },
+    { "beat": 6, "type": "screenFlash", "params": { "color": "#F2F4FE", "durationBeats": 0.4 } },
+    { "beat": 8, "type": "closeWindow", "params": { "id": "a1" } },
+    { "beat": 8, "type": "closeWindow", "params": { "id": "a2" } },
+    { "beat": 8, "type": "closeWindow", "params": { "id": "a3" } }
+  ]
+}

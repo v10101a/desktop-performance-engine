@@ -148,6 +148,42 @@ enum StillRenderer {
         try writePNG(canvas: canvas, to: url)
     }
 
+    /// ASCII-renderer demo: literal art + image→ASCII (colorized and monochrome), for
+    /// `--snapshot=out.png` with `DPE_ASCII_DEMO=1`. Renders synchronously so the PNG
+    /// captures the converted art (the live path is async).
+    static func renderAsciiDemo(to url: URL) throws {
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1180, height: 520))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+
+        func panel(_ frame: NSRect) -> NSTextView {
+            let p = NSView(frame: frame)
+            p.wantsLayer = true
+            p.layer?.backgroundColor = NSColor(hex: "#060A14")?.cgColor
+            p.layer?.cornerRadius = 6
+            let tv = makeAsciiTextView(frame: NSRect(x: 8, y: 8, width: frame.width - 16, height: frame.height - 16))
+            p.addSubview(tv)
+            canvas.addSubview(p)
+            canvas.window?.layoutIfNeeded()
+            tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+            return tv
+        }
+
+        let cat = " /\\_/\\\n( o.o )\n > ^ <\n ASCII"
+        renderAscii(asciiArtFromText(cat), into: panel(NSRect(x: 20, y: 20, width: 320, height: 480)),
+                    fg: NSColor(hex: "#8CF2A6") ?? .green)
+
+        let horse = resolveResourcePath("assets/muybridge_horse.gif")
+        if let a = asciiArtFromImage(path: horse, cols: 92, invert: false, colorized: true, ramp: dpeAsciiRamp) {
+            renderAscii(a, into: panel(NSRect(x: 360, y: 20, width: 400, height: 480)), fg: .white)
+        }
+        if let a = asciiArtFromImage(path: horse, cols: 92, invert: true, colorized: false, ramp: dpeAsciiRamp) {
+            renderAscii(a, into: panel(NSRect(x: 780, y: 20, width: 400, height: 480)),
+                        fg: NSColor(hex: "#68BDF8") ?? .cyan)
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
     /// Host in an off-screen window so the layer tree composites, then cache to PNG.
     private static func writePNG(canvas: NSView, to url: URL) throws {
         let host = NSWindow(contentRect: NSRect(origin: NSPoint(x: -5000, y: -5000),

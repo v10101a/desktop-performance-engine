@@ -57,7 +57,7 @@ struct MapSpec: Decodable {
 /// defaults — dev-tool and preview code that builds these by hand then doesn't need
 /// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "code" | "image" | "livecode" | "map"
+    let kind: String      // "color" | "text" | "code" | "image" | "ascii" | "livecode" | "map"
     var hex: String? = nil
     var text: String? = nil
     var path: String? = nil
@@ -74,6 +74,11 @@ struct ContentSpec: Decodable {
     /// `id` with `running: true` and the sketch starts, which is how the show fakes
     /// someone hitting run.
     var running: Bool? = nil
+    // "ascii" kind: literal `text` OR an image `path` converted to ASCII.
+    var cols: Int? = nil        // character-grid width for image→ASCII (default 80)
+    var invert: Bool? = nil     // flip the light/dark ramp
+    var colorized: Bool? = nil  // tint each glyph with its source pixel color
+    var ramp: String? = nil     // custom character ramp (dark→light)
 }
 
 struct AnimateSpec: Decodable {
