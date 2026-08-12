@@ -400,8 +400,33 @@ connection, and with no route to Apple's tile servers the window just sits there
            "style": "flyover" } }
 ```
 
-`style` is `flyover` (default) / `satellite` / `hybrid` / `standard`; anything omitted
-from the `to*` pose holds. The camera is stepped by the view's own 30 Hz timer rather than
+This **is** Apple Maps — `MKMapView` is MapKit, the same framework and the same Apple
+tile servers Maps.app uses. `style` picks how it renders:
+
+| style | |
+|---|---|
+| `flyover` (default) | Apple's 3-D flyover imagery, **no labels, no roads** |
+| `hybrid` | the same imagery **with** roads and place names — closest to Maps' own 3-D satellite view |
+| `satellite` | flat satellite, no labels |
+| `standard` | the plain vector map with streets and names |
+
+Regenerate the show's flights with `MAP_STYLE=hybrid python3 tools/generate_show.py` to
+compare. Anything omitted from the `to*` pose holds.
+
+Three things worth knowing before performing with it:
+
+- **It needs the network.** Tiles stream from Apple; flyover's 3-D meshes are heavier
+  than flat imagery, so on a cold cache the first seconds can arrive blurry and sharpen.
+  Playing the show once on the venue's network beforehand warms the cache.
+- **Flyover coverage is per-city.** Where Apple hasn't modeled 3-D geometry, `flyover`
+  falls back to draped imagery and looks flat. Check each location by eye.
+- **In mainland China** Apple Maps renders on GCJ-02, so a WGS-84 coordinate can land
+  a few hundred metres off. Nudge the lat/lon until the camera is over what you want.
+
+If you'd rather have the *real Maps.app window* on screen instead of a map inside one of
+ours, that's a different thing: we can launch it with a `maps://` URL, but its camera
+can't be animated and closing it again is messy — it would break the reversibility
+guarantee the rest of the piece keeps. The camera is stepped by the view's own 30 Hz timer rather than
 the show's pump — a map redraw waits on tiles and is far too unpredictable to let near the
 beat. All interaction is disabled: it's a shot in a film, not a map the viewer drives.
 

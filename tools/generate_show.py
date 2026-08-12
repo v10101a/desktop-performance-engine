@@ -33,6 +33,10 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 W = int(os.environ.get("W", "1440"))
 H = int(os.environ.get("H", "900"))
 HUSH = os.environ.get("HUSH", "1") != "0"     # honour the bar where the bass drops out
+# How the flyover renders: "flyover" is Apple's 3-D mode with no labels at all,
+# "hybrid" is the same imagery WITH roads and place names, "standard" is the plain
+# vector map. All three are real Apple Maps — it's the same MKMapView either way.
+MAP_STYLE = os.environ.get("MAP_STYLE", "flyover")
 AUDIO = "assets/03 - Give it 2 me.mp3"
 
 # --- the tempo map, straight from the analysis ---
@@ -368,13 +372,13 @@ for i, kt in enumerate(KICKS):
 FLIGHTS = [
     # Lujiazui, over the river from the Bund
     dict(lat=31.2397, lon=121.4998, altitude=1600, toAltitude=420,
-         pitch=72, heading=250, toHeading=40, seconds=17),
+         pitch=72, heading=250, toHeading=40, seconds=17, style=MAP_STYLE),
     # Washington Square, New York
     dict(lat=40.7308, lon=-73.9973, altitude=1200, toAltitude=300,
-         pitch=76, heading=20, toHeading=210, seconds=17),
+         pitch=76, heading=20, toHeading=210, seconds=17, style=MAP_STYLE),
     # out over the water, climbing away
     dict(lat=31.2210, lon=121.5400, altitude=700, toAltitude=5200,
-         pitch=68, toPitch=40, heading=140, toHeading=330, seconds=22),
+         pitch=68, toPitch=40, heading=140, toHeading=330, seconds=22, style=MAP_STYLE),
 ]
 map_at = letter_out + 1.5
 map_frames = [(W * 0.06, H * 0.10, W * 0.52, H * 0.50),
@@ -452,6 +456,6 @@ print(f"  letter  bar {BAR_LETTER:>2}     {secs(bar(BAR_LETTER)):6.2f}s  {len(le
       f"{CHARS_PER_BEAT:.0f}/beat → done {secs(bar(BAR_LETTER) + letter_beats):.1f}s, "
       f"closes {secs(letter_out):.1f}s")
 print(f"  letter bg         {'':6s}  {letter_flashes} white pulses behind the typing")
-print(f"  flyover bar {BAR_MAP:>2}    {secs(map_at):6.2f}s  {len(FLIGHTS)} Apple Maps flights, "
+print(f"  flyover bar {BAR_MAP:>2}    {secs(map_at):6.2f}s  {len(FLIGHTS)} Apple Maps flights ({MAP_STYLE}), "
       f"{final_flashes} kick flashes → break at {secs(bar(87)):.1f}s")
 print(f"  heartbeat         {strobe_end:6.2f}s → {secs(map_at):.1f}s  ({heartbeats} blinks)")

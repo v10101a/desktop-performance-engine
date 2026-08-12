@@ -18411,7 +18411,8 @@
       "pitch": 72,
       "heading": 250,
       "toHeading": 40,
-      "seconds": 17
+      "seconds": 17,
+      "style": "flyover"
      }
     },
     "animate": {
@@ -18796,7 +18797,8 @@
       "pitch": 76,
       "heading": 20,
       "toHeading": 210,
-      "seconds": 17
+      "seconds": 17,
+      "style": "flyover"
      }
     },
     "animate": {
@@ -19182,7 +19184,8 @@
       "toPitch": 40,
       "heading": 140,
       "toHeading": 330,
-      "seconds": 22
+      "seconds": 22,
+      "style": "flyover"
      }
     },
     "animate": {
