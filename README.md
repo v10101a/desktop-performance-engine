@@ -19,7 +19,10 @@ swift run DesktopPerformanceEngine                 # uses the bundled sample tim
 swift run DesktopPerformanceEngine path/to/timeline.json
 ```
 
-Packaged `.app` (needed for Phase 3's Finder Automation to prompt cleanly):
+Packaged `.app` — **double-click it and the piece runs**, no terminal. Also what
+Phase 3's Finder Automation needs to prompt cleanly. It carries its own icon (a BSOD-blue
+tile with a little window and a pink glitch bar through it; redraw with
+`python3 tools/make_icon.py`) and embeds the backing track, so it runs from anywhere:
 
 ```bash
 ./bundle.sh                                         # → build/DesktopPerformanceEngine.app (ad-hoc signed)
@@ -37,6 +40,34 @@ The control window has a **scrubbable timeline** with a live playhead and a posi
 readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to seek:
 while playing it jumps audio + visuals live; while stopped it sets where Play begins.
 Stop leaves the playhead where it is, so Play resumes from there.
+
+### Act 0 — the intro gate
+
+Launching the app opens the piece on the **F.B.I. anti-piracy screen** every rental
+tape started with — blue field, white box, giant condensed FBI, a seal, a justified
+block of white legalese — rebuilt from shapes in `VHSWarningView`, carrying a parody
+notice and the real photosensitivity warning. It then shrinks to a small **popup window**
+on the desktop asking **DO YOU WANT THE MALWARE?** with two answers: **YES. INFECT ME.**
+or **no thank you** (which quits).
+
+Cards auto-advance after their `dwell` or step on click/space; **Esc** leaves from
+anywhere; **Return** takes the default on the choice card. "Yes" starts the show through
+the same path as the Play button, so the transport stays in sync.
+
+Every word of it is a joke and the seal is drawn from scratch (rings, tick marks, a
+shield) rather than reproduced. Title and body both **shrink to fit** their panel, so
+rewriting the copy can't push text off the card.
+
+```bash
+swift run DesktopPerformanceEngine --no-gate                    # skip it (dev loop)
+swift run DesktopPerformanceEngine --snapshot-gate=cards.png    # render the cards to a PNG montage
+```
+
+`--autoplay` skips the gate too, since it drives itself. Edit the copy in
+`IntroGate.script` (`App/IntroGate.swift`) — one `IntroCard` per screen. `dwell: nil`
+marks the card that waits for an answer; `style` picks `.vhs` (full screen), `.popup`
+(small window, title and buttons only) or `.plain` (centered type on black); `glyph` is
+the big word in the left column.
 
 ### Backing track
 
@@ -67,9 +98,15 @@ high-energy = teal, section = blue, break/start = gray) — **click a tick to ju
 and the readout shows the current section. Markers use absolute time, so they stay valid
 regardless of `meta.bpm`.
 
-The default show is **regridded to the detected 128.5 BPM** with `beatOffset` set to the
-first downbeat, and blinks a `(kick)` window in the lower-left on every detected kick
-(absolute-time `openWindow`/`closeWindow` pairs, so they hit the real audio kicks).
+The committed analysis lives at **`assets/track_analysis.json`**, and
+`tools/generate_show.py` reads it — BPM, `beatOffset` (the first downbeat) and every kick
+time come from the audio, so the generator owns the tempo map and nothing has to be
+patched in afterwards.
+
+⚠️ The **section detector is a hint, not gospel.** On this track it put the first chorus
+at 35.87 s; a per-bar energy probe shows the sub-bass actually drops out at 26.54 s
+(bar 15), returns at 28.41 s, and the real drop lands at **30.28 s** (bar 17). The show's
+act boundaries are those verified bars, and the generator adds its own markers for them.
 
 ### Dev tools
 
@@ -77,6 +114,8 @@ first downbeat, and blinks a `(kick)` window in the lower-left on every detected
 swift run DesktopPerformanceEngine --autoplay          # play whole show, log per-event
                                                        # timing drift, then restore + quit
 swift run DesktopPerformanceEngine --snapshot=out.png  # render the window content to a PNG
+swift run DesktopPerformanceEngine --snapshot-scenes=out.png   # preview the livecode + typeText scenes
+python3 tools/make_icon.py                             # redraw assets/AppIcon.icns
 ```
 
 ## Timeline format
@@ -101,25 +140,46 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` from the
 bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner. Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
-stats readouts), `image` (`path` to any image; decoded off-thread + cached).
+stats readouts), `image` (`path` to any image; decoded off-thread + cached),
+`livecode` (a running Strudel-style REPL — see below), `map` (a real Apple Maps
+flythrough — see below).
 Animations: `springIn`, `fadeIn`, `none`. Any content can add fake window `chrome`
 (`"browser" | "terminal" | "mac" | "mixed"`, plus a `title` shown in the bar/URL pill) —
 drawn by us at any size, deliberately stylized, never a pixel-accurate imitation of
 real system UI.
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
-`screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`.
+`screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,
+`typeText`.
 Present but disabled by default: `wallpaper`.
 
 The bundled default demo (`Resources/timeline.json`) is **the show**
-(`examples/timeline_show.json`, ~35 s, regenerate with `python3 tools/generate_show.py`),
-four acts on one clock: the Muybridge **window-horse** runs in, gallops in place
-~2 s, runs out — as it leaves, the cursor glides over and **draws one long arrow**
-pointing down-right, stamped in little pages — then, from exactly the spot the
-arrow points at, the **chaos** builds elastically (small, slow, and close at
-first; accelerating, swelling, and flinging wider on a curve) until it tips over
-into the original full-speed **strobe** finale (`examples/timeline_strobe.json`,
-spliced in verbatim). ~8 ms mean A/V drift across all 786 events.
+(`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`),
+scored bar by bar to the real track at 128.5 BPM:
+
+| bars | act | |
+|---|---|---|
+| 1–4 | **HORSE** | the Muybridge window-zoetrope runs in, gallops in place ~2 s, runs out |
+| 5–8 | **POINT** | the cursor draws one long arrow, stamped in little pages — unhurried, with the `>` head in a single stroke |
+| 8–11 | **HYDRA** | somebody using a computer: the instant the pointer finishes, a little browser opens at **exactly the spot the arrow pointed at**; the cursor drags it up by the title bar, grabs the **lower-right corner** and pulls it bigger (top-left pinned, so the code never leaves its corner), then clicks run — and only *then* does the sketch start rendering |
+| 12–15 | **MORE** | **four** more sketches, already running, with the gap closing (`SPREAD_GAPS`) |
+| — | **RISER** | the run-up collapses into **one second**: four more, each faster than the last, the final one landing on the drop (`RISER_SECONDS` / `RISER_COUNT`) |
+| 17 | **CHORUS** | the drop. Everything blows away, the background flashes on every detected **kick**, and the chaos erupts from the focal point |
+| 24 | **STROBE** | the original strobe finale (`examples/timeline_strobe.json`), spliced in verbatim at 43.35 s |
+| 33 | **LETTER** | a plain text editor opens and writes itself out in tempo (`assets/letter.txt`), short white pulses flashing behind it on every fourth kick, until it's flashed away at bar 76 |
+| 56 | **FLYOVER** | the letter has finished writing, so it's flashed away and the screen opens onto real Apple Maps flights over Shanghai and New York — the two cities the letter is about — kicks flashing again, until the break at 161 s clears everything |
+
+The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The
+sub-bass really lands at 30.28 s, but cutting exactly on it reads as late — the eye
+needs the change to have already started when the ear arrives.
+
+Deliberately **simple before the chorus** — one element at a time, so the viewer can
+catch on to what each one is — then all of it at once. The stretch between the strobe and the letter is **not scored yet**: a small `(kick)`
+window blinks the beat in the lower-left as a placeholder.
+
+The flyover uses the native `map` kind rather than a `web` Google Maps window on
+purpose — google.com is blocked from mainland China, and the piece has to work where
+it's being performed.
 
 The strobe also still runs standalone:
 
@@ -138,8 +198,10 @@ P_COLOR=0.06 P_ALERT=0.2 python3 tools/generate_strobe.py   # per-lane pacing ov
 The committed timeline is the sanitized one. `PERSONALIZE=1` pulls your hostname, specs,
 and desktop images into the show — great locally, but don't commit that output.
 
-⚠️ **Photosensitivity:** it flashes rapidly — kept out of the worst 15–20 Hz seizure
-band, but if you push the flash cadence faster in the JSON, be aware of the risk.
+⚠️ **Photosensitivity:** it flashes rapidly. Measured on the current show: the chorus
+kick-flash pass peaks at **3 Hz**, but the spliced strobe finale runs a median 6.7 Hz and
+touches **20 Hz** at its fastest — inside the risk band. The intro gate warns the viewer
+before anything plays; keep that card, and re-measure if you push the cadence faster.
 
 ### Performance notes
 
@@ -226,6 +288,12 @@ works whether the cursor is choreographed or user-driven).
 - `mode: "follow"` — a comet tail: `count` windows chase the cursor, each delayed
   `delay` s more than the last, fading down the tail.
 
+The arrow is drawn as a shaft plus a `>` head in **one continuous stroke** (barb →
+tip → barb, forced to `linear` so the spline doesn't round the tip off) — two separate
+barb strokes read as two stray marks rather than a pointer. Stroke `speed` is px per
+beat and is deliberately unhurried (200): a fast stroke can outrun the pump on a loaded
+machine and drop most of its breadcrumb stamps, so the arrow arrives half-drawn.
+
 The spelling scene — the cursor handwrites "look" huge in a single-stroke plotter
 font, draws an actual arrow pointing down-right, then glides trail-off to the spot
 the arrow points at (in the full show, that's where the chaos erupts):
@@ -235,6 +303,115 @@ python3 tools/spell_path.py          # → examples/timeline_look.json (standalo
 TEXT="oh no" python3 tools/spell_path.py    # any text the stroke font covers
 swift run DesktopPerformanceEngine examples/timeline_look.json
 ```
+
+### `livecode` — a very small hydra
+
+A hydra sketch, **actually running**. `Effects/HydraView.swift` parses the chain and
+**builds the layer stack the code describes**, so the visual in the window is what the
+source printed over it says. The source sits on top in hydra's own style: no gutter, a
+dark box behind each line, numbers in pink.
+
+```jsonc
+{ "kind": "livecode", "chrome": "browser", "title": "hydra.ojack.xyz", "hex": "#68BDF8",
+  "running": false, "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()" }
+```
+
+Sources: `osc(freq, sync, offset)`, `noise(scale, speed)`, `voronoi(scale, speed)`,
+`shape(sides, radius)`, `gradient(speed)`, `solid`. Ops: `kaleid(n)`, `rotate(a, speed)`,
+`scale`, `repeat`/`repeatX`/`repeatY`, `pixelate`, `colorama`/`color`, `thresh`, `invert`,
+`scrollX`/`scrollY`, and `blend`/`diff`/`mult`/`add` against a second source. `modulate*`
+is approximated, not real feedback. Anything unrecognised is skipped, so a patch that uses
+more of the language still renders the part we understand.
+
+`kaleid` masks the source to one wedge before replicating it around the circle —
+rotating an opaque full-bleed layer just hides every copy under the last one.
+
+**`running: false`** draws the source over a dead black canvas: the state the page is in
+before you hit run. Re-opening the same window `id` with `running: true` swaps in the live
+version, which is how the show fakes someone clicking run.
+
+A `moveWindow` resize doesn't rebuild a window's content, so the code label, prompt and
+toolbar all carry autoresizing masks that pin them to their own corners, and the sketch
+layer stretches with the window. Re-opening the same id at the final size rebuilds the
+composition cleanly — which is what the show does once the corner-drag settles.
+
+Every bit of the motion is **Core Animation and Core Image on the render server**, with
+periods keyed to `dpeShowBPM` (published from `WindowManager.bpm`). Nothing runs on the
+pump, so a stack of these keeps playing — in tempo — while the timeline is busy elsewhere.
+Generated textures are cached, so repeats of a patch cost nothing.
+
+### Grabbable windows
+
+`openWindow` takes two flags that hand a window to the viewer:
+
+```jsonc
+{ "id": "hy0", "interactive": true, "respawn": true, "frame": [...], "content": {...} }
+```
+
+`interactive` makes it **draggable by its body** and **closable by its fake traffic
+lights**. It still never becomes key, so grabbing one can't pull focus mid-show. Off by
+default — click-through is what stops a choreographed cursor snagging on the scenery.
+
+`respawn` means closing it doesn't get rid of it: the window is back 0.8 s later. Only
+interesting on the ones that matter. `typeText` takes `interactive` too — the letter can
+be shoved around while it writes itself, with no close zone armed so it can't be
+dismissed by accident. A pending respawn is cancelled by `closeAll`
+(panic/stop), so nothing can pop up on a restored desktop.
+
+### `web`
+
+Any page, in a `WKWebView`, inside one of our windows — including Google Maps.
+
+```jsonc
+{ "kind": "web", "chrome": "browser", "title": "google.com/maps",
+  "url": "https://www.google.com/maps/@31.2304,121.4737,4000a,35y,60t/data=!3m1!1e3" }
+```
+
+Needs the network, and needs the host to actually be reachable — worth knowing that
+google.com is blocked from mainland China, where Apple's `map` flyover still works.
+
+### `typeText`
+
+A text editor that opens and **writes itself out in tempo**. `charsPerBeat` (default 16)
+sets the rate — a rate, not a duration, so rewriting the copy doesn't retime the scene.
+The window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
+
+```jsonc
+{ "beat": 128, "type": "typeText", "params": {
+    "id": "letter", "frame": [300, 120, 840, 590], "text": "Dear …",
+    "charsPerBeat": 16, "fontSize": 14, "title": "resignation.txt — Edited" } }
+```
+
+The text lives in a **CATextLayer**, not an NSTextField: the typewriter rewrites it ~30
+times a second, and the layer lays out on the render server where a text field would
+re-run cell layout on the main thread every keystroke. The visible count is cached, so a
+tick that reveals no new character does no work at all.
+
+### `map`
+
+A real **MKMapView** flying its camera between two poses — Apple's own 3-D flyover tiles,
+inside one of our windows. No API key needed on macOS; it **does** need a network
+connection, and with no route to Apple's tile servers the window just sits there grey.
+
+```jsonc
+{ "kind": "map", "chrome": "browser", "title": "maps://shanghai",
+  "map": { "lat": 31.2304, "lon": 121.4737, "altitude": 1400, "toAltitude": 500,
+           "pitch": 70, "heading": 20, "toHeading": 200, "seconds": 16,
+           "style": "flyover" } }
+```
+
+`style` is `flyover` (default) / `satellite` / `hybrid` / `standard`; anything omitted
+from the `to*` pose holds. The camera is stepped by the view's own 30 Hz timer rather than
+the show's pump — a map redraw waits on tiles and is far too unpredictable to let near the
+beat. All interaction is disabled: it's a shot in a film, not a map the viewer drives.
+
+```bash
+swift run DesktopPerformanceEngine examples/timeline_map.json
+swift run DesktopPerformanceEngine --test-map     # proves the camera actually moves
+```
+
+`--test-map` builds a real map window off-screen and samples its camera twice, so you
+can tell a flight that isn't running from tiles that haven't loaded.
 
 ### `wallpaper` (disabled by default)
 

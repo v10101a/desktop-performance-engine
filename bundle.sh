@@ -29,6 +29,12 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp "$BINDIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
 
+# App icon — so it can just be double-clicked from the Finder like anything else.
+# (Regenerate with `python3 tools/make_icon.py`.)
+if [ -f assets/AppIcon.icns ]; then
+  cp assets/AppIcon.icns "$APP/Contents/Resources/"
+fi
+
 # Bundle.module resolves resources from Contents/Resources inside an .app.
 RESBUNDLE="$BINDIR/${APP_NAME}_${APP_NAME}.bundle"
 if [ -d "$RESBUNDLE" ]; then
@@ -56,6 +62,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleVersion</key>         <string>2</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
+    <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>NSHighResolutionCapable</key> <true/>
     <key>LSUIElement</key>             <false/>
     <key>NSAppleEventsUsageDescription</key>

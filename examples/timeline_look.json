@@ -16,7 +16,7 @@
      46
     ],
     "chrome": "mixed",
-    "durationBeats": 12.35
+    "durationBeats": 11.94
    }
   },
   {
@@ -224,7 +224,7 @@
    }
   },
   {
-   "beat": 13.102,
+   "beat": 13.252,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -236,35 +236,19 @@
      [
       796.9,
       733.4
-     ]
-    ],
-    "durationBeats": 0.4,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 13.702,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
+     ],
      [
       723.2,
       720.4
-     ],
-     [
-      796.9,
-      733.4
      ]
     ],
-    "durationBeats": 0.4,
+    "durationBeats": 0.44,
     "easing": "easeInOut",
     "mode": "warp"
    }
   },
   {
-   "beat": 14.802,
+   "beat": 14.393,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -284,7 +268,7 @@
    }
   },
   {
-   "beat": 20.802,
+   "beat": 20.393,
    "type": "closeWindow",
    "params": {
     "id": "trace"

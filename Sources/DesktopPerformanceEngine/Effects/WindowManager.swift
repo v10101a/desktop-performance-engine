@@ -6,7 +6,9 @@ final class WindowManager {
     private var windows: [String: NSWindow] = [:]
 
     /// Set from the loaded timeline so beat-based durations resolve to seconds.
-    var bpm: Double = 120
+    /// Also published to `dpeShowBPM` so generative content (the livecode visuals)
+    /// can key its Core Animation periods to the beat.
+    var bpm: Double = 120 { didSet { dpeShowBPM = bpm } }
 
     var count: Int {
         windows.count
@@ -34,6 +36,26 @@ final class WindowManager {
         let easing: (Double) -> Double
     }
     private var moves: [String: Move] = [:]
+
+    /// A text editor writing itself out. `shown` is cached so the (relatively costly)
+    /// text relayout only happens when the visible character count actually changes,
+    /// not on every one of the pump's ~72 ticks a second.
+    private struct Typer {
+        let view: TextEditorView
+        let text: [Character]
+        let start: Double
+        let charsPerSecond: Double
+        let endTime: Double?
+        var shown: Int
+        var caretOn: Bool
+    }
+    private var typers: [String: Typer] = [:]
+
+    /// Windows the viewer is allowed to close but that come back anyway. The
+    /// generation counter makes a pending respawn a no-op once the show has stopped,
+    /// so nothing can pop up on a restored desktop.
+    private var respawns: [String: OpenWindowParams] = [:]
+    private var respawnGeneration = 0
 
     /// Reused fullscreen flash overlays, keyed by screen index.
     private var flashOverlays: [Int: FlashWindow] = [:]
@@ -244,19 +266,44 @@ final class WindowManager {
         let frame = rect(from: p.frame, on: scr)
         jiggles[p.id] = nil
         moves[p.id] = nil
+        respawns[p.id] = (p.respawn == true) ? p : nil
         // Reuse the existing window if this id is being re-opened — swapping the
         // content view + frame avoids the expensive NSWindow create/destroy that
-        // otherwise dominates a dense strobe.
+        // otherwise dominates a dense strobe. (Re-opening the same id is also how a
+        // livecode window goes from "written" to "running".)
         if let existing = windows[p.id] as? EffectWindow {
             existing.setFrame(frame, display: false)
             existing.contentView = makeEffectContentView(p.content, size: frame.size)
+            arm(existing, p, size: frame.size)
             existing.present(animate: "none")
             return
         }
         close(id: p.id)
         let win = EffectWindow(contentRect: frame, content: p.content)
+        arm(win, p, size: frame.size)
         windows[p.id] = win
         win.present(animate: p.animate?.kind ?? "fadeIn")
+    }
+
+    /// Hand a window to the viewer if the event asked for it: draggable, and closable
+    /// by its fake traffic lights. A `respawn` window comes straight back.
+    private func arm(_ win: EffectWindow, _ p: OpenWindowParams, size: NSSize) {
+        guard p.interactive == true else {
+            win.onUserClose = nil
+            return
+        }
+        win.makeInteractive(size: size)
+        win.onUserClose = { [weak self] in
+            guard let self = self else { return }
+            let again = self.respawns[p.id]
+            let generation = self.respawnGeneration
+            self.close(id: p.id)
+            guard let again = again else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                guard let self = self, self.respawnGeneration == generation else { return }
+                self.openWindow(again)
+            }
+        }
     }
 
     func openDialog(_ p: FakeDialogParams) {
@@ -563,10 +610,47 @@ final class WindowManager {
         return samples.last?.p
     }
 
+    /// The typewriter: reveal however many characters the tempo says we should be at
+    /// by now, and blink the caret at 2 Hz.
+    func beginTyping(_ p: TypeTextParams, at now: Double, bpm: Double) {
+        let scr = screen(p.screen)
+        let frame = rect(from: p.frame, on: scr)
+        close(id: p.id)
+        let view = TextEditorView(size: frame.size, title: p.title,
+                                  fontSize: CGFloat(p.fontSize ?? 13))
+        let win = HostedEffectWindow(contentRect: frame, view: view)
+        // Draggable, but with no close zone armed: the letter can be shoved around
+        // while it writes itself, and can't be dismissed by accident.
+        if p.interactive == true { win.makeInteractive(size: frame.size) }
+        windows[p.id] = win
+        win.present(animate: "fadeIn")
+        let cps = max(0.5, (p.charsPerBeat ?? 16) * bpm / 60.0)
+        let trim = p.durationSeconds ?? p.durationBeats.map { $0 * 60.0 / bpm }
+        typers[p.id] = Typer(view: view, text: Array(p.text), start: now,
+                             charsPerSecond: cps, endTime: trim.map { now + $0 },
+                             shown: -1, caretOn: true)
+        view.render("", caret: true)
+    }
+
+    private func updateTypers(now: Double) {
+        for (id, var t) in typers {
+            guard windows[id] != nil else { typers[id] = nil; continue }
+            if let end = t.endTime, now >= end { typers[id] = nil; continue }
+            let want = min(t.text.count, max(0, Int((now - t.start) * t.charsPerSecond)))
+            let caret = Int((now - t.start) * 2) % 2 == 0
+            guard want != t.shown || caret != t.caretOn else { continue }
+            t.shown = want
+            t.caretOn = caret
+            typers[id] = t
+            t.view.render(String(t.text[0..<want]), caret: caret)
+        }
+    }
+
     /// Called every pump tick to advance active moves and jiggles.
     func update(now: Double) {
         updateSprites(now: now)
         updateTrails(now: now)
+        updateTypers(now: now)
         guard !jiggles.isEmpty || !moves.isEmpty else { return }
 
         for (id, m) in moves {
@@ -606,6 +690,7 @@ final class WindowManager {
     func close(id: String) {
         jiggles[id] = nil
         moves[id] = nil
+        typers[id] = nil
         if let s = sprites.removeValue(forKey: id) {
             for w in s.pool { w.orderOut(nil) }
         }
@@ -621,6 +706,9 @@ final class WindowManager {
     func closeAll() {
         jiggles.removeAll()
         moves.removeAll()
+        typers.removeAll()
+        respawns.removeAll()
+        respawnGeneration &+= 1     // cancels any respawn still in flight
         for (_, s) in sprites { for w in s.pool { w.orderOut(nil) } }
         sprites.removeAll()
         for (_, t) in trails {

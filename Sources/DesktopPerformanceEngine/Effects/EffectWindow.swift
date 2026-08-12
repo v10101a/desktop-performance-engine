@@ -1,5 +1,7 @@
 import AppKit
 import ImageIO
+import MapKit
+import WebKit
 
 /// Decoded-thumbnail cache. Decoding a large Retina screenshot/HEIC on the main
 /// thread blocks the pump for 100+ ms; we decode downsampled thumbnails on a
@@ -127,11 +129,216 @@ func makeMicroContentView(size: NSSize, bodyColor: NSColor, chrome: String?, tit
     return view
 }
 
+// MARK: - Live-coding REPL
+
+/// Tempo of the running show, so generative content can lock its animation periods
+/// to the beat. Set by `WindowManager.bpm` when a timeline loads.
+var dpeShowBPM: Double = 120
+
+private let liveCodeInk    = NSColor(hex: "#9BE0FF") ?? .cyan
+private let liveCodeGutter = NSColor(hex: "#3E6E88") ?? .gray
+
+/// A hydra sketch. The patch's own output fills the window — `Hydra` reads the chain
+/// and builds the layer stack it describes — with the source over the top in the
+/// editor's type: no gutter, a dark box behind each line, numbers in pink. That is
+/// what hydra.ojack.xyz looks like while someone is playing it.
+///
+/// `content.running == false` draws the source over a dead black canvas, the state the
+/// page is in before you hit run. Re-opening the same window id with `running: true`
+/// swaps in the live version — the show's way of "executing" the code on a click.
+func makeLiveCodeContentView(_ content: ContentSpec, size: NSSize) -> NSView {
+    let beat = 60.0 / max(40, dpeShowBPM)
+    let accent = NSColor(hex: content.hex ?? "#68BDF8") ?? .cyan
+    let source = content.text ?? ""
+    let running = content.running ?? true
+
+    let root = NSView(frame: NSRect(origin: .zero, size: size))
+    root.wantsLayer = true
+    root.layer?.backgroundColor = NSColor.black.cgColor
+    root.layer?.masksToBounds = true
+    root.layer?.cornerRadius = 6
+
+    let barH = content.chrome == nil ? 0 : fakeChromeBarHeight(for: size)
+    if running {
+        let visual = Hydra.makeVisual(source: source,
+                                      size: NSSize(width: size.width, height: size.height - barH),
+                                      tint: accent, beat: beat)
+        // A `moveWindow` resize doesn't rebuild the content, so the sketch has to
+        // stretch with the window. (The composition re-centers properly the next time
+        // the window is re-opened at its final size.)
+        visual.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        root.layer?.addSublayer(visual)
+    }
+
+    // --- the source, hydra-style: no line numbers, a dark box behind every line ---
+    let fontSize = min(max(size.height * 0.045, 6.5), 13)
+    let font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+    let para = NSMutableParagraphStyle()
+    para.lineSpacing = fontSize * 0.30
+    let box = NSColor(white: 0, alpha: 0.55)
+    let code = NSMutableAttributedString()
+    for line in source.components(separatedBy: "\n") {
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font, .foregroundColor: NSColor(white: 0.96, alpha: 1),
+            .paragraphStyle: para, .backgroundColor: box]
+        let piece = NSMutableAttributedString(string: line + "\n", attributes: attrs)
+        // Numbers pink, the way hydra's editor highlights them.
+        if let re = try? NSRegularExpression(pattern: "-?\\d+(\\.\\d+)?") {
+            let ns = line as NSString
+            for m in re.matches(in: line, range: NSRange(location: 0, length: ns.length)) {
+                piece.addAttribute(.foregroundColor, value: NSColor(hex: "#F58AE1") ?? .magenta,
+                                   range: m.range)
+            }
+        }
+        code.append(piece)
+    }
+    let label = NSTextField(labelWithAttributedString: code)
+    label.maximumNumberOfLines = 0
+    let pad = max(6, fontSize * 0.8)
+    let fit = label.sizeThatFits(NSSize(width: size.width - pad * 2, height: .greatestFiniteMagnitude))
+    label.frame = NSRect(x: pad, y: size.height - barH - fit.height - pad * 0.6,
+                         width: size.width - pad * 2, height: fit.height)
+    label.autoresizingMask = [.minYMargin, .maxXMargin]   // stays pinned top-left
+    root.addSubview(label)
+
+    // The REPL prompt in the bottom-left corner.
+    if size.height > 120 {
+        let prompt = NSTextField(labelWithAttributedString: NSAttributedString(
+            string: running ? ">>" : ">> _", attributes: [
+                .font: font, .foregroundColor: NSColor(white: 0.62, alpha: 0.9)]))
+        prompt.frame = NSRect(x: pad, y: pad * 0.5, width: 80, height: fontSize * 1.6)
+        prompt.autoresizingMask = [.maxYMargin, .maxXMargin]   // stays bottom-left
+        root.addSubview(prompt)
+    }
+
+    // Hydra's little toolbar, top-right.
+    if size.width > 260 {
+        let names = ["play.fill", "trash", "puzzlepiece", "shuffle", "die.face.5",
+                     "square.and.arrow.up", "questionmark.circle"]
+        let g = min(max(size.height * 0.045, 9), 15)
+        var x = size.width - pad - g
+        for name in names.reversed() {
+            guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { continue }
+            let iv = NSImageView(frame: NSRect(x: x, y: size.height - barH - pad * 0.6 - g,
+                                               width: g, height: g))
+            iv.image = img
+            iv.contentTintColor = NSColor(white: 1, alpha: 0.85)
+            iv.imageScaling = .scaleProportionallyUpOrDown
+            iv.autoresizingMask = [.minXMargin, .minYMargin]   // stays top-right
+            root.addSubview(iv)
+            x -= g * 1.7
+            if x < size.width * 0.5 { break }
+        }
+    }
+
+    if let kind = resolvedChromeKind(content.chrome, index: 0) {
+        addFakeChrome(to: root, size: size, kind: kind, title: content.title)
+    }
+    return root
+}
+
+// MARK: - Apple Maps flythrough
+
+/// A real MKMapView flying its camera between two poses — Apple's own 3-D flyover
+/// tiles, inside one of our windows.
+///
+/// The camera is stepped by a self-owned 30 Hz timer rather than the show's pump: a
+/// map redraw is heavy and unpredictable (it waits on tiles), and the pump's budget
+/// belongs to the windows that have to hit the beat. It costs a network connection —
+/// with no route to Apple's tile servers the window just sits there grey.
+final class MapFlyView: NSView {
+    private let map = MKMapView()
+    private var timer: Timer?
+
+    init(size: NSSize, spec: MapSpec) {
+        super.init(frame: NSRect(origin: .zero, size: size))
+        wantsLayer = true
+        map.frame = bounds
+        map.autoresizingMask = [.width, .height]
+        switch spec.style {
+        case "satellite": map.mapType = .satellite
+        case "hybrid":    map.mapType = .hybridFlyover
+        case "standard":  map.mapType = .standard
+        default:          map.mapType = .satelliteFlyover
+        }
+        // No affordances — it is a shot in a film, not a map the viewer drives.
+        map.isZoomEnabled = false
+        map.isScrollEnabled = false
+        map.isRotateEnabled = false
+        map.isPitchEnabled = false
+        map.showsCompass = false
+        map.showsZoomControls = false
+        addSubview(map)
+
+        let from = MKMapCamera(lookingAtCenter: CLLocationCoordinate2D(latitude: spec.lat,
+                                                                      longitude: spec.lon),
+                               fromDistance: spec.altitude ?? 900,
+                               pitch: CGFloat(spec.pitch ?? 60),
+                               heading: spec.heading ?? 0)
+        map.camera = from
+
+        let duration = max(0.5, spec.seconds ?? 14)
+        let toLat = spec.toLat ?? spec.lat
+        let toLon = spec.toLon ?? spec.lon
+        let toAlt = spec.toAltitude ?? (spec.altitude ?? 900)
+        let toPitch = CGFloat(spec.toPitch ?? (spec.pitch ?? 60))
+        let toHeading = spec.toHeading ?? ((spec.heading ?? 0) + 90)
+        let started = Date()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] t in
+            guard let self = self else { t.invalidate(); return }
+            let u = min(1.0, Date().timeIntervalSince(started) / duration)
+            let e = u < 0.5 ? 2 * u * u : 1 - pow(-2 * u + 2, 2) / 2      // easeInOut
+            let cam = MKMapCamera(
+                lookingAtCenter: CLLocationCoordinate2D(latitude: spec.lat + (toLat - spec.lat) * e,
+                                                        longitude: spec.lon + (toLon - spec.lon) * e),
+                fromDistance: (spec.altitude ?? 900) + (toAlt - (spec.altitude ?? 900)) * e,
+                pitch: CGFloat(spec.pitch ?? 60) + (toPitch - CGFloat(spec.pitch ?? 60)) * CGFloat(e),
+                heading: (spec.heading ?? 0) + (toHeading - (spec.heading ?? 0)) * e)
+            self.map.camera = cam
+            if u >= 1 { t.invalidate() }
+        }
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    deinit { timer?.invalidate() }
+}
+
 // MARK: - Content builders (shared by live windows and the still renderer)
 
 /// Build the content view for a pure-visual window: solid color, big text, or image.
 /// An optional `chrome` draws a fake title bar and insets the body under it.
 func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
+    // Self-contained: draws its own REPL header and never takes fake chrome.
+    if content.kind == "livecode" { return makeLiveCodeContentView(content, size: size) }
+    if content.kind == "web", let urlString = content.url, let url = URL(string: urlString) {
+        // A real browser view. Needs the network; with no route it just sits blank.
+        let config = WKWebViewConfiguration()
+        let web = WKWebView(frame: NSRect(origin: .zero, size: size), configuration: config)
+        web.autoresizingMask = [.width, .height]
+        web.setValue(false, forKey: "drawsBackground")
+        web.load(URLRequest(url: url))
+        let host = NSView(frame: NSRect(origin: .zero, size: size))
+        host.wantsLayer = true
+        host.layer?.backgroundColor = NSColor.black.cgColor
+        host.layer?.masksToBounds = true
+        host.layer?.cornerRadius = 6
+        host.addSubview(web)
+        if let kind = resolvedChromeKind(content.chrome, index: 0) {
+            let barH = fakeChromeBarHeight(for: size)
+            web.frame = NSRect(x: 0, y: 0, width: size.width, height: size.height - barH)
+            addFakeChrome(to: host, size: size, kind: kind, title: content.title)
+        }
+        return host
+    }
+    if content.kind == "map", let spec = content.map {
+        let view = MapFlyView(size: size, spec: spec)
+        if let kind = resolvedChromeKind(content.chrome, index: 0) {
+            addFakeChrome(to: view, size: size, kind: kind, title: content.title)
+        }
+        return view
+    }
+
     let view = NSView(frame: NSRect(origin: .zero, size: size))
     view.wantsLayer = true
     view.layer?.masksToBounds = true
@@ -245,6 +452,30 @@ class BaseEffectWindow: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
+    /// Fired when the viewer clicks this window's (fake) traffic lights.
+    var onUserClose: (() -> Void)?
+    private var closeZone: NSRect = .zero
+
+    /// Hand the window to the viewer: draggable anywhere by its body, closable by its
+    /// traffic lights. It still never becomes key, so grabbing one can't pull focus
+    /// away mid-show.
+    func makeInteractive(size: NSSize) {
+        ignoresMouseEvents = false
+        isMovableByWindowBackground = true
+        let barH = fakeChromeBarHeight(for: size)
+        let d = min(max(barH * 0.42, 3), 7)
+        closeZone = NSRect(x: 0, y: size.height - barH,
+                           width: max(3, barH * 0.35) + d * 4.8, height: barH)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if onUserClose != nil, closeZone.contains(event.locationInWindow) {
+            onUserClose?()
+            return
+        }
+        super.mouseDown(with: event)   // let isMovableByWindowBackground drag it
+    }
+
     func present(animate kind: String) {
         orderFrontRegardless()
         switch kind {
@@ -273,10 +504,11 @@ class BaseEffectWindow: NSPanel {
 
 /// A pure-visual window. Click-through so a choreographed cursor passes over it untouched.
 final class EffectWindow: BaseEffectWindow {
-    init(contentRect: NSRect, content: ContentSpec) {
+    init(contentRect: NSRect, content: ContentSpec, interactive: Bool = false) {
         super.init(contentRect: contentRect)
         ignoresMouseEvents = true
         contentView = makeEffectContentView(content, size: contentRect.size)
+        if interactive { makeInteractive(size: contentRect.size) }
     }
 }
 
@@ -290,6 +522,69 @@ final class MicroWindow: BaseEffectWindow {
         hasShadow = shadow
         contentView = makeMicroContentView(size: size, bodyColor: bodyColor,
                                            chrome: chrome, title: title)
+    }
+}
+
+/// A plain document mid-composition: white page, dark text, blinking caret. The
+/// deliberate opposite of everything else on screen — nothing neon, nothing flashing,
+/// just someone writing.
+///
+/// The text lives in a CATextLayer rather than an NSTextField: the typewriter rewrites
+/// it ~30 times a second and the layer lays out on the render server, where an
+/// NSTextField would re-run cell layout on the main thread every keystroke.
+final class TextEditorView: NSView {
+    private let textLayer = CATextLayer()
+    private let font: NSFont
+    private let ink = NSColor(white: 0.09, alpha: 1)
+
+    init(size: NSSize, title: String?, fontSize: CGFloat) {
+        self.font = .systemFont(ofSize: fontSize, weight: .regular)
+        super.init(frame: NSRect(origin: .zero, size: size))
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.white.cgColor
+        layer?.cornerRadius = 6
+        layer?.masksToBounds = true
+
+        let barH = fakeChromeBarHeight(for: size)
+        let pad = min(max(size.width * 0.055, 14), 40)
+        textLayer.frame = CGRect(x: pad, y: pad,
+                                 width: size.width - pad * 2,
+                                 height: size.height - barH - pad * 1.4)
+        textLayer.isWrapped = true
+        textLayer.alignmentMode = .left
+        textLayer.truncationMode = .none
+        textLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        layer?.addSublayer(textLayer)
+        addFakeChrome(to: self, size: size, kind: "mac", title: title ?? "Untitled")
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    /// CATextLayer anchors its string at the TOP of its frame, which is what a
+    /// document does — the text grows downward as it is typed.
+    func render(_ visible: String, caret: Bool) {
+        let para = NSMutableParagraphStyle()
+        para.lineSpacing = font.pointSize * 0.30
+        let s = NSMutableAttributedString(string: visible, attributes: [
+            .font: font, .foregroundColor: ink, .paragraphStyle: para])
+        if caret {
+            s.append(NSAttributedString(string: "▌", attributes: [
+                .font: font, .foregroundColor: ink, .paragraphStyle: para]))
+        }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)     // no implicit fade on every keystroke
+        textLayer.string = s
+        CATransaction.commit()
+    }
+}
+
+/// An effect window built around a content view the caller already has a handle on
+/// (the typewriter needs to keep talking to its view after the window is up).
+final class HostedEffectWindow: BaseEffectWindow {
+    init(contentRect: NSRect, view: NSView) {
+        super.init(contentRect: contentRect)
+        ignoresMouseEvents = true
+        contentView = view
     }
 }
 

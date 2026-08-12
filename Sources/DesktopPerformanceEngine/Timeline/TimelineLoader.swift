@@ -37,6 +37,10 @@ enum TimelineLoader {
         case .moveWindow(let p):  return secs(p.durationBeats, p.durationSeconds)
         case .jiggle(let p):      return secs(p.durationBeats, p.durationSeconds, or: 60.0 / bpm)
         case .screenFlash(let p): return secs(p.durationBeats, p.durationSeconds, or: 0.2)
+        case .typeText(let p):
+            // The scene runs as long as it takes to type the text, unless trimmed.
+            let typing = Double(p.text.count) / max(1, p.charsPerBeat ?? 16) * 60.0 / bpm
+            return secs(p.durationBeats, p.durationSeconds, or: typing)
         default:                  return 0
         }
     }

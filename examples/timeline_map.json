@@ -1,0 +1,42 @@
+{
+ "meta": { "bpm": 128.5, "beatOffset": 0.0 },
+ "events": [
+  { "beat": 0, "type": "openWindow", "params": {
+     "id": "map1", "frame": [90, 90, 660, 420],
+     "content": { "kind": "map", "chrome": "browser", "title": "maps://shanghai",
+                  "map": { "lat": 31.2304, "lon": 121.4737,
+                           "altitude": 1400, "toAltitude": 500,
+                           "pitch": 70, "heading": 20, "toHeading": 200,
+                           "seconds": 16, "style": "flyover" } },
+     "animate": { "kind": "springIn" } } },
+
+  { "beat": 8, "type": "openWindow", "params": {
+     "id": "map2", "frame": [-90, -90, 560, 360],
+     "content": { "kind": "map", "chrome": "browser", "title": "maps://manhattan",
+                  "map": { "lat": 40.7061, "lon": -73.9969,
+                           "altitude": 900, "toAltitude": 320,
+                           "pitch": 75, "heading": 300, "toHeading": 60,
+                           "seconds": 14, "style": "flyover" } },
+     "animate": { "kind": "springIn" } } },
+
+  { "beat": 16, "type": "openWindow", "params": {
+     "id": "map3", "frame": [420, 260, 520, 340],
+     "content": { "kind": "map", "chrome": "terminal", "title": "flyover.sh",
+                  "map": { "lat": 37.8199, "lon": -122.4783,
+                           "altitude": 1200, "toAltitude": 260,
+                           "pitch": 78, "heading": 120, "toHeading": 260,
+                           "seconds": 12, "style": "flyover" } },
+     "animate": { "kind": "fadeIn" } } },
+
+  { "beat": 24, "type": "openWindow", "params": {
+     "id": "gmap", "frame": [200, 420, 700, 430],
+     "content": { "kind": "web", "chrome": "browser", "title": "google.com/maps",
+                  "url": "https://www.google.com/maps/@31.2304,121.4737,4000a,35y,60t/data=!3m1!1e3" },
+     "animate": { "kind": "fadeIn" }, "interactive": true } },
+
+  { "beat": 40, "type": "closeWindow", "params": { "id": "gmap" } },
+  { "beat": 40, "type": "closeWindow", "params": { "id": "map1" } },
+  { "beat": 40, "type": "closeWindow", "params": { "id": "map2" } },
+  { "beat": 40, "type": "closeWindow", "params": { "id": "map3" } }
+ ]
+}

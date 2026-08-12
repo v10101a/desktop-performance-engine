@@ -45,6 +45,8 @@ final class EventContext {
             windows.beginSprite(p, at: now, bpm: bpm)
         case .cursorTrail(let p):
             windows.beginTrail(p, at: now, bpm: bpm)
+        case .typeText(let p):
+            windows.beginTyping(p, at: now, bpm: bpm)
         }
     }
 }

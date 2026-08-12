@@ -40,6 +40,64 @@ enum StillRenderer {
         try writePNG(canvas: canvas, to: url)
     }
 
+    /// Render every intro-gate card as a vertical montage, using the same card builder
+    /// the live gate uses. Buttons draw but are inert. `--snapshot-gate=out.png`.
+    static func renderGate(to url: URL) throws {
+        let card = NSSize(width: 1200, height: 750)
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: card.width,
+                                          height: card.height * CGFloat(IntroGate.script.count)))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor.black.cgColor
+        for (i, spec) in IntroGate.script.enumerated() {
+            let tileY = canvas.frame.height - card.height * CGFloat(i + 1)
+            // Popups render at their real on-screen size, centered in the tile, so
+            // the montage shows how big they actually are.
+            let size = spec.style == .popup ? IntroGate.popupSize : card
+            let view = makeIntroCardView(spec, size: size)
+            view.frame.origin = NSPoint(x: (card.width - size.width) / 2,
+                                        y: tileY + (card.height - size.height) / 2)
+            canvas.addSubview(view)
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// Preview the Phase 6 scenes: two livecode REPL windows and the letter editor
+    /// mid-sentence. `--snapshot-scenes=out.png`.
+    ///
+    /// Caveat: the REPL's motion is Core Animation, and a layer renders its MODEL
+    /// value off-screen — so the piano roll and the numerals all show at once here,
+    /// where live they blink through in sequence.
+    static func renderScenes(to url: URL) throws {
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1280, height: 900))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+
+        let small = ContentSpec(kind: "livecode", hex: "#68BDF8",
+                                text: "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .out()",
+                                chrome: "browser", title: "hydra.ojack.xyz")
+        let a = makeEffectContentView(small, size: NSSize(width: 300, height: 190))
+        a.frame = NSRect(x: 30, y: 680, width: 300, height: 190)
+
+        let big = ContentSpec(kind: "livecode", hex: "#68BDF8",
+                              text: "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .kaleid(7)\n  .rotate(0.2, 0.1)\n  .out()",
+                              chrome: "browser", title: "hydra — sketch 02")
+        let b = makeEffectContentView(big, size: NSSize(width: 620, height: 380))
+        b.frame = NSRect(x: 380, y: 490, width: 620, height: 380)
+
+        let editor = TextEditorView(size: NSSize(width: 700, height: 440),
+                                    title: "resignation.txt — Edited", fontSize: 14)
+        editor.frame = NSRect(x: 40, y: 20, width: 700, height: 440)
+        editor.render("""
+                      Dear Dean Atwill and Marcela
+
+                      I'm writing to formally confirm the change I've discussed with \
+                      Marcela: this spring will be my last semester at NYU Shangh
+                      """, caret: true)
+
+        [a, b, editor].forEach { canvas.addSubview($0) }
+        try writePNG(canvas: canvas, to: url)
+    }
+
     static func render(to url: URL) throws {
         let canvasSize = NSSize(width: 1120, height: 620)
         let canvas = NSView(frame: NSRect(origin: .zero, size: canvasSize))
@@ -47,20 +105,17 @@ enum StillRenderer {
         canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
 
         // color window with fake browser chrome
-        let color = makeEffectContentView(ContentSpec(kind: "color", hex: "#020AF5", text: nil, path: nil,
-                                                      chrome: "browser", title: "horse://gallop"),
+        let color = makeEffectContentView(ContentSpec(kind: "color", hex: "#020AF5", chrome: "browser", title: "horse://gallop"),
                                           size: NSSize(width: 360, height: 260))
         color.frame = NSRect(x: 40, y: 320, width: 360, height: 260)
 
         // text window
-        let text = makeEffectContentView(ContentSpec(kind: "text", hex: nil, text: "HELLO", path: nil,
-                                                     chrome: nil, title: nil),
+        let text = makeEffectContentView(ContentSpec(kind: "text", text: "HELLO"),
                                          size: NSSize(width: 440, height: 200))
         text.frame = NSRect(x: 440, y: 360, width: 440, height: 200)
 
         // teal color window with terminal chrome
-        let teal = makeEffectContentView(ContentSpec(kind: "color", hex: "#68BDF8", text: nil, path: nil,
-                                                     chrome: "terminal", title: "haunt.sh"),
+        let teal = makeEffectContentView(ContentSpec(kind: "color", hex: "#68BDF8", chrome: "terminal", title: "haunt.sh"),
                                          size: NSSize(width: 200, height: 200))
         teal.frame = NSRect(x: 900, y: 360, width: 200, height: 200)
 

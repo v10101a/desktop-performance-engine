@@ -181,14 +181,21 @@ final class MainWindowController: NSWindowController {
         }
     }
 
+    /// Start from the current playhead. Also the intro gate's "yes" path, so the
+    /// transport UI stays in sync however the show was started.
+    func startShow() {
+        guard !engine.isPlaying else { return }
+        engine.play()
+        playButton.title = "Stop"
+        let src = engine.usingClickTrack ? "synth click track (no audio file found)" : "backing track"
+        setStatus("Playing — \(src)")
+    }
+
     @objc private func togglePlay() {
         if engine.isPlaying {
             panic()
         } else {
-            engine.play()
-            playButton.title = "Stop"
-            let src = engine.usingClickTrack ? "synth click track (no audio file found)" : "backing track"
-            setStatus("Playing — \(src)")
+            startShow()
         }
     }
 

@@ -35,15 +35,45 @@ struct Meta: Decodable {
 
 // MARK: - Event parameter payloads
 
+/// A real Apple Maps camera move, for `content.kind == "map"`. The camera flies from
+/// the `lat`/`lon`/`altitude`/`heading` pose to the `to*` pose over `seconds`; anything
+/// omitted holds. Needs a network connection to fetch tiles.
+struct MapSpec: Decodable {
+    let lat: Double
+    let lon: Double
+    let toLat: Double?
+    let toLon: Double?
+    let altitude: Double?     // metres from the ground, default 900
+    let toAltitude: Double?
+    let pitch: Double?        // degrees off straight-down, default 60
+    let toPitch: Double?
+    let heading: Double?      // compass degrees, default 0
+    let toHeading: Double?
+    let seconds: Double?      // fly duration, default 14
+    let style: String?        // "flyover" (default) | "satellite" | "hybrid" | "standard"
+}
+
+/// Optional fields carry `= nil` so the synthesized memberwise initializer has
+/// defaults — dev-tool and preview code that builds these by hand then doesn't need
+/// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "code" | "image"
-    let hex: String?
-    let text: String?
-    let path: String?
+    let kind: String      // "color" | "text" | "code" | "image" | "livecode" | "map"
+    var hex: String? = nil
+    var text: String? = nil
+    var path: String? = nil
     /// Optional fake window chrome: "browser" | "terminal" | "mac" | "mixed" | "none".
     /// Drawn by us at any size — never a pixel-accurate imitation of real system UI.
-    let chrome: String?
-    let title: String?    // chrome bar text (browser shows it as the URL pill)
+    var chrome: String? = nil
+    var title: String? = nil    // chrome bar text (browser shows it as the URL pill)
+    /// Camera flight for `kind == "map"`.
+    var map: MapSpec? = nil
+    /// Page to load for `kind == "web"`.
+    var url: String? = nil
+    /// `livecode` only: has the patch been evaluated yet? A window opened with
+    /// `running: false` shows the source over a dead black canvas — re-open the same
+    /// `id` with `running: true` and the sketch starts, which is how the show fakes
+    /// someone hitting run.
+    var running: Bool? = nil
 }
 
 struct AnimateSpec: Decodable {
@@ -52,10 +82,17 @@ struct AnimateSpec: Decodable {
 
 struct OpenWindowParams: Decodable {
     let id: String
-    let screen: Int?
+    var screen: Int? = nil
     let content: ContentSpec
     let frame: [Double]   // [x, y, w, h], top-left origin, relative to the target screen
-    let animate: AnimateSpec?
+    var animate: AnimateSpec? = nil
+    /// Let the viewer grab it: draggable by its body, closable by its traffic lights.
+    /// Off by default — click-through is what keeps a choreographed cursor from
+    /// snagging on the scenery.
+    var interactive: Bool? = nil
+    /// Closing it doesn't get rid of it. The window comes back a beat later, which is
+    /// only interesting on the ones that matter.
+    var respawn: Bool? = nil
 }
 
 struct FakeDialogParams: Decodable {
@@ -158,6 +195,24 @@ struct CursorTrailParams: Decodable {
     let durationSeconds: Double?
 }
 
+/// A text editor that opens and writes itself out, in tempo. `charsPerBeat` sets the
+/// typing rate (a rate, not a duration, so editing the copy doesn't retime the scene);
+/// `durationBeats` is optional and only trims the scene short. The window stays up,
+/// caret blinking, until `closeWindow` by `id`.
+struct TypeTextParams: Decodable {
+    let id: String
+    var screen: Int? = nil
+    let frame: [Double]           // [x, y, w, h], top-left origin
+    let text: String
+    var charsPerBeat: Double? = nil     // default 16
+    var durationBeats: Double? = nil
+    var durationSeconds: Double? = nil
+    var title: String? = nil            // window chrome title, e.g. "Untitled 2"
+    var fontSize: Double? = nil         // default 13
+    /// Let the viewer pick the document up and move it around while it types.
+    var interactive: Bool? = nil
+}
+
 struct WallpaperParams: Decodable {
     let path: String?             // image file (absolute or relative to the timeline)
     let color: String?            // solid color, e.g. "#FF00AA" (used if no path)
@@ -178,6 +233,7 @@ enum EventAction {
     case wallpaper(WallpaperParams)           // Phase 4
     case sprite(SpriteParams)                 // Phase 5
     case cursorTrail(CursorTrailParams)       // Phase 5
+    case typeText(TypeTextParams)             // Phase 6
 }
 
 /// A single authored event. `beat`/`t` are resolved to an absolute `fireTime`
@@ -220,6 +276,8 @@ struct TimelineEvent: Decodable {
             action = .sprite(try c.decode(SpriteParams.self, forKey: .params))
         case "cursorTrail":
             action = .cursorTrail(try c.decode(CursorTrailParams.self, forKey: .params))
+        case "typeText":
+            action = .typeText(try c.decode(TypeTextParams.self, forKey: .params))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: c,
                 debugDescription: "Unknown event type \"\(type)\"")

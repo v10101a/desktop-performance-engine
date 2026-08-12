@@ -41,11 +41,13 @@ def seg_len(pts):
                for a, b in zip(pts, pts[1:]))
 
 
-def stroke_event(beat, pts, speed):
-    """One pen stroke as a cursorPath event. Returns (event, durationBeats)."""
+def stroke_event(beat, pts, speed, path=None):
+    """One pen stroke as a cursorPath event. Returns (event, durationBeats).
+    `path` forces the interpolation — the arrowhead needs "linear" so the corner at
+    the tip stays sharp instead of getting rounded off by the spline."""
     beats = max(0.4, seg_len(pts) / speed)
     return ({"beat": round(beat, 3), "type": "cursorPath", "params": {
-        "path": "catmullRom" if len(pts) >= 3 else "linear",
+        "path": path or ("catmullRom" if len(pts) >= 3 else "linear"),
         "points": [[round(x, 1), round(y, 1)] for x, y in pts],
         "durationBeats": round(beats, 2),
         "easing": "easeInOut",
@@ -77,20 +79,26 @@ def spell_events(text, origin, scale, speed, start_beat, advance=ADVANCE):
     return events, beat
 
 
-def arrow_events(start, angle_deg, length, barb, speed, start_beat):
-    """Draw an ACTUAL arrow: shaft then two head barbs, all strokes ending at the
-    tip. Returns (events, end_beat, tip, direction unit vector)."""
+def arrow_events(start, angle_deg, length, barb, speed, start_beat, barb_deg=28):
+    """Draw an ACTUAL arrow: the shaft, then the ">" head in ONE continuous stroke —
+    barb, through the tip, out to the other barb — so the pen never lifts in the
+    middle of the arrowhead. (Two separate barb strokes read as two stray marks;
+    one stroke reads as a pointer.) Returns (events, end_beat, tip, unit direction)."""
     a = math.radians(angle_deg)
     d = (math.cos(a), math.sin(a))
     tip = (start[0] + d[0] * length, start[1] + d[1] * length)
     events, beat = [], start_beat
+
     ev, beats = stroke_event(beat, [start, tip], speed)
+    events.append(ev); beat += beats + 0.35      # a held moment at the tip
+
+    def barb_point(sign):
+        b = math.radians(angle_deg + 180 + sign * barb_deg)   # back from the tip
+        return (tip[0] + math.cos(b) * barb, tip[1] + math.sin(b) * barb)
+
+    ev, beats = stroke_event(beat, [barb_point(+1), tip, barb_point(-1)], speed,
+                             path="linear")
     events.append(ev); beat += beats + 0.2
-    for barb_deg in (+28, -28):
-        b = math.radians(angle_deg + 180 + barb_deg)   # back from the tip
-        p = (tip[0] + math.cos(b) * barb, tip[1] + math.sin(b) * barb)
-        ev, beats = stroke_event(beat, [p, tip], speed)
-        events.append(ev); beat += beats + 0.2
     return events, beat, tip, d
 
 
@@ -149,12 +157,16 @@ def writing_scene(start_beat, W, H, text="LOOK", scale=54, speed=340,
     return events, beat, focal
 
 
-def arrow_scene(start_beat, W, H, angle_deg=35, length=None, speed=340,
-                stamp_size=(72, 52), spacing=40, lead_from=None):
+def arrow_scene(start_beat, W, H, angle_deg=35, length=None, speed=200,
+                stamp_size=(72, 52), spacing=40, lead_from=None, lead_beats=3):
     """Arrow only, no writing: the cursor glides from `lead_from` (default screen
     center, where the last act held the eye) to the arrow start, draws one LONG
     big arrow pointing down-a-bit — stamped in windows — then glides trail-off to
-    the spot it points at. Returns (events, end_beat, focal_point)."""
+    the spot it points at. Returns (events, end_beat, focal_point).
+
+    `speed` is px per beat, and it is deliberately unhurried: a fast stroke can
+    outrun a loaded machine's pump and drop most of its breadcrumb stamps, so the
+    arrow half-draws. Slower = more samples = it always lands."""
     length = length or 0.48 * W
     a_start = (W * 0.18, H * 0.24)
     lead_from = lead_from or (W / 2, H / 2)
@@ -163,12 +175,12 @@ def arrow_scene(start_beat, W, H, angle_deg=35, length=None, speed=340,
         "path": "linear",
         "points": [[round(lead_from[0]), round(lead_from[1])],
                    [round(a_start[0]), round(a_start[1])]],
-        "durationBeats": 2, "easing": "easeInOut", "mode": "warp",
+        "durationBeats": lead_beats, "easing": "easeInOut", "mode": "warp",
     }}]
-    trail_start = start_beat + 2.05
+    trail_start = start_beat + lead_beats + 0.05
     a_events, beat, tip, d = arrow_events(a_start, angle_deg, length,
                                           barb=0.09 * W, speed=speed,
-                                          start_beat=start_beat + 2.3)
+                                          start_beat=start_beat + lead_beats + 0.3)
     events += a_events
     events.insert(0, {"beat": round(trail_start, 3), "type": "cursorTrail", "params": {
         "id": "trace", "mode": "stamp", "spacing": spacing,
@@ -182,9 +194,9 @@ def arrow_scene(start_beat, W, H, angle_deg=35, length=None, speed=340,
     events.append({"beat": round(beat, 3), "type": "cursorPath", "params": {
         "path": "linear", "points": [[round(tip[0]), round(tip[1])],
                                      [round(focal[0]), round(focal[1])]],
-        "durationBeats": 2, "easing": "easeInOut", "mode": "warp",
+        "durationBeats": lead_beats, "easing": "easeInOut", "mode": "warp",
     }})
-    return events, beat + 2, focal
+    return events, beat + lead_beats, focal
 
 
 def main():

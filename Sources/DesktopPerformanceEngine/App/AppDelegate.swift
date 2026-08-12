@@ -1,10 +1,27 @@
 import AppKit
+import MapKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let engine = PerformanceEngine()
     var controller: MainWindowController?
+    var gate: IntroGateController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Dev tools: render the intro gate's cards, or the Phase 6 scenes, to a PNG.
+        for (flag, render) in [("--snapshot-gate=", StillRenderer.renderGate),
+                               ("--snapshot-scenes=", StillRenderer.renderScenes)] {
+            guard let arg = CommandLine.arguments.first(where: { $0.hasPrefix(flag) }) else { continue }
+            let path = String(arg.dropFirst(flag.count))
+            do {
+                try render(URL(fileURLWithPath: path))
+                NSLog("[DPE] snapshot written: \(path)")
+            } catch {
+                NSLog("[DPE] snapshot error: \(error)")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
         // Dev tool: render a still of the window content to PNG and quit. With a
         // timeline argument that contains a sprite, renders that sprite's frames.
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--snapshot=") }) {
@@ -21,6 +38,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSLog("[DPE] snapshot error: \(error)")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        // Does the map actually fly? Builds a real MapFlyView off-screen, samples the
+        // camera at t0 and again a couple of seconds later, and reports whether the
+        // pose moved. (Tiles are a separate question — that needs the network.)
+        if CommandLine.arguments.contains("--test-map") {
+            runMapSelfTest()
             return
         }
 
@@ -92,6 +117,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        // Act 0: the viewer opts in (or leaves) before anything happens. Skipped for
+        // the unattended paths — --autoplay drives itself, --no-gate is the dev loop.
+        if !args.contains("--autoplay") && !args.contains("--no-gate") {
+            gate = IntroGateController(
+                onStart: { [weak self] in self?.controller?.startShow() },
+                onExit: { NSApp.terminate(nil) })
+            gate?.present()
+        }
+
         // Self-test path: play the whole show with fire logging, then panic-restore
         // and quit. Verifies clock → scheduler → executors → restore end to end.
         if args.contains("--autoplay") {
@@ -120,6 +154,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if case .sprite(let p) = ev.action { return p }
         }
         return nil
+    }
+
+    /// Build a real map window off-screen and watch its camera for a couple of
+    /// seconds. Proves the flight is running independently of the pump.
+    private func runMapSelfTest() {
+        let spec = MapSpec(lat: 31.2397, lon: 121.4998, toLat: 31.2410, toLon: 121.5100,
+                           altitude: 1600, toAltitude: 420, pitch: 72, toPitch: nil,
+                           heading: 250, toHeading: 40, seconds: 6, style: "flyover")
+        let size = NSSize(width: 640, height: 420)
+        let view = MapFlyView(size: size, spec: spec)
+        let host = NSWindow(contentRect: NSRect(origin: NSPoint(x: -5000, y: -5000), size: size),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        host.contentView = view
+        host.orderBack(nil)
+
+        guard let map = view.subviews.compactMap({ $0 as? MKMapView }).first else {
+            NSLog("[DPE] map: MKMapView MISSING — the content view never built")
+            NSApp.terminate(nil); return
+        }
+        let a = map.camera
+        NSLog(String(format: "[DPE] map t=0.0  heading=%.1f altitude=%.0f pitch=%.1f center=(%.4f, %.4f)",
+                     a.heading, a.centerCoordinateDistance, a.pitch,
+                     a.centerCoordinate.latitude, a.centerCoordinate.longitude))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            let b = map.camera
+            NSLog(String(format: "[DPE] map t=2.5  heading=%.1f altitude=%.0f pitch=%.1f center=(%.4f, %.4f)",
+                         b.heading, b.centerCoordinateDistance, b.pitch,
+                         b.centerCoordinate.latitude, b.centerCoordinate.longitude))
+            let moved = abs(a.heading - b.heading) > 1
+                || abs(a.centerCoordinateDistance - b.centerCoordinateDistance) > 10
+            NSLog("[DPE] map FLYING = \(moved)  (expect true)")
+            NSLog("[DPE] map tiles need the network; this test only proves the camera moves")
+            NSApp.terminate(nil)
+        }
     }
 
     /// Headless checks for the sprite/trail math: frame parsing, pool assignment
@@ -205,7 +273,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let wm = WindowManager()
         wm.openWindow(OpenWindowParams(id: "j", screen: 0,
                                        content: ContentSpec(kind: "color", hex: "#00FF88", text: nil, path: nil,
-                                                            chrome: nil, title: nil),
+                                                            chrome: nil, title: nil, map: nil),
                                        frame: [400, 300, 200, 150], animate: AnimateSpec(kind: "none")))
         guard let base = wm.frameOrigin(id: "j") else { NSLog("[DPE] jiggle: no window"); return }
         wm.beginJiggle(JiggleParams(id: "j", durationBeats: nil, durationSeconds: 1.0, amplitude: 20, frequency: 8),
