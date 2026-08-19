@@ -159,43 +159,72 @@ func makeLiveCodeContentView(_ content: ContentSpec, size: NSSize) -> NSView {
     root.layer?.cornerRadius = 6
 
     let barH = content.chrome == nil ? 0 : fakeChromeBarHeight(for: size)
+    let body = NSRect(x: 0, y: 0, width: size.width, height: size.height - barH)
     if running {
-        let visual = Hydra.makeVisual(source: source,
-                                      size: NSSize(width: size.width, height: size.height - barH),
-                                      tint: accent, beat: beat)
-        // A `moveWindow` resize doesn't rebuild the content, so the sketch has to
-        // stretch with the window. (The composition re-centers properly the next time
-        // the window is re-opened at its final size.)
-        visual.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        root.layer?.addSublayer(visual)
+        // Real hydra when the library shipped and nothing turned it off, the Core
+        // Animation impression when it didn't. Only the picture changes: the code, the
+        // prompt, the toolbar and the chrome below are drawn the same way either way,
+        // because they are what makes it read as somebody's editor rather than a video.
+        if let canvas = HydraWeb.take() {
+            canvas.frame = body
+            canvas.autoresizingMask = [.width, .height]
+            root.addSubview(canvas)
+            canvas.run(source)
+        } else {
+            let visual = Hydra.makeVisual(source: source, size: body.size,
+                                          tint: accent, beat: beat)
+            // A `moveWindow` resize doesn't rebuild the content, so the sketch has to
+            // stretch with the window. (The composition re-centers properly the next
+            // time the window is re-opened at its final size.)
+            visual.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            root.layer?.addSublayer(visual)
+        }
     }
 
     // --- the source, hydra-style: no line numbers, a dark box behind every line ---
-    let fontSize = min(max(size.height * 0.045, 6.5), 13)
-    let font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-    let para = NSMutableParagraphStyle()
-    para.lineSpacing = fontSize * 0.30
-    let box = NSColor(white: 0, alpha: 0.55)
-    let code = NSMutableAttributedString()
-    for line in source.components(separatedBy: "\n") {
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font, .foregroundColor: NSColor(white: 0.96, alpha: 1),
-            .paragraphStyle: para, .backgroundColor: box]
-        let piece = NSMutableAttributedString(string: line + "\n", attributes: attrs)
-        // Numbers pink, the way hydra's editor highlights them.
-        if let re = try? NSRegularExpression(pattern: "-?\\d+(\\.\\d+)?") {
-            let ns = line as NSString
-            for m in re.matches(in: line, range: NSRange(location: 0, length: ns.length)) {
-                piece.addAttribute(.foregroundColor, value: NSColor(hex: "#F58AE1") ?? .magenta,
-                                   range: m.range)
+    func codeText(_ pt: CGFloat) -> NSAttributedString {
+        let font = NSFont.monospacedSystemFont(ofSize: pt, weight: .regular)
+        let para = NSMutableParagraphStyle()
+        para.lineSpacing = pt * 0.30
+        let box = NSColor(white: 0, alpha: 0.55)
+        let code = NSMutableAttributedString()
+        for line in source.components(separatedBy: "\n") {
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: font, .foregroundColor: NSColor(white: 0.96, alpha: 1),
+                .paragraphStyle: para, .backgroundColor: box]
+            let piece = NSMutableAttributedString(string: line + "\n", attributes: attrs)
+            // Numbers pink, the way hydra's editor highlights them.
+            if let re = try? NSRegularExpression(pattern: "-?\\d+(\\.\\d+)?") {
+                let ns = line as NSString
+                for m in re.matches(in: line, range: NSRange(location: 0, length: ns.length)) {
+                    piece.addAttribute(.foregroundColor, value: NSColor(hex: "#F58AE1") ?? .magenta,
+                                       range: m.range)
+                }
             }
+            code.append(piece)
         }
-        code.append(piece)
+        return code
     }
-    let label = NSTextField(labelWithAttributedString: code)
+
+    // Shrink to fit. A long patch in a small window runs off the bottom and gets cut
+    // by the window's own corner mask — and a sketch you can only read half of reads
+    // as a bug, not as a style. The type gives way; the source stays whole.
+    var fontSize = min(max(size.height * 0.045, 6.5), 13)
+    var pad = max(6, fontSize * 0.8)
+    let label = NSTextField(labelWithAttributedString: codeText(fontSize))
     label.maximumNumberOfLines = 0
-    let pad = max(6, fontSize * 0.8)
-    let fit = label.sizeThatFits(NSSize(width: size.width - pad * 2, height: .greatestFiniteMagnitude))
+    func measure() -> NSSize {
+        label.sizeThatFits(NSSize(width: size.width - pad * 2, height: .greatestFiniteMagnitude))
+    }
+    var fit = measure()
+    let room = size.height - barH - pad * 1.2
+    while fit.height > room, fontSize > 4.5 {
+        fontSize -= 0.5
+        pad = max(4, fontSize * 0.8)
+        label.attributedStringValue = codeText(fontSize)
+        fit = measure()
+    }
+    let font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
     label.frame = NSRect(x: pad, y: size.height - barH - fit.height - pad * 0.6,
                          width: size.width - pad * 2, height: fit.height)
     label.autoresizingMask = [.minYMargin, .maxXMargin]   // stays pinned top-left

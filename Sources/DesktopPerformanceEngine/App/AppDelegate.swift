@@ -41,11 +41,103 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Is this copy self-contained? Loads the bundled show, resolves the backing
+        // track, reports what it found and quits — no windows, nothing touched. Run it
+        // from a copy of the .app somewhere else to prove the bundle travels.
+        if CommandLine.arguments.contains("--check") {
+            let bundled = AppDelegate.bundledTimelineURL()
+            NSLog("[DPE] check: bundle      \(Bundle.main.bundleURL.path)")
+            NSLog("[DPE] check: timeline    \(bundled?.path ?? "NOT FOUND")")
+            if let url = bundled {
+                do {
+                    try engine.loadTimeline(at: url)
+                    NSLog("[DPE] check: loaded      \(engine.loadedInfo)")
+                    let audio = engine.resolvedAudioPath
+                    NSLog("[DPE] check: audio       \(audio ?? "NOT FOUND — would fall back to a synth click track")")
+                    NSLog("[DPE] check: SELF-CONTAINED = \(audio != nil)")
+                } catch {
+                    NSLog("[DPE] check: load error  \(error)")
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        // What does the mini-hydra actually read out of a patch? Prints the op chain
+        // it built — name, nesting depth, args, and which args are time functions — so
+        // an op the parser cannot see shows up here instead of silently not happening.
+        if CommandLine.arguments.contains("--parse-hydra") {
+            let path = CommandLine.arguments.dropFirst().first { !$0.hasPrefix("--") } ?? ""
+            let src = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
+            for op in Hydra.parse(src) {
+                var parts: [String] = []
+                for i in 0..<4 where op.arg(i, .nan).isFinite {
+                    parts.append(String(format: op.isDynamic(i) ? "%.3g*time" : "%.3g", op.arg(i, 0)))
+                }
+                NSLog("[DPE] hydra-parse: depth=\(op.depth) \(op.name)(\(parts.joined(separator: ", ")))")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        // Does Pause actually hold the frame? Plays the given timeline, pauses partway,
+        // and reports whether the clock stopped while the windows stayed up — the whole
+        // point being that pausing is NOT a stop. Holds the pause long enough to grab a
+        // screenshot from outside, then resumes and checks the clock picked up again.
+        if CommandLine.arguments.contains("--test-pause") {
+            controller = MainWindowController(engine: engine)   // keep-alive window
+            controller?.showWindow(nil)
+            let path = CommandLine.arguments.dropFirst().first { !$0.hasPrefix("--") }
+            let url = path.map { URL(fileURLWithPath: $0) } ?? AppDelegate.bundledTimelineURL()
+            if let url = url { try? engine.loadTimeline(at: url) }
+            var last = 0.0
+            engine.onTick = { last = $0 }
+            engine.setInspecting(true)
+            engine.play()
+            let log = { (m: String) in NSLog("[DPE] pause-test: \(m)") }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                log(String(format: "playing  pos=%.2f windows=%d", last, self.engine.liveWindowCount))
+                self.engine.readHydraTicks { log("live sketches before pause: \($0)") }
+                self.engine.pause()
+                let atPause = last
+                let winAtPause = self.engine.liveWindowCount
+                log(String(format: "paused   pos=%.2f windows=%d", atPause, winAtPause))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                    log(String(format: "held 5s  pos=%.2f windows=%d (expect same pos, same windows)",
+                               last, self.engine.liveWindowCount))
+                    log("HELD-FRAME = \(last == atPause && self.engine.liveWindowCount == winAtPause)")
+                    for line in self.engine.inspectSummary { log("  \(line)") }
+                    // A live canvas renders in its own process off its own rAF loop, so
+                    // freezing CALayers proves nothing about it. Read the frame counter
+                    // out of the page: identical across a 5s hold means truly stopped.
+                    self.engine.readHydraTicks { log("live sketches after 5s hold: \($0)") }
+                    self.engine.resume()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        log(String(format: "resumed  pos=%.2f (expect > %.2f)", last, atPause))
+                        log("RESUMED = \(last > atPause)")
+                        for line in self.engine.inspectSummary { log("  \(line)") }
+                        self.engine.readHydraTicks { log("live sketches after resume: \($0)") }
+                        self.engine.stopAndRestore()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { NSApp.terminate(nil) }
+                    }
+                }
+            }
+            return
+        }
+
         // Does the map actually fly? Builds a real MapFlyView off-screen, samples the
         // camera at t0 and again a couple of seconds later, and reports whether the
         // pose moved. (Tiles are a separate question — that needs the network.)
         if CommandLine.arguments.contains("--test-map") {
             runMapSelfTest()
+            return
+        }
+
+        // Is the hydra in the hydra windows actually hydra? Runs the show's own opening
+        // sketch on a live canvas and screenshots it. `--test-hydra=out.png` keeps the
+        // frame; DPE_HYDRA=fake runs the same test against the impression for contrast.
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("--test-hydra") }) {
+            runHydraSelfTest()
             return
         }
 
@@ -70,7 +162,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if CommandLine.arguments.contains("--test-seek") {
             controller = MainWindowController(engine: engine)   // keep-alive window
             controller?.showWindow(nil)
-            if let url = Bundle.module.url(forResource: "timeline", withExtension: "json") {
+            if let url = AppDelegate.bundledTimelineURL() {
                 try? engine.loadTimeline(at: url)
             }
             var last = 0.0
@@ -100,7 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         if let path = args.dropFirst().first(where: { !$0.hasPrefix("--") }) {
             url = URL(fileURLWithPath: path)
-        } else if let bundled = Bundle.module.url(forResource: "timeline", withExtension: "json") {
+        } else if let bundled = AppDelegate.bundledTimelineURL() {
             url = bundled
         }
 
@@ -147,6 +239,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Locate the bundled show WITHOUT touching `Bundle.module` unless we have to.
+    ///
+    /// SwiftPM's generated `Bundle.module` looks in exactly two places: the top level
+    /// of the .app, and an ABSOLUTE path into the `.build` directory of the machine
+    /// that compiled it — and it calls `fatalError` when neither exists. So a packaged
+    /// app that only carries its resources in `Contents/Resources` (the normal place)
+    /// runs fine on the build machine and crashes on launch anywhere else. We look in
+    /// the sane locations first and keep `Bundle.module` as the last resort, which is
+    /// the case that matters for `swift run` during development.
+    static func bundledTimelineURL() -> URL? {
+        let fm = FileManager.default
+        if let res = Bundle.main.resourceURL {
+            let candidates = [
+                res.appendingPathComponent("timeline.json"),
+                res.appendingPathComponent("DesktopPerformanceEngine_DesktopPerformanceEngine.bundle")
+                   .appendingPathComponent("timeline.json")
+            ]
+            for url in candidates where fm.fileExists(atPath: url.path) { return url }
+        }
+        return Bundle.module.url(forResource: "timeline", withExtension: "json")
+    }
+
     /// First sprite event in a timeline, for `--snapshot` sprite rendering.
     static func firstSprite(in path: String) -> SpriteParams? {
         guard let tl = try? TimelineLoader.load(from: URL(fileURLWithPath: path)) else { return nil }
@@ -158,6 +272,162 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Build a real map window off-screen and watch its camera for a couple of
     /// seconds. Proves the flight is running independently of the pump.
+    /// Does real hydra render?
+    ///
+    /// The failure this exists to catch is a quiet one: a page that fails to load, or a
+    /// library that never defines itself, leaves a perfectly black rectangle — and so
+    /// does a sketch that simply hasn't started yet. Both look like "the window opened
+    /// fine". So this puts the show's own first sketch on a live canvas, captures the
+    /// window through the window server (the only way to get a web view's pixels; an
+    /// off-screen `cacheDisplay` returns an empty rectangle) and counts what lit up.
+    private func runHydraSelfTest() {
+        guard HydraWeb.isAvailable else {
+            NSLog("[DPE] hydra: NOT AVAILABLE — hydra-synth.js / hydra.html are not in this build")
+            NSLog("[DPE] hydra: LIVE = false")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        // The real sketches out of the real show, so this tests what actually ships.
+        var specs: [ContentSpec] = []
+        if let url = AppDelegate.bundledTimelineURL(),
+           let timeline = try? TimelineLoader.load(from: url) {
+            for ev in timeline.events {
+                if case .openWindow(let p) = ev.action, p.content.kind == "livecode",
+                   let text = p.content.text, p.content.running ?? true,
+                   !specs.contains(where: { $0.text == text }) {
+                    specs.append(p.content)
+                }
+            }
+        }
+        guard !specs.isEmpty else {
+            NSLog("[DPE] hydra: no livecode windows in the timeline; nothing to test")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+        // `--sketch=N` puts the Nth sketch in the captured window, which is how you ask
+        // "did MY patch render?" rather than "did the first one render?".
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--sketch=") }),
+           let n = Int(arg.dropFirst("--sketch=".count)), n > 0, n < specs.count {
+            specs = Array(specs[n...] + specs[..<n])
+        }
+        NSLog("[DPE] hydra: patch —\n\(specs[0].text ?? "")")
+
+        // The bar before the drop has nine sketches running AT ONCE, and that — not one
+        // canvas in isolation — is the load that decides whether this is affordable.
+        // So the test stands up the show's real peak: nine windows, nine live sketches,
+        // all drawing, and then reports the bill.
+        let peak = 9
+        let size = NSSize(width: 420, height: 280)
+        // WebKit keeps a cache of idle content processes, and other apps have their own,
+        // so an absolute count says nothing about what WE cost. Measure the delta.
+        let before = AppDelegate.webContentUsage()
+        HydraWeb.prewarm(count: peak)
+
+        // The whole content view, not a bare canvas: the sketch has to end up UNDER
+        // the source, the prompt, the toolbar and the chrome, and building it the way
+        // the show builds it is the only way to catch a canvas that covers the code.
+        var hosts: [NSWindow] = []
+        for i in 0..<peak {
+            let column = i % 3, row = i / 3
+            let origin = NSPoint(x: 60 + CGFloat(column) * (size.width + 12),
+                                 y: 80 + CGFloat(row) * (size.height + 12))
+            let host = NSWindow(contentRect: NSRect(origin: origin, size: size),
+                                styleMask: [.borderless], backing: .buffered, defer: false)
+            host.backgroundColor = .black
+            host.contentView = makeEffectContentView(specs[i % specs.count], size: size)
+            host.orderFrontRegardless()
+            hosts.append(host)
+        }
+        NSLog("[DPE] hydra: \(hosts.count) sketches live at once")
+        guard let host = hosts.first else {
+            NSLog("[DPE] hydra: no canvas; LIVE = false")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
+        // Two and a half seconds: enough for the page, the GL context and a few hundred
+        // frames, so a sketch whose first frame is legitimately black has moved on.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            guard let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                     CGWindowID(host.windowNumber),
+                                                     [.boundsIgnoreFraming, .bestResolution]) else {
+                NSLog("[DPE] hydra: capture failed; LIVE = unknown")
+                NSApp.terminate(nil); return
+            }
+            let rep = NSBitmapImageRep(cgImage: shot)
+            var lit = 0, total = 0
+            var hues = Set<Int>()
+            for y in stride(from: 0, to: shot.height, by: 5) {
+                for x in stride(from: 0, to: shot.width, by: 5) {
+                    total += 1
+                    guard let px = rep.colorAt(x: x, y: y) else { continue }
+                    if px.brightnessComponent > 0.06 {
+                        lit += 1
+                        hues.insert(Int(px.hueComponent * 12))
+                    }
+                }
+            }
+            let percent = total > 0 ? 100.0 * Double(lit) / Double(total) : 0
+            // "%@", not the string itself: NSLog re-reads its first argument as a
+            // format, so a percent sign that survived String(format:) is eaten twice.
+            NSLog("%@", String(format: "[DPE] hydra: %.1f%% of the canvas is lit, %d distinct hues",
+                               percent, hues.count))
+            NSLog("[DPE] hydra: LIVE = \(percent > 2)  (expect true)")
+            AppDelegate.reportWebContentCost(canvases: hosts.count, before: before)
+            if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-hydra=") }) {
+                let path = String(arg.dropFirst("--test-hydra=".count))
+                if let png = rep.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                    NSLog("[DPE] hydra: wrote \(path)")
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// What nine live sketches cost. WebKit runs pages out of process, so the memory
+    /// and the process count are somewhere `ps` can see them and this app cannot — the
+    /// canvases share one configuration and one file origin precisely so that WebKit is
+    /// free to keep them together, and this is the check on whether it did.
+    /// Every WebContent process on the machine, with its memory and CPU. On its own
+    /// this number is meaningless — WebKit keeps a cache of idle content processes and
+    /// every other app on the machine has its own — so it is only ever read as a delta
+    /// against a baseline taken before the canvases existed.
+    static func webContentUsage() -> (count: Int, kb: Double, cpu: Double) {
+        let task = Process()
+        task.launchPath = "/bin/ps"
+        task.arguments = ["-axo", "rss=,pcpu=,comm="]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        guard (try? task.run()) != nil else { return (0, 0, 0) }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+        let lines = (String(data: data, encoding: .utf8) ?? "")
+            .components(separatedBy: "\n")
+            .filter { $0.contains("com.apple.WebKit.WebContent") }
+        var kb = 0.0, cpu = 0.0
+        for line in lines {
+            let fields = line.split(separator: " ", omittingEmptySubsequences: true)
+            if fields.count >= 2 {
+                kb += Double(fields[0]) ?? 0
+                cpu += Double(fields[1]) ?? 0
+            }
+        }
+        return (lines.count, kb, cpu)
+    }
+
+    static func reportWebContentCost(canvases: Int, before: (count: Int, kb: Double, cpu: Double)) {
+        let now = webContentUsage()
+        let lines = (count: now.count - before.count, kb: now.kb - before.kb)
+        let totalKB = lines.kb, totalCPU = now.cpu - before.cpu
+        // CPU across every WebContent process, with all nine sketches drawing. This is
+        // the number that decides the feature: a Mac has 100% per core, so this is read
+        // against the core count, and against how much the pump still needs.
+        NSLog("%@", String(format: "[DPE] hydra: %d live sketches -> +%d process(es), +%.0f MB, +%.0f%% CPU (machine had %d before)",
+                           canvases, lines.count, totalKB / 1024.0, totalCPU, before.count))
+    }
+
     private func runMapSelfTest() {
         let spec = MapSpec(lat: 31.2397, lon: 121.4998, toLat: 31.2410, toLon: 121.5100,
                            altitude: 1600, toAltitude: 420, pitch: 72, toPitch: nil,
@@ -274,7 +544,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         wm.openWindow(OpenWindowParams(id: "j", screen: 0,
                                        content: ContentSpec(kind: "color", hex: "#00FF88", text: nil, path: nil,
                                                             chrome: nil, title: nil, map: nil),
-                                       frame: [400, 300, 200, 150], animate: AnimateSpec(kind: "none")))
+                                       frame: [400, 300, 200, 150], animate: AnimateSpec(kind: "none")),
+                     at: 0)
         guard let base = wm.frameOrigin(id: "j") else { NSLog("[DPE] jiggle: no window"); return }
         wm.beginJiggle(JiggleParams(id: "j", durationBeats: nil, durationSeconds: 1.0, amplitude: 20, frequency: 8),
                        at: 0, bpm: 120)

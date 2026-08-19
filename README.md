@@ -30,6 +30,27 @@ open build/DesktopPerformanceEngine.app
 open -a "$PWD/build/DesktopPerformanceEngine.app" --args examples/timeline_cursor.json
 ```
 
+The bundle is **self-contained** — it carries the show, the backing track and its icon,
+so it runs from anywhere (Applications, a USB stick, another Mac). Verify a copy with:
+
+```bash
+/path/to/DesktopPerformanceEngine.app/Contents/MacOS/DesktopPerformanceEngine --check
+```
+
+⚠️ Don't reach for SwiftPM's `Bundle.module` to find bundled resources here. It searches
+only the top level of the .app and an **absolute path into the build machine's `.build`
+directory**, then calls `fatalError` — so an app that keeps its resources in the normal
+`Contents/Resources` runs perfectly on the machine that built it and crashes on launch
+everywhere else. `AppDelegate.bundledTimelineURL()` checks `Contents/Resources` first and
+keeps `Bundle.module` as the last resort for `swift run`.
+
+**After changing anything the show depends on, both steps are needed** — nothing rebuilds
+the `.app` on its own:
+
+```bash
+python3 tools/generate_show.py && ./bundle.sh
+```
+
 Ad-hoc signing works but macOS resets Accessibility/Automation grants on each
 rebuild. For grants that persist, create a self-signed **Code Signing** certificate
 once (Keychain Access ▸ Certificate Assistant) and run
@@ -40,6 +61,57 @@ The control window has a **scrubbable timeline** with a live playhead and a posi
 readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to seek:
 while playing it jumps audio + visuals live; while stopped it sets where Play begins.
 Stop leaves the playhead where it is, so Play resumes from there.
+
+### Pausing
+
+**Pause** (button, or `P`) holds the show exactly where it is: the playhead stops, the
+audio holds its sample, and every window the show has opened **stays on screen**. Resume picks up on the same sample, with no jump.
+
+**Inspect** (checkbox) stamps every live window with its timeline id and the moment it
+opened — `hy3 · 24.37s`. the badge is how you tell which window on screen is which entry in
+`PATCHES`, so you can go edit the right one. It is an authoring overlay only: never part
+of the piece, and gone the moment the show stops.
+
+### Shipping it to someone else
+
+`bundle.sh` is the dev loop; **`ship.sh`** is what you hand out. It builds both
+architectures, lipos them into a universal binary (so it runs on Intel Macs too),
+re-signs, and writes a `.dmg` and a `.zip` into `build/dist/`.
+
+```bash
+./ship.sh                                                    # universal, ad-hoc signed
+SIGN_IDENTITY="Developer ID Application: You (TEAMID)" ./ship.sh
+SIGN_IDENTITY="Developer ID Application: You (TEAMID)" NOTARY_PROFILE=dpe ./ship.sh
+```
+
+**USB stick: works as-is.** Files copied from removable media are never given the
+`com.apple.quarantine` attribute, so Gatekeeper lets an ad-hoc signed app run.
+
+**A download does not.** Anything delivered by a browser, Mail or AirDrop is quarantined,
+and an app without a Developer ID signature is refused — the recipient has to go to
+System Settings ▸ Privacy & Security ▸ Open Anyway. For a link people can just click you
+need the Apple Developer Program ($99/yr): a *Developer ID Application* certificate,
+`notarytool` to notarize, and `stapler` to attach the ticket. Store the credentials once:
+
+```bash
+xcrun notarytool store-credentials dpe --apple-id you@example.com \
+      --team-id TEAMID --password <app-specific-password>
+```
+
+Test a build the way a recipient gets it, by faking the quarantine flag:
+
+```bash
+xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/DesktopPerformanceEngine.zip
+```
+
+The piece needs **no permission prompts** — the show uses `cursorPath` in `warp` mode
+(no Accessibility) and no `rearrangeIcons` (no Automation). It does want the network,
+for the Apple Maps flyover. Note also that `hdiutil` needs real disk-image privileges, so
+`ship.sh` won't make a `.dmg` from inside a sandboxed shell.
+
+Two things travel inside the bundle that are worth a thought before handing it out: the
+**licensed backing track**, and `assets/letter.txt`, which is baked into the timeline and
+names real people.
 
 ### Act 0 — the intro gate
 
@@ -115,6 +187,9 @@ swift run DesktopPerformanceEngine --autoplay          # play whole show, log pe
                                                        # timing drift, then restore + quit
 swift run DesktopPerformanceEngine --snapshot=out.png  # render the window content to a PNG
 swift run DesktopPerformanceEngine --snapshot-scenes=out.png   # preview the livecode + typeText scenes
+swift run DesktopPerformanceEngine --test-hydra=out.png        # nine live hydra sketches at once:
+                                                       # proves they render, prints processes/MB/CPU
+swift run DesktopPerformanceEngine --parse-hydra patch.txt     # what the impression reads out of a patch
 python3 tools/make_icon.py                             # redraw assets/AppIcon.icns
 ```
 
@@ -304,12 +379,43 @@ TEXT="oh no" python3 tools/spell_path.py    # any text the stroke font covers
 swift run DesktopPerformanceEngine examples/timeline_look.json
 ```
 
-### `livecode` — a very small hydra
+### `livecode` — hydra, for real
 
-A hydra sketch, **actually running**. `Effects/HydraView.swift` parses the chain and
-**builds the layer stack the code describes**, so the visual in the window is what the
-source printed over it says. The source sits on top in hydra's own style: no gutter, a
-dark box behind each line, numbers in pink.
+A hydra sketch, **actually running** — and since the piece ships hydra itself, "actually"
+now means actually. There are two engines behind this window kind:
+
+**Real hydra** (`Effects/HydraWebView.swift`) runs ojack's hydra-synth 1.3.29 on a WebGL
+canvas in a `WKWebView`. The patch is evaluated by hydra, so everything in the language
+works: UV modulation, `o0` feedback, arrow functions, anything you can type into
+hydra.ojack.xyz. This is the default whenever the library is in the bundle.
+
+**The impression** (`Effects/HydraView.swift`) is the fallback: it reads the chain and
+rebuilds it out of CALayers and Core Image filters. It is a good impression and it costs
+almost nothing, but it cannot warp UVs, feed a frame back into itself, or run an
+expression. It is used when the library is missing, when `DPE_HYDRA=fake` is set, and by
+the still renderer — an off-screen `cacheDisplay` draws layers and skips web views, so a
+snapshot of a real canvas would come out empty.
+
+Either way the source sits on top in hydra's own style: no gutter, a dark box behind each
+line, numbers in pink.
+
+| | real hydra | the impression |
+|---|---|---|
+| fidelity | the language, entire | the chain, approximated |
+| 9 sketches at once | 9 processes, ~410MB, ~15% CPU | one layer tree, negligible |
+| renders in `--snapshot` | no | yes |
+
+```bash
+DPE_HYDRA=fake      ./build/DesktopPerformanceEngine.app/Contents/MacOS/DesktopPerformanceEngine
+DPE_HYDRA_MAX=3     # cap live canvases; sketches past the cap fall back to the impression
+```
+
+The canvases are pooled and built during `prewarm`, before the clock starts — a
+`WKWebView` plus a 205KB library is nowhere near cheap enough to build inside a pump
+tick — and handed back when their window lets go of them. They drive their own render
+loop (see `Resources/hydra.html`) so a canvas standing by costs a GL context and nothing
+else; hydra's own loop cannot be stopped once started. `--test-hydra` stands up the
+show's nine-sketch peak and prints the bill on your machine.
 
 ```jsonc
 { "kind": "livecode", "chrome": "browser", "title": "hydra.ojack.xyz", "hex": "#68BDF8",
@@ -335,10 +441,16 @@ toolbar all carry autoresizing masks that pin them to their own corners, and the
 layer stretches with the window. Re-opening the same id at the final size rebuilds the
 composition cleanly — which is what the show does once the corner-drag settles.
 
-Every bit of the motion is **Core Animation and Core Image on the render server**, with
-periods keyed to `dpeShowBPM` (published from `WindowManager.bpm`). Nothing runs on the
-pump, so a stack of these keeps playing — in tempo — while the timeline is busy elsewhere.
-Generated textures are cached, so repeats of a patch cost nothing.
+In the impression, every bit of the motion is **Core Animation and Core Image on the
+render server**, with periods keyed to `dpeShowBPM` (published from `WindowManager.bpm`).
+Nothing runs on the pump, so a stack of these keeps playing — in tempo — while the
+timeline is busy elsewhere. Generated textures are cached, so repeats of a patch cost
+nothing.
+
+That tempo-keying is also the impression's one deliberate infidelity: hydra reads a bare
+number in a speed slot as a static offset, and a sketch that never moves is not what this
+act is for, so a constant animates on the beat grid instead. An explicit `()=>time*k` is
+taken literally — 0.4 radians a second really is 0.4 radians a second.
 
 ### Grabbable windows
 
@@ -487,4 +599,25 @@ can be layered on later against the same format.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE) — **except** that the app now bundles
+[hydra-synth](https://github.com/ojack/hydra-synth) 1.3.29, which is **AGPL-3.0**.
+
+That is a decision about distribution, not about running the piece. Building and
+performing it on your own machine raises nothing. Handing out the `.app` — the `.dmg` and
+`.zip` that `ship.sh` produces — distributes hydra-synth with it, and AGPL is copyleft:
+the combined work goes out under AGPL terms, with source offered to whoever receives it.
+
+Three ways through, pick deliberately:
+
+1. **Ship it AGPL.** Relicense the distributed work, keep the source public. Simplest if
+   the repo is public anyway — but it is not only a relicence. The vendored bundle is a
+   browserify build that carries **no licence notice of its own**: grep it for `AGPL`,
+   `Affero`, `GNU` or `ojack` and you get nothing, and the only copyright strings in it
+   belong to bundled MIT dependencies. AGPL-3.0 §4–5 require the licence and copyright
+   notices to travel with the work, so this option means *adding* what the artefact is
+   missing: the full AGPL-3.0 text and an ojack/hydra-synth attribution alongside it.
+2. **Ship without it.** Delete `Sources/DesktopPerformanceEngine/Resources/hydra-synth.js`
+   and `hydra.html` from the bundle; every sketch falls back to the MIT-licensed
+   impression and the show still runs. This is the only path that keeps the shipped work
+   MIT.
+3. **Don't distribute.** Perform from your own build.

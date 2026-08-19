@@ -35,7 +35,21 @@ if [ -f assets/AppIcon.icns ]; then
   cp assets/AppIcon.icns "$APP/Contents/Resources/"
 fi
 
-# Bundle.module resolves resources from Contents/Resources inside an .app.
+# The show itself, copied FLAT into Contents/Resources.
+#
+# This is the copy the app actually uses. SwiftPM's Bundle.module only searches the top
+# level of the .app and an absolute path into the build machine's .build directory, so
+# relying on it makes a bundle that runs here and crashes everywhere else — see
+# AppDelegate.bundledTimelineURL, which looks here first.
+cp Sources/$APP_NAME/Resources/timeline.json "$APP/Contents/Resources/"
+
+# Real hydra: the library and the page that hosts it, side by side because the page
+# loads the library by relative name. Without these the livecode windows silently fall
+# back to the Core Animation impression — the show still runs, it just isn't hydra.
+cp Sources/$APP_NAME/Resources/hydra-synth.js "$APP/Contents/Resources/"
+cp Sources/$APP_NAME/Resources/hydra.html     "$APP/Contents/Resources/"
+
+# The SwiftPM resource bundle too, as a second home for anything else it carries.
 RESBUNDLE="$BINDIR/${APP_NAME}_${APP_NAME}.bundle"
 if [ -d "$RESBUNDLE" ]; then
   cp -R "$RESBUNDLE" "$APP/Contents/Resources/"
