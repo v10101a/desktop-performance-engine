@@ -5,6 +5,10 @@ import AppKit
 final class WindowManager {
     private var windows: [String: NSWindow] = [:]
 
+    /// Timeline position each live window opened at, for the inspect badges.
+    /// Same keys as `windows`.
+    private var openedAt: [String: Double] = [:]
+
     /// Set from the loaded timeline so beat-based durations resolve to seconds.
     /// Also published to `dpeShowBPM` so generative content (the livecode visuals)
     /// can key its Core Animation periods to the beat.
@@ -213,6 +217,19 @@ final class WindowManager {
     /// dialog window shells (reused by id at open), and flash overlays. Creating
     /// any of these inside a pump tick makes every later event fire late.
     func prewarm(for events: [ResolvedEvent]) {
+        // Every sketch that ever runs needs a live canvas, and a WKWebView carrying a
+        // 205KB library is nowhere near cheap enough to build inside a tick. Count them
+        // from the timeline and stand them all up now, with a couple spare for the
+        // windows the viewer is allowed to close and respawn.
+        var liveSketches = 0
+        for ev in events {
+            if case .openWindow(let p) = ev.action,
+               p.content.kind == "livecode", p.content.running ?? true {
+                liveSketches += 1
+            }
+        }
+        HydraWeb.prewarm(count: liveSketches + 2)
+
         for ev in events {
             switch ev.action {
             case .openWindow(let p):
@@ -259,10 +276,120 @@ final class WindowManager {
         }
     }
 
+    // MARK: - Authoring aids (pause inspection — never part of the piece)
+
+    /// True while the inspect overlay is on, so windows opened later get badged too.
+    private(set) var inspecting = false
+
+    /// Halt — or release — every Core Animation timeline the show has running.
+    ///
+    /// Stopping the pump freezes everything the pump drives (moves, jiggles, sprites,
+    /// typers), but the livecode visuals animate on the render server and would sail
+    /// straight through a pause. A pause that only stopped the pump would leave the
+    /// hydra stack spinning, which is not a still frame and not what you want to judge.
+    func setAnimationsPaused(_ paused: Bool) {
+        // Live hydra canvases are web views driving their own rAF loop in another
+        // process; no CALayer speed reaches them. They have to be told.
+        for canvas in liveHydraCanvases() { canvas.setPaused(paused) }
+
+        var layers: [CALayer] = windows.values.compactMap { $0.contentView?.layer }
+        layers += flashOverlays.values.compactMap { $0.contentView?.layer }
+        for layer in layers {
+            if paused {
+                guard layer.speed != 0 else { continue }
+                layer.timeOffset = layer.convertTime(CACurrentMediaTime(), from: nil)
+                layer.speed = 0
+            } else {
+                guard layer.speed == 0 else { continue }
+                let held = layer.timeOffset
+                layer.speed = 1
+                layer.timeOffset = 0
+                layer.beginTime = 0
+                layer.beginTime = layer.convertTime(CACurrentMediaTime(), from: nil) - held
+            }
+        }
+    }
+
+    /// Stamp every live window with its timeline id and the moment it opened, so a
+    /// stack of near-identical windows can be told apart and the right one edited.
+    func setInspecting(_ on: Bool) {
+        inspecting = on
+        for (id, win) in windows {
+            if on { applyBadge(to: win, id: id) } else { removeBadge(from: win) }
+        }
+    }
+
+    /// Every live sketch currently on screen. They hang inside a livecode window's
+    /// content view, so the window list is the way to reach them.
+    private func liveHydraCanvases() -> [HydraCanvasView] {
+        func canvases(in view: NSView) -> [HydraCanvasView] {
+            if let canvas = view as? HydraCanvasView { return [canvas] }
+            return view.subviews.flatMap(canvases)
+        }
+        return windows.values.compactMap { $0.contentView }.flatMap(canvases)
+    }
+
+    /// Frame counts of every live sketch, for `--test-pause`.
+    func readHydraTicks(_ done: @escaping ([String]) -> Void) {
+        let canvases = liveHydraCanvases()
+        guard !canvases.isEmpty else { done([]); return }
+        var out: [String] = []
+        let group = DispatchGroup()
+        for canvas in canvases {
+            group.enter()
+            canvas.readTicks { value in out.append(value); group.leave() }
+        }
+        group.notify(queue: .main) { done(out.sorted()) }
+    }
+
+    private static let badgeID = NSUserInterfaceItemIdentifier("dpe.inspect.badge")
+
+    private func applyBadge(to win: NSWindow, id: String) {
+        guard let content = win.contentView else { return }
+        removeBadge(from: win)
+        let label = NSTextField(labelWithString: openedAt[id].map {
+            String(format: "%@ · %.2fs", id, $0)
+        } ?? id)
+        label.identifier = WindowManager.badgeID
+        label.font = .monospacedSystemFont(ofSize: 9, weight: .bold)
+        label.textColor = .white
+        label.backgroundColor = .systemPink
+        label.drawsBackground = true
+        label.alignment = .center
+        label.sizeToFit()
+        let size = label.frame.size
+        // Top-left, inside the window. Not flipped, so the top edge is max-y.
+        label.frame = NSRect(x: 0, y: content.bounds.height - size.height,
+                             width: size.width + 8, height: size.height)
+        label.autoresizingMask = [.minYMargin, .maxXMargin]
+        content.addSubview(label)
+    }
+
+    /// What the inspect overlay is actually showing right now, read back off the live
+    /// view hierarchy (not from bookkeeping), plus whether each window's animations are
+    /// really frozen. Used by `--test-pause` to prove the overlay and the freeze landed.
+    var inspectSummary: [String] {
+        windows.keys.sorted().map { id in
+            let win = windows[id]
+            let badge = (win?.contentView?.subviews
+                .compactMap { $0 as? NSTextField }
+                .first { $0.identifier == WindowManager.badgeID }?.stringValue) ?? "—"
+            let speed = win?.contentView?.layer?.speed ?? -1
+            return "\(id): badge=\"\(badge)\" layerSpeed=\(speed)"
+        }
+    }
+
+    private func removeBadge(from win: NSWindow) {
+        win.contentView?.subviews
+            .filter { $0.identifier == WindowManager.badgeID }
+            .forEach { $0.removeFromSuperview() }
+    }
+
     // MARK: - Executors
 
-    func openWindow(_ p: OpenWindowParams) {
+    func openWindow(_ p: OpenWindowParams, at now: Double) {
         let scr = screen(p.screen)
+        openedAt[p.id] = now
         let frame = rect(from: p.frame, on: scr)
         jiggles[p.id] = nil
         moves[p.id] = nil
@@ -276,6 +403,7 @@ final class WindowManager {
             existing.contentView = makeEffectContentView(p.content, size: frame.size)
             arm(existing, p, size: frame.size)
             existing.present(animate: "none")
+            if inspecting { applyBadge(to: existing, id: p.id) }   // contentView was swapped
             return
         }
         close(id: p.id)
@@ -283,6 +411,7 @@ final class WindowManager {
         arm(win, p, size: frame.size)
         windows[p.id] = win
         win.present(animate: p.animate?.kind ?? "fadeIn")
+        if inspecting { applyBadge(to: win, id: p.id) }
     }
 
     /// Hand a window to the viewer if the event asked for it: draggable, and closable
@@ -297,11 +426,14 @@ final class WindowManager {
             guard let self = self else { return }
             let again = self.respawns[p.id]
             let generation = self.respawnGeneration
+            // Keep the authored open time across the respawn — the badge should name
+            // the timeline event this window came from, not when the viewer closed it.
+            let authored = self.openedAt[p.id] ?? 0
             self.close(id: p.id)
             guard let again = again else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
                 guard let self = self, self.respawnGeneration == generation else { return }
-                self.openWindow(again)
+                self.openWindow(again, at: authored)
             }
         }
     }
@@ -691,6 +823,7 @@ final class WindowManager {
         jiggles[id] = nil
         moves[id] = nil
         typers[id] = nil
+        openedAt[id] = nil
         if let s = sprites.removeValue(forKey: id) {
             for w in s.pool { w.orderOut(nil) }
         }
@@ -707,6 +840,7 @@ final class WindowManager {
         jiggles.removeAll()
         moves.removeAll()
         typers.removeAll()
+        openedAt.removeAll()
         respawns.removeAll()
         respawnGeneration &+= 1     // cancels any respawn still in flight
         for (_, s) in sprites { for w in s.pool { w.orderOut(nil) } }

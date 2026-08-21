@@ -16,6 +16,9 @@ final class AudioClock {
     private var baseOffset: Double = 0     // playback start position (for seeking)
 
     private(set) var usingSynthesizedClick = false
+    /// Held mid-playback by `pause()`. Distinct from "stopped": the engine is still
+    /// running and the scheduled segment is still loaded, so `resume()` is seamless.
+    private(set) var isPaused = false
     /// Total length of the loaded audio (file length, or the synthesized click track).
     private(set) var audioDuration: Double = 0
 
@@ -63,6 +66,7 @@ final class AudioClock {
         baseOffset = max(0, seconds)
         schedule(from: baseOffset)
         player.play()
+        isPaused = false
     }
 
     /// Jump to a new position; `playing` keeps the transport running.
@@ -72,6 +76,23 @@ final class AudioClock {
         baseOffset = max(0, seconds)
         schedule(from: baseOffset)
         if playing { player.play() }
+        isPaused = !playing
+    }
+
+    /// Hold playback where it is WITHOUT tearing the engine down. `stop()` resets the
+    /// node's sampleTime; `pause()` does not, which is exactly what keeps
+    /// `currentTime()` continuous across the gap — resume picks up the same sample.
+    func pause() {
+        guard prepared, !isPaused else { return }
+        player.pause()
+        isPaused = true
+    }
+
+    /// Resume from a `pause()`, or start the segment a `seek(playing: false)` staged.
+    func resume() {
+        guard prepared, isPaused else { return }
+        player.play()
+        isPaused = false
     }
 
     private func schedule(from seconds: Double) {
@@ -93,6 +114,7 @@ final class AudioClock {
         player.stop()
         engine.stop()
         prepared = false
+        isPaused = false
     }
 
     /// Absolute playback position in seconds (start offset + rendered time). `nil`

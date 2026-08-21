@@ -1,0 +1,112 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>hydra</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+<canvas id="c"></canvas>
+<script src="hydra-synth.js"></script>
+<script>
+// The bridge the engine drives. Every window loads THIS file, from the same URL, so
+// WebKit can share one compiled copy of the library between them.
+(function () {
+  var canvas = document.getElementById('c');
+  var hydra = null;
+  var frame = null;
+  var last = 0;
+  var running = false;   // a sketch is loaded (as opposed to merely paused)
+  var ticks = 0;         // frames actually rendered — how --test-pause proves a freeze
+
+  // hydra's own render loop is started inside its constructor and the handle is
+  // thrown away, so there is no way to stop it once it runs. We drive the clock
+  // instead (autoLoop: false below): a canvas that has been built but handed no
+  // sketch yet costs a GL context and nothing else, which matters when nine of
+  // them are standing by before the show has started.
+  function step(now) {
+    frame = requestAnimationFrame(step);
+    var dt = last ? now - last : 16;
+    last = now;
+    ticks++;
+    hydra.tick(dt);
+  }
+
+  function startLoop() {
+    if (!frame) { last = 0; frame = requestAnimationFrame(step); }
+  }
+
+  function stopLoop() {
+    if (frame) { cancelAnimationFrame(frame); frame = null; }
+  }
+
+  // Called once, as soon as the page is up, with the render size in points. The canvas
+  // stays at that size while CSS stretches it to the window — the same half-resolution
+  // trick hydra.ojack.xyz uses to stay fast on a Retina display.
+  window.__dpeStart = function (w, h) {
+    if (hydra) { return 'already started'; }
+    canvas.width = w;
+    canvas.height = h;
+    try {
+      hydra = new Hydra({
+        canvas: canvas,
+        width: w,
+        height: h,
+        detectAudio: false,   // no microphone: nothing here listens, and asking would
+                              // put a permission prompt in the middle of a performance
+        makeGlobal: true,     // so a patch can be eval'd exactly as it was written
+        autoLoop: false,      // we run the clock — see step() above
+        precision: 'mediump'
+      });
+      return '';
+    } catch (e) {
+      return String((e && e.message) || e);
+    }
+  };
+
+  // Run a patch verbatim. Indirect eval so it lands in global scope, where hydra put
+  // osc / noise / o0 / time — the same scope the editor on the website evaluates in.
+  window.__dpeRun = function (src) {
+    if (!hydra) { return 'not started'; }
+    try {
+      (0, eval)(src);
+      running = true;
+      startLoop();
+      return '';
+    } catch (e) {
+      return String((e && e.message) || e);
+    }
+  };
+
+  // Back to a black canvas, ready to be handed to another window.
+  window.__dpeStop = function () {
+    try {
+      stopLoop();
+      running = false;
+      if (typeof hush === 'function') { hush(); }
+      if (hydra && hydra.synth) { hydra.synth.time = 0; }
+      return '';
+    } catch (e) {
+      return String((e && e.message) || e);
+    }
+  };
+  // Freeze on the current frame WITHOUT discarding the sketch — the transport's
+  // Pause holds every window on screen, and a canvas still animating under a stopped
+  // clock would make the still frame a lie. The host cannot do this itself: a live
+  // sketch renders in its own process off this rAF loop, where setting the hosting
+  // CALayer's speed to 0 has no reach. `time` stops advancing with the loop, so
+  // resuming picks the sketch up on the same frame it froze on.
+  // Rendered-frame count and hydra's own clock, for the pause self-test.
+  window.__dpeTicks = function () {
+    return String(ticks) + ':' + String((hydra && hydra.synth && hydra.synth.time) || 0);
+  };
+
+  window.__dpeSetPaused = function (paused) {
+    try {
+      if (paused) { stopLoop(); } else if (running) { startLoop(); }
+      return '';
+    } catch (e) {
+      return String((e && e.message) || e);
+    }
+  };
+}());
+</script>
