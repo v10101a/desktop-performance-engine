@@ -34,7 +34,7 @@ final class EventContext {
     func execute(_ action: EventAction, now: Double) {
         switch action {
         case .openWindow(let p):
-            windows.openWindow(p)
+            windows.openWindow(p, at: now)
         case .fakeDialog(let p):
             windows.openDialog(p)
         case .closeWindow(let p):

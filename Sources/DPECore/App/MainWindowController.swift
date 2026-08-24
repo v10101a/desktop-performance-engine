@@ -51,6 +51,8 @@ final class MainWindowController: NSWindowController {
     private let statusLabel = NSTextField(labelWithString: "Ready")
     private let infoLabel = NSTextField(labelWithString: "")
     private var playButton: NSButton!
+    private var pauseButton: NSButton!
+    private var inspectCheckbox: NSButton!
     private var positionSlider: NSSlider!
     private var volumeSlider: NSSlider!
     private var muteButton: NSButton!
@@ -66,7 +68,7 @@ final class MainWindowController: NSWindowController {
 
     init(engine: PerformanceEngine) {
         self.engine = engine
-        let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 290),
+        let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 330),
                            styleMask: [.titled, .closable, .miniaturizable],
                            backing: .buffered, defer: false)
         win.title = "Desktop Performance Engine"
@@ -81,7 +83,7 @@ final class MainWindowController: NSWindowController {
         }
         engine.onFinished = { [weak self] in
             self?.setStatus("Stopped — desktop restored")
-            self?.playButton.title = "Play"
+            self?.syncTransport()
         }
     }
 
@@ -150,21 +152,34 @@ final class MainWindowController: NSWindowController {
         playButton = NSButton(title: "Play", target: self, action: #selector(togglePlay))
         playButton.bezelStyle = .rounded
         playButton.keyEquivalent = " "
+        pauseButton = NSButton(title: "Pause", target: self, action: #selector(togglePause))
+        pauseButton.bezelStyle = .rounded
+        pauseButton.keyEquivalent = "p"
+        pauseButton.isEnabled = false
         let panicButton = NSButton(title: "PANIC / Stop", target: self, action: #selector(panic))
         panicButton.bezelStyle = .rounded
         let loadButton = NSButton(title: "Load Timeline…", target: self, action: #selector(loadTimeline))
         loadButton.bezelStyle = .rounded
 
-        let hint = NSTextField(wrappingLabelWithString: "Global panic hotkey: ⌃⌥⌘Esc  ·  drag the bar to scrub  ·  volume is output level only, never the clock")
+        inspectCheckbox = NSButton(checkboxWithTitle: "Inspect — label windows with id · time",
+                                   target: self, action: #selector(toggleInspect))
+        inspectCheckbox.state = .off
+
+        let hint = NSTextField(wrappingLabelWithString: "Global panic hotkey: ⌃⌥⌘Esc  ·  space = play/stop, P = pause  ·  drag the bar to scrub  ·  volume is output level only, never the clock")
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
 
-        let buttons = NSStackView(views: [playButton, panicButton, loadButton])
-        buttons.orientation = .horizontal
-        buttons.spacing = 10
+        let transport = NSStackView(views: [playButton, pauseButton, panicButton])
+        transport.orientation = .horizontal
+        transport.spacing = 10
+
+        let tools = NSStackView(views: [loadButton, inspectCheckbox])
+        tools.orientation = .horizontal
+        tools.spacing = 10
 
         let stack = NSStackView(views: [timeLabel, positionSlider, markerStrip, frameLabel,
-                                        statusLabel, infoLabel, buttons, volumeRow, hint])
+                                        statusLabel, infoLabel, transport, tools,
+                                        volumeRow, hint])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
@@ -252,7 +267,7 @@ final class MainWindowController: NSWindowController {
     func startShow() {
         guard !engine.isPlaying else { return }
         engine.play()
-        playButton.title = "Stop"
+        syncTransport()
         let src = engine.usingClickTrack ? "synth click track (no audio file found)" : "backing track"
         setStatus("Playing — \(src)")
     }
@@ -265,10 +280,38 @@ final class MainWindowController: NSWindowController {
         }
     }
 
+    /// Freeze the show on the current frame, windows and all, so it can be looked at.
+    /// Distinct from Stop, which restores the desktop and throws the frame away.
+    @objc private func togglePause() {
+        guard engine.isPlaying else { return }
+        if engine.isPaused {
+            engine.resume()
+            syncTransport()
+            setStatus("Playing")
+        } else {
+            engine.pause()
+            syncTransport()
+            setStatus("Paused at \(Self.clock(engine.startPosition)) · "
+                      + "\(engine.liveWindowCount) window(s) on screen")
+        }
+    }
+
+    @objc private func toggleInspect(_ sender: NSButton) {
+        engine.setInspecting(sender.state == .on)
+    }
+
+    /// One place that decides what the transport buttons say and whether they are live,
+    /// so play / pause / resume / stop / end-of-piece can't drift out of sync.
+    private func syncTransport() {
+        playButton.title = engine.isPlaying ? "Stop" : "Play"
+        pauseButton.isEnabled = engine.isPlaying
+        pauseButton.title = engine.isPaused ? "Resume" : "Pause"
+    }
+
     @objc private func panic() {
         engine.stopAndRestore()
         setStatus("Stopped — desktop restored")
-        playButton.title = "Play"
+        syncTransport()
     }
 
     @objc private func loadTimeline() {

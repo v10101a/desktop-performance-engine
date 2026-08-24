@@ -66,6 +66,10 @@ enum StillRenderer {
     /// value off-screen — so the piano roll and the numerals all show at once here,
     /// where live they blink through in sequence.
     static func renderScenes(to url: URL) throws {
+        // A still is `cacheDisplay` into a bitmap, which draws layers and skips web
+        // views entirely — a real hydra canvas would come out an empty rectangle. The
+        // impression draws, so snapshots use it whatever the show is running.
+        HydraWeb.enabled = false
         let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1280, height: 900))
         canvas.wantsLayer = true
         canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor

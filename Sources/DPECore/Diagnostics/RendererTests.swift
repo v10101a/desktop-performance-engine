@@ -147,9 +147,17 @@ enum ChromeTests {
             // of every hydra window.
             let live = ContentSpec(kind: "livecode", text: "osc(40).out()",
                                    chrome: "browser", title: "hydra", running: true)
+            //
+            // The sketch renders one of two ways: a real hydra WKWebView added as a
+            // SUBVIEW when the library shipped, or the Core Animation impression added
+            // as a SUBLAYER when it didn't. Either is fine; what must hold is that
+            // whichever one is live fills the full height.
             let liveView = makeLiveCodeContentView(live, size: big)
-            let visualHeight = liveView.layer?.sublayers?.first?.frame.height ?? 0
-            t.near(Double(visualHeight), Double(big.height), 1.0,
+            let canvasHeight = liveView.subviews.first(where: { $0.frame.height > big.height / 2 })?
+                .frame.height
+                ?? liveView.layer?.sublayers?.first?.frame.height
+                ?? 0
+            t.near(Double(canvasHeight), Double(big.height), 1.0,
                    "the hydra sketch fills the window; no reserved bar gap")
 
             // REGRESSION: micro-windows (sprite pixels, trail breadcrumbs) drew a

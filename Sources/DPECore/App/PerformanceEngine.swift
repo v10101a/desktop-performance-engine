@@ -35,6 +35,9 @@ final class PerformanceEngine {
     private(set) var startPosition: Double = 0
 
     private(set) var isPlaying = false
+    /// Held mid-show: the timeline stops advancing but nothing is torn down.
+    /// Only ever true while `isPlaying`.
+    private(set) var isPaused = false
 
     /// Master output level, 0…1. Takes effect immediately, playing or not, and persists
     /// across stop/play because the clock re-applies it whenever it re-prepares.
@@ -96,6 +99,24 @@ final class PerformanceEngine {
 
     var usingClickTrack: Bool { clock.usingSynthesizedClick }
 
+    /// How much the show currently has on screen — the readout for a paused frame.
+    var liveWindowCount: Int { windows.count }
+
+    /// Badge every live window with its timeline id and open time. An authoring
+    /// overlay for telling a stack of near-identical windows apart; not in the piece.
+    func setInspecting(_ on: Bool) { windows.setInspecting(on) }
+    var isInspecting: Bool { windows.inspecting }
+    /// Read-back of the inspect overlay + freeze state, for `--test-pause`.
+    var inspectSummary: [String] { windows.inspectSummary }
+    /// Live-sketch frame counts, for `--test-pause`.
+    func readHydraTicks(_ done: @escaping ([String]) -> Void) { windows.readHydraTicks(done) }
+
+    /// Where the backing track actually resolved to, or nil if nothing was found.
+    /// Used by `--check` to prove a packaged .app is self-contained.
+    var resolvedAudioPath: String? {
+        resolveAudioURL(timeline?.meta.audioFile)?.path
+    }
+
     /// Whole-piece length: the longer of the event timeline and the backing track.
     var duration: Double { max(timeline?.duration ?? 0, audioDuration) }
 
@@ -151,6 +172,29 @@ final class PerformanceEngine {
 
         clock.play(from: startPosition)
         isPlaying = true
+        isPaused = false
+        pump.start { [weak self] in self?.step() }
+    }
+
+    /// Hold the show exactly where it is. The playhead stops, the audio holds, and
+    /// every window the show has opened STAYS ON SCREEN — the desktop is not restored
+    /// and nothing is torn down, so a frame can be looked at and judged. This is the
+    /// opposite of `stopAndRestore()`, which is still the way out.
+    func pause() {
+        guard isPlaying, !isPaused else { return }
+        isPaused = true
+        pump.stop()
+        clock.pause()
+        windows.setAnimationsPaused(true)
+        onTick?(startPosition)
+    }
+
+    func resume() {
+        guard isPlaying, isPaused else { return }
+        isPaused = false
+        windows.setAnimationsPaused(false)
+        clock.resume()
+        lastFxUpdate = -1.0       // don't skip the first frame's effect update
         pump.start { [weak self] in self?.step() }
     }
 
@@ -188,7 +232,7 @@ final class PerformanceEngine {
             for executor in executors { executor.closeAll() }
             windows.prewarm(for: tl.events)
             scheduler.seek(to: t)
-            clock.seek(to: t, playing: true)
+            clock.seek(to: t, playing: !isPaused)   // scrubbing while paused stays paused
             lastFxUpdate = -1.0
         }
         onTick?(t)
@@ -198,6 +242,7 @@ final class PerformanceEngine {
     func stopAndRestore() {
         let wasPlaying = isPlaying
         isPlaying = false
+        isPaused = false
         pump.stop()
         clock.stop()
         for executor in executors { executor.closeAll() }

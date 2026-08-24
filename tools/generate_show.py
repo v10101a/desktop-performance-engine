@@ -110,14 +110,24 @@ fx, fy = focal
 # opening on the beat, more and more of them, cascading up-left from the exact
 # spot the arrow pointed at. They all stay open until the drop. ---
 PATCHES = [
-    ("osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()", "hydra.ojack.xyz"),
-    ("noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()", "hydra — sketch 02"),
-    ("voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()", "hydra — sketch 03"),
-    ("shape(4, 0.4)\n  .repeat(3, 3)\n  .scrollX(0.08)\n  .kaleid(4)\n  .out()", "hydra — sketch 04"),
-    ("osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()", "hydra — sketch 05"),
-    ("gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()", "hydra — sketch 06"),
-    ("osc(60, 0.2)\n  .mult(voronoi(20, 0.2))\n  .pixelate(24)\n  .out()", "hydra — sketch 07"),
-    ("noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()", "hydra — sketch 08"),
+    ("osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()", "hydra.ojack.xyz"),
+    ("osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()", "hydra.ojack.xyz"),
+    ("osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()", "hydra.ojack.xyz"),
+    ("shape(6, 0.9, 0.01)\n  .repeat(4, 3)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(10, 0.08).rotate(0, -0.01), 0.5)\n  .color(0.1, 0.5, 3)\n  .modulate(o0,0.02)\n .out()", "hydra.ojack.xyz"),
+    ("shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()", "hydra.ojack.xyz"),
+    ("osc(10, 0.1, 0).rotate(0.9).out(o1)\n"
+     "osc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n"
+     "  .modulatePixelate(o1,4,10)\n"
+     "  .out(o0)\n"
+     "render(o0)", "hydra.ojack.xyz"),
+    ("shape(4, 0.9, 0.01)\n"
+     "  .repeat(2, 4)\n"
+     "  .rotate(0, 0.02).pixelate(100)\n"
+     "  .modulate(osc(20, 0.01).rotate(0, -0.01), 0.8)\n"
+     "  .color(0.1, 0.5, 3)\n"
+     "//   .modulate(o0,0.02)\n"
+     "  .out()", "hydra.ojack.xyz"),
+    ("noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()", "hydra.ojack.xyz"),
 ]
 
 # --- Act 3: HYDRA. It reads as somebody actually using a computer: a little browser
@@ -288,7 +298,7 @@ while b < chorus_end:
 # The kick pass: the background flashes on every kick the analyser found between the
 # drop and the strobe. Absolute seconds, so these land on the real audio transients
 # rather than on the nominal grid. ~2.4 flashes/sec — nowhere near the 15-20 Hz band.
-flash_colors = ["#F2F4FE", "#020AF5", "#FF2D95", "#68BDF8"]
+flash_colors = ["#FEFEFE", "#020AF5", "#020202", "#68BDF8"]
 kick_flashes = 0
 wipe = chorus_end - 0.5
 authored_flashes.append(secs(wipe))

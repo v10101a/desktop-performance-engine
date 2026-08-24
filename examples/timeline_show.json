@@ -452,7 +452,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -586,7 +586,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -632,7 +632,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -666,8 +666,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -692,8 +692,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -718,8 +718,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "shape(4, 0.4)\n  .repeat(3, 3)\n  .scrollX(0.08)\n  .kaleid(4)\n  .out()",
-     "title": "hydra \u2014 sketch 04",
+     "text": "shape(6, 0.9, 0.01)\n  .repeat(4, 3)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(10, 0.08).rotate(0, -0.01), 0.5)\n  .color(0.1, 0.5, 3)\n  .modulate(o0,0.02)\n .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -744,8 +744,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -770,8 +770,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -796,8 +796,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(60, 0.2)\n  .mult(voronoi(20, 0.2))\n  .pixelate(24)\n  .out()",
-     "title": "hydra \u2014 sketch 07",
+     "text": "shape(4, 0.9, 0.01)\n  .repeat(2, 4)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(20, 0.01).rotate(0, -0.01), 0.8)\n  .color(0.1, 0.5, 3)\n//   .modulate(o0,0.02)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -823,7 +823,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -848,7 +848,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -1085,7 +1085,7 @@
    "t": 29.977,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -1256,7 +1256,7 @@
    "t": 30.789,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -1361,7 +1361,7 @@
    "t": 31.481,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -1502,7 +1502,7 @@
    "t": 32.178,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -1695,7 +1695,7 @@
    "t": 32.985,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -1809,7 +1809,7 @@
    "t": 33.675,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -1967,7 +1967,7 @@
    "t": 34.481,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -2125,7 +2125,7 @@
    "t": 35.406,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -2308,7 +2308,7 @@
    "t": 36.328,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -2426,7 +2426,7 @@
    "t": 37.019,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -2656,7 +2656,7 @@
    "t": 38.173,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -2839,7 +2839,7 @@
    "t": 39.131,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -2996,7 +2996,7 @@
    "t": 40.02,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -3154,7 +3154,7 @@
    "t": 40.712,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -3295,7 +3295,7 @@
    "t": 41.408,
    "type": "screenFlash",
    "params": {
-    "color": "#FF2D95",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
@@ -3481,7 +3481,7 @@
    "t": 42.327,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
@@ -15139,8 +15139,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -15187,8 +15187,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -15547,8 +15547,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -15652,7 +15652,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -16102,7 +16102,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -16128,7 +16128,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -16214,7 +16214,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -16498,8 +16498,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(60, 0.2)\n  .mult(voronoi(20, 0.2))\n  .pixelate(24)\n  .out()",
-     "title": "hydra \u2014 sketch 07",
+     "text": "shape(4, 0.9, 0.01)\n  .repeat(2, 4)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(20, 0.01).rotate(0, -0.01), 0.8)\n  .color(0.1, 0.5, 3)\n//   .modulate(o0,0.02)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -17418,7 +17418,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -17534,8 +17534,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -17628,8 +17628,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -17775,8 +17775,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -17972,7 +17972,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -18133,8 +18133,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -18366,7 +18366,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -18539,8 +18539,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -18857,8 +18857,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -18882,8 +18882,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -19625,7 +19625,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -19692,8 +19692,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -19958,8 +19958,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -20095,8 +20095,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -21095,8 +21095,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -21143,8 +21143,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -21191,8 +21191,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(60, 0.2)\n  .mult(voronoi(20, 0.2))\n  .pixelate(24)\n  .out()",
-     "title": "hydra \u2014 sketch 07",
+     "text": "shape(4, 0.9, 0.01)\n  .repeat(2, 4)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(20, 0.01).rotate(0, -0.01), 0.8)\n  .color(0.1, 0.5, 3)\n//   .modulate(o0,0.02)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -21296,7 +21296,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -21565,8 +21565,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(60, 0.2)\n  .mult(voronoi(20, 0.2))\n  .pixelate(24)\n  .out()",
-     "title": "hydra \u2014 sketch 07",
+     "text": "shape(4, 0.9, 0.01)\n  .repeat(2, 4)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(20, 0.01).rotate(0, -0.01), 0.8)\n  .color(0.1, 0.5, 3)\n//   .modulate(o0,0.02)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -21656,7 +21656,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -21854,8 +21854,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "shape(4, 0.4)\n  .repeat(3, 3)\n  .scrollX(0.08)\n  .kaleid(4)\n  .out()",
-     "title": "hydra \u2014 sketch 04",
+     "text": "shape(6, 0.9, 0.01)\n  .repeat(4, 3)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(10, 0.08).rotate(0, -0.01), 0.5)\n  .color(0.1, 0.5, 3)\n  .modulate(o0,0.02)\n .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -22148,8 +22148,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -22206,8 +22206,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -22627,7 +22627,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -22699,7 +22699,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -23114,7 +23114,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -23275,8 +23275,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -23300,8 +23300,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -23461,8 +23461,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -23774,7 +23774,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -24054,7 +24054,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -24142,7 +24142,7 @@
     "content": {
      "kind": "livecode",
      "text": "noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()",
-     "title": "hydra \u2014 sketch 08",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -24221,8 +24221,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -24459,8 +24459,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "gradient(0.4)\n  .diff(noise(9, 0.1))\n  .colorama(0.6)\n  .kaleid(7)\n  .out()",
-     "title": "hydra \u2014 sketch 06",
+     "text": "osc(10, 0.1, 0).rotate(0.9).out(o1)\nosc(30, 0.01, 0).color(0.2, 0.7, 3).rotate(1).modulate(o1, 0.1)\n  .modulatePixelate(o1,4,10)\n  .out(o0)\nrender(o0)",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -25080,8 +25080,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -25436,8 +25436,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -25756,8 +25756,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -26037,8 +26037,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(90, 0.05, 1.2)\n  .thresh(0.4)\n  .kaleid(9)\n  .rotate(0, -0.2)\n  .out()",
-     "title": "hydra \u2014 sketch 05",
+     "text": "shape(3, 0.6, 0.02)\n  .kaleid(8)\n  .rotate(()=>time*0.08)\n  .diff(shape(3, 0.45, 0.02).kaleid(8).rotate(()=>-time*0.05))\n  .color(0.3, 0.7, 2.5)\n  .pixelate(120)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -26903,8 +26903,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -27568,8 +27568,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "shape(4, 0.4)\n  .repeat(3, 3)\n  .scrollX(0.08)\n  .kaleid(4)\n  .out()",
-     "title": "hydra \u2014 sketch 04",
+     "text": "shape(6, 0.9, 0.01)\n  .repeat(4, 3)\n  .rotate(0, 0.02).pixelate(100)\n  .modulate(osc(10, 0.08).rotate(0, -0.01), 0.5)\n  .color(0.1, 0.5, 3)\n  .modulate(o0,0.02)\n .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -27640,8 +27640,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -27665,8 +27665,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -27713,8 +27713,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -27853,7 +27853,7 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .rotate(0.2, 0.1)\n  .out()",
+     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
      "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
@@ -28078,8 +28078,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "noise(6, 0.12)\n  .colorama(0.4)\n  .kaleid(6)\n  .out()",
-     "title": "hydra \u2014 sketch 02",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true
@@ -28215,8 +28215,8 @@
     ],
     "content": {
      "kind": "livecode",
-     "text": "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .rotate(0, 0.15)\n  .out()",
-     "title": "hydra \u2014 sketch 03",
+     "text": "osc(4,0.7).color(0,0.8,10)\n  .pixelate(60)\n  .kaleid()\n  .rotate(0, 0.2).modulate(o0,0.9)\n  .out()",
+     "title": "hydra.ojack.xyz",
      "chrome": "browser",
      "hex": "#68BDF8",
      "running": true

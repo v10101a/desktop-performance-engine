@@ -12,7 +12,12 @@ let package = Package(
             name: "DPECore",
             path: "Sources/DPECore",
             resources: [
-                .copy("Resources/timeline.json")
+                .copy("Resources/timeline.json"),
+                // hydra-synth (AGPL-3.0) and the page that hosts it. Copied rather
+                // than processed: the library must stay byte-identical to the release
+                // it claims to be, and the page loads it by name from the same folder.
+                .copy("Resources/hydra-synth.js"),
+                .copy("Resources/hydra.html")
             ]
         ),
         .executableTarget(

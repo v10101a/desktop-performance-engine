@@ -35,13 +35,27 @@ if [ -f assets/AppIcon.icns ]; then
   cp assets/AppIcon.icns "$APP/Contents/Resources/"
 fi
 
-# Bundle.module resolves resources from Contents/Resources inside an .app.
+# The show itself, copied FLAT into Contents/Resources.
 #
-# Copy every resource bundle SwiftPM produced rather than one hardcoded name. The
-# bundle is named for the *target* that declares the resources, so when the library was
-# split out of the executable this became DesktopPerformanceEngine_DPECore.bundle — and
-# a hardcoded name silently shipped an .app with no timeline.json in it, which only
-# shows up as a blank show at runtime.
+# This is the copy the app actually uses. SwiftPM's Bundle.module only searches the top
+# level of the .app and an absolute path into the build machine's .build directory, so
+# relying on it makes a bundle that runs here and crashes everywhere else — see
+# AppDelegate.bundledTimelineURL, which looks here first.
+#
+# These read from Sources/DPECore, not Sources/$APP_NAME: the library was split out of
+# the executable so it could be tested, and the resources went with it.
+cp Sources/DPECore/Resources/timeline.json "$APP/Contents/Resources/"
+
+# Real hydra: the library and the page that hosts it, side by side because the page
+# loads the library by relative name. Without these the livecode windows silently fall
+# back to the Core Animation impression — the show still runs, it just isn't hydra.
+cp Sources/DPECore/Resources/hydra-synth.js "$APP/Contents/Resources/"
+cp Sources/DPECore/Resources/hydra.html     "$APP/Contents/Resources/"
+
+# The SwiftPM resource bundle too, as a second home for anything else it carries.
+# Copy every bundle SwiftPM produced rather than one hardcoded name: the bundle is named
+# for the TARGET that declares the resources, so the split renamed it to
+# DesktopPerformanceEngine_DPECore.bundle and a hardcoded name copied nothing.
 FOUND_RESBUNDLE=0
 for RESBUNDLE in "$BINDIR"/*.bundle; do
   [ -d "$RESBUNDLE" ] || continue
@@ -49,8 +63,7 @@ for RESBUNDLE in "$BINDIR"/*.bundle; do
   FOUND_RESBUNDLE=1
 done
 if [ "$FOUND_RESBUNDLE" -eq 0 ]; then
-  echo "!! no resource bundle in $BINDIR — the app will have no bundled timeline" >&2
-  exit 1
+  echo "note: no SwiftPM resource bundle in $BINDIR (the flat copies above are what the app reads)" >&2
 fi
 
 # Embed the compressed backing track(s) so the .app is self-contained and plays
