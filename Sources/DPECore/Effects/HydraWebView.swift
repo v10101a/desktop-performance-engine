@@ -79,16 +79,16 @@ enum HydraWeb {
     /// first, then SwiftPM's bundle for `swift run` in the tree.
     private static func resource(_ name: String, _ ext: String) -> URL? {
         if let res = Bundle.main.resourceURL {
-            // DPECore's bundle is where the resources live now; the old executable-
-            // target bundle is a last-resort fallback only (see `bundledTimelineURL`).
-            let candidates = [
-                res.appendingPathComponent("\(name).\(ext)"),
-                res.appendingPathComponent("DesktopPerformanceEngine_DPECore.bundle")
-                   .appendingPathComponent("\(name).\(ext)"),
-                res.appendingPathComponent("DesktopPerformanceEngine_DesktopPerformanceEngine.bundle")
-                   .appendingPathComponent("\(name).\(ext)")
-            ]
-            for url in candidates where FileManager.default.fileExists(atPath: url.path) { return url }
+            // Same resolution order as `bundledTimelineURL`: flat copy, then whichever
+            // SwiftPM resource bundle is present, DPECore's first. The bundle name is
+            // derived from the package and target, so it is scanned for, not hardcoded.
+            let fm = FileManager.default
+            let flat = res.appendingPathComponent("\(name).\(ext)")
+            if fm.fileExists(atPath: flat.path) { return flat }
+            for b in resourceBundles(in: res, fm: fm) {
+                let url = b.appendingPathComponent("\(name).\(ext)")
+                if fm.fileExists(atPath: url.path) { return url }
+            }
         }
         return Bundle.module.url(forResource: name, withExtension: ext)
     }

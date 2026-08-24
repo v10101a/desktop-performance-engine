@@ -21,8 +21,8 @@ Quick dev loop (SwiftPM executable):
 
 ```bash
 swift build
-swift run DesktopPerformanceEngine                 # uses the bundled sample timeline
-swift run DesktopPerformanceEngine path/to/timeline.json
+swift run GiveIt2Me_DJ_Dave_malware                 # uses the bundled sample timeline
+swift run GiveIt2Me_DJ_Dave_malware path/to/timeline.json
 ```
 
 Packaged `.app` — **double-click it and the piece runs**, no terminal. Also what
@@ -31,16 +31,16 @@ tile with a little window and a pink glitch bar through it; redraw with
 `python3 tools/make_icon.py`) and embeds the backing track, so it runs from anywhere:
 
 ```bash
-./bundle.sh                                         # → build/DesktopPerformanceEngine.app (ad-hoc signed)
-open build/DesktopPerformanceEngine.app
-open -a "$PWD/build/DesktopPerformanceEngine.app" --args examples/timeline_cursor.json
+./bundle.sh                                         # → build/GiveIt2Me_DJ_Dave_malware.app (ad-hoc signed)
+open build/GiveIt2Me_DJ_Dave_malware.app
+open -a "$PWD/build/GiveIt2Me_DJ_Dave_malware.app" --args examples/timeline_cursor.json
 ```
 
 The bundle is **self-contained** — it carries the show, the backing track and its icon,
 so it runs from anywhere (Applications, a USB stick, another Mac). Verify a copy with:
 
 ```bash
-/path/to/DesktopPerformanceEngine.app/Contents/MacOS/DesktopPerformanceEngine --check
+/path/to/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware --check
 ```
 
 ⚠️ Don't reach for SwiftPM's `Bundle.module` to find bundled resources here. It searches
@@ -107,7 +107,7 @@ xcrun notarytool store-credentials dpe --apple-id you@example.com \
 Test a build the way a recipient gets it, by faking the quarantine flag:
 
 ```bash
-xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/DesktopPerformanceEngine.zip
+xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/GiveIt2Me_DJ_Dave_malware.zip
 ```
 
 The piece asks for **Camera** (the photo booth), **Contacts** and **Location Services**
@@ -117,7 +117,7 @@ The piece asks for **Camera** (the photo booth), **Contacts** and **Location Ser
 `warp` mode) and no Automation (no `rearrangeIcons`). It does want the network, for the
 Apple Maps flights. The `.app`'s Info.plist carries the usage strings; the bare
 `swift run` executable embeds the same strings from
-`Sources/DesktopPerformanceEngine/Info.plist` (Package.swift's linker flags), because
+`Sources/GiveIt2Me_DJ_Dave_malware/Info.plist` (Package.swift's linker flags), because
 macOS kills a process that touches the camera without one. Note also that `hdiutil` needs real disk-image privileges, so
 `ship.sh` won't make a `.dmg` from inside a sandboxed shell.
 
@@ -147,8 +147,8 @@ shield) rather than reproduced. Title and body both **shrink to fit** their pane
 rewriting the copy can't push text off the card.
 
 ```bash
-swift run DesktopPerformanceEngine --no-gate                    # skip it (dev loop)
-swift run DesktopPerformanceEngine --snapshot-gate=cards.png    # render the cards to a PNG montage
+swift run GiveIt2Me_DJ_Dave_malware --no-gate                    # skip it (dev loop)
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-gate=cards.png    # render the cards to a PNG montage
 ```
 
 `--autoplay` skips the gate too, since it drives itself. Edit the copy in
@@ -219,20 +219,20 @@ NSApplication — Finder automation, MapKit, engine seek — not pure logic.
 ### Dev tools
 
 ```bash
-swift run DesktopPerformanceEngine --autoplay          # play whole show, log per-event
+swift run GiveIt2Me_DJ_Dave_malware --autoplay          # play whole show, log per-event
                                                        # timing drift, then restore + quit
-DPE_AUTOPLAY_FROM=146 DPE_AUTOPLAY_SECS=30 swift run DesktopPerformanceEngine --autoplay
+DPE_AUTOPLAY_FROM=146 DPE_AUTOPLAY_SECS=30 swift run GiveIt2Me_DJ_Dave_malware --autoplay
                                                        # rehearse one act: start at 146 s, quit after 30
-swift run DesktopPerformanceEngine --snapshot-acts=a.png  # the new surfaces, offscreen: lyric card,
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-acts=a.png  # the new surfaces, offscreen: lyric card,
                                                        # boot screen, booth, oracle, end card
-swift run DesktopPerformanceEngine --snapshot=out.png  # render the window content to a PNG
-swift run DesktopPerformanceEngine --snapshot-scenes=out.png   # preview the livecode + typeText scenes
-swift run DesktopPerformanceEngine --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
-swift run DesktopPerformanceEngine --snapshot-chrome=c.png     # real window chrome + alerts, alpha intact
-swift run DesktopPerformanceEngine --validate=examples/timeline_show.json   # load + count a timeline
-swift run DesktopPerformanceEngine --test-hydra=out.png        # nine live hydra sketches at once:
+swift run GiveIt2Me_DJ_Dave_malware --snapshot=out.png  # render the window content to a PNG
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-scenes=out.png   # preview the livecode + typeText scenes
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-chrome=c.png     # real window chrome + alerts, alpha intact
+swift run GiveIt2Me_DJ_Dave_malware --validate=examples/timeline_show.json   # load + count a timeline
+swift run GiveIt2Me_DJ_Dave_malware --test-hydra=out.png        # nine live hydra sketches at once:
                                                        # proves they render, prints processes/MB/CPU
-swift run DesktopPerformanceEngine --parse-hydra patch.txt     # what the impression reads out of a patch
+swift run GiveIt2Me_DJ_Dave_malware --parse-hydra patch.txt     # what the impression reads out of a patch
 python3 tools/make_icon.py                             # redraw assets/AppIcon.icns
 ```
 
@@ -275,7 +275,7 @@ ramp (dark→light, default `" .:-=+*#%@"`), and `colorized: true` tints each gl
 its source pixel color. `hex` is the text color (default matrix-green `#8CF2A6`). Image
 conversion runs off the main thread and is cached, like the `image` kind. Works with
 `chrome`/`title` too. See `examples/timeline_ascii.json`; preview with
-`DPE_ASCII_DEMO=1 swift run DesktopPerformanceEngine --snapshot=ascii.png`.
+`DPE_ASCII_DEMO=1 swift run GiveIt2Me_DJ_Dave_malware --snapshot=ascii.png`.
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
 `screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,
@@ -340,7 +340,7 @@ it's being performed.
 The strobe also still runs standalone:
 
 ```bash
-swift run DesktopPerformanceEngine examples/timeline_strobe.json
+swift run GiveIt2Me_DJ_Dave_malware examples/timeline_strobe.json
 ```
 
 Regenerate / tune the strobe with its generator:
@@ -429,7 +429,7 @@ replayed as browser windows:
 ```bash
 python3 tools/generate_horse.py      # assets/muybridge_horse.gif → examples/timeline_horse.json
 SPAN=0.88 HOLD=20 COLS=19 python3 tools/generate_horse.py   # size / hold / grid overrides
-swift run DesktopPerformanceEngine examples/timeline_horse.json
+swift run GiveIt2Me_DJ_Dave_malware examples/timeline_horse.json
 ```
 
 ### `cursorTrail`
@@ -457,7 +457,7 @@ the arrow points at (in the full show, that's where the chaos erupts):
 ```bash
 python3 tools/spell_path.py          # → examples/timeline_look.json (standalone)
 TEXT="oh no" python3 tools/spell_path.py    # any text the stroke font covers
-swift run DesktopPerformanceEngine examples/timeline_look.json
+swift run GiveIt2Me_DJ_Dave_malware examples/timeline_look.json
 ```
 
 ### `livecode` — hydra, for real
@@ -487,7 +487,7 @@ line, numbers in pink.
 | renders in `--snapshot` | no | yes |
 
 ```bash
-DPE_HYDRA=fake      ./build/DesktopPerformanceEngine.app/Contents/MacOS/DesktopPerformanceEngine
+DPE_HYDRA=fake      ./build/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware
 DPE_HYDRA_MAX=3     # cap live canvases; sketches past the cap fall back to the impression
 ```
 
@@ -630,8 +630,8 @@ the show's pump — a map redraw waits on tiles and is far too unpredictable to 
 beat. All interaction is disabled: it's a shot in a film, not a map the viewer drives.
 
 ```bash
-swift run DesktopPerformanceEngine examples/timeline_map.json
-swift run DesktopPerformanceEngine --test-map     # proves the camera actually moves
+swift run GiveIt2Me_DJ_Dave_malware examples/timeline_map.json
+swift run GiveIt2Me_DJ_Dave_malware --test-map     # proves the camera actually moves
 ```
 
 `--test-map` builds a real map window off-screen and samples its camera twice, so you
@@ -948,7 +948,7 @@ original.
 | Target | What |
 | --- | --- |
 | `DPECore` | everything: clock, scheduler, executors, timeline |
-| `DesktopPerformanceEngine` | the executable; `main.swift` and nothing else |
+| `GiveIt2Me_DJ_Dave_malware` | the executable; `main.swift` and nothing else |
 | `dpe-tests` | the test runner (`swift run dpe-tests`) |
 
 The library was split out of the executable so the tests could reach it — an executable
@@ -1025,7 +1025,7 @@ Three ways through, pick deliberately:
    belong to bundled MIT dependencies. AGPL-3.0 §4–5 require the licence and copyright
    notices to travel with the work, so this option means *adding* what the artefact is
    missing: the full AGPL-3.0 text and an ojack/hydra-synth attribution alongside it.
-2. **Ship without it.** Delete `Sources/DesktopPerformanceEngine/Resources/hydra-synth.js`
+2. **Ship without it.** Delete `Sources/GiveIt2Me_DJ_Dave_malware/Resources/hydra-synth.js`
    and `hydra.html` from the bundle; every sketch falls back to the MIT-licensed
    impression and the show still runs. This is the only path that keeps the shipped work
    MIT.

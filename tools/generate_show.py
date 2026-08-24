@@ -554,7 +554,7 @@ doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
                 "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
 for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
-            # DPECore, not DesktopPerformanceEngine: the library was split out of the
+            # DPECore, not the executable target: the library was split out of the
             # executable so the tests could import it, and the resources went with it.
             os.path.join(ROOT, "Sources", "DPECore", "Resources", "timeline.json")):
     with open(out, "w") as f:

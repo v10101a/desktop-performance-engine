@@ -22,7 +22,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP_NAME="DesktopPerformanceEngine"
+APP_NAME="GiveIt2Me_DJ_Dave_malware"
 VOL_NAME="Desktop Performance Engine"
 IDENTITY="${SIGN_IDENTITY:--}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-}"

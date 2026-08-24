@@ -5,7 +5,7 @@ import AppKit
 /// auto-places every icon in its own top-right stack, so the pattern reads in time
 /// but not in space.
 ///
-/// Two hard-won details, inherited from DesktopPerformanceEngine:
+/// Two hard-won details, inherited from the host app:
 ///   * scripts run through the `osascript` subprocess, not in-process NSAppleScript,
 ///     which is orders of magnitude faster for bulk Finder work;
 ///   * positions are batched into a single `tell application "Finder"` block and

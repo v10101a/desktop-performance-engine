@@ -1,5 +1,5 @@
 #!/bin/bash
-# Assemble DesktopPerformanceEngine.app from the SwiftPM build and code-sign it.
+# Assemble GiveIt2Me_DJ_Dave_malware.app from the SwiftPM build and code-sign it.
 #
 #   ./bundle.sh                 # release build, ad-hoc signed
 #   CONFIG=debug ./bundle.sh    # debug build
@@ -15,8 +15,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG="${CONFIG:-release}"
-BUNDLE_ID="com.computerart.desktopperformanceengine"
-APP_NAME="DesktopPerformanceEngine"
+BUNDLE_ID="com.computerart.giveit2me"
+APP_NAME="GiveIt2Me_DJ_Dave_malware"
 IDENTITY="${SIGN_IDENTITY:--}"
 
 echo "▸ swift build -c $CONFIG"
@@ -55,7 +55,7 @@ cp Sources/DPECore/Resources/hydra.html     "$APP/Contents/Resources/"
 # The SwiftPM resource bundle too, as a second home for anything else it carries.
 # Copy every bundle SwiftPM produced rather than one hardcoded name: the bundle is named
 # for the TARGET that declares the resources, so the split renamed it to
-# DesktopPerformanceEngine_DPECore.bundle and a hardcoded name copied nothing.
+# <package>_DPECore.bundle and a hardcoded name copied nothing.
 FOUND_RESBUNDLE=0
 for RESBUNDLE in "$BINDIR"/*.bundle; do
   [ -d "$RESBUNDLE" ] || continue

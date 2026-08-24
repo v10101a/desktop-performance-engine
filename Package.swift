@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "DesktopPerformanceEngine",
+    name: "GiveIt2Me_DJ_Dave_malware",
     platforms: [.macOS(.v13)],
     targets: [
         // Everything except the process entry point. Split out of the executable so it
@@ -21,9 +21,9 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "DesktopPerformanceEngine",
+            name: "GiveIt2Me_DJ_Dave_malware",
             dependencies: ["DPECore"],
-            path: "Sources/DesktopPerformanceEngine",
+            path: "Sources/GiveIt2Me_DJ_Dave_malware",
             exclude: ["Info.plist"],
             // Embed the usage strings into the bare executable: without them macOS kills
             // the process the moment it touches the camera, Contacts or Location Services
@@ -32,7 +32,7 @@ let package = Package(
                 .unsafeFlags(["-Xlinker", "-sectcreate",
                               "-Xlinker", "__TEXT",
                               "-Xlinker", "__info_plist",
-                              "-Xlinker", "Sources/DesktopPerformanceEngine/Info.plist"])
+                              "-Xlinker", "Sources/GiveIt2Me_DJ_Dave_malware/Info.plist"])
             ]
         ),
         // Not a .testTarget: this toolchain is Command Line Tools only, which ships

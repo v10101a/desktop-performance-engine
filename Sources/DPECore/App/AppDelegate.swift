@@ -318,18 +318,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     static func bundledTimelineURL() -> URL? {
         let fm = FileManager.default
         if let res = Bundle.main.resourceURL {
-            // The resources live in DPECore's bundle since the library split. The old
-            // executable-target bundle is still listed LAST as a fallback — but only
-            // last: a stale copy of it in .build once played the previous show under
-            // `swift run` while the new timeline sat unread in the DPECore bundle.
-            let candidates = [
-                res.appendingPathComponent("timeline.json"),
-                res.appendingPathComponent("DesktopPerformanceEngine_DPECore.bundle")
-                   .appendingPathComponent("timeline.json"),
-                res.appendingPathComponent("DesktopPerformanceEngine_DesktopPerformanceEngine.bundle")
-                   .appendingPathComponent("timeline.json")
-            ]
-            for url in candidates where fm.fileExists(atPath: url.path) { return url }
+            // Flat copy first (what bundle.sh writes), then inside whichever SwiftPM
+            // resource bundle is present — that name follows the package AND the target
+            // declaring the resources, so it must not be hardcoded across renames.
+            // DPECore's bundle is tried before any other: a stale executable-target
+            // bundle in .build once played the previous show under `swift run` while
+            // the new timeline sat unread in DPECore's.
+            let flat = res.appendingPathComponent("timeline.json")
+            if fm.fileExists(atPath: flat.path) { return flat }
+            for b in resourceBundles(in: res, fm: fm) {
+                let url = b.appendingPathComponent("timeline.json")
+                if fm.fileExists(atPath: url.path) { return url }
+            }
         }
         return Bundle.module.url(forResource: "timeline", withExtension: "json")
     }
