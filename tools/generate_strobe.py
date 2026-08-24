@@ -1,4 +1,7 @@
 import json, os, glob, subprocess, socket
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import lyrics
 
 import os as _os
 bpm = 150
@@ -71,36 +74,10 @@ stats_blocks = [
     f"PID   COMMAND        %CPU\n1     launchd         0.0\n420   WindowServer   88.3\n666   chaos_daemon   ???\n1337  havoc.app      MAX\n\n> everything is fine",
 ]
 
-code_blocks = [
-    "func chaos() {\n  while true {\n    window.open(.random)\n    cursor.flee()\n  }\n}",
-    "for (;;) {\n  spawn(alert);\n  desktop.shake();\n  // TODO: stop\n}",
-    "def escape():\n    while trapped:\n        panic()\n    return None  # never",
-    "if (reality == stable)\n    reality = undefined;\nrender(pandemonium);",
-    "$ sudo rm -rf /calm\n$ ./summon --windows=∞\nsummoning... done.",
-    "let vibes = try? load(.critical)\nguard vibes else {\n  fatalError(\"too calm\")\n}",
-    "0x48 0x45 0x4C 0x50\nsegmentation fault\n(core dumped) 💀",
-    "npm install chaos\n+ chaos@6.6.6\nadded 9001 packages\nfound ∞ vulnerabilities",
-]
+code_blocks = lyrics.CODE   # the song as JavaScript — see docs/LYRICS.md
 
-alerts = [
-    ("KERNEL PANIC?", "just kidding. or am i?", ["ok", "OK?!"]),
-    ("VIBES OVERFLOW", "buffer of good vibes exceeded at 0xC0FFEE", ["flush", "MORE"]),
-    ("SEGMENTATION FAULT", "of the heart", ["core dump", "cry"]),
-    ("UPDATE AVAILABLE", "reality.app 2.0 wants to install itself", ["not now", "never"]),
-    ("MOUSE ESCAPED", "your cursor has left the building", ["catch it", "let it go"]),
-    ("TOO MANY WINDOWS", "the windows are multiplying", ["close all", "open more"]),
-    ("SYSTEM", "you have 4,000 unread thoughts", ["ignore", "panic"]),
-    ("DISK ALMOST FULL", "of screenshots, specifically", ["delete?", "hoard"]),
-    ("ARE YOU STILL THERE?", "the desktop misses you", ["yes", "no"]),
-    ("ACHIEVEMENT UNLOCKED", "witnessed maximum chaos", ["nice", "again"]),
-    ("wetware error", "operator not found", ["retry", "abort"]),
-    ("REMINDER", "you were supposed to be working", ["lol", "ok"]),
-    ("NULL POINTER", "pointing at nothing, as usual", ["deref", "meh"]),
-    ("do you trust me?", "no reason. just asking.", ["yes", "also yes"]),
-]
+alerts = [(m, b, lyrics.buttons(i)) for i, (m, b, _icon) in enumerate(lyrics.ALERTS)]
 
-texts = ["HELLO","YOU","LOOK","OVER HERE","404","RUN","NO ESCAPE","BEEP","CHAOS",
-         "01001000","STARE","WAKE UP","CLICK","::::","glitch","∞","why","▓▓▓▓","AGAIN"]
 
 # ---------- SCHEDULE ----------
 
@@ -113,13 +90,7 @@ while t < 15.0:
     add(t, "openWindow", {"id":wid,"content":{"kind":"color","hex":col},"frame":[x,y,w,h],"animate":{"kind":"none"}})
     i += 1; t += P["color"]
 
-# text windows
-i, t = 0, 0.2
-while t < 15.0:
-    msg = texts[i%len(texts)]; w, h = 360, 170
-    x = clampx(150 + (i*211)%1150, w); y = clampy(90 + (i*149)%660, h)
-    add(t, "openWindow", {"id":f"tx{i%3}","content":{"kind":"text","text":msg},"frame":[x,y,w,h],"animate":{"kind":"none"}})
-    i += 1; t += P["text"]
+# (text-only windows removed: big-label panels that said nothing but a word)
 
 # code windows
 i, t = 0, 0.5
@@ -151,9 +122,10 @@ if imgs:
 i, t = 0, 0.35
 while t < 15.0:
     title, body, btns = alerts[i%len(alerts)]
-    w, h = 420, 170
+    w, h = 460, 190
     x = clampx(120 + (i*281)%1000, w); y = clampy(100 + (i*199)%560, h)
-    add(t, "fakeDialog", {"id":f"al{i%4}","title":title,"body":body,"buttons":btns,"frame":[x,y,w,h]})
+    add(t, "fakeDialog", {"id":f"al{i%4}","title":title,"body":body,"buttons":btns,
+                          "icon":lyrics.alert(i)[2],"frame":[x,y,w,h]})
     i += 1; t += P["alert"]
 
 # dedicated flyer windows (opened once, moved around fast)

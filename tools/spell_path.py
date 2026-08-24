@@ -158,7 +158,7 @@ def writing_scene(start_beat, W, H, text="LOOK", scale=54, speed=340,
 
 
 def arrow_scene(start_beat, W, H, angle_deg=35, length=None, speed=200,
-                stamp_size=(72, 52), spacing=40, lead_from=None, lead_beats=3):
+                stamp_size=(84, 58), spacing=40, lead_from=None, lead_beats=3):
     """Arrow only, no writing: the cursor glides from `lead_from` (default screen
     center, where the last act held the eye) to the arrow start, draws one LONG
     big arrow pointing down-a-bit — stamped in windows — then glides trail-off to

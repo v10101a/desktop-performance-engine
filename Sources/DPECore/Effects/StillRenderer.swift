@@ -1,0 +1,371 @@
+import AppKit
+
+/// Renders the show's window content into a single PNG, off-screen, using the same
+/// content builders the live windows use. Lets us verify visual rendering without
+/// needing Screen Recording permission. Not part of the performance — a dev tool.
+enum StillRenderer {
+    /// Render phases of a timeline's first sprite as a vertical montage — the same
+    /// cell geometry + micro content views the live pool uses, so what you see is
+    /// what the show spawns. Used by `--snapshot=out.png path/to/timeline.json`.
+    static func renderSprite(_ p: SpriteParams, to url: URL) throws {
+        let cellW = p.cell ?? 30
+        let cellH = cellW * (p.cellAspect ?? 0.72)
+        let gap = p.gap ?? 4
+        let offsets = WindowManager.spriteFrameOffsets(p.frames, strideX: cellW + gap,
+                                                       strideY: cellH + gap)
+        let phases = [0, offsets.count / 3, (2 * offsets.count) / 3]
+        let spriteW = (p.frames.first?.map(\.count).max() ?? 1)
+        let spriteH = p.frames.first?.count ?? 1
+        let paneW = Double(spriteW) * (cellW + gap) + 40
+        let paneH = Double(spriteH) * (cellH + gap) + 40
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: paneW,
+                                          height: paneH * Double(phases.count)))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+        let colors = p.colors ?? WindowManager.defaultPoolColors
+        for (pi, fi) in phases.enumerated() {
+            let baseY = canvas.frame.height - paneH * Double(pi + 1) + 20
+            for (i, cell) in offsets[fi].enumerated() {
+                let v = makeMicroContentView(size: NSSize(width: cellW, height: cellH),
+                                             bodyColor: NSColor(hex: colors[i % colors.count]) ?? .magenta)
+                // Flip authored +y-down offsets into the view's bottom-left space.
+                v.frame = NSRect(x: 20 + cell.x,
+                                 y: baseY + paneH - 40 - cell.y - cellH,
+                                 width: cellW, height: cellH)
+                canvas.addSubview(v)
+            }
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// Render every intro-gate card as a vertical montage, using the same card builder
+    /// the live gate uses. Buttons draw but are inert. `--snapshot-gate=out.png`.
+    static func renderGate(to url: URL) throws {
+        let card = NSSize(width: 1200, height: 750)
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: card.width,
+                                          height: card.height * CGFloat(IntroGate.script.count)))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor.black.cgColor
+        for (i, spec) in IntroGate.script.enumerated() {
+            let tileY = canvas.frame.height - card.height * CGFloat(i + 1)
+            // Popups render at their real on-screen size, centered in the tile, so
+            // the montage shows how big they actually are.
+            let size = spec.style == .popup ? IntroGate.popupSize : card
+            let view = makeIntroCardView(spec, size: size)
+            view.frame.origin = NSPoint(x: (card.width - size.width) / 2,
+                                        y: tileY + (card.height - size.height) / 2)
+            canvas.addSubview(view)
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// Preview the Phase 6 scenes: two livecode REPL windows and the letter editor
+    /// mid-sentence. `--snapshot-scenes=out.png`.
+    ///
+    /// Caveat: the REPL's motion is Core Animation, and a layer renders its MODEL
+    /// value off-screen — so the piano roll and the numerals all show at once here,
+    /// where live they blink through in sequence.
+    static func renderScenes(to url: URL) throws {
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1280, height: 900))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+
+        let small = ContentSpec(kind: "livecode", hex: "#68BDF8",
+                                text: "osc(40, 0.1, 0.8)\n  .kaleid(5)\n  .out()",
+                                chrome: "browser", title: "hydra.ojack.xyz")
+        let a = makeEffectContentView(small, size: NSSize(width: 300, height: 190))
+        a.frame = NSRect(x: 30, y: 680, width: 300, height: 190)
+
+        let big = ContentSpec(kind: "livecode", hex: "#68BDF8",
+                              text: "voronoi(14, 0.3)\n  .diff(osc(30, 0.2))\n  .kaleid(7)\n  .rotate(0.2, 0.1)\n  .out()",
+                              chrome: "browser", title: "hydra — sketch 02")
+        let b = makeEffectContentView(big, size: NSSize(width: 620, height: 380))
+        b.frame = NSRect(x: 380, y: 490, width: 620, height: 380)
+
+        let editor = TextEditorView(size: NSSize(width: 700, height: 440),
+                                    title: "resignation.txt — Edited", fontSize: 14)
+        editor.frame = NSRect(x: 40, y: 20, width: 700, height: 440)
+        editor.render("""
+                      Dear Dean Atwill and Marcela
+
+                      I'm writing to formally confirm the change I've discussed with \
+                      Marcela: this spring will be my last semester at NYU Shangh
+                      """, caret: true)
+
+        [a, b, editor].forEach { canvas.addSubview($0) }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    static func render(to url: URL) throws {
+        let canvasSize = NSSize(width: 1120, height: 620)
+        let canvas = NSView(frame: NSRect(origin: .zero, size: canvasSize))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+
+        // color window with fake browser chrome
+        let color = makeEffectContentView(ContentSpec(kind: "color", hex: "#020AF5", chrome: "browser", title: "horse://gallop"),
+                                          size: NSSize(width: 360, height: 260))
+        color.frame = NSRect(x: 40, y: 320, width: 360, height: 260)
+
+        // text window
+        let text = makeEffectContentView(ContentSpec(kind: "text", text: "HELLO"),
+                                         size: NSSize(width: 440, height: 200))
+        text.frame = NSRect(x: 440, y: 360, width: 440, height: 200)
+
+        // teal color window with terminal chrome
+        let teal = makeEffectContentView(ContentSpec(kind: "color", hex: "#68BDF8", chrome: "terminal", title: "haunt.sh"),
+                                         size: NSSize(width: 200, height: 200))
+        teal.frame = NSRect(x: 900, y: 360, width: 200, height: 200)
+
+        // a row of micro-windows at sprite-pixel size, mixed chrome
+        var micros: [NSView] = []
+        for i in 0..<5 {
+            let body = NSColor(hex: WindowManager.defaultPoolColors[i % WindowManager.defaultPoolColors.count]) ?? .magenta
+            let m = makeMicroContentView(size: NSSize(width: 30, height: 22), bodyColor: body)
+            m.frame = NSRect(x: 560 + CGFloat(i) * 38, y: 260, width: 30, height: 22)
+            micros.append(m)
+        }
+
+        // fake dialog
+        let dialog = makeDialogContentView(title: "CRITICAL VIBES",
+                                           message: "Your desktop is 12% too calm. Increase chaos?",
+                                           buttons: ["MORE", "EVEN MORE"],
+                                           size: NSSize(width: 440, height: 180))
+        dialog.frame = NSRect(x: 60, y: 40, width: 440, height: 180)
+
+        let dialog2 = makeDialogContentView(title: "UH OH",
+                                            message: "A wild window appeared.",
+                                            buttons: ["neat"],
+                                            size: NSSize(width: 380, height: 150))
+        dialog2.frame = NSRect(x: 560, y: 40, width: 380, height: 150)
+
+        ([color, text, teal, dialog, dialog2] + micros).forEach { canvas.addSubview($0) }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// ASCII-renderer demo: literal art + image→ASCII (colorized and monochrome), for
+    /// `--snapshot=out.png` with `DPE_ASCII_DEMO=1`. Renders synchronously so the PNG
+    /// captures the converted art (the live path is async).
+    static func renderAsciiDemo(to url: URL) throws {
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1180, height: 520))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#101014")?.cgColor
+
+        func panel(_ frame: NSRect) -> NSTextView {
+            let p = NSView(frame: frame)
+            p.wantsLayer = true
+            p.layer?.backgroundColor = NSColor(hex: "#060A14")?.cgColor
+            p.layer?.cornerRadius = 6
+            let tv = makeAsciiTextView(frame: NSRect(x: 8, y: 8, width: frame.width - 16, height: frame.height - 16))
+            p.addSubview(tv)
+            canvas.addSubview(p)
+            canvas.window?.layoutIfNeeded()
+            tv.layoutManager?.ensureLayout(for: tv.textContainer!)
+            return tv
+        }
+
+        let cat = " /\\_/\\\n( o.o )\n > ^ <\n ASCII"
+        renderAscii(asciiArtFromText(cat), into: panel(NSRect(x: 20, y: 20, width: 320, height: 480)),
+                    fg: NSColor(hex: "#8CF2A6") ?? .green)
+
+        let horse = resolveResourcePath("assets/muybridge_horse.gif")
+        if let a = asciiArtFromImage(path: horse, cols: 92, invert: false, colorized: true, ramp: dpeAsciiRamp) {
+            renderAscii(a, into: panel(NSRect(x: 360, y: 20, width: 400, height: 480)), fg: .white)
+        }
+        if let a = asciiArtFromImage(path: horse, cols: 92, invert: true, colorized: false, ramp: dpeAsciiRamp) {
+            renderAscii(a, into: panel(NSRect(x: 780, y: 20, width: 400, height: 480)),
+                        fg: NSColor(hex: "#68BDF8") ?? .cyan)
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// Host in an off-screen window so the layer tree composites, then cache to PNG.
+    /// Montage of real, titled effect windows — the actual macOS chrome, captured from
+    /// each window's frame view rather than a drawing of one. `--snapshot-chrome=out.png`.
+    ///
+    /// The frame view (`contentView.superview`) is the view AppKit draws the title bar
+    /// and traffic lights into, so caching its display gives a genuine screenshot with
+    /// no Screen Recording permission involved. Each window is parked far offscreen and
+    /// ordered to the back, so nothing appears on the display.
+    static func renderChrome(to url: URL) throws {
+        let specs: [(ContentSpec, String)] = [
+            (ContentSpec(kind: "color", hex: "#020AF5", chrome: "mac", title: "Untitled"), "mac"),
+            (ContentSpec(kind: "text", text: "you looked", chrome: "browser",
+                         title: "look://found"), "browser"),
+            (ContentSpec(kind: "code",
+                         text: "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
+                         chrome: "terminal"), "terminal"),
+        ]
+        let size = NSSize(width: 420, height: 260)
+        let pad: CGFloat = 24
+        var shots: [NSImage] = []
+
+        // NOTE: the traffic lights draw in the INACTIVE style here, and in the show.
+        // AppKit colours them only for a key/main window, and these windows deliberately
+        // never become key — spawning one must not interrupt whatever is being typed.
+        // That is genuinely how a background macOS window looks; it is not a defect of
+        // this snapshot. Activating the app and calling makeKey() were both tried and
+        // changed nothing, because the window still is not key.
+
+        for (spec, _) in specs {
+            let win = EffectWindow(contentRect: NSRect(origin: .zero, size: size), content: spec)
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            guard let frameView = win.contentView?.superview,
+                  let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds)
+            else { win.close(); continue }
+            frameView.cacheDisplay(in: frameView.bounds, to: rep)
+            let image = NSImage(size: frameView.bounds.size)
+            image.addRepresentation(rep)
+            shots.append(image)
+            win.orderOut(nil)
+            win.close()
+        }
+        // The typeText letter goes through HostedEffectWindow, a different path — include
+        // it so a regression there shows up here too.
+        do {
+            let native = usesNativeChrome("mac", size: size)
+            let editor = TextEditorView(
+                size: BaseEffectWindow.contentSize(forFrame: NSRect(origin: .zero, size: size),
+                                                   native: native),
+                title: "resignation.txt — Edited", fontSize: 13)
+            editor.render("Dear Dean Atwill and Marcela\n\nI'm writing to formally confirm", caret: true)
+            let win = HostedEffectWindow(contentRect: NSRect(origin: .zero, size: size),
+                                         view: editor, title: "resignation.txt — Edited")
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            if let frameView = win.contentView?.superview,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                let image = NSImage(size: frameView.bounds.size)
+                image.addRepresentation(rep)
+                shots.append(image)
+            }
+            win.orderOut(nil)
+            win.close()
+        }
+
+        // Alerts: every illustration variant, at the real dialog size the show uses.
+        // Sample copy matches what the show actually ships: the alert text is the song
+        // (docs/LYRICS.md), fed to both generators from tools/lyrics.py.
+        for (icon, title, body) in [
+            (DialogIcon.critical, "what I want",
+             "I told you that i need your love so give it to me"),
+            (DialogIcon.caution, "running up",
+             "my currents i can\u{2019}t get enough of this feeling baby"),
+            (DialogIcon.info, "all i got", "i\u{2019}m giving that so give it up"),
+        ] {
+            let dialogSize = NSSize(width: 460, height: 190)
+            let win = FakeDialogWindow(contentRect: NSRect(origin: .zero, size: dialogSize),
+                                       title: title, message: body,
+                                       buttons: ["not now", "ok"], icon: icon)
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            if let frameView = win.contentView?.superview,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                let image = NSImage(size: frameView.bounds.size)
+                image.addRepresentation(rep)
+                shots.append(image)
+            }
+            win.orderOut(nil)
+            win.close()
+        }
+
+        // Pooled micro-windows at the sizes the show actually uses: horse sprite cells
+        // and cursor-trail breadcrumbs. These are real windows, so this is the only way
+        // to see whether a 28pt title bar leaves a usable body at these sizes.
+        let microSizes: [(NSSize, String)] = [
+            (NSSize(width: 79, height: 57), "horse sprite cell"),
+            (NSSize(width: 84, height: 58), "cursor-trail breadcrumb"),
+            (NSSize(width: 120, height: 80), "small chaos window"),
+        ]
+        var microShots: [NSImage] = []
+        for (msize, _) in microSizes {
+            let win = MicroWindow(size: msize, bodyColor: NSColor(hex: "#020AF5") ?? .blue,
+                                  shadow: false)
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            if let frameView = win.contentView?.superview,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                let image = NSImage(size: frameView.bounds.size)
+                image.addRepresentation(rep)
+                microShots.append(image)
+            }
+            win.orderOut(nil)
+            win.close()
+        }
+        // Lay them in one row so their relative sizes are obvious.
+        if !microShots.isEmpty {
+            let rowW = microShots.reduce(0) { $0 + $1.size.width + 18 } + 18
+            let rowH = (microShots.map(\.size.height).max() ?? 60) + 24
+            let row = NSView(frame: NSRect(x: 0, y: 0, width: rowW, height: rowH))
+            row.wantsLayer = true
+            row.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.85).cgColor
+            var x: CGFloat = 18
+            for shot in microShots {
+                let iv = NSImageView(frame: NSRect(x: x, y: (rowH - shot.size.height) / 2,
+                                                   width: shot.size.width, height: shot.size.height))
+                iv.image = shot
+                iv.imageScaling = .scaleNone
+                row.addSubview(iv)
+                x += shot.size.width + 18
+            }
+            if let rep = row.bitmapImageRepForCachingDisplay(in: row.bounds) {
+                row.cacheDisplay(in: row.bounds, to: rep)
+                let image = NSImage(size: row.bounds.size)
+                image.addRepresentation(rep)
+                shots.append(image)
+            }
+        }
+
+        guard !shots.isEmpty else { throw NSError(domain: "StillRenderer", code: 2) }
+
+        // Shots differ in size (windows vs alerts), so stack by each one's own height.
+        let widest = shots.map(\.size.width).max() ?? 400
+        let totalH = shots.reduce(0) { $0 + $1.size.height + pad } + pad
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: widest + pad * 2, height: totalH))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor.systemTeal.withAlphaComponent(0.25).cgColor
+        var y = canvas.frame.height - pad
+        for shot in shots {
+            y -= shot.size.height
+            let iv = NSImageView(frame: NSRect(x: pad, y: y,
+                                               width: shot.size.width, height: shot.size.height))
+            iv.image = shot
+            iv.imageScaling = .scaleNone
+            canvas.addSubview(iv)
+            y -= pad
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    private static func writePNG(canvas: NSView, to url: URL) throws {
+        let host = NSWindow(contentRect: NSRect(origin: NSPoint(x: -5000, y: -5000),
+                                                size: canvas.frame.size),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        host.contentView = canvas
+        host.orderBack(nil)
+        canvas.display()
+
+        guard let rep = canvas.bitmapImageRepForCachingDisplay(in: canvas.bounds) else {
+            throw NSError(domain: "StillRenderer", code: 1)
+        }
+        canvas.cacheDisplay(in: canvas.bounds, to: rep)
+        host.orderOut(nil)
+
+        guard let data = rep.representation(using: .png, properties: [:]) else {
+            throw NSError(domain: "StillRenderer", code: 2)
+        }
+        try data.write(to: url)
+    }
+}

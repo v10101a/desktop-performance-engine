@@ -1,4 +1,5 @@
 import AppKit
+import DPECore
 
 // Bootstrap a regular AppKit app without a storyboard/xib.
 let app = NSApplication.shared

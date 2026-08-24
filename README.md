@@ -7,7 +7,13 @@ flashing the screen, and (in later phases) moving the cursor and rearranging des
 icons. The running app *is* the piece; there's no video capture.
 
 Everything is **fully reversible**: state is snapshotted on launch and restored on
-quit or via a global **panic hotkey (⌃⌥⌘Esc)**. Real files are never touched.
+quit or via a global **panic hotkey (⌃⌥⌘Esc)**. Your files are never touched.
+
+One event is an exception worth stating plainly: `fileSwarm` draws patterns out of real
+file icons, so it *creates and deletes its own* throwaway files in `~/Desktop` — marked
+with an extended attribute, swept on stop/panic/quit, and never touching anything it
+didn't make. It is gated behind `meta.allowDesktopFiles` and off by default, as is the
+`deskWallpaper` swap behind `meta.allowWallpaper`.
 
 ## Build & run
 
@@ -108,6 +114,26 @@ at 35.87 s; a per-bar energy probe shows the sub-bass actually drops out at 26.5
 (bar 15), returns at 28.41 s, and the real drop lands at **30.28 s** (bar 17). The show's
 act boundaries are those verified bars, and the generator adds its own markers for them.
 
+### Tests
+
+```bash
+swift run dpe-tests          # 109 checks; exits non-zero on failure
+```
+
+Covers the pacing accumulator, the timeline format and every event type's decode, the
+photo-wall coverage/retirement invariants, all seven swarm patterns, the glitch engine,
+screen geometry, the probe's section builders, and a real offscreen torus render.
+
+**Why an executable and not `swift test`.** This project builds with the Command Line
+Tools toolchain, which ships neither XCTest nor swift-testing, so a `.testTarget` cannot
+compile — which is presumably why the app grew `--test-*` NSLog modes instead. Those
+printed an expectation next to a result and left a human to compare them, so a
+regression printed `3/6` beside `(expect 6/6)` and **still exited 0**. `dpe-tests` is a
+plain executable with real assertions and a real exit code, so CI can gate on it.
+
+The `--test-*` flags that remain on the app are the ones that genuinely need a running
+NSApplication — Finder automation, MapKit, engine seek — not pure logic.
+
 ### Dev tools
 
 ```bash
@@ -115,6 +141,8 @@ swift run DesktopPerformanceEngine --autoplay          # play whole show, log pe
                                                        # timing drift, then restore + quit
 swift run DesktopPerformanceEngine --snapshot=out.png  # render the window content to a PNG
 swift run DesktopPerformanceEngine --snapshot-scenes=out.png   # preview the livecode + typeText scenes
+swift run DesktopPerformanceEngine --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
+swift run DesktopPerformanceEngine --validate=examples/timeline_show.json   # load + count a timeline
 python3 tools/make_icon.py                             # redraw assets/AppIcon.icns
 ```
 
@@ -161,8 +189,10 @@ conversion runs off the main thread and is cached, like the `image` kind. Works 
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
 `screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,
-`typeText`.
-Present but disabled by default: `wallpaper`.
+`typeText`, `photoWall`, `glassTorus`, `systemProbe`.
+Gated off by default: `wallpaper`, `deskWallpaper` (`meta.allowWallpaper`), `fileSwarm`
+(`meta.allowDesktopFiles`).
+
 
 The bundled default demo (`Resources/timeline.json`) is **the show**
 (`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`),
@@ -178,6 +208,10 @@ scored bar by bar to the real track at 128.5 BPM:
 | 17 | **CHORUS** | the drop. Everything blows away, the background flashes on every detected **kick**, and the chaos erupts from the focal point |
 | 24 | **STROBE** | the original strobe finale (`examples/timeline_strobe.json`), spliced in verbatim at 43.35 s |
 | 33 | **LETTER** | a plain text editor opens and writes itself out in tempo (`assets/letter.txt`), short white pulses flashing behind it on every fourth kick, until it's flashed away at bar 76 |
+| 56 | **FLYOVER** | three Apple Maps flights, the kicks lighting the room back up between them |
+| 57 | **PROBE** | `system_probe` opens lower-right and types out its disclosure report — the machine reading you back to yourself — while the maps fly |
+| 68 | **SWARM** | the desktop icons themselves start drawing: `rain`, then Conway's `life` running out the track. *Gated: `ALLOW_DESKTOP_FILES=1`* |
+| 82 | **WALLPAPER** | the last act. The desktop shows a screenshot of itself, so the probe and the swarm recurse into the background; then it glitches, then strobes to the end. *Gated: `ALLOW_WALLPAPER=1`* |
 | 56 | **FLYOVER** | the letter has finished writing, so it's flashed away and the screen opens onto real Apple Maps flights over Shanghai and New York — the two cities the letter is about — kicks flashing again, until the break at 161 s clears everything |
 
 The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The
@@ -449,6 +483,219 @@ swift run DesktopPerformanceEngine --test-map     # proves the camera actually m
 `--test-map` builds a real map window off-screen and samples its camera twice, so you
 can tell a flight that isn't running from tiles that haven't loaded.
 
+### `glassTorus`
+
+A tumbling glass (or mirror-metal) torus in a borderless, fully transparent window,
+refracting a live capture of the screen behind it. Ported from the standalone
+`GlassTorus` app; `TorusScene` (pipeline + Metal shader source), `TorusMesh`, `Math`
+and `Snapshot` are that app's code unchanged, under `Effects/GlassTorus/`.
+
+```jsonc
+{ "beat": 4,  "type": "glassTorus", "params": { "id": "torus", "material": "glass" } }
+{ "beat": 16, "type": "glassTorus", "params": {
+    "id": "torus", "material": "chrome", "roughness": 0.02, "speed": 1.6 } }
+{ "beat": 32, "type": "closeWindow", "params": { "id": "torus" } }
+```
+
+Materials: `glass` (default), `crystal`, `chrome`, `gold`, `copper`, `titanium`. The two
+dielectrics refract the capture per channel at slightly different indices, which is
+where the coloured fringing comes from; the conductors weight an environment reflection
+by Schlick-Fresnel, with `roughness` (0 = mirror, 1 = brushed) driving the mip LOD.
+`planeDistance` (default 2.0) sets how far behind the torus the desktop plane sits —
+nearer gives a tight, strongly curved reflection. Firing a second `glassTorus` with the
+same `id` swaps the material live, as in the example above.
+
+`speed` (default 1) multiplies the tumble rate. `durationBeats`/`durationSeconds` close
+the window; omit both and it stays until `closeWindow` by `id`. Geometry is `frame`
+(`[x, y, w, h]`, top-left origin) or `size`, defaulting to the standalone app's sizing —
+72% of the screen's shorter side, clamped to 560…1100, centred. `level` is
+`"screenSaver"` by default (above the menu bar, as the standalone app ran), or
+`"floating"` / `"normal"` to sit inside the show's window stack.
+
+Three things the port had to change:
+
+- **The show clock drives the frame.** MTKView is put in `isPaused` mode and drawn from
+  the pump with `elapsed` written from the timeline position, so the tumble scrubs with
+  the playhead, freezes when the transport stops, and is identical take to take. The
+  standalone renderer accumulated wall-clock deltas.
+- **The glass reflects the show.** The standalone app excluded its whole *application*
+  from the capture to stop the reflection recursing into itself. Inside the show that
+  would exclude the show — the photo wall, every effect window — leaving only the bare
+  desktop to refract. Only the torus's own window is excluded now, which is the minimum
+  that breaks the feedback loop. Set `reflectShow: false` for the old behaviour.
+- **The window never takes focus and has no keys.** The standalone app's shortcuts
+  (material, roughness, plane, pause, quit) are authored per event instead, and `Esc`
+  belongs to the panic hotkey.
+
+Metal is built lazily, on the first `glassTorus` event: a show that never uses one
+neither compiles the pipeline nor triggers the **Screen Recording** prompt. That
+permission is optional — refused, the torus falls back to the procedural studio
+environment and still runs, it just reflects a studio instead of your desktop.
+
+Verify headlessly with `--test-glasstorus`: it compiles the pipeline on the real GPU
+(the shaders are built from source at runtime, so a clean build proves nothing about
+them) and renders a frame offscreen, asserting both that the torus is drawn and that
+the background stays transparent — a fully opaque frame would mean a black box over the
+show. `--snapshot-torus=out.png` writes one to look at.
+
+`examples/timeline_glasstorus.json` runs the torus over the photo wall, which is the
+combination the two ports are for.
+
+### `systemProbe`
+
+The `system_probe` disclosure report typing itself out in a window: a terminal reading
+back everything this machine knows about whoever is sitting at it — hardware, storage,
+displays, network, battery, the Contacts "me" card, a location fix. Ported from the
+standalone systemprobe app.
+
+```jsonc
+{ "beat": 224, "type": "systemProbe", "params": {
+    "id": "probe", "linesPerBeat": 24, "frame": [576, 144, 806, 630] } }
+{ "beat": 360, "type": "closeWindow", "params": { "id": "probe" } }
+```
+
+`linesPerBeat` (default 24) is a rate, not a duration — as with `typeText.charsPerBeat`,
+editing the report doesn't retime the scene. The standalone app ran the reveal on a
+0.012 s `Timer`; here it is driven from the pump, so the report types in tempo, freezes
+when the transport stops, and lands the same line on the same beat every take. Section
+gathering still happens off the main thread and splices in as it lands.
+
+**This event triggers two TCC prompts the rest of the show doesn't**: Contacts and
+Location Services, for the identity section. That is the point of the piece, but it is
+worth knowing before you run it in front of people. Refused, those lines read
+`<unavailable>` and the report continues. A show with no `systemProbe` event never
+constructs a `Probe`, so nothing is asked for.
+
+`--test-systemprobe` covers the section builders, the formatting helpers and the reveal
+pacing. It deliberately does *not* call `Probe.start()`, because a test that fired two
+permission prompts would be a bad citizen.
+
+### `fileSwarm`
+
+Patterns drawn on the desktop out of **real file icons** — a spiral, rain, Conway's
+life, scrolling text — one throwaway file per lit cell, placed on a grid by Finder.
+Ported from the standalone FileSwarm app.
+
+```jsonc
+{ "beat": 268, "type": "fileSwarm", "params": {
+    "id": "swarm", "pattern": "rain", "ticksPerBeat": 2, "maxLive": 70, "seed": 3 } }
+```
+
+Patterns: `spiral`, `wave`, `rain`, `ripple`, `life`, `marquee` (set `text`),
+`constellation`.
+
+**Gated behind `meta.allowDesktopFiles`, off by default.** This is the only event in the
+show that writes to disk. Files are tiny, prefixed `swarm-`, carry an extended-attribute
+marker, and are removed by the pattern, by `closeWindow`, by panic, by seek and on quit;
+`SwarmFileStore.sweep()` also catches orphans from a run that was killed. Only files
+carrying its own marker are ever deleted, so nothing of yours can be touched.
+
+**Do not author this to land on a beat.** The standalone app measured Finder's desktop
+view: a *deletion* shows in ~85 ms reliably, a *creation* takes 0.7–3 s and erratically
+doesn't show at all before it's deleted again. Touching the folder, `update desktop`,
+hidden flags, renames and activating Finder were all tried and none of them help — it is
+the window server's limit. Treat it as a texture running under a section. The `erase`
+option inverts the trade: fill the grid and cut the pattern *out* of it, so the moving
+edge is the crisp 85 ms deletion and the lag is in the healing behind.
+
+It also needs **Automation ▸ Finder** to place icons on the grid. Refused, the pattern
+still runs — Finder just puts each icon where it likes, so it reads in time but not in
+space.
+
+`--test-fileswarm` runs all seven patterns against a synthetic grid, asserting in-bounds
+cells and that a seeded pattern replays identically. It touches no files.
+
+### `deskWallpaper`
+
+The desktop wallpaper itself as a surface. The three standalone wallpaper tools folded
+into one event:
+
+```jsonc
+{ "beat": 324, "type": "deskWallpaper", "params": { "id": "wall", "mode": "recursive", "hz": 0.7 } }
+{ "beat": 348, "type": "deskWallpaper", "params": { "id": "wall", "mode": "glitch", "hz": 6, "intensity": 0.75 } }
+{ "beat": 364, "type": "deskWallpaper", "params": { "id": "wall", "mode": "strobe", "hz": 10 } }
+```
+
+- **`strobe`** — solid black ↔ solid white on every screen.
+- **`glitch`** — horizontal displacement, per-channel chroma split, scanlines and block
+  corruption, applied to the wallpaper *the show started with* (read from the snapshot,
+  not from the current wallpaper — compounding each pass would dissolve to noise in a
+  second). `intensity` 0…1, `seed` for a reproducible tear.
+- **`recursive`** — the desktop set to a screenshot of the desktop, deepening each pass.
+  Needs Screen Recording.
+
+**Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
+reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.
+
+`hz` is an apply rate, not a beat division, and it has a hard ceiling that isn't ours:
+`setDesktopImageURL` blocks roughly 58 ms per screen, which the standalone app measured
+as a ~17 Hz wall, and the compositor may still drop frames. Asking for more gets you the
+ceiling. Because of that cost the applies are rate-limited off the pump rather than run
+every frame, and `recursive` never has more than one capture in flight.
+
+> **Flashing imagery can trigger seizures in photosensitive epilepsy.** `screenFlash` is
+> the beat-accurate, instantly reversible way to flash the screen; `strobe` differs only
+> in living *behind* every window. Prefer `screenFlash` unless you specifically need the
+> wallpaper.
+
+Frames are written under `~/Library/Application Support/DPE/wallpaper` (macOS stores the
+path, not a copy, so they have to stay on disk while displayed) and swept on restore.
+
+`--test-wallpaper` checks the gate, the glitch engine's determinism, and that frames are
+written and swept. It never calls `setDesktopImageURL` — a test that changed your actual
+wallpaper would be a bad citizen.
+
+### `photoWall`
+
+Fills every screen with randomly sized, randomly placed photo windows pulled from the
+viewer's **own** folders, then keeps laying new photos over the wall. Ported from the
+standalone `photowall` app; `Planner`, `ScreenCoverage` and `PhotoIndex` are that app's
+code unchanged, under `Effects/PhotoWall/`.
+
+```jsonc
+{ "beat": 68, "type": "photoWall", "params": {
+    "id": "wall", "fillPerBeat": 20, "churnPerBeat": 2.7, "windows": 45 } }
+{ "beat": 100, "type": "closeWindow", "params": { "id": "wall" } }
+```
+
+Rates are **per beat**, not per second — that is the one substantive change from the
+standalone app, which ran two `NSTimer`s (a fast fill, then a slower churn). Here
+placement is paced by a beat-credit accumulator on the display pump, so the wall fills
+in tempo. The standalone defaults (`--speed 2`) land at roughly `fillPerBeat: 20` /
+`churnPerBeat: 2.7` at 128.5 BPM.
+
+`durationBeats`/`durationSeconds` bound how long the wall keeps *placing*; the windows
+stay up until `closeWindow` by `id`, so the screen never flashes bare mid-show. Other
+params: `dirs` (default `~/Desktop ~/Downloads ~/Documents ~/Pictures`), `windows`
+(live population, default 45), `minFrac`/`maxFrac` (window edge as a fraction of the
+screen, 0.13/0.52), `cell` (placement lattice, 12), `fade` (seconds, 0.065),
+`minPixels` (640), `imageCap` (1200), `includeCloud`, `keepFilling`, `shadows`, and
+`level` (`"normal"` default — the wall interleaves with the show's other windows;
+`"front"` is the standalone app's level, above the menu bar and Dock).
+
+Three things the port had to change, all of which would otherwise break the show:
+
+- **The windows never take focus and ignore the mouse.** The standalone app made its
+  first window key and closed a photo on click; here that would pull focus off the
+  control window and let a stray click dismantle the wall mid-performance.
+- **The disk walk is prewarmed at load**, alongside the sprite/trail pools. A cold scan
+  of four home folders takes seconds and a `photoWall` fires on a beat, so an unwarmed
+  index would come up empty and fill in late, off the music.
+- **`closeAll()` is wired into panic and restore.** The wall is only ever windows the
+  app opened — no cursor warp, no icon moves — so tearing them down restores the desktop
+  exactly, and ⌃⌥⌘Esc works regardless of what is covering the screen.
+
+Photo selection is the standalone app's, unchanged: app caches and generated images are
+skipped by directory name and size, and iCloud-evicted files are skipped because reading
+one blocks while macOS downloads it (measured at 21 seconds for a 3.5 KB file). Pass
+`includeCloud: true` to use them anyway. Nothing is copied, moved or modified — the
+scan is read-only, and the `.app` declares the Desktop/Documents/Downloads usage strings
+macOS prompts with.
+
+Verify the ported math headlessly with `--test-photowall`: it asserts the fill
+terminates with exact coverage, that 2,000 churn placements retire ~1,980 windows
+without ever exposing a bare cell, and that the beat pacing yields the expected rate.
+
 ### `wallpaper` (disabled by default)
 
 Swaps the desktop wallpaper (`path` to an image, or a solid `color` hex; `screen` or
@@ -457,6 +704,31 @@ public API (`NSWorkspace.setDesktopImageURL`) can't restore Aerial/dynamic wallp
 and applies unreliably without restarting the WallpaperAgent — so it can't meet the
 reversibility guarantee. Enable only if you accept it may not fully restore the
 original.
+
+## Targets
+
+| Target | What |
+| --- | --- |
+| `DPECore` | everything: clock, scheduler, executors, timeline |
+| `DesktopPerformanceEngine` | the executable; `main.swift` and nothing else |
+| `dpe-tests` | the test runner (`swift run dpe-tests`) |
+
+The library was split out of the executable so the tests could reach it — an executable
+target with top-level code in `main.swift` cannot be imported. If you add resources,
+note that SwiftPM names the resource bundle after the *target* that declares them;
+`bundle.sh` copies whatever bundles exist rather than a hardcoded name, because a
+hardcoded one silently shipped an `.app` with no `timeline.json`.
+
+Two directories are worth knowing about:
+
+- **`Support/`** — the pieces every executor shares. `Cadence` (fractional per-beat
+  pacing, burst caps, seek handling), `Beats` (duration resolution), `ScreenGeometry`
+  (the top-left-origin frame convention), and the `Executor` protocol.
+- **`Diagnostics/`** — the test suites, in the library so they can see internal types
+  without a test target's `@testable import`.
+
+`Effects/VENDORING.md` documents which ported files may be refactored and which must
+stay byte-identical to their upstream app.
 
 ## Architecture
 

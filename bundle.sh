@@ -36,9 +36,21 @@ if [ -f assets/AppIcon.icns ]; then
 fi
 
 # Bundle.module resolves resources from Contents/Resources inside an .app.
-RESBUNDLE="$BINDIR/${APP_NAME}_${APP_NAME}.bundle"
-if [ -d "$RESBUNDLE" ]; then
+#
+# Copy every resource bundle SwiftPM produced rather than one hardcoded name. The
+# bundle is named for the *target* that declares the resources, so when the library was
+# split out of the executable this became DesktopPerformanceEngine_DPECore.bundle — and
+# a hardcoded name silently shipped an .app with no timeline.json in it, which only
+# shows up as a blank show at runtime.
+FOUND_RESBUNDLE=0
+for RESBUNDLE in "$BINDIR"/*.bundle; do
+  [ -d "$RESBUNDLE" ] || continue
   cp -R "$RESBUNDLE" "$APP/Contents/Resources/"
+  FOUND_RESBUNDLE=1
+done
+if [ "$FOUND_RESBUNDLE" -eq 0 ]; then
+  echo "!! no resource bundle in $BINDIR — the app will have no bundled timeline" >&2
+  exit 1
 fi
 
 # Embed the compressed backing track(s) so the .app is self-contained and plays
@@ -67,6 +79,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key>             <false/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Desktop Performance Engine rearranges your desktop icons during a performance and restores them when it finishes.</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>The photo wall reads image files from your Desktop to show them during a performance. Nothing is copied, moved or modified.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>The photo wall reads image files from your Documents folder to show them during a performance. Nothing is copied, moved or modified.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>The photo wall reads image files from your Downloads folder to show them during a performance. Nothing is copied, moved or modified.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>The photo wall reads image files to show them during a performance. Nothing is copied, moved or modified.</string>
 </dict>
 </plist>
 PLIST

@@ -28,6 +28,7 @@ import json, math, os, random, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_horse import PALETTE, build_frames, horse_event
 from spell_path import arrow_scene
+import lyrics
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 W = int(os.environ.get("W", "1440"))
@@ -66,6 +67,13 @@ BAR_CHORUS  = 17    # 30.28s  THE DROP
 BAR_STROBE  = 24    # 43.35s
 BAR_LETTER  = 33    # 60.16s  the strobe is over; someone starts typing
 BAR_MAP     = 56    # 103.12s the letter is finished; close it and fly
+BAR_PROBE   = 56    # 103.12s the machine starts reading you back to yourself
+BAR_MIRROR = 63     # 116.19s  section (mid)
+BAR_WALL_UP = 69    # 127.40s  section (high)
+BAR_PEAK   = 76     # 140.47s  section (high)
+BAR_BREAK  = 87     # 161.01s  break (low)
+BAR_SWARM   = 68    # 125.55s the desktop icons start drawing
+BAR_WALL    = 82    # 151.72s the wallpaper itself gives out
 
 # The run-up: one second of windows slamming in, then the drop. Short on purpose —
 # a long visual build reads as the drop having already happened.
@@ -232,15 +240,9 @@ for wid in hydra_ids:
     add(drop + 0.05, "closeWindow", {"id": wid})
 add(drop + 0.05, "closeWindow", {"id": "trace"})     # the arrow goes too
 
-texts   = ["you looked", "hi.", "it's here", ":)", "told you", "don't blink",
-           "give it 2 me", "again"]
-codes   = ["$ open look://deeper\nspawning pages… ok\nvibes at 98%",
-           "> trace complete\n> you are the cursor now",
-           "while true:\n    window()   # sorry"]
-dialogs = [("FOUND SOMETHING", "You looked. That was the whole trick."),
-           ("NOTHING TO SEE", "Absolutely nothing behind this window."),
-           ("CONGRATULATIONS", "You are the 1,000,000th cursor."),
-           ("UH OH", "The pages are multiplying.")]
+codes   = lyrics.CODE     # the song as JavaScript — see docs/LYRICS.md
+# Alert copy is the song — see docs/LYRICS.md. One source, shared with the strobe.
+dialogs = lyrics.ALERTS
 body_colors = PALETTE + ["#0B0E16"]
 
 # No flashes in this loop — the kick pass below owns the flashing, so the two can't
@@ -257,30 +259,24 @@ while b < chorus_end:
     x = max(10, min(fx + r * math.cos(ang) - w / 2, W - w - 10))
     y = max(10, min(fy + r * math.sin(ang) - h / 2, H - h - 10))
     roll = rng.random()
-    if roll < 0.50:
+    if roll < 0.58:
         add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), w, h],
             "content": {"kind": "color", "hex": rng.choice(body_colors),
                         "chrome": "mixed", "title": "look://again"},
             "animate": {"kind": "none" if rng.random() < 0.8 else "springIn"},
             "interactive": True})
         wi += 1
-    elif roll < 0.64:
-        add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), max(w, 240), h],
-            "content": {"kind": "text", "text": rng.choice(texts), "chrome": "browser",
-                        "title": "look://found"},
-            "animate": {"kind": "none"}, "interactive": True})
-        wi += 1
-    elif roll < 0.74:
+    elif roll < 0.70:
         add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), max(w, 300), h],
             "content": {"kind": "code", "text": rng.choice(codes), "chrome": "terminal",
                         "title": "haunt.sh"},
             "animate": {"kind": "none"}, "interactive": True})
         wi += 1
     elif roll < 0.86:
-        title, body = dialogs[di % len(dialogs)]
+        title, body, icon = dialogs[di % len(dialogs)]
         add(b, "fakeDialog", {"id": f"d{di % 4}", "title": title, "body": body,
-            "buttons": ["ok", "OK", "very ok"][di % 2:],
-            "frame": [round(x), round(y), 380, 170]})
+            "buttons": lyrics.buttons(di), "icon": icon,
+            "frame": [round(x), round(y), 460, 190]})
         di += 1
     elif wi > 0:
         add(b, "jiggle", {"id": f"w{(wi - 1) % 14}", "durationBeats": 1.5,
@@ -380,42 +376,221 @@ FLIGHTS = [
     dict(lat=31.2210, lon=121.5400, altitude=700, toAltitude=5200,
          pitch=68, toPitch=40, heading=140, toHeading=330, seconds=22, style=MAP_STYLE),
 ]
-map_at = letter_out + 1.5
+# Moved into PEAK: as a 57-second act starting right after the letter, the maps sat on
+# top of the probe, the torus and the photo wall for the whole of their solos.
+map_at = bar(BAR_PEAK)
 map_frames = [(W * 0.06, H * 0.10, W * 0.52, H * 0.50),
               (W * 0.44, H * 0.34, W * 0.50, H * 0.48),
               (W * 0.20, H * 0.16, W * 0.60, H * 0.62)]
 map_titles = ["maps://shanghai", "maps://new-york", "maps://leaving"]
 for i, (flight, frame, title) in enumerate(zip(FLIGHTS, map_frames, map_titles)):
-    add(map_at + i * 38, "openWindow", {"id": f"map{i}",
+    add(map_at + i * 7, "openWindow", {"id": f"map{i}",
         "frame": [round(v) for v in frame],
         "content": {"kind": "map", "chrome": "browser", "title": title, "map": flight},
         "animate": {"kind": "springIn" if i == 0 else "fadeIn"},
         "interactive": True, "respawn": i == 0})
 
-# the final section is high-energy again, so the kicks light the room back up
+# (The kick-flash pass that ran across the whole final third is gone: it strobed the
+# full screen over the probe, torus and photo-wall solos, which is exactly what those
+# stretches are supposed to be free of.)
 final_flashes = 0
-for i, kt in enumerate(KICKS):
-    if secs(map_at) <= kt < secs(bar(87)):          # bar 87 = 161.01s, the break
-        add_t(kt, "screenFlash", {"color": flash_colors[i % len(flash_colors)],
-                                  "durationSeconds": 0.07})
-        final_flashes += 1
 
 # the break at 161s: everything goes
 add(bar(87), "screenFlash", {"color": "#F2F4FE", "durationBeats": 1.0})
 for i in range(len(FLIGHTS)):
     add(bar(87, 0.5), "closeWindow", {"id": f"map{i}"})
 
-# --- placeholder: the rest of the track isn't scored yet, so keep a heartbeat —
-# a small (kick) window blinking in the lower-left on every remaining kick. ---
+# (The "(kick)" heartbeat placeholder is gone with the other text-only windows; the
+# final third below is scored, so it no longer needs a blinking stand-in.)
 heartbeats = 0
-for kt in KICKS:
-    if strobe_end + 1.0 < kt < secs(map_at):
-        add_t(kt, "openWindow", {"id": "kick", "frame": [36, -140, 176, 64],
-            "content": {"kind": "text", "text": "(kick)", "chrome": "mac",
-                        "title": "kick"},
-            "animate": {"kind": "none"}})
-        add_t(kt + 0.09, "closeWindow", {"id": "kick"})
-        heartbeats += 1
+
+# --- Acts 7-11: the final third (bars 57-end).
+#
+# From ~105s the show was 12 events per 5 seconds and eleven of those were kick
+# flashes — i.e. an empty screen with the lights blinking. The CHORUS runs at 230 per
+# 5s for comparison. This scores the rest of the track to the analyser's own section
+# markers, escalating into the two "high" sections and blowing out at the break:
+#
+#   bar 57  105.0s  PROBE   the machine starts reading you back to yourself
+#   bar 64  118.1s  MIRROR  a glass torus drops in and refracts the whole desktop
+#   bar 69  127.4s  WALL    (section: high) your own photos bury the screen
+#   bar 76  140.5s  PEAK    (section: high) everything at once
+#   bar 87  161.0s  BREAK   it all goes; a bare outro to the end of the track
+#
+# TWO EVENTS ARE GATED OFF BY DEFAULT and are inert until you opt in:
+#
+#   fileSwarm      needs meta.allowDesktopFiles — creates and deletes marked throwaway
+#                  files in ~/Desktop (swept on stop/panic/quit) and drives Finder.
+#   deskWallpaper  needs meta.allowWallpaper — macOS cannot reliably restore
+#                  Aerial/dynamic wallpapers through the public API.
+#
+# Flip them with ALLOW_DESKTOP_FILES=1 / ALLOW_WALLPAPER=1. Shipped as-is the show
+# touches neither your disk nor your wallpaper.
+
+
+fin = random.Random(1105)
+
+# A bounded pool of window ids. Reopening an id moves that window rather than adding
+# one, which is what keeps a few hundred events from becoming a few hundred live
+# NSWindows — the same trick the CHORUS uses.
+FIN_POOL = 26
+fin_wi = 0
+
+FIN_CODES = lyrics.CODE
+FIN_DIALOGS = lyrics.ALERTS
+FIN_ASCII = [
+    "  ___  _ _ \n / _ \\| | |\n| (_) | | |\n \\___/|_|_|\n  ALL YOURS",
+    "  >_  \n  >_  \n  >_  \n  READY",
+    " /\\_/\\ \n( o.o )\n > ^ < \n WATCHING",
+]
+fin_colors = PALETTE + ["#0B0E16", "#F2F4FE"]
+
+def fin_frame(u):
+    """A window frame whose size and spread grow with intensity `u` (0..1)."""
+    w = round((150 + u * 420) * fin.uniform(0.75, 1.3))
+    h = round(w * fin.uniform(0.52, 0.9))
+    x = round(fin.uniform(-0.04, 1.04) * W - w / 2)
+    y = round(fin.uniform(-0.02, 1.02) * H - h / 2)
+    return [max(-40, min(x, W - 40)), max(-20, min(y, H - 20)), w, h]
+
+def fin_window(b, u):
+    """One chaos event: a window, a dialog, or a nudge to something already up."""
+    global fin_wi
+    roll = fin.random()
+    wid = f"f{fin_wi % FIN_POOL}"
+    frame = fin_frame(u)
+    if roll < 0.36:
+        add(b, "openWindow", {"id": wid, "frame": frame,
+            "content": {"kind": "color", "hex": fin.choice(fin_colors),
+                        "chrome": "mixed", "title": "give://it/2/me"},
+            "animate": {"kind": "none" if fin.random() < 0.75 else "springIn"},
+            "interactive": True})
+        fin_wi += 1
+    elif roll < 0.54:
+        frame[2] = max(frame[2], 320)
+        add(b, "openWindow", {"id": wid, "frame": frame,
+            "content": {"kind": "code", "text": fin.choice(FIN_CODES),
+                        "chrome": "terminal", "title": "exfil.sh"},
+            "animate": {"kind": "none"}, "interactive": True})
+        fin_wi += 1
+    elif roll < 0.66:
+        # The ascii renderer, cherry-picked onto this branch earlier.
+        frame[2] = max(frame[2], 300)
+        add(b, "openWindow", {"id": wid, "frame": frame,
+            "content": {"kind": "ascii", "text": fin.choice(FIN_ASCII),
+                        "hex": "#8CF2A6", "chrome": "terminal", "title": "art.txt"},
+            "animate": {"kind": "none"}, "interactive": True})
+        fin_wi += 1
+    elif roll < 0.76:
+        src, title = PATCHES[fin.randrange(len(PATCHES))]
+        frame[2] = max(frame[2], 300)
+        add(b, "openWindow", {"id": wid, "frame": frame,
+            "content": {"kind": "livecode", "text": src, "title": title,
+                        "chrome": "browser", "hex": "#68BDF8", "running": True},
+            "animate": {"kind": "none"}, "interactive": True})
+        fin_wi += 1
+    elif roll < 0.92:
+        title, body, icon = FIN_DIALOGS[fin.randrange(len(FIN_DIALOGS))]
+        add(b, "fakeDialog", {"id": f"fd{fin_wi % 5}",
+            "title": title, "body": body, "icon": icon,
+            "buttons": lyrics.buttons(fin_wi),
+            "frame": [frame[0], frame[1], 460, 190]})
+        fin_wi += 1
+    elif roll < 0.96 and fin_wi > 0:
+        # Slide something already up, so the screen moves as well as blinks.
+        dest = fin_frame(u)
+        add(b, "moveWindow", {"id": f"f{fin.randrange(min(fin_wi, FIN_POOL))}",
+            "frame": dest[:2], "durationBeats": 1.0 + fin.random() * 2,
+            "easing": "easeOut" if fin.random() < 0.5 else "easeInOut"})
+    elif fin_wi > 0:
+        add(b, "jiggle", {"id": f"f{(fin_wi - 1) % FIN_POOL}",
+            "durationBeats": 1.0 + fin.random(), "amplitude": 12 + u * 22,
+            "frequency": 8 + u * 6})
+
+def fin_fill(b0, b1, rate0, rate1):
+    """Chaos from beat b0 to b1, events-per-beat ramping rate0 -> rate1."""
+    b = b0
+    n = 0
+    while b < b1:
+        u = (b - b0) / max(1e-6, b1 - b0)
+        fin_window(b, min(1.0, 0.35 + 0.65 * u))
+        rate = rate0 + (rate1 - rate0) * u
+        b += 1.0 / max(0.2, rate * fin.uniform(0.7, 1.4))
+        n += 1
+    return n
+
+# --- Acts 7-10.
+#
+# Each of the three big elements gets a stretch with NOTHING on top of it before they
+# start layering. They were previously stacked so tightly that the probe was buried
+# before it finished typing and the wall arrived on top of the torus. Now:
+#
+#   bar 57  105.0s  PROBE   13s of the report alone on screen
+#   bar 64  118.1s  TORUS   11s of the glass alone over a quiet desktop
+#   bar 70  129.3s  WALL    13s of the photo wall alone, filling the screen
+#   bar 77  142.3s  PEAK    19s of all of it at once, ramping into the break
+#
+# The chaos pass runs only in PEAK. During the three solos the screen carries just
+# that element and the kick flashes, which is what "uncovered" has to mean here.
+
+# --- Act 7: PROBE (bar 57) — the report types itself out and is allowed to be read.
+# 6 lines/beat, not 24: at the faster rate the whole report was on screen in about
+# four seconds and then just sat there. ---
+add(bar(BAR_PROBE), "systemProbe", {"id": "probe", "linesPerBeat": 6,
+    "frame": [round(W * 0.22), round(H * 0.12), round(W * 0.56), round(H * 0.74)]})
+add(bar(BAR_MIRROR, -1), "closeWindow", {"id": "probe"})
+
+# --- Act 8: TORUS (bar 64) — the glass, alone. The probe has just closed, so what it
+# refracts is a bare desktop and the shape itself is the whole image. ---
+add(bar(BAR_MIRROR), "glassTorus", {"id": "torus", "material": "glass",
+                                    "speed": 0.8, "size": round(min(W, H) * 0.62)})
+add(bar(BAR_MIRROR), "screenFlash", {"color": "#68BDF8", "durationBeats": 0.5})
+
+# --- Act 9: WALL (bar 70, section high) — the photo wall fills the screen on its own.
+# The torus goes out first: it floats above everything, so leaving it up would put a
+# large object in front of the thing that is meant to be uncovered. ---
+add(bar(BAR_WALL_UP, -1), "closeWindow", {"id": "torus"})
+add(bar(BAR_WALL_UP), "photoWall", {"id": "wall", "fillPerBeat": 9, "churnPerBeat": 2.2,
+                                    "windows": 34, "minFrac": 0.11, "maxFrac": 0.44})
+add(bar(BAR_WALL_UP), "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.6})
+
+# --- Act 10: PEAK (bar 77, section high) — now they layer. The glass comes back over
+# the wall it can reflect, the horse runs through, the cursor drags a comet, and the
+# chaos pass ramps into the break. All the density lives here. ---
+peak_horse, _, _ = horse_event(frames, gc, gr, W, H, start_beat=bar(BAR_PEAK, 4),
+                               span=0.88, hold=6, in_beats=4, out_beats=4)
+events.append(peak_horse)
+add(bar(BAR_PEAK), "screenFlash", {"color": "#FF2D95", "durationBeats": 0.75})
+add(bar(BAR_PEAK), "glassTorus", {"id": "torus", "material": "chrome",
+                                  "roughness": 0.03, "speed": 1.6,
+                                  "size": round(min(W, H) * 0.66)})
+add(bar(BAR_PEAK + 5), "glassTorus", {"id": "torus", "material": "crystal", "speed": 2.1,
+                                      "size": round(min(W, H) * 0.72)})
+add(bar(BAR_PEAK, 2), "cursorTrail", {"id": "comet", "mode": "follow", "count": 12,
+                                      "delay": 0.05, "size": [84, 58], "chrome": "mixed",
+                                      "durationBeats": 36})
+add(bar(BAR_PEAK, 2), "fileSwarm", {"id": "swarm", "pattern": "life",
+                                    "ticksPerBeat": 2, "maxLive": 90, "seed": 5})
+add(bar(BAR_PEAK + 3), "deskWallpaper", {"id": "wall2", "mode": "recursive", "hz": 0.7})
+add(bar(BAR_PEAK + 6), "deskWallpaper", {"id": "wall2", "mode": "glitch",
+                                         "hz": 6, "intensity": 0.75, "seed": 11})
+n_probe = n_mirror = n_wall = 0
+n_peak = fin_fill(bar(BAR_PEAK, 1), bar(BAR_BREAK), 6.0, 22.0)
+
+# --- Act 11: BREAK (bar 87) — the analyser's own break. Everything goes at once,
+# and the last eight seconds are bare: one window, then nothing. ---
+add(bar(BAR_BREAK), "screenFlash", {"color": "#F2F4FE", "durationBeats": 1.5})
+for wid in [f"f{i}" for i in range(FIN_POOL)] + [f"fd{i}" for i in range(5)]:
+    add(bar(BAR_BREAK, 0.25), "closeWindow", {"id": wid})
+for wid in ("wall", "swarm", "wall2", "probe", "comet", "horse"):
+    add(bar(BAR_BREAK, 0.25), "closeWindow", {"id": wid})
+
+# The torus outlives everything else by a few bars — the last thing on screen is the
+# glass, turning over an empty desktop.
+add(bar(BAR_BREAK, 1), "glassTorus", {"id": "torus", "material": "glass", "speed": 0.5,
+                                      "size": round(min(W, H) * 0.5)})
+outro_end = ((DURATION - OFFSET) / BEAT) - 1
+add(outro_end, "closeWindow", {"id": "torus"})
 
 # --- markers for the scrubber: the analyser's sections plus the act boundaries we
 # verified by hand (the detector missed the drop by three bars) ---
@@ -426,6 +601,11 @@ markers += [
     {"t": round(secs(bar(BAR_BUILD)), 2), "bar": BAR_BUILD, "label": "build", "kind": "section"},
     {"t": round(secs(bar(BAR_CHORUS)), 2), "bar": BAR_CHORUS, "label": "CHORUS", "kind": "drop"},
     {"t": round(secs(bar(BAR_STROBE)), 2), "bar": BAR_STROBE, "label": "strobe", "kind": "drop"},
+    {"t": round(secs(bar(BAR_PROBE)), 2),  "bar": BAR_PROBE,  "label": "probe", "kind": "section"},
+    {"t": round(secs(bar(BAR_MIRROR)), 2), "bar": BAR_MIRROR, "label": "mirror", "kind": "section"},
+    {"t": round(secs(bar(BAR_WALL_UP)), 2),"bar": BAR_WALL_UP,"label": "photo wall", "kind": "section"},
+    {"t": round(secs(bar(BAR_PEAK)), 2),   "bar": BAR_PEAK,   "label": "PEAK", "kind": "drop"},
+    {"t": round(secs(bar(BAR_BREAK)), 2),  "bar": BAR_BREAK,  "label": "break", "kind": "break"},
 ]
 markers.sort(key=lambda m: m["t"])
 
@@ -434,10 +614,15 @@ def when(e):
 events.sort(key=when)
 
 doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
-                "analyzedBpm": BPM, "markers": markers},
+                "analyzedBpm": BPM, "markers": markers,
+                # Both default false — see the tail-acts note above.
+                "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") == "1",
+                "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
 for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
-            os.path.join(ROOT, "Sources", "DesktopPerformanceEngine", "Resources", "timeline.json")):
+            # DPECore, not DesktopPerformanceEngine: the library was split out of the
+            # executable so the tests could import it, and the resources went with it.
+            os.path.join(ROOT, "Sources", "DPECore", "Resources", "timeline.json")):
     with open(out, "w") as f:
         json.dump(doc, f, indent=1)
     print(f"wrote {os.path.normpath(out)}")
@@ -446,6 +631,18 @@ print(f"{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}
 print(f"  horse   bar  1     {secs(0):6.2f}s  exits beat {horse_exit:.0f}")
 print(f"  point   bar {BAR_POINT:>2}     {secs(bar(BAR_POINT)):6.2f}s  ends beat {p_end:.1f} "
       f"→ focal ({fx:.0f},{fy:.0f})")
+print(f"  probe   bar {BAR_PROBE:>2}     {secs(bar(BAR_PROBE)):6.2f}s  report alone      "
+      f"({secs(bar(BAR_MIRROR)) - secs(bar(BAR_PROBE)):5.1f}s uncovered)")
+print(f"  torus   bar {BAR_MIRROR:>2}     {secs(bar(BAR_MIRROR)):6.2f}s  glass alone       "
+      f"({secs(bar(BAR_WALL_UP)) - secs(bar(BAR_MIRROR)):5.1f}s uncovered)")
+print(f"  wall    bar {BAR_WALL_UP:>2}     {secs(bar(BAR_WALL_UP)):6.2f}s  photo wall alone  "
+      f"({secs(bar(BAR_PEAK)) - secs(bar(BAR_WALL_UP)):5.1f}s uncovered)")
+print(f"  PEAK    bar {BAR_PEAK:>2}     {secs(bar(BAR_PEAK)):6.2f}s  all of it (+{n_peak} chaos)")
+print(f"  break   bar {BAR_BREAK:>2}     {secs(bar(BAR_BREAK)):6.2f}s  it all goes, bare outro")
+print(f"  gated: fileSwarm "
+      f"{'ENABLED' if doc['meta']['allowDesktopFiles'] else '(ALLOW_DESKTOP_FILES=1)'} · "
+      f"deskWallpaper "
+      f"{'ENABLED' if doc['meta']['allowWallpaper'] else '(ALLOW_WALLPAPER=1)'}")
 print(f"  hydra             {secs(HY):6.2f}s  opens at the arrow's tip, runs at "
       f"{secs(RUN_AT):.2f}s, {len(hydra_ids)} windows total")
 print(f"  riser             {secs(DROP_BEAT - RISER_SECONDS / BEAT):6.2f}s  {RISER_COUNT} windows "
