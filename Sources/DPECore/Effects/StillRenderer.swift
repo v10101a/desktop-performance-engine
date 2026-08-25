@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 /// Renders the show's window content into a single PNG, off-screen, using the same
 /// content builders the live windows use. Lets us verify visual rendering without
@@ -97,6 +98,78 @@ enum StillRenderer {
                       """, caret: true)
 
         [a, b, editor].forEach { canvas.addSubview($0) }
+        try writePNG(canvas: canvas, to: url)
+    }
+
+    /// Preview the restructured show's new surfaces, none of which needs a camera, a
+    /// location fix or a running clock to draw: a lyric card at screen aspect, one of
+    /// the clock windows, the boot screen mid-bar, Photo Booth on "2" with no camera,
+    /// the oracle asking and answering, and the end card's photo frame + terminal +
+    /// alert. `--snapshot-acts=out.png`.
+    static func renderActs(to url: URL) throws {
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1400, height: 1180))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor(hex: "#1A1A20")?.cgColor
+
+        func put(_ v: NSView, _ x: CGFloat, _ y: CGFloat) {
+            v.frame.origin = NSPoint(x: x, y: y)
+            canvas.addSubview(v)
+        }
+
+        // Row 1: lyric cards — the fullscreen frame at 16:10, and one clock window.
+        let card = makeEffectContentView(
+            ContentSpec(kind: "lyric", hex: "#0078D7", text: "i can’t get enough", fg: "#F2F4FE"),
+            size: NSSize(width: 640, height: 400))
+        put(card, 20, 760)
+        let card2 = makeEffectContentView(
+            ContentSpec(kind: "lyric", hex: "#F2F4FE", text: "so give it to me", fg: "#0078D7"),
+            size: NSSize(width: 230, height: 108))
+        put(card2, 1150, 640)
+        let boot = BootView(size: NSSize(width: 640, height: 400), glyph: "\u{F8FF}", color: .white)
+        boot.showsBar = true
+        boot.progress = 0.62
+        put(boot, 740, 760)
+
+        // Row 2: Photo Booth (no camera), the oracle asking, the oracle answering.
+        let booth = BoothView(size: NSSize(width: 520, height: 400), session: AVCaptureSession(), mirror: true)
+        booth.setCameraAvailable(false)
+        booth.show(number: 2)
+        put(booth, 20, 340)
+        let (ask, _) = OracleController.makeAskView(
+            size: NSSize(width: 460, height: 186), title: "hey, i'm the magic torus",
+            body: "ask me a question", placeholder: "will you give it 2 me?", icon: .app,
+            target: nil, action: nil)
+        put(ask, 580, 520)
+        let answer = OracleController.makeAnswerView(
+            size: NSSize(width: 460, height: 186), question: "will you give it 2 me?",
+            answer: OracleController.answer(to: "will you give it 2 me?", from: [], fallback: 0),
+            icon: .app)
+        put(answer, 580, 340 - 30)
+
+        // Row 3: the end card's pieces, with a stand-in photo.
+        let stand = NSImage(size: NSSize(width: 400, height: 300))
+        stand.lockFocus()
+        NSGradient(starting: NSColor(hex: "#FF2D95")!, ending: NSColor(hex: "#0078D7")!)?
+            .draw(in: NSRect(x: 0, y: 0, width: 400, height: 300), angle: 35)
+        NSColor(white: 1, alpha: 0.85).setFill()
+        NSBezierPath(ovalIn: NSRect(x: 150, y: 90, width: 100, height: 130)).fill()
+        stand.unlockFocus()
+        let photo = CreditsController.makePhotoCard(
+            size: NSSize(width: 412, height: 379), photo: stand,
+            photoRect: NSRect(x: 16, y: 64, width: 380, height: 285),
+            caption: "the computer took this · 25 Aug 2026 · 21:03", filter: "instant")
+        put(photo, 20, -30 + 30)
+        let info = makeEffectContentView(
+            ContentSpec(kind: "code", text: CreditsController.machineSummary(), chrome: "terminal",
+                        title: "system_probe — summary"),
+            size: NSSize(width: 470, height: 230))
+        put(info, 460, 90)
+        let surv = makeDialogContentView(title: "i survived DJ_DAVE malware",
+                                         message: "and all i got was this alert.",
+                                         buttons: ["ok"], icon: .caution,
+                                         size: NSSize(width: 440, height: 160))
+        put(surv, 950, 160)
+
         try writePNG(canvas: canvas, to: url)
     }
 

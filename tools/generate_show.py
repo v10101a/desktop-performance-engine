@@ -4,24 +4,38 @@ Reads assets/track_analysis.json (written by tools/analyze_track.py) so the grid
 the section markers and every kick come from the audio itself — the generator owns
 the tempo map, nothing is patched in afterwards.
 
-  bars  1-4    HORSE    the Muybridge window-zoetrope runs in, gallops, runs out
-  bars  5-8    POINT    the cursor draws one long arrow, unhurried, ">" in one stroke
-  bars  8-11   HYDRA    somebody using a computer: a little browser opens at exactly
-                        the spot the arrow pointed at, the cursor drags it up, pulls it
-                        bigger and clicks run — only then does the sketch render
-  bars 12-15   MORE     one, two, three, four more, already running when they land
-  ~1s          BUILD    the biggest ones slam in
-  bar   17     CHORUS   THE DROP, fired CHORUS_LEAD seconds AHEAD of the bass so it
-                        doesn't read as late. Everything blows away, the background
-                        flashes on every detected kick, chaos erupts from the focal spot
-  bar   24     STROBE   the original strobe finale, spliced in verbatim
-  after        the rest of the track is not scored yet — a lower-left (kick) window
-                        blinks the beat as a placeholder
+  0:00  bars  1-4    HORSE      the Muybridge window-zoetrope, wall to wall, runs in,
+                                gallops, runs out
+  0:08  bars  5-8    POINT      the cursor draws one long arrow, ">" in one stroke
+  0:13  bars  8-10   HYDRA      a browser opens where the arrow points; the cursor
+                                drags it up, pulls it bigger, clicks run
+  0:19  bars 11-16   MORE       one more sketch on EVERY downbeat, each bigger
+  0:29  bars 17-24   CHORUS A   the screen IS the lyric video: full-screen cards, one
+                                phrase each, blue-on-white / white-on-blue, on the beat
+  0:45  bars 25-32   CHORUS B   back to the desktop: the glass torus in the middle and
+                                the same lyrics as small windows going round it like a
+                                clock, the background glitching white and blue
+  1:00  bars 33-40   BRIDGE     the system probe types out what the machine knows
+  1:15  bars 41-48   FOCUS      the terminal clears and re-reads WHERE YOU ARE,
+                                highlighted
+  1:30  bars 49-55   REBOOT     the screen goes black; the boot glyph and a bar
+  1:43  bars 56-61   VERSE 2    the machine comes back — onto a map falling out of
+                                orbit onto the viewer's own location, titled with
+                                their IP; then a sweep across town
+  1:54  bars 62-67   ORACLE     the torus again, and an alert: ask it a question
+  2:05  bars 68-71   BOOTH      Photo Booth opens on the viewer; 3 · 2 · 1 on the bars
+  2:13  bar  72      CHORUS C   the shutter: one flash. Then their own photos bury
+                                the screen
+  2:28  bars 80-86   CHORUS D   the eruption, then the original strobe as the finale
+  2:41  bar  87      BREAK      everything goes; the end card comes up and HOLDS —
+                                the photo the computer took, the machine's vitals,
+                                an "i survived" alert, and the credits
 
     python3 tools/generate_show.py
-    W=1440 H=900 HUSH=0 python3 tools/generate_show.py
+    W=1440 H=900 COLS=22 python3 tools/generate_show.py
 
-Seeded, so the show is identical take to take.
+Seeded, so the show is identical take to take. Every act boundary is one BAR_*
+constant below; the lyric-card timings live in tools/lyrics.py (CUES).
 """
 import json, math, os, random, sys
 
@@ -33,12 +47,19 @@ import lyrics
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 W = int(os.environ.get("W", "1440"))
 H = int(os.environ.get("H", "900"))
-HUSH = os.environ.get("HUSH", "1") != "0"     # honour the bar where the bass drops out
+# The horse: grid columns and how much of the screen it spans. 22 columns is 63
+# windows at the widest frame — under the ~70 where the pool starts to lag.
+HORSE_COLS = int(os.environ.get("COLS", "22"))
+HORSE_SPAN = float(os.environ.get("SPAN", "0.96"))
 # How the flyover renders: "flyover" is Apple's 3-D mode with no labels at all,
 # "hybrid" is the same imagery WITH roads and place names, "standard" is the plain
 # vector map. All three are real Apple Maps — it's the same MKMapView either way.
-MAP_STYLE = os.environ.get("MAP_STYLE", "flyover")
+MAP_STYLE = os.environ.get("MAP_STYLE", "hybrid")
 AUDIO = "assets/03 - Give it 2 me.mp3"
+
+# The lyric cards' two colours. Cards alternate ground/type between them.
+BLUE = "#0078D7"
+WHITE = "#F2F4FE"
 
 # --- the tempo map, straight from the analysis ---
 with open(os.path.join(ROOT, "assets", "track_analysis.json")) as f:
@@ -57,35 +78,32 @@ def secs(beat):
     """Absolute seconds for a timeline beat (matches the loader's beat→time math)."""
     return OFFSET + beat * BEAT
 
-# Structure, verified against per-bar RMS energy in the audio (not the section
-# detector, which put the chorus 3 bars late at 35.87s):
-BAR_POINT   = 5     #  7.87s
-BAR_HYDRA   = 9     # 15.34s  windows start stacking
-BAR_HUSH    = 15    # 26.54s  sub-bass energy 0.198 -> 0.012: the bass drops out
-BAR_BUILD   = 16    # 28.41s  it comes back
-BAR_CHORUS  = 17    # 30.28s  THE DROP
-BAR_STROBE  = 24    # 43.35s
-BAR_LETTER  = 33    # 60.16s  the strobe is over; someone starts typing
-BAR_MAP     = 56    # 103.12s the letter is finished; close it and fly
-BAR_PROBE   = 56    # 103.12s the machine starts reading you back to yourself
-BAR_MIRROR = 63     # 116.19s  section (mid)
-BAR_WALL_UP = 69    # 127.40s  section (high)
-BAR_PEAK   = 76     # 140.47s  section (high)
-BAR_BREAK  = 87     # 161.01s  break (low)
-BAR_SWARM   = 68    # 125.55s the desktop icons start drawing
-BAR_WALL    = 82    # 151.72s the wallpaper itself gives out
-
-# The run-up: one second of windows slamming in, then the drop. Short on purpose —
-# a long visual build reads as the drop having already happened.
-BUILD_SECONDS = 1.0
-BUILD_WINDOWS = 3
+# Structure. The chorus boundaries are 8-bar phrases from the verified drop at bar 17
+# (the analyser's section detector put it three bars late — see README); the rest
+# follow the artist's timeline, which lands on the same grid.
+BAR_POINT    = 5     #   7.87s  the arrow
+BAR_HYDRA    = 11    #  19.07s  a sketch on every downbeat from here to the drop
+BAR_CHORUS_A = 17    #  30.28s  THE DROP — lyric cards
+BAR_CHORUS_B = 25    #  45.22s  torus + lyric clock
+BAR_BRIDGE   = 33    #  60.16s  the probe
+BAR_FOCUS    = 41    #  75.10s  the probe re-reads where you are
+BAR_REBOOT   = 49    #  90.05s  black; the boot bar
+BAR_VERSE2   = 56    # 103.12s  the map, onto your location
+BAR_SWEEP    = 60    # 110.59s  a second flight, across town
+BAR_ORACLE   = 62    # 114.33s  the torus, and the question
+BAR_BOOTH    = 68    # 125.55s  Photo Booth; 3·2·1 on the next three bars
+BAR_CHORUS_C = 72    # 133.02s  the shutter; the photo wall
+BAR_CHORUS_D = 80    # 147.96s  the eruption, then the strobe
+BAR_STROBE   = 82    # 151.69s  the original strobe finale, cut by the break
+BAR_BREAK    = 87    # 161.01s  everything goes; the end card
 
 # The visuals land AHEAD of the audio drop by this much. The bass really hits at
 # bar 17 / 30.28 s, but cutting exactly on it reads as late — the eye needs the
 # change to have already started when the ear arrives.
 CHORUS_LEAD = 1.0
-
-DROP_BEAT = bar(BAR_CHORUS) - CHORUS_LEAD / BEAT
+DROP_BEAT = bar(BAR_CHORUS_A) - CHORUS_LEAD / BEAT
+# The shutter is an instant, not a change of scene: a whisker ahead is enough.
+SHUTTER_LEAD = 0.12
 
 events = []
 def add(beat, typ, params):
@@ -93,22 +111,33 @@ def add(beat, typ, params):
 def add_t(t, typ, params):
     events.append({"t": round(t, 3), "type": typ, "params": params})
 
-# --- Act 1: HORSE (bars 1-4) — run in, a SHORT gallop in place, run out ---
-frames, gc, gr, max_lit = build_frames()
-horse, horse_exit, horse_end = horse_event(frames, gc, gr, W, H,
+def kicks_between(b0, b1):
+    """Kick times (absolute seconds) inside [beat b0, beat b1)."""
+    return [kt for kt in KICKS if secs(b0) <= kt < secs(b1)]
+
+def fullscreen():
+    return [0, 0, 0, 0]          # w/h of 0 stretch to the far edge on any display
+
+# =============================================================================
+# Act 1: HORSE (bars 1-4) — wall to wall. Run in, a SHORT gallop in place, run out.
+# =============================================================================
+frames, gc, gr, max_lit = build_frames(cols=HORSE_COLS)
+horse, horse_exit, horse_end = horse_event(frames, gc, gr, W, H, span=HORSE_SPAN,
                                            in_beats=6, hold=5, out_beats=5)
 events.append(horse)
 
-# --- Act 2: POINT (bars 5-8) — as the horse leaves, the cursor draws the arrow.
+# =============================================================================
+# Act 2: POINT (bars 5-8) — as the horse leaves, the cursor draws the arrow.
 # Slower than it used to be: a fast stroke drops breadcrumb stamps on a busy
-# machine and the arrow arrives half-drawn. ---
+# machine and the arrow arrives half-drawn.
+# =============================================================================
 p_events, p_end, focal = arrow_scene(bar(BAR_POINT), W, H, speed=200, lead_beats=3)
 events += p_events
 fx, fy = focal
 
-# --- Act 3: HYDRA (bars 9-16) — small browser windows of livecoding source,
-# opening on the beat, more and more of them, cascading up-left from the exact
-# spot the arrow pointed at. They all stay open until the drop. ---
+# =============================================================================
+# Act 3: HYDRA (bars 8-16) — somebody using a computer.
+# =============================================================================
 PATCHES = [
     ("osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()", "hydra.ojack.xyz"),
     ("osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()", "hydra.ojack.xyz"),
@@ -129,12 +158,6 @@ PATCHES = [
      "  .out()", "hydra.ojack.xyz"),
     ("noise(3, 0.1)\n  .rotate(1, -0.2)\n  .colorama(0.5)\n  .kaleid(3)\n  .out()", "hydra.ojack.xyz"),
 ]
-
-# --- Act 3: HYDRA. It reads as somebody actually using a computer: a little browser
-# opens at exactly the spot the arrow pointed at (that was the whole point of the
-# arrow), the cursor drags it up, pulls it bigger, and clicks run — and only THEN does
-# the sketch start rendering. Once it's live, more of them arrive already running. ---
-HY_SRC, HY_TITLE = PATCHES[0]
 
 def hydra_window(wid, beat, frame, patch, running, animate="none", interactive=False):
     src, title = patch
@@ -186,16 +209,18 @@ add(HY + 8.4, "openWindow", {"id": "hy0",
                 "chrome": "browser", "hex": "#68BDF8", "running": False},
     "animate": {"kind": "none"}, "interactive": True, "respawn": True})
 
-# 4. up to hydra's run button, top-right — and the sketch starts
+# 4. up to hydra's run button, top-right — and the sketch starts. The click lands on
+# the downbeat of BAR_HYDRA if the drag has left room for it, else as soon as it can.
 play = (big[0] + big[2] - 26, big[1] + 34)
 add(HY + 8.6, "cursorPath", {"path": "linear", "durationBeats": 1.4, "easing": "easeInOut",
     "mode": "warp", "points": [[round(new_corner[0]), round(new_corner[1])],
                                [round(play[0]), round(play[1])]]})
-RUN_AT = HY + 10.4
+RUN_AT = max(HY + 10.2, bar(BAR_HYDRA))
 hydra_window("hy0", RUN_AT, big, PATCHES[0], running=True, interactive=True)
 add(RUN_AT, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
 
-# 5. FOUR more, spread out and closing in — the long ramp…
+# 5. one more on EVERY downbeat until the drop — evenly, on the beat, each bigger
+# than the last, scattered so nothing sits on anything else.
 rng = random.Random(11)
 hydra_ids = ["hy0"]
 spots = [(big[0], big[1])]
@@ -210,412 +235,310 @@ def place(w, h):
     spots.append((x, y))
     return x, y
 
-# Four windows with the gap shrinking, so the stack is already accelerating…
-SPREAD_GAPS = [5.0, 4.0, 3.5]        # beats between the four
-# …then the whole run-up collapses into ONE SECOND: four more, faster and faster,
-# the last one landing right on top of the drop.
-RISER_SECONDS = 1.0
-RISER_COUNT = 4
-
-schedule = []
-b = RUN_AT + 4.5
-schedule.append((b, 1.15))
-for gap in SPREAD_GAPS:
-    b += gap
-    schedule.append((b, 1.15 + 0.30 * len(schedule)))
-
-# Riser positions: evenly spaced in TIME would read as a metronome, so they ride a
-# curve — each gap SHORTER than the last, bunching up against the drop.
-riser_beats = RISER_SECONDS / BEAT
-for i in range(RISER_COUNT):
-    lead = riser_beats * ((1 - i / RISER_COUNT) ** 1.6)   # 1.00, 0.64, 0.33, 0.11
-    schedule.append((DROP_BEAT - lead, 2.6 + 0.22 * i))
-
-for i, (beat, scale) in enumerate(schedule, start=1):
+first_more = int(RUN_AT // 4) + 2                      # the next downbeat strictly after the run
+more_bars = list(range(first_more, BAR_CHORUS_A))       # …up to, not including, the drop
+for i, bn in enumerate(more_bars, start=1):
     wid = f"hy{i}"
     hydra_ids.append(wid)
+    scale = 1.15 + 0.32 * (i - 1)
     w = min(round(240 * scale), round(W * 0.52))
     h = min(round(155 * scale), round(H * 0.52))
     x, y = place(w, h)
-    riser = i > 1 + len(SPREAD_GAPS)
-    hydra_window(wid, beat, (x, y, w, h), PATCHES[i % len(PATCHES)], running=True,
-                 animate="springIn" if riser else "none", interactive=True)
+    hydra_window(wid, bar(bn), (x, y, w, h), PATCHES[i % len(PATCHES)], running=True,
+                 animate="springIn", interactive=True)
 
-# --- Act 4: CHORUS (bar 17) — the drop. Wipe the stack, then chaos erupts from
-# the focal point while the background flashes on every real kick. ---
+# =============================================================================
+# Act 4: CHORUS A (bars 17-24) — the lyric video. The stack blows away under the
+# first card; from then on the whole screen is one phrase at a time, the ground and
+# the type swapping blue/white card to card, on the beat.
+# =============================================================================
 drop = DROP_BEAT
-authored_flashes = [secs(drop)]
-add(drop, "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.75})
 for wid in hydra_ids:
     add(drop + 0.05, "closeWindow", {"id": wid})
 add(drop + 0.05, "closeWindow", {"id": "trace"})     # the arrow goes too
 
-codes   = lyrics.CODE     # the song as JavaScript — see docs/LYRICS.md
-# Alert copy is the song — see docs/LYRICS.md. One source, shared with the strobe.
+def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none"):
+    blue_ground = (i % 2 == 0)
+    add(beat, "openWindow", {"id": wid, "frame": frame or fullscreen(),
+        "content": {"kind": "lyric", "text": text,
+                    "hex": BLUE if blue_ground else WHITE,
+                    "fg": WHITE if blue_ground else BLUE,
+                    "chrome": chrome, "title": "give it 2 me — lyrics"},
+        "animate": {"kind": animate}})
+
+# Two fullscreen ids, alternating: the new card opens over the old one, and the old
+# one is reused for the card after that. Reopening an id is a content swap, not a
+# window create, which is what keeps this on the beat.
+n_cards = 0
+for i, (offset, text) in enumerate(lyrics.CUES):
+    lyric_card(f"ly{i % 2}", drop + offset, text, i)
+    n_cards += 1
+
+# =============================================================================
+# Act 5: CHORUS B (bars 25-32) — the desktop again. The glass torus lands in the
+# middle and the same lyrics come back as small windows going round it like a
+# clock, one per cue, accumulating. The background glitches white and blue.
+# =============================================================================
+b_start = bar(BAR_CHORUS_B)
+add(b_start, "screenFlash", {"color": WHITE, "durationBeats": 0.5})
+add(b_start + 0.02, "closeWindow", {"id": "ly0"})
+add(b_start + 0.02, "closeWindow", {"id": "ly1"})
+TORUS_SIZE = round(min(W, H) * 0.60)
+add(b_start, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
+                            "size": TORUS_SIZE})
+
+CLOCK_W, CLOCK_H = round(W * 0.16), round(H * 0.12)
+rx, ry = W * 0.36, H * 0.40                      # an ellipse hugging the screen
+clock_ids = []
+for i, (offset, text) in enumerate(lyrics.CUES):
+    ang = -math.pi / 2 + 2 * math.pi * i / len(lyrics.CUES)     # 12 o'clock, clockwise
+    cx = W / 2 + rx * math.cos(ang)
+    cy = H / 2 + ry * math.sin(ang)
+    frame = [round(cx - CLOCK_W / 2), round(cy - CLOCK_H / 2), CLOCK_W, CLOCK_H]
+    wid = f"ck{i}"
+    clock_ids.append(wid)
+    lyric_card(wid, b_start + offset, text, i, frame=frame, chrome="mac", animate="springIn")
+
+# The glitch: a short white or blue wash behind everything on every third kick, and
+# now and then two in a row — a background that can't quite hold still.
+glitch_rng = random.Random(31)
+n_glitch = 0
+for i, kt in enumerate(kicks_between(b_start, bar(BAR_BRIDGE))):
+    if i % 3 != 0:
+        continue
+    color = WHITE if (i // 3) % 2 == 0 else BLUE
+    add_t(kt, "screenFlash", {"color": color, "durationSeconds": 0.08})
+    n_glitch += 1
+    if glitch_rng.random() < 0.35:
+        add_t(kt + 0.14, "screenFlash", {"color": BLUE if color == WHITE else WHITE,
+                                         "durationSeconds": 0.05})
+        n_glitch += 1
+
+# =============================================================================
+# Act 6: BRIDGE (bars 33-40) — the probe. The clock goes; a terminal opens in the
+# middle and types out what the machine knows, slowly enough to be read.
+# =============================================================================
+br = bar(BAR_BRIDGE)
+add(br, "screenFlash", {"color": BLUE, "durationBeats": 0.5})
+for wid in clock_ids + ["torus"]:
+    add(br + 0.05, "closeWindow", {"id": wid})
+PROBE_FRAME = [round(W * 0.18), round(H * 0.08), round(W * 0.64), round(H * 0.84)]
+add(br + 0.3, "systemProbe", {"id": "probe", "linesPerBeat": 6, "frame": PROBE_FRAME})
+
+# =============================================================================
+# Act 7: FOCUS (bars 41-48) — the terminal clears and reads out just WHERE YOU ARE
+# and what you're connected to, every line highlighted. Slower still.
+# =============================================================================
+fo = bar(BAR_FOCUS)
+add(fo, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
+add(fo, "systemProbe", {"id": "probe", "linesPerBeat": 3, "frame": PROBE_FRAME,
+                        "focus": ["geolocation", "network"]})
+
+# =============================================================================
+# Act 8: REBOOT (bars 49-55) — the machine has seen enough. Black; the glyph; the
+# bar fills across the phrase; then black again, and the desktop comes back on the
+# downbeat of verse 2 — onto the map.
+# =============================================================================
+rb = bar(BAR_REBOOT)
+REBOOT_BEATS = bar(BAR_VERSE2) - rb          # 28 beats black, bar filling most of it
+add(rb, "reboot", {"id": "boot", "delayBeats": 3, "durationBeats": REBOOT_BEATS - 6})
+add(rb + 0.1, "closeWindow", {"id": "probe"})
+# The last beat is black-on-black: the glyph goes, then the desktop is simply there.
+add(bar(BAR_VERSE2, -1), "openWindow", {"id": "blackout", "frame": fullscreen(),
+    "content": {"kind": "color", "hex": "#000000", "chrome": "none"},
+    "animate": {"kind": "none"}})
+add(bar(BAR_VERSE2, -0.95), "closeWindow", {"id": "boot"})
+
+# =============================================================================
+# Act 9: VERSE 2 (bars 56-61) — the map. It falls out of orbit onto the viewer's own
+# location (`here`: the fix the probe got), the window titled with their address.
+# Then a second flight sweeps across town at rooftop height.
+# =============================================================================
+v2 = bar(BAR_VERSE2)
+add(v2, "closeWindow", {"id": "blackout"})
+add(v2, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
+# Fallback coordinates if there's no fix: Shanghai. `here` overrides them when there is.
+FALL = dict(lat=31.2304, lon=121.4737)
+DESCENT = dict(FALL, here=True, altitude=2_600_000, toAltitude=260,
+               pitch=0, toPitch=62, heading=0, toHeading=30,
+               seconds=round((bar(BAR_SWEEP) - v2) * BEAT - 0.5, 1), style=MAP_STYLE)
+add(v2, "openWindow", {"id": "map0",
+    "frame": [round(W * 0.10), round(H * 0.07), round(W * 0.80), round(H * 0.78)],
+    "content": {"kind": "map", "chrome": "browser", "title": "maps://{ip}", "map": DESCENT},
+    "animate": {"kind": "springIn"}, "interactive": True, "respawn": True})
+SWEEP = dict(FALL, here=True, altitude=260, toAltitude=900,
+             pitch=62, toPitch=55, heading=30, toHeading=230,
+             seconds=round((bar(BAR_ORACLE) - bar(BAR_SWEEP)) * BEAT + 2.0, 1), style=MAP_STYLE)
+add(bar(BAR_SWEEP), "openWindow", {"id": "map1",
+    "frame": [round(W * 0.30), round(H * 0.22), round(W * 0.66), round(H * 0.72)],
+    "content": {"kind": "map", "chrome": "browser", "title": "maps://{city}", "map": SWEEP},
+    "animate": {"kind": "springIn"}, "interactive": True})
+
+# =============================================================================
+# Act 10: ORACLE (bars 62-67) — the torus again, and this time it talks: an alert
+# asks for a question and answers on OK, or on its own two bars later.
+# =============================================================================
+orc = bar(BAR_ORACLE)
+add(orc, "screenFlash", {"color": BLUE, "durationBeats": 0.4})
+add(orc + 0.05, "closeWindow", {"id": "map0"})
+add(bar(BAR_ORACLE + 1), "closeWindow", {"id": "map1"})
+add(orc, "glassTorus", {"id": "torus", "material": "crystal", "speed": 1.2,
+                        "size": round(min(W, H) * 0.56)})
+add(bar(BAR_ORACLE + 1), "oracle", {"id": "oracle",
+    "frame": [round(W * 0.5 + min(W, H) * 0.30), round(H * 0.5 - 93), 460, 186],
+    "title": "hey, i'm the magic torus", "body": "ask me a question",
+    "placeholder": "will you give it 2 me?", "answerBeats": 10})
+
+# =============================================================================
+# Act 11: BOOTH (bars 68-71) — Photo Booth opens on the viewer. 3, 2, 1 land on the
+# downbeats of the last three bars; the shutter is the drop.
+# =============================================================================
+bo = bar(BAR_BOOTH) - SHUTTER_LEAD / BEAT
+add(bar(BAR_BOOTH, -0.5), "closeWindow", {"id": "oracle"})
+add(bar(BAR_BOOTH, -0.5), "closeWindow", {"id": "torus"})
+add(bar(BAR_BOOTH, -0.5), "screenFlash", {"color": WHITE, "durationBeats": 0.3})
+BOOTH_W, BOOTH_H = round(min(W * 0.52, 760)), round(min(W * 0.52, 760) * 0.78)
+add(bo, "photoBooth", {"id": "booth",
+    "frame": [round((W - BOOTH_W) / 2), round((H - BOOTH_H) * 0.45), BOOTH_W, BOOTH_H],
+    "durationBeats": bar(BAR_CHORUS_C) - bar(BAR_BOOTH), "count": 3, "stepBeats": 4})
+
+# =============================================================================
+# Act 12: CHORUS C (bars 72-79) — the shutter. ONE flash, the booth goes with it, and
+# their own photos start burying the screen.
+# =============================================================================
+shutter = bar(BAR_CHORUS_C) - SHUTTER_LEAD / BEAT
+add(shutter, "screenFlash", {"color": "#FFFFFF", "durationBeats": 0.6})
+add(bar(BAR_CHORUS_C, 0.25), "photoWall", {"id": "wall", "fillPerBeat": 12, "churnPerBeat": 2.6,
+                                            "windows": 40, "minFrac": 0.10, "maxFrac": 0.42})
+
+# =============================================================================
+# Act 13: CHORUS D (bars 80-86) — the eruption from the first chorus, two bars of it,
+# then the original strobe as the finale until the break cuts it.
+# =============================================================================
+cd = bar(BAR_CHORUS_D)
+add(cd, "screenFlash", {"color": "#FF2D95", "durationBeats": 0.75})
+add(cd + 0.05, "closeWindow", {"id": "wall"})
+
+codes = lyrics.CODE
 dialogs = lyrics.ALERTS
 body_colors = PALETTE + ["#0B0E16"]
+chaos_rng = random.Random(7)
 
-# No flashes in this loop — the kick pass below owns the flashing, so the two can't
-# fight over the same overlay.
-rng = random.Random(7)
-b, wi, di = drop, 0, 0
-chorus_end = bar(BAR_STROBE)
-while b < chorus_end:
-    u = 0.75 + 0.25 * (b - drop) / (chorus_end - drop)   # already near full tilt
-    r = 30 + (u ** 1.6) * 0.65 * W * rng.uniform(0.5, 1.0)
-    ang = rng.uniform(0, 6.28318)
-    w = round((110 + (u ** 1.7) * 380) * rng.uniform(0.8, 1.25))
-    h = round(w * rng.uniform(0.6, 0.85))
-    x = max(10, min(fx + r * math.cos(ang) - w / 2, W - w - 10))
-    y = max(10, min(fy + r * math.sin(ang) - h / 2, H - h - 10))
-    roll = rng.random()
-    if roll < 0.58:
-        add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), w, h],
-            "content": {"kind": "color", "hex": rng.choice(body_colors),
-                        "chrome": "mixed", "title": "look://again"},
-            "animate": {"kind": "none" if rng.random() < 0.8 else "springIn"},
-            "interactive": True})
-        wi += 1
-    elif roll < 0.70:
-        add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), max(w, 300), h],
-            "content": {"kind": "code", "text": rng.choice(codes), "chrome": "terminal",
-                        "title": "haunt.sh"},
-            "animate": {"kind": "none"}, "interactive": True})
-        wi += 1
-    elif roll < 0.86:
-        title, body, icon = dialogs[di % len(dialogs)]
-        add(b, "fakeDialog", {"id": f"d{di % 4}", "title": title, "body": body,
-            "buttons": lyrics.buttons(di), "icon": icon,
-            "frame": [round(x), round(y), 460, 190]})
-        di += 1
-    elif wi > 0:
-        add(b, "jiggle", {"id": f"w{(wi - 1) % 14}", "durationBeats": 1.5,
-            "amplitude": 18, "frequency": 9})
-    # Dense from the first beat — this is the explosion, not a ramp. ~8 events/sec
-    # on top of the kick flashes.
-    b += max(0.15, 0.25 * rng.uniform(0.7, 1.3))
+def erupt(b0, b1, cx, cy):
+    """Windows, terminals, alerts and lyric cards bursting out of (cx, cy), dense
+    from the first beat — the explosion, not a ramp. ~8 events/sec."""
+    b, wi, di, li = b0, 0, 0, 0
+    while b < b1:
+        u = 0.75 + 0.25 * (b - b0) / (b1 - b0)
+        r = 30 + (u ** 1.6) * 0.65 * W * chaos_rng.uniform(0.5, 1.0)
+        ang = chaos_rng.uniform(0, 6.28318)
+        w = round((110 + (u ** 1.7) * 380) * chaos_rng.uniform(0.8, 1.25))
+        h = round(w * chaos_rng.uniform(0.6, 0.85))
+        x = max(10, min(cx + r * math.cos(ang) - w / 2, W - w - 10))
+        y = max(10, min(cy + r * math.sin(ang) - h / 2, H - h - 10))
+        roll = chaos_rng.random()
+        if roll < 0.42:
+            add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), w, h],
+                "content": {"kind": "color", "hex": chaos_rng.choice(body_colors),
+                            "chrome": "mixed", "title": "look://again"},
+                "animate": {"kind": "none" if chaos_rng.random() < 0.8 else "springIn"},
+                "interactive": True})
+            wi += 1
+        elif roll < 0.58:
+            _, text = lyrics.CUES[li % len(lyrics.CUES)]
+            lyric_card(f"w{wi % 14}", b, text, li, frame=[round(x), round(y), max(w, 260), h],
+                       chrome="mac")
+            wi += 1; li += 1
+        elif roll < 0.70:
+            add(b, "openWindow", {"id": f"w{wi % 14}", "frame": [round(x), round(y), max(w, 300), h],
+                "content": {"kind": "code", "text": chaos_rng.choice(codes), "chrome": "terminal",
+                            "title": "haunt.sh"},
+                "animate": {"kind": "none"}, "interactive": True})
+            wi += 1
+        elif roll < 0.86:
+            title, body, icon = dialogs[di % len(dialogs)]
+            add(b, "fakeDialog", {"id": f"d{di % 4}", "title": title, "body": body,
+                "buttons": lyrics.buttons(di), "icon": icon,
+                "frame": [round(x), round(y), 460, 190]})
+            di += 1
+        elif wi > 0:
+            add(b, "jiggle", {"id": f"w{(wi - 1) % 14}", "durationBeats": 1.5,
+                "amplitude": 18, "frequency": 9})
+        b += max(0.15, 0.25 * chaos_rng.uniform(0.7, 1.3))
 
-# The kick pass: the background flashes on every kick the analyser found between the
-# drop and the strobe. Absolute seconds, so these land on the real audio transients
-# rather than on the nominal grid. ~2.4 flashes/sec — nowhere near the 15-20 Hz band.
-flash_colors = ["#FEFEFE", "#020AF5", "#020202", "#68BDF8"]
-kick_flashes = 0
-wipe = chorus_end - 0.5
-authored_flashes.append(secs(wipe))
-for i, kt in enumerate(KICKS):
-    if not (secs(drop) <= kt < secs(chorus_end)):
-        continue
-    # There is one flash overlay for the whole screen, so a kick landing on top of
-    # an authored flash just cuts it short. Let the authored one have the moment.
-    if any(abs(kt - a) < 0.25 for a in authored_flashes):
+# …up to the wipe, not the strobe: a nudge aimed past the wipe hits a closed window.
+wipe = bar(BAR_STROBE) - 0.3
+erupt(cd + 0.1, wipe, W / 2, H / 2)
+
+# The background flashes on every kick under the eruption (behind the windows).
+flash_colors = ["#FEFEFE", BLUE, "#020202", "#68BDF8"]
+n_kick = 0
+for i, kt in enumerate(kicks_between(cd, bar(BAR_STROBE))):
+    if abs(kt - secs(cd)) < 0.25:
         continue
     add_t(kt, "screenFlash", {"color": flash_colors[i % len(flash_colors)],
                               "durationSeconds": 0.09})
-    kick_flashes += 1
+    n_kick += 1
 
-# --- chorus wipe: clear the stage for the finale ---
-add(wipe, "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.6})
+# Wipe, then the ORIGINAL strobe, spliced in verbatim. Its events are authored in
+# absolute seconds, which survive the splice with a plain offset; everything past the
+# break is dropped, and the break closes whatever it left open.
+add(wipe, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 for i in range(14):
     add(wipe + 0.1, "closeWindow", {"id": f"w{i}"})
 for i in range(4):
     add(wipe + 0.1, "closeWindow", {"id": f"d{i}"})
-add(wipe + 0.1, "closeWindow", {"id": "trace"})
 
-# --- Act 5: the ORIGINAL strobe, spliced in verbatim at bar 24. Its events are
-# authored in absolute seconds, which survive the splice with a plain offset. ---
 with open(os.path.join(ROOT, "examples", "timeline_strobe.json")) as f:
     strobe = json.load(f)
 strobe_at = secs(bar(BAR_STROBE))
-strobe_len = max(ev["t"] for ev in strobe["events"])
+strobe_cut = secs(bar(BAR_BREAK)) - 0.05
+strobe_ids, n_strobe = set(), 0
 for ev in strobe["events"]:
+    if ev["t"] + strobe_at >= strobe_cut:
+        continue
     add_t(ev["t"] + strobe_at, ev["type"], ev["params"])
-strobe_end = strobe_at + strobe_len
+    n_strobe += 1
+    if "id" in ev["params"]:
+        strobe_ids.add(ev["params"]["id"])
 
-# --- Act 6: THE LETTER (bar 33) — after all that noise, a plain text editor opens
-# and writes itself out in tempo. The copy lives in assets/letter.txt so it can be
-# rewritten without touching the generator. ---
-with open(os.path.join(ROOT, "assets", "letter.txt")) as f:
-    letter = f.read().strip()
-CHARS_PER_BEAT = float(os.environ.get("CHARS_PER_BEAT", "16"))
-lw, lh = round(W * 0.58), round(H * 0.66)
-add(bar(BAR_LETTER), "typeText", {
-    "id": "letter", "frame": [round((W - lw) / 2), round((H - lh) * 0.42), lw, lh],
-    "text": letter, "charsPerBeat": CHARS_PER_BEAT, "fontSize": 14,
-    "title": "resignation.txt — Edited", "interactive": True})
-letter_beats = len(letter) / CHARS_PER_BEAT
-# It finishes typing, sits there a while, then the energy comes back and takes it.
-letter_out = bar(BAR_MAP)                # 103.12s — typing finished at ~98s
-add(letter_out, "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.5})
-add(letter_out + 0.1, "closeWindow", {"id": "letter"})
-
-# Behind the letter: the show doesn't go quiet, it just gets out of the way. A short
-# WHITE pulse on every fourth kick (a downbeat-ish rate) and the odd small window
-# blinking in a corner — enough to keep the screen alive without eating the text.
-letter_rng = random.Random(23)
-corners = [(40, 60), (W - 320, 60), (40, H - 240), (W - 320, H - 240)]
-letter_flashes = 0
-for i, kt in enumerate(KICKS):
-    if not (secs(bar(BAR_LETTER)) <= kt < secs(letter_out)):
-        continue
-    if i % 4 != 0:
-        continue
-    add_t(kt, "screenFlash", {"color": "#FFFFFF", "durationSeconds": 0.07})
-    letter_flashes += 1
-    if (i // 4) % 6 == 0:                       # …and now and then, a window blinks
-        cx, cy = letter_rng.choice(corners)
-        wid = f"lb{(i // 4) % 4}"
-        add_t(kt, "openWindow", {"id": wid,
-            "frame": [round(cx), round(cy), 280, 180],
-            "content": {"kind": "color", "hex": letter_rng.choice(PALETTE),
-                        "chrome": "mixed", "title": "still here"},
-            "animate": {"kind": "fadeIn"}})
-        add_t(kt + 0.9, "closeWindow", {"id": wid})
-
-# --- Act 7: THE FLYOVER (bar 76) — the letter gets flashed away and the screen
-# opens onto real Apple Maps, flying over the two cities the letter is about. Uses the
-# native `map` kind rather than a `web` Google window on purpose: google.com is blocked
-# from mainland China, and this has to work where it's being performed. ---
-FLIGHTS = [
-    # Lujiazui, over the river from the Bund
-    dict(lat=31.2397, lon=121.4998, altitude=1600, toAltitude=420,
-         pitch=72, heading=250, toHeading=40, seconds=17, style=MAP_STYLE),
-    # Washington Square, New York
-    dict(lat=40.7308, lon=-73.9973, altitude=1200, toAltitude=300,
-         pitch=76, heading=20, toHeading=210, seconds=17, style=MAP_STYLE),
-    # out over the water, climbing away
-    dict(lat=31.2210, lon=121.5400, altitude=700, toAltitude=5200,
-         pitch=68, toPitch=40, heading=140, toHeading=330, seconds=22, style=MAP_STYLE),
+# =============================================================================
+# Act 14: BREAK (bar 87) — everything goes at once, and the end card comes up and
+# stays: the photo the booth took, the machine's vitals, the "i survived" alert,
+# and the credits. The engine holds on it past the end of the track.
+# =============================================================================
+brk = bar(BAR_BREAK)
+add(brk, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
+for wid in sorted(strobe_ids) + ["wall", "booth", "torus", "oracle", "probe"]:
+    add(brk + 0.05, "closeWindow", {"id": wid})
+CREDITS = [
+    # One entry per line. Pending — the artist will supply the copy.
+    "a computer art piece",
+    "music: Give it 2 me",
+    "software: desktop performance engine",
+    "starring: you",
 ]
-# Moved into PEAK: as a 57-second act starting right after the letter, the maps sat on
-# top of the probe, the torus and the photo wall for the whole of their solos.
-map_at = bar(BAR_PEAK)
-map_frames = [(W * 0.06, H * 0.10, W * 0.52, H * 0.50),
-              (W * 0.44, H * 0.34, W * 0.50, H * 0.48),
-              (W * 0.20, H * 0.16, W * 0.60, H * 0.62)]
-map_titles = ["maps://shanghai", "maps://new-york", "maps://leaving"]
-for i, (flight, frame, title) in enumerate(zip(FLIGHTS, map_frames, map_titles)):
-    add(map_at + i * 7, "openWindow", {"id": f"map{i}",
-        "frame": [round(v) for v in frame],
-        "content": {"kind": "map", "chrome": "browser", "title": title, "map": flight},
-        "animate": {"kind": "springIn" if i == 0 else "fadeIn"},
-        "interactive": True, "respawn": i == 0})
+add(bar(BAR_BREAK, 1), "credits", {"id": "credits", "lines": CREDITS,
+    "survivor": "i survived DJ_DAVE malware",
+    "survivorBody": "and all i got was this alert.",
+    "hold": True})
 
-# (The kick-flash pass that ran across the whole final third is gone: it strobed the
-# full screen over the probe, torus and photo-wall solos, which is exactly what those
-# stretches are supposed to be free of.)
-final_flashes = 0
-
-# the break at 161s: everything goes
-add(bar(87), "screenFlash", {"color": "#F2F4FE", "durationBeats": 1.0})
-for i in range(len(FLIGHTS)):
-    add(bar(87, 0.5), "closeWindow", {"id": f"map{i}"})
-
-# (The "(kick)" heartbeat placeholder is gone with the other text-only windows; the
-# final third below is scored, so it no longer needs a blinking stand-in.)
-heartbeats = 0
-
-# --- Acts 7-11: the final third (bars 57-end).
-#
-# From ~105s the show was 12 events per 5 seconds and eleven of those were kick
-# flashes — i.e. an empty screen with the lights blinking. The CHORUS runs at 230 per
-# 5s for comparison. This scores the rest of the track to the analyser's own section
-# markers, escalating into the two "high" sections and blowing out at the break:
-#
-#   bar 57  105.0s  PROBE   the machine starts reading you back to yourself
-#   bar 64  118.1s  MIRROR  a glass torus drops in and refracts the whole desktop
-#   bar 69  127.4s  WALL    (section: high) your own photos bury the screen
-#   bar 76  140.5s  PEAK    (section: high) everything at once
-#   bar 87  161.0s  BREAK   it all goes; a bare outro to the end of the track
-#
-# TWO EVENTS ARE GATED OFF BY DEFAULT and are inert until you opt in:
-#
-#   fileSwarm      needs meta.allowDesktopFiles — creates and deletes marked throwaway
-#                  files in ~/Desktop (swept on stop/panic/quit) and drives Finder.
-#   deskWallpaper  needs meta.allowWallpaper — macOS cannot reliably restore
-#                  Aerial/dynamic wallpapers through the public API.
-#
-# Flip them with ALLOW_DESKTOP_FILES=1 / ALLOW_WALLPAPER=1. Shipped as-is the show
-# touches neither your disk nor your wallpaper.
-
-
-fin = random.Random(1105)
-
-# A bounded pool of window ids. Reopening an id moves that window rather than adding
-# one, which is what keeps a few hundred events from becoming a few hundred live
-# NSWindows — the same trick the CHORUS uses.
-FIN_POOL = 26
-fin_wi = 0
-
-FIN_CODES = lyrics.CODE
-FIN_DIALOGS = lyrics.ALERTS
-FIN_ASCII = [
-    "  ___  _ _ \n / _ \\| | |\n| (_) | | |\n \\___/|_|_|\n  ALL YOURS",
-    "  >_  \n  >_  \n  >_  \n  READY",
-    " /\\_/\\ \n( o.o )\n > ^ < \n WATCHING",
-]
-fin_colors = PALETTE + ["#0B0E16", "#F2F4FE"]
-
-def fin_frame(u):
-    """A window frame whose size and spread grow with intensity `u` (0..1)."""
-    w = round((150 + u * 420) * fin.uniform(0.75, 1.3))
-    h = round(w * fin.uniform(0.52, 0.9))
-    x = round(fin.uniform(-0.04, 1.04) * W - w / 2)
-    y = round(fin.uniform(-0.02, 1.02) * H - h / 2)
-    return [max(-40, min(x, W - 40)), max(-20, min(y, H - 20)), w, h]
-
-def fin_window(b, u):
-    """One chaos event: a window, a dialog, or a nudge to something already up."""
-    global fin_wi
-    roll = fin.random()
-    wid = f"f{fin_wi % FIN_POOL}"
-    frame = fin_frame(u)
-    if roll < 0.36:
-        add(b, "openWindow", {"id": wid, "frame": frame,
-            "content": {"kind": "color", "hex": fin.choice(fin_colors),
-                        "chrome": "mixed", "title": "give://it/2/me"},
-            "animate": {"kind": "none" if fin.random() < 0.75 else "springIn"},
-            "interactive": True})
-        fin_wi += 1
-    elif roll < 0.54:
-        frame[2] = max(frame[2], 320)
-        add(b, "openWindow", {"id": wid, "frame": frame,
-            "content": {"kind": "code", "text": fin.choice(FIN_CODES),
-                        "chrome": "terminal", "title": "exfil.sh"},
-            "animate": {"kind": "none"}, "interactive": True})
-        fin_wi += 1
-    elif roll < 0.66:
-        # The ascii renderer, cherry-picked onto this branch earlier.
-        frame[2] = max(frame[2], 300)
-        add(b, "openWindow", {"id": wid, "frame": frame,
-            "content": {"kind": "ascii", "text": fin.choice(FIN_ASCII),
-                        "hex": "#8CF2A6", "chrome": "terminal", "title": "art.txt"},
-            "animate": {"kind": "none"}, "interactive": True})
-        fin_wi += 1
-    elif roll < 0.76:
-        src, title = PATCHES[fin.randrange(len(PATCHES))]
-        frame[2] = max(frame[2], 300)
-        add(b, "openWindow", {"id": wid, "frame": frame,
-            "content": {"kind": "livecode", "text": src, "title": title,
-                        "chrome": "browser", "hex": "#68BDF8", "running": True},
-            "animate": {"kind": "none"}, "interactive": True})
-        fin_wi += 1
-    elif roll < 0.92:
-        title, body, icon = FIN_DIALOGS[fin.randrange(len(FIN_DIALOGS))]
-        add(b, "fakeDialog", {"id": f"fd{fin_wi % 5}",
-            "title": title, "body": body, "icon": icon,
-            "buttons": lyrics.buttons(fin_wi),
-            "frame": [frame[0], frame[1], 460, 190]})
-        fin_wi += 1
-    elif roll < 0.96 and fin_wi > 0:
-        # Slide something already up, so the screen moves as well as blinks.
-        dest = fin_frame(u)
-        add(b, "moveWindow", {"id": f"f{fin.randrange(min(fin_wi, FIN_POOL))}",
-            "frame": dest[:2], "durationBeats": 1.0 + fin.random() * 2,
-            "easing": "easeOut" if fin.random() < 0.5 else "easeInOut"})
-    elif fin_wi > 0:
-        add(b, "jiggle", {"id": f"f{(fin_wi - 1) % FIN_POOL}",
-            "durationBeats": 1.0 + fin.random(), "amplitude": 12 + u * 22,
-            "frequency": 8 + u * 6})
-
-def fin_fill(b0, b1, rate0, rate1):
-    """Chaos from beat b0 to b1, events-per-beat ramping rate0 -> rate1."""
-    b = b0
-    n = 0
-    while b < b1:
-        u = (b - b0) / max(1e-6, b1 - b0)
-        fin_window(b, min(1.0, 0.35 + 0.65 * u))
-        rate = rate0 + (rate1 - rate0) * u
-        b += 1.0 / max(0.2, rate * fin.uniform(0.7, 1.4))
-        n += 1
-    return n
-
-# --- Acts 7-10.
-#
-# Each of the three big elements gets a stretch with NOTHING on top of it before they
-# start layering. They were previously stacked so tightly that the probe was buried
-# before it finished typing and the wall arrived on top of the torus. Now:
-#
-#   bar 57  105.0s  PROBE   13s of the report alone on screen
-#   bar 64  118.1s  TORUS   11s of the glass alone over a quiet desktop
-#   bar 70  129.3s  WALL    13s of the photo wall alone, filling the screen
-#   bar 77  142.3s  PEAK    19s of all of it at once, ramping into the break
-#
-# The chaos pass runs only in PEAK. During the three solos the screen carries just
-# that element and the kick flashes, which is what "uncovered" has to mean here.
-
-# --- Act 7: PROBE (bar 57) — the report types itself out and is allowed to be read.
-# 6 lines/beat, not 24: at the faster rate the whole report was on screen in about
-# four seconds and then just sat there. ---
-add(bar(BAR_PROBE), "systemProbe", {"id": "probe", "linesPerBeat": 6,
-    "frame": [round(W * 0.22), round(H * 0.12), round(W * 0.56), round(H * 0.74)]})
-add(bar(BAR_MIRROR, -1), "closeWindow", {"id": "probe"})
-
-# --- Act 8: TORUS (bar 64) — the glass, alone. The probe has just closed, so what it
-# refracts is a bare desktop and the shape itself is the whole image. ---
-add(bar(BAR_MIRROR), "glassTorus", {"id": "torus", "material": "glass",
-                                    "speed": 0.8, "size": round(min(W, H) * 0.62)})
-add(bar(BAR_MIRROR), "screenFlash", {"color": "#68BDF8", "durationBeats": 0.5})
-
-# --- Act 9: WALL (bar 70, section high) — the photo wall fills the screen on its own.
-# The torus goes out first: it floats above everything, so leaving it up would put a
-# large object in front of the thing that is meant to be uncovered. ---
-add(bar(BAR_WALL_UP, -1), "closeWindow", {"id": "torus"})
-add(bar(BAR_WALL_UP), "photoWall", {"id": "wall", "fillPerBeat": 9, "churnPerBeat": 2.2,
-                                    "windows": 34, "minFrac": 0.11, "maxFrac": 0.44})
-add(bar(BAR_WALL_UP), "screenFlash", {"color": "#F2F4FE", "durationBeats": 0.6})
-
-# --- Act 10: PEAK (bar 77, section high) — now they layer. The glass comes back over
-# the wall it can reflect, the horse runs through, the cursor drags a comet, and the
-# chaos pass ramps into the break. All the density lives here. ---
-peak_horse, _, _ = horse_event(frames, gc, gr, W, H, start_beat=bar(BAR_PEAK, 4),
-                               span=0.88, hold=6, in_beats=4, out_beats=4)
-events.append(peak_horse)
-add(bar(BAR_PEAK), "screenFlash", {"color": "#FF2D95", "durationBeats": 0.75})
-add(bar(BAR_PEAK), "glassTorus", {"id": "torus", "material": "chrome",
-                                  "roughness": 0.03, "speed": 1.6,
-                                  "size": round(min(W, H) * 0.66)})
-add(bar(BAR_PEAK + 5), "glassTorus", {"id": "torus", "material": "crystal", "speed": 2.1,
-                                      "size": round(min(W, H) * 0.72)})
-add(bar(BAR_PEAK, 2), "cursorTrail", {"id": "comet", "mode": "follow", "count": 12,
-                                      "delay": 0.05, "size": [84, 58], "chrome": "mixed",
-                                      "durationBeats": 36})
-add(bar(BAR_PEAK, 2), "fileSwarm", {"id": "swarm", "pattern": "life",
-                                    "ticksPerBeat": 2, "maxLive": 90, "seed": 5})
-add(bar(BAR_PEAK + 3), "deskWallpaper", {"id": "wall2", "mode": "recursive", "hz": 0.7})
-add(bar(BAR_PEAK + 6), "deskWallpaper", {"id": "wall2", "mode": "glitch",
-                                         "hz": 6, "intensity": 0.75, "seed": 11})
-n_probe = n_mirror = n_wall = 0
-n_peak = fin_fill(bar(BAR_PEAK, 1), bar(BAR_BREAK), 6.0, 22.0)
-
-# --- Act 11: BREAK (bar 87) — the analyser's own break. Everything goes at once,
-# and the last eight seconds are bare: one window, then nothing. ---
-add(bar(BAR_BREAK), "screenFlash", {"color": "#F2F4FE", "durationBeats": 1.5})
-for wid in [f"f{i}" for i in range(FIN_POOL)] + [f"fd{i}" for i in range(5)]:
-    add(bar(BAR_BREAK, 0.25), "closeWindow", {"id": wid})
-for wid in ("wall", "swarm", "wall2", "probe", "comet", "horse"):
-    add(bar(BAR_BREAK, 0.25), "closeWindow", {"id": wid})
-
-# The torus outlives everything else by a few bars — the last thing on screen is the
-# glass, turning over an empty desktop.
-add(bar(BAR_BREAK, 1), "glassTorus", {"id": "torus", "material": "glass", "speed": 0.5,
-                                      "size": round(min(W, H) * 0.5)})
-outro_end = ((DURATION - OFFSET) / BEAT) - 1
-add(outro_end, "closeWindow", {"id": "torus"})
-
-# --- markers for the scrubber: the analyser's sections plus the act boundaries we
-# verified by hand (the detector missed the drop by three bars) ---
+# --- markers for the scrubber: the analyser's sections plus the act boundaries ---
 markers = list(analysis["markers"])
 markers += [
-    {"t": round(secs(bar(BAR_HYDRA)), 2), "bar": BAR_HYDRA, "label": "hydra stack", "kind": "section"},
-    {"t": round(secs(bar(BAR_HUSH)), 2),  "bar": BAR_HUSH,  "label": "hush (bass out)", "kind": "break"},
-    {"t": round(secs(bar(BAR_BUILD)), 2), "bar": BAR_BUILD, "label": "build", "kind": "section"},
-    {"t": round(secs(bar(BAR_CHORUS)), 2), "bar": BAR_CHORUS, "label": "CHORUS", "kind": "drop"},
-    {"t": round(secs(bar(BAR_STROBE)), 2), "bar": BAR_STROBE, "label": "strobe", "kind": "drop"},
-    {"t": round(secs(bar(BAR_PROBE)), 2),  "bar": BAR_PROBE,  "label": "probe", "kind": "section"},
-    {"t": round(secs(bar(BAR_MIRROR)), 2), "bar": BAR_MIRROR, "label": "mirror", "kind": "section"},
-    {"t": round(secs(bar(BAR_WALL_UP)), 2),"bar": BAR_WALL_UP,"label": "photo wall", "kind": "section"},
-    {"t": round(secs(bar(BAR_PEAK)), 2),   "bar": BAR_PEAK,   "label": "PEAK", "kind": "drop"},
-    {"t": round(secs(bar(BAR_BREAK)), 2),  "bar": BAR_BREAK,  "label": "break", "kind": "break"},
+    {"t": round(secs(bar(BAR_HYDRA)), 2),    "bar": BAR_HYDRA,    "label": "hydra stack", "kind": "section"},
+    {"t": round(secs(bar(BAR_CHORUS_A)), 2), "bar": BAR_CHORUS_A, "label": "CHORUS A · lyrics", "kind": "drop"},
+    {"t": round(secs(bar(BAR_CHORUS_B)), 2), "bar": BAR_CHORUS_B, "label": "CHORUS B · torus clock", "kind": "drop"},
+    {"t": round(secs(bar(BAR_BRIDGE)), 2),   "bar": BAR_BRIDGE,   "label": "probe", "kind": "section"},
+    {"t": round(secs(bar(BAR_FOCUS)), 2),    "bar": BAR_FOCUS,    "label": "focus: where you are", "kind": "section"},
+    {"t": round(secs(bar(BAR_REBOOT)), 2),   "bar": BAR_REBOOT,   "label": "reboot", "kind": "break"},
+    {"t": round(secs(bar(BAR_VERSE2)), 2),   "bar": BAR_VERSE2,   "label": "map: here", "kind": "section"},
+    {"t": round(secs(bar(BAR_ORACLE)), 2),   "bar": BAR_ORACLE,   "label": "oracle", "kind": "section"},
+    {"t": round(secs(bar(BAR_BOOTH)), 2),    "bar": BAR_BOOTH,    "label": "photo booth", "kind": "section"},
+    {"t": round(secs(bar(BAR_CHORUS_C)), 2), "bar": BAR_CHORUS_C, "label": "CHORUS C · shutter", "kind": "drop"},
+    {"t": round(secs(bar(BAR_CHORUS_D)), 2), "bar": BAR_CHORUS_D, "label": "CHORUS D · eruption", "kind": "drop"},
+    {"t": round(secs(bar(BAR_STROBE)), 2),   "bar": BAR_STROBE,   "label": "strobe", "kind": "drop"},
+    {"t": round(secs(bar(BAR_BREAK)), 2),    "bar": BAR_BREAK,    "label": "credits", "kind": "break"},
 ]
 markers.sort(key=lambda m: m["t"])
 
@@ -625,7 +548,8 @@ events.sort(key=when)
 
 doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
                 "analyzedBpm": BPM, "markers": markers,
-                # Both default false — see the tail-acts note above.
+                # Both default false: nothing in this show writes to disk or touches
+                # the wallpaper.
                 "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") == "1",
                 "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
@@ -638,31 +562,27 @@ for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
     print(f"wrote {os.path.normpath(out)}")
 
 print(f"{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}s")
-print(f"  horse   bar  1     {secs(0):6.2f}s  exits beat {horse_exit:.0f}")
-print(f"  point   bar {BAR_POINT:>2}     {secs(bar(BAR_POINT)):6.2f}s  ends beat {p_end:.1f} "
+print(f"  horse    bar  1     {secs(0):6.2f}s  {gc}x{gr} grid, {max_lit} windows, "
+      f"{HORSE_SPAN:.0%} of the screen, exits beat {horse_exit:.0f}")
+print(f"  point    bar {BAR_POINT:>2}     {secs(bar(BAR_POINT)):6.2f}s  ends beat {p_end:.1f} "
       f"→ focal ({fx:.0f},{fy:.0f})")
-print(f"  probe   bar {BAR_PROBE:>2}     {secs(bar(BAR_PROBE)):6.2f}s  report alone      "
-      f"({secs(bar(BAR_MIRROR)) - secs(bar(BAR_PROBE)):5.1f}s uncovered)")
-print(f"  torus   bar {BAR_MIRROR:>2}     {secs(bar(BAR_MIRROR)):6.2f}s  glass alone       "
-      f"({secs(bar(BAR_WALL_UP)) - secs(bar(BAR_MIRROR)):5.1f}s uncovered)")
-print(f"  wall    bar {BAR_WALL_UP:>2}     {secs(bar(BAR_WALL_UP)):6.2f}s  photo wall alone  "
-      f"({secs(bar(BAR_PEAK)) - secs(bar(BAR_WALL_UP)):5.1f}s uncovered)")
-print(f"  PEAK    bar {BAR_PEAK:>2}     {secs(bar(BAR_PEAK)):6.2f}s  all of it (+{n_peak} chaos)")
-print(f"  break   bar {BAR_BREAK:>2}     {secs(bar(BAR_BREAK)):6.2f}s  it all goes, bare outro")
-print(f"  gated: fileSwarm "
-      f"{'ENABLED' if doc['meta']['allowDesktopFiles'] else '(ALLOW_DESKTOP_FILES=1)'} · "
-      f"deskWallpaper "
-      f"{'ENABLED' if doc['meta']['allowWallpaper'] else '(ALLOW_WALLPAPER=1)'}")
-print(f"  hydra             {secs(HY):6.2f}s  opens at the arrow's tip, runs at "
-      f"{secs(RUN_AT):.2f}s, {len(hydra_ids)} windows total")
-print(f"  riser             {secs(DROP_BEAT - RISER_SECONDS / BEAT):6.2f}s  {RISER_COUNT} windows "
-      f"in {RISER_SECONDS:.0f}s, accelerating into the drop")
-print(f"  CHORUS  bar {BAR_CHORUS:>2}     {secs(drop):6.2f}s  {kick_flashes} kick flashes")
-print(f"  strobe  bar {BAR_STROBE:>2}     {strobe_at:6.2f}s  ends {strobe_end:.2f}s")
-print(f"  letter  bar {BAR_LETTER:>2}     {secs(bar(BAR_LETTER)):6.2f}s  {len(letter)} chars @ "
-      f"{CHARS_PER_BEAT:.0f}/beat → done {secs(bar(BAR_LETTER) + letter_beats):.1f}s, "
-      f"closes {secs(letter_out):.1f}s")
-print(f"  letter bg         {'':6s}  {letter_flashes} white pulses behind the typing")
-print(f"  flyover bar {BAR_MAP:>2}    {secs(map_at):6.2f}s  {len(FLIGHTS)} Apple Maps flights ({MAP_STYLE}), "
-      f"{final_flashes} kick flashes → break at {secs(bar(87)):.1f}s")
-print(f"  heartbeat         {strobe_end:6.2f}s → {secs(map_at):.1f}s  ({heartbeats} blinks)")
+print(f"  hydra              {secs(HY):6.2f}s  opens at the arrow's tip, runs at "
+      f"{secs(RUN_AT):.2f}s (bar {RUN_AT / 4 + 1:.2f})")
+print(f"  more     bars {more_bars[0]}-{more_bars[-1]}  one per downbeat → {len(hydra_ids)} sketches")
+print(f"  CHORUS A bar {BAR_CHORUS_A:>2}     {secs(drop):6.2f}s  {n_cards} lyric cards "
+      f"(lead {CHORUS_LEAD:.1f}s)")
+print(f"  CHORUS B bar {BAR_CHORUS_B:>2}     {secs(b_start):6.2f}s  torus + {len(clock_ids)} clock windows, "
+      f"{n_glitch} glitch flashes")
+print(f"  probe    bar {BAR_BRIDGE:>2}     {secs(br):6.2f}s  full report @ 6 lines/beat")
+print(f"  focus    bar {BAR_FOCUS:>2}     {secs(fo):6.2f}s  geolocation + network, highlighted")
+print(f"  reboot   bar {BAR_REBOOT:>2}     {secs(rb):6.2f}s  black for {REBOOT_BEATS * BEAT:.1f}s")
+print(f"  map      bar {BAR_VERSE2:>2}    {secs(v2):6.2f}s  descent {DESCENT['seconds']}s → "
+      f"sweep at {secs(bar(BAR_SWEEP)):.2f}s ({MAP_STYLE})")
+print(f"  oracle   bar {BAR_ORACLE:>2}    {secs(orc):6.2f}s  torus + question")
+print(f"  booth    bar {BAR_BOOTH:>2}    {secs(bo):6.2f}s  3·2·1 on bars {BAR_BOOTH + 1}-{BAR_BOOTH + 3}, "
+      f"shutter {secs(shutter):.2f}s")
+print(f"  CHORUS C bar {BAR_CHORUS_C:>2}    {secs(bar(BAR_CHORUS_C)):6.2f}s  photo wall")
+print(f"  CHORUS D bar {BAR_CHORUS_D:>2}    {secs(cd):6.2f}s  eruption, {n_kick} kick flashes")
+print(f"  strobe   bar {BAR_STROBE:>2}    {strobe_at:6.2f}s  {n_strobe} of {len(strobe['events'])} events "
+      f"before the break")
+print(f"  break    bar {BAR_BREAK:>2}    {secs(brk):6.2f}s  credits hold past the end ({DURATION:.1f}s)")

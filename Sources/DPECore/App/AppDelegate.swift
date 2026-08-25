@@ -12,6 +12,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Dev tools: render the intro gate's cards, or the Phase 6 scenes, to a PNG.
         for (flag, render) in [("--snapshot-gate=", StillRenderer.renderGate),
                                ("--snapshot-scenes=", StillRenderer.renderScenes),
+                               ("--snapshot-acts=", StillRenderer.renderActs),
                                ("--snapshot-chrome=", StillRenderer.renderChrome)] {
             guard let arg = CommandLine.arguments.first(where: { $0.hasPrefix(flag) }) else { continue }
             let path = String(arg.dropFirst(flag.count))
@@ -268,7 +269,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // the unattended paths — --autoplay drives itself, --no-gate is the dev loop.
         if !args.contains("--autoplay") && !args.contains("--no-gate") {
             gate = IntroGateController(
-                onStart: { [weak self] in self?.controller?.startShow() },
+                onStart: { [weak self] in
+                    guard let self else { return }
+                    // Every prompt the show will need, answered before the first beat.
+                    Permissions.preflight(for: self.engine.events) { [weak self] in
+                        self?.controller?.startShow()
+                    }
+                },
                 onExit: { NSApp.terminate(nil) })
             gate?.present()
         }
@@ -279,10 +286,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             engine.enableFiringLog()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 guard let self = self else { return }
-                NSLog("[DPE] --autoplay: starting show")
+                // DPE_AUTOPLAY_FROM=<seconds> starts partway in — the way to rehearse one
+                // act without sitting through the ones before it.
+                let env = ProcessInfo.processInfo.environment
+                let from = env["DPE_AUTOPLAY_FROM"].flatMap(Double.init) ?? 0
+                if from > 0 { self.engine.seek(to: from) }
+                NSLog("[DPE] --autoplay: starting show at \(from)s")
                 self.engine.play()
-                let cap = ProcessInfo.processInfo.environment["DPE_AUTOPLAY_SECS"].flatMap(Double.init)
-                let quitAfter = cap ?? (self.engine.duration + 2.5)
+                let cap = env["DPE_AUTOPLAY_SECS"].flatMap(Double.init)
+                let quitAfter = cap ?? (self.engine.duration - from + 2.5)
                 DispatchQueue.main.asyncAfter(deadline: .now() + quitAfter) {
                     NSLog("[DPE] --autoplay: panic + restore")
                     self.engine.stopAndRestore()
@@ -306,8 +318,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     static func bundledTimelineURL() -> URL? {
         let fm = FileManager.default
         if let res = Bundle.main.resourceURL {
+            // The resources live in DPECore's bundle since the library split. The old
+            // executable-target bundle is still listed LAST as a fallback — but only
+            // last: a stale copy of it in .build once played the previous show under
+            // `swift run` while the new timeline sat unread in the DPECore bundle.
             let candidates = [
                 res.appendingPathComponent("timeline.json"),
+                res.appendingPathComponent("DesktopPerformanceEngine_DPECore.bundle")
+                   .appendingPathComponent("timeline.json"),
                 res.appendingPathComponent("DesktopPerformanceEngine_DesktopPerformanceEngine.bundle")
                    .appendingPathComponent("timeline.json")
             ]

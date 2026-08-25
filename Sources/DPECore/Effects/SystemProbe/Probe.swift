@@ -30,15 +30,21 @@ final class Probe: ObservableObject {
         "  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝"
     ]
 
-    func start() {
+    /// The full report — or, with `focus`, just the named sections, highlighted.
+    func start(focus: [String]? = nil) {
         live = sampler.sample()
 
         for b in banner { queue.append(TermLine(text: b, kind: .banner)) }
         queue.append(TermLine(text: "  self-directed disclosure report · everything this machine knows about you", kind: .dim, pause: 4))
         queue.append(TermLine(text: "  all readings are local — nothing leaves this computer", kind: .ok, pause: 10))
         queue.append(TermLine(text: "", kind: .plain))
-        queue.append(TermLine(text: "  > opening sensor bus …", kind: .prompt, pause: 8))
 
+        if let focus {
+            queue.append(TermLine(text: "  > probe --focus " + focus.joined(separator: ","), kind: .prompt, pause: 8))
+            gatherFocused(focus)
+            return
+        }
+        queue.append(TermLine(text: "  > opening sensor bus …", kind: .prompt, pause: 8))
 
         let displays = displayLines()
         let snapshot = live
@@ -58,13 +64,59 @@ final class Probe: ObservableObject {
         }
     }
 
+    /// Clear the terminal and read out ONLY `focus`, every line of it highlighted —
+    /// the machine going back to the parts that matter. The window, the live-stats
+    /// bar and the reveal pacing are untouched; only the text starts over.
+    func rerun(focus: [String]) {
+        queue.removeAll()
+        lines.removeAll()
+        wait = 0
+        footerAdded = false
+        streaming = true
+        queue.append(TermLine(text: "  > clear", kind: .prompt, pause: 3))
+        queue.append(TermLine(text: "  > probe --rerun --focus " + focus.joined(separator: ","), kind: .prompt, pause: 8))
+        queue.append(TermLine(text: "  re-reading where you are …", kind: .dim, pause: 8))
+        gatherFocused(focus)
+    }
+
+    /// Names → section builders. Unknown names are skipped with a line saying so,
+    /// rather than a typo in the timeline silently reading out nothing.
+    private func gatherFocused(_ focus: [String]) {
+        for name in focus {
+            switch name {
+            case "geolocation":
+                pendingAsync += 1
+                // A fresh prober: the first one has finished and won't fire again.
+                let lp = LocationProbe()
+                focusProbes.append(lp)
+                lp.run { [weak self] lines in
+                    Task { @MainActor in self?.enqueue(highlighted(lines)); self?.pendingAsync -= 1 }
+                }
+            case "network":
+                gather(highlight: true) { section("network") + networkLines() }
+            case "identity":
+                gather(highlight: true) { identitySection() }
+            case "machine":
+                gather(highlight: true) { machineSection() }
+            case "contacts":
+                pendingAsync += 1
+                contactCard { [weak self] lines in
+                    Task { @MainActor in self?.enqueue(highlighted(lines)); self?.pendingAsync -= 1 }
+                }
+            default:
+                queue.append(warn("  unknown section \"\(name)\" — skipped"))
+            }
+        }
+    }
+    private var focusProbes: [LocationProbe] = []
+
     /// Collect a section off the main thread, then splice it into the reveal queue.
-    private func gather(_ build: @escaping () -> [TermLine]) {
+    private func gather(highlight: Bool = false, _ build: @escaping () -> [TermLine]) {
         pendingAsync += 1
         DispatchQueue.global(qos: .userInitiated).async {
             let lines = build()
             Task { @MainActor in
-                self.enqueue(lines)
+                self.enqueue(highlight ? highlighted(lines) : lines)
                 self.pendingAsync -= 1
             }
         }

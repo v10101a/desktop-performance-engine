@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Embedded into the bare `swift run` executable (see Package.swift). macOS
+         KILLS a process that touches the camera, Contacts or Location Services without
+         a usage string — and a bare executable has no bundle to carry one. The packaged
+         .app gets its own Info.plist from bundle.sh; keep the two in step. -->
+    <key>CFBundleIdentifier</key>      <string>com.computerart.dpe.dev</string>
+    <key>CFBundleName</key>            <string>DesktopPerformanceEngine</string>
+    <key>NSCameraUsageDescription</key>
+    <string>The photo booth shows your camera during a performance and takes one photo for the end card. It is kept in memory only and discarded when the show ends.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>The system probe reads your own "me" card to show you what this machine knows about you. Nothing leaves this computer.</string>
+    <key>NSLocationUsageDescription</key>
+    <string>The system probe and the map show where this machine is. Nothing leaves this computer.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>The system probe and the map show where this machine is. Nothing leaves this computer.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Desktop Performance Engine rearranges your desktop icons during a performance and restores them when it finishes.</string>
+</dict>
+</plist>

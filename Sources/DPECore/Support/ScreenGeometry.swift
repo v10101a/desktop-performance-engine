@@ -21,13 +21,20 @@ enum ScreenGeometry {
     /// **Negative x/y anchor to the far edge**, which keeps authored frames
     /// resolution-independent: `x < 0` measures from the right, `y < 0` from the bottom,
     /// so `[36, -36, 176, 64]` is the lower-left corner on any display.
+    ///
+    /// **A width or height ≤ 0 stretches to the far edge**, minus that much: `[0, 0, 0, 0]`
+    /// is the whole screen on any display, `[40, 40, -40, -40]` is the screen with a
+    /// 40pt margin. The lyric cards and the end card use this; nothing else authors a
+    /// zero-size window, so it can't collide with an existing frame.
     static func rect(from frame: [Double], on screen: NSScreen,
                      fallbackSize: NSSize? = nil) -> NSRect {
         let sf = screen.frame
         let x = frame.count > 0 ? frame[0] : 0
         let topY = frame.count > 1 ? frame[1] : 0
-        let w = frame.count > 2 ? frame[2] : (fallbackSize?.width ?? 300)
-        let h = frame.count > 3 ? frame[3] : (fallbackSize?.height ?? 200)
+        var w = frame.count > 2 ? frame[2] : (fallbackSize?.width ?? 300)
+        var h = frame.count > 3 ? frame[3] : (fallbackSize?.height ?? 200)
+        if w <= 0 { w = max(1, sf.width - max(0, x) + w) }
+        if h <= 0 { h = max(1, sf.height - max(0, topY) + h) }
         let originX = x >= 0 ? sf.minX + x : sf.maxX + x - w
         let originY = topY >= 0 ? sf.maxY - topY - h    // from top
                                 : sf.minY - topY         // from bottom (topY negative)

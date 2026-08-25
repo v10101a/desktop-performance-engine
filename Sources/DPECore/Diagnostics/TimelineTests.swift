@@ -17,11 +17,60 @@ enum TimelineTests {
                     "every type string must decode to the case reporting that name")
 
             t.equal(TimelineEvent.registeredTypeNames,
-                    ["closeWindow", "cursorPath", "cursorTrail", "deskWallpaper",
+                    ["closeWindow", "credits", "cursorPath", "cursorTrail", "deskWallpaper",
                      "fakeDialog", "fileSwarm", "glassTorus", "jiggle", "moveWindow",
-                     "openWindow", "photoWall", "rearrangeIcons", "screenFlash",
-                     "sprite", "systemProbe", "typeText", "wallpaper"],
+                     "openWindow", "oracle", "photoBooth", "photoWall", "rearrangeIcons",
+                     "reboot", "screenFlash", "sprite", "systemProbe", "typeText",
+                     "wallpaper"],
                     "registered event types")
+
+            // --- the restructured show's new acts ---
+
+            if let ev = decode(#"{"beat":4,"type":"reboot","params":{"id":"boot","durationBeats":12,"delayBeats":2}}"#),
+               case .reboot(let p) = ev.action {
+                t.equal(p.durationBeats ?? -1, 12, "reboot durationBeats")
+                t.equal(p.delayBeats ?? -1, 2, "reboot delayBeats")
+            } else { t.expect(false, "reboot failed to decode") }
+
+            if let ev = decode(#"{"beat":4,"type":"oracle","params":{"id":"o","answers":["yes","no"],"answerBeats":6}}"#),
+               case .oracle(let p) = ev.action {
+                t.equal(p.answers ?? [], ["yes", "no"], "oracle answers")
+                t.equal(p.answerBeats ?? -1, 6, "oracle answerBeats")
+                t.equal(OracleController.answer(to: "will you", from: p.answers ?? [], fallback: 0),
+                        OracleController.answer(to: "will you", from: p.answers ?? [], fallback: 1),
+                        "the same question always gets the same answer")
+            } else { t.expect(false, "oracle failed to decode") }
+
+            if let ev = decode(#"{"beat":4,"type":"photoBooth","params":{"id":"b","durationBeats":16,"count":3,"stepBeats":4}}"#),
+               case .photoBooth(let p) = ev.action {
+                t.equal(p.count ?? -1, 3, "photoBooth count")
+                let plan = PhotoBoothController.Plan(p, bpm: 120)
+                t.equal(plan.numberAt.count, 3, "photoBooth shows three numbers")
+                t.equal(plan.numberAt.first ?? -1, 2.0, "3 shows at 4 beats before the shutter (120 BPM)")
+                t.equal(plan.shutterAt, 8.0, "shutter at 16 beats (120 BPM)")
+            } else { t.expect(false, "photoBooth failed to decode") }
+
+            if let ev = decode(#"{"beat":4,"type":"credits","params":{"id":"c","lines":["a","b"],"hold":true}}"#),
+               case .credits(let p) = ev.action {
+                t.equal(p.lines ?? [], ["a", "b"], "credits lines")
+                t.equal(p.hold, true, "credits hold")
+            } else { t.expect(false, "credits failed to decode") }
+
+            if let ev = decode(#"{"beat":4,"type":"systemProbe","params":{"id":"p","focus":["geolocation","network"]}}"#),
+               case .systemProbe(let p) = ev.action {
+                t.equal(p.focus ?? [], ["geolocation", "network"], "systemProbe focus")
+            } else { t.expect(false, "systemProbe focus failed to decode") }
+
+            if let ev = decode(##"{"beat":0,"type":"openWindow","params":{"id":"l","frame":[0,0,10,10],"content":{"kind":"lyric","text":"what I want","hex":"#0078D7","fg":"#FFFFFF"}}}"##),
+               case .openWindow(let p) = ev.action {
+                t.equal(p.content.kind, "lyric", "lyric content kind")
+                t.equal(p.content.fg ?? "", "#FFFFFF", "lyric fg")
+            } else { t.expect(false, "lyric window failed to decode") }
+
+            if let ev = decode(#"{"beat":0,"type":"openWindow","params":{"id":"m","frame":[0,0,10,10],"content":{"kind":"map","map":{"lat":1,"lon":2,"here":true}}}}"#),
+               case .openWindow(let p) = ev.action {
+                t.equal(p.content.map?.here, true, "map here")
+            } else { t.expect(false, "map here failed to decode") }
 
             t.expect(decode(#"{"beat":0,"type":"nope","params":{}}"#) == nil,
                      "an unknown type must be rejected")
@@ -99,7 +148,7 @@ enum TimelineTests {
 
             if let url = Bundle.module.url(forResource: "timeline", withExtension: "json"),
                let tl = try? TimelineLoader.load(from: url) {
-                t.expect(tl.events.count > 1000, "bundled show has \(tl.events.count) events")
+                t.expect(tl.events.count > 500, "bundled show has \(tl.events.count) events")
                 t.expect(tl.duration > 100, "bundled show duration \(tl.duration)s")
                 // The scheduler walks a single advancing cursor, so order is load-bearing.
                 let sorted = zip(tl.events, tl.events.dropFirst()).allSatisfy { $0.fireTime <= $1.fireTime }

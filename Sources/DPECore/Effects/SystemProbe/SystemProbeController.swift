@@ -45,6 +45,17 @@ final class SystemProbeController {
     // MARK: - Lifecycle
 
     func begin(_ p: SystemProbeParams, at now: Double, bpm: Double) {
+        // Same id, already up, and a `focus`: don't rebuild the window — clear the text
+        // and read the named sections back out, highlighted. The pacing can change too.
+        if var r = report, r.id == p.id, let focus = p.focus {
+            MainActor.assumeIsolated { r.probe.rerun(focus: focus) }
+            if let rate = p.linesPerBeat { r.cadence.ratePerBeat = rate }
+            r.finished = false
+            let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)
+            r.endTime = duration.map { now + $0 }
+            report = r
+            return
+        }
         if report != nil { teardown() }
 
         // Probe is @MainActor because it drives SwiftUI; the pump already guarantees
@@ -66,7 +77,7 @@ final class SystemProbeController {
                         endTime: duration.map { now + $0 })
 
         // Kicks the off-main gathering; nothing is revealed until the clock says so.
-        MainActor.assumeIsolated { probe.start() }
+        MainActor.assumeIsolated { probe.start(focus: p.focus) }
     }
 
     func stop(id: String) {

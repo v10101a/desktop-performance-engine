@@ -20,7 +20,18 @@ final class LocationProbe: NSObject, CLLocationManagerDelegate {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
             guard let self, !self.finished else { return }
-            self.deliver([warn("  location request timed out — no fix acquired")])
+            // The gate may have warmed a fix up before the show started; better the
+            // one we have than none at all.
+            if let c = LocationStore.shared.coordinate {
+                self.deliver([
+                    TermLine(label: "  coordinates",
+                             text: String(format: "%.6f, %.6f", c.latitude, c.longitude), kind: .alert),
+                    kv("  locality", LocationStore.shared.placeName, kind: .alert),
+                    note("  (from the pre-show fix — the live request timed out)")
+                ])
+            } else {
+                self.deliver([warn("  location request timed out — no fix acquired")])
+            }
         }
     }
 
@@ -58,6 +69,7 @@ final class LocationProbe: NSObject, CLLocationManagerDelegate {
 
     func locationManager(_ m: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let loc = locations.last else { return }
+        LocationStore.shared.record(loc)          // the map flies here later
         var lines: [TermLine] = [
             TermLine(label: "  coordinates",
                      text: String(format: "%.6f, %.6f", loc.coordinate.latitude, loc.coordinate.longitude),
@@ -70,6 +82,7 @@ final class LocationProbe: NSObject, CLLocationManagerDelegate {
         CLGeocoder().reverseGeocodeLocation(loc) { [weak self] places, _ in
             guard let self else { return }
             if let p = places?.first {
+                LocationStore.shared.record(place: p)
                 let street = [p.subThoroughfare, p.thoroughfare].compactMap { $0 }.joined(separator: " ")
                 if !street.isEmpty { lines.append(kv("  street", street, kind: .alert)) }
                 lines.append(kv("  locality", [p.locality, p.subAdministrativeArea].compactMap { $0 }.joined(separator: ", "), kind: .alert))

@@ -18,6 +18,13 @@ so give it to me
 
 ## Where these appear in the show
 
+**All of it is chorus** — each chorus sings the whole lyric — so the first chorus is a
+lyric video: full-screen cards, one phrase per card, and the second chorus puts the same
+phrases in small windows round the torus. The card timings are `CUES` in
+`tools/lyrics.py`: `(beat from the start of the chorus, text)`, 32 beats to a chorus.
+They are a first pass on the bar grid; tune them by scrubbing with Inspect on and
+editing the numbers, then `python3 tools/generate_show.py && ./bundle.sh`.
+
 Every `fakeDialog` in the piece draws its title and body from these lines — see
 `tools/lyrics.py`, which is the single source both generators import. The lines
 alternate short/long, which maps onto an alert's two text styles: the short line

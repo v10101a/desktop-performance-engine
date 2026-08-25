@@ -11,6 +11,10 @@ final class EventContext {
     let torus: GlassTorusController
     let probe: SystemProbeController
     let swarm: FileSwarmController
+    let reboot: RebootController
+    let oracle: OracleController
+    let booth: PhotoBoothController
+    let credits: CreditsController
 
     /// Document BPM, so beat-based durations resolve to seconds.
     var bpm: Double = 120
@@ -18,7 +22,9 @@ final class EventContext {
     init(windows: WindowManager, cursor: CursorController,
          icons: DesktopIconController, wallpaper: WallpaperController,
          photos: PhotoWallController, torus: GlassTorusController,
-         probe: SystemProbeController, swarm: FileSwarmController) {
+         probe: SystemProbeController, swarm: FileSwarmController,
+         reboot: RebootController, oracle: OracleController,
+         booth: PhotoBoothController, credits: CreditsController) {
         self.windows = windows
         self.cursor = cursor
         self.icons = icons
@@ -27,6 +33,10 @@ final class EventContext {
         self.torus = torus
         self.probe = probe
         self.swarm = swarm
+        self.reboot = reboot
+        self.oracle = oracle
+        self.booth = booth
+        self.credits = credits
     }
 
     /// Always invoked on the main thread (the pump hops to main before ticking).
@@ -44,6 +54,10 @@ final class EventContext {
             wallpaper.stopDesk(id: p.id)
             probe.stop(id: p.id)
             swarm.stop(id: p.id)
+            reboot.stop(id: p.id)
+            oracle.stop(id: p.id)
+            booth.stop(id: p.id)
+            credits.stop(id: p.id)
         case .moveWindow(let p):
             windows.beginMove(p, at: now, bpm: bpm)
         case .screenFlash(let p):
@@ -72,6 +86,14 @@ final class EventContext {
             probe.begin(p, at: now, bpm: bpm)
         case .fileSwarm(let p):
             swarm.begin(p, at: now, bpm: bpm)
+        case .reboot(let p):
+            reboot.begin(p, at: now, bpm: bpm)
+        case .oracle(let p):
+            oracle.begin(p, at: now, bpm: bpm)
+        case .photoBooth(let p):
+            booth.begin(p, at: now, bpm: bpm)
+        case .credits(let p):
+            credits.begin(p, at: now, bpm: bpm)
         }
     }
 }

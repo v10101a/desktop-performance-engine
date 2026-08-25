@@ -274,16 +274,22 @@ final class MapFlyView: NSView {
         map.showsZoomControls = false
         addSubview(map)
 
-        let from = MKMapCamera(lookingAtCenter: CLLocationCoordinate2D(latitude: spec.lat,
-                                                                      longitude: spec.lon),
+        // `here`: the viewer's own location, if Location Services gave us one. The
+        // authored coordinates are the fallback — the show flies somewhere either way.
+        var lat = spec.lat, lon = spec.lon
+        var toLat = spec.toLat ?? spec.lat, toLon = spec.toLon ?? spec.lon
+        if spec.here == true, let fix = LocationStore.shared.coordinate {
+            lat = fix.latitude; lon = fix.longitude
+            toLat = fix.latitude; toLon = fix.longitude
+        }
+        let from = MKMapCamera(lookingAtCenter: CLLocationCoordinate2D(latitude: lat,
+                                                                      longitude: lon),
                                fromDistance: spec.altitude ?? 900,
                                pitch: CGFloat(spec.pitch ?? 60),
                                heading: spec.heading ?? 0)
         map.camera = from
 
         let duration = max(0.5, spec.seconds ?? 14)
-        let toLat = spec.toLat ?? spec.lat
-        let toLon = spec.toLon ?? spec.lon
         let toAlt = spec.toAltitude ?? (spec.altitude ?? 900)
         let toPitch = CGFloat(spec.toPitch ?? (spec.pitch ?? 60))
         let toHeading = spec.toHeading ?? ((spec.heading ?? 0) + 90)
@@ -293,8 +299,8 @@ final class MapFlyView: NSView {
             let u = min(1.0, Date().timeIntervalSince(started) / duration)
             let e = u < 0.5 ? 2 * u * u : 1 - pow(-2 * u + 2, 2) / 2      // easeInOut
             let cam = MKMapCamera(
-                lookingAtCenter: CLLocationCoordinate2D(latitude: spec.lat + (toLat - spec.lat) * e,
-                                                        longitude: spec.lon + (toLon - spec.lon) * e),
+                lookingAtCenter: CLLocationCoordinate2D(latitude: lat + (toLat - lat) * e,
+                                                        longitude: lon + (toLon - lon) * e),
                 fromDistance: (spec.altitude ?? 900) + (toAlt - (spec.altitude ?? 900)) * e,
                 pitch: CGFloat(spec.pitch ?? 60) + (toPitch - CGFloat(spec.pitch ?? 60)) * CGFloat(e),
                 heading: (spec.heading ?? 0) + (toHeading - (spec.heading ?? 0)) * e)
@@ -344,15 +350,47 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
 
     switch content.kind {
     case "text":
-        view.layer?.backgroundColor = (NSColor(hex: "#091724") ?? .black).cgColor
+        view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#091724") ?? .black).cgColor
         view.layer?.cornerRadius = 6
         let label = NSTextField(labelWithString: content.text ?? "")
-        label.font = .systemFont(ofSize: 42, weight: .heavy)
-        label.textColor = .white
+        label.font = .systemFont(ofSize: CGFloat(content.fontSize ?? 42), weight: .heavy)
+        label.textColor = NSColor(hex: content.fg ?? "#FFFFFF") ?? .white
         label.alignment = .center
         label.maximumNumberOfLines = 0
         label.frame = body
         label.autoresizingMask = [.width, .height]
+        view.addSubview(label)
+    case "lyric":
+        // A lyric-video frame: the ground is a flat colour and the line is set as big
+        // as the window allows, wrapped, centred both ways. Fullscreen it is the whole
+        // screen going blue with the words on it; at 300pt it is a caption in a clock.
+        view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#0078D7") ?? .systemBlue).cgColor
+        view.layer?.cornerRadius = size.width > 600 ? 0 : 6
+        let label = NSTextField(labelWithString: content.text ?? "")
+        label.textColor = NSColor(hex: content.fg ?? "#FFFFFF") ?? .white
+        label.alignment = .center
+        label.maximumNumberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        let pad = max(8, min(size.width, size.height) * 0.07)
+        let room = NSSize(width: size.width - pad * 2, height: size.height - pad * 2)
+        // Shrink to fit: start at a fifth of the height and step down until the
+        // wrapped block fits both ways. A word wider than the window wraps mid-word,
+        // which reads as broken, so that counts as not fitting too.
+        var pt = max(12, size.height * 0.22)
+        var fit = NSSize.zero
+        while pt > 8 {
+            let font = NSFont.systemFont(ofSize: pt, weight: .heavy)
+            label.font = font
+            fit = label.sizeThatFits(NSSize(width: room.width, height: .greatestFiniteMagnitude))
+            let widest = (content.text ?? "").split(separator: " ")
+                .map { (String($0) as NSString).size(withAttributes: [.font: font]).width }
+                .max() ?? 0
+            if fit.height <= room.height && widest <= room.width { break }
+            pt -= max(1, pt * 0.06)
+        }
+        label.frame = NSRect(x: pad, y: (size.height - fit.height) / 2,
+                             width: room.width, height: fit.height)
+        label.autoresizingMask = [.width, .minYMargin, .maxYMargin]
         view.addSubview(label)
     case "code":
         // Terminal.app, "Basic" — the profile a Mac ships with: white background,
@@ -659,7 +697,7 @@ final class EffectWindow: BaseEffectWindow {
         var spec = content
         if isNativeChrome {
             spec.chrome = "none"
-            title = content.title ?? EffectWindow.defaultTitle(for: content)
+            title = LocationStore.fill(content.title ?? EffectWindow.defaultTitle(for: content))
         }
         contentView = makeEffectContentView(spec, size: contentRect(forFrameRect: frame).size)
     }

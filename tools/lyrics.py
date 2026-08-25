@@ -42,6 +42,37 @@ def buttons(i):
     return BUTTONS[i % len(BUTTONS)]
 
 
+# The lyric video: the chorus, card by card.
+#
+# Every line of the song is chorus (it repeats each time), so one pass of these is one
+# chorus. Each entry is (beat, text): the beat is counted from the START of the chorus,
+# 32 beats = 8 bars long, and the text is what the card says. The long lines are split
+# into more than one card so each card is a phrase, not a paragraph.
+#
+# These beat offsets are a FIRST PASS placed by eye on the bar grid, not by ear — tune
+# them against the vocal by scrubbing (Inspect shows each card's id + time) and
+# nudging the numbers. Cards alternate blue-on-white / white-on-blue in the order
+# given, so inserting one flips the colours after it.
+CUES = [
+    (0.0,  "what I want"),
+    (4.0,  "I told you that i"),
+    (6.0,  "need your love"),
+    (7.0,  "so give it to me"),
+    (8.0,  "running up"),
+    (12.0, "my currents"),
+    (14.0, "i can’t get enough"),
+    (15.0, "of this feeling baby"),
+    (16.0, "all i got"),
+    (20.0, "i’m giving that"),
+    (22.0, "so give it up"),
+    (24.0, "i told you that I"),
+    (26.0, "need your love"),
+    (27.0, "so give it to me"),
+    (28.0, "need your love"),
+    (30.0, "so give it to me"),
+]
+
+
 # The song as JavaScript, for the fake Terminal windows.
 #
 # Same source as ALERTS — the words are in docs/LYRICS.md. Kept short: these render in

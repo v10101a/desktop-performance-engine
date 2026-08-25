@@ -23,7 +23,17 @@ let package = Package(
         .executableTarget(
             name: "DesktopPerformanceEngine",
             dependencies: ["DPECore"],
-            path: "Sources/DesktopPerformanceEngine"
+            path: "Sources/DesktopPerformanceEngine",
+            exclude: ["Info.plist"],
+            // Embed the usage strings into the bare executable: without them macOS kills
+            // the process the moment it touches the camera, Contacts or Location Services
+            // under `swift run`. (The .app has its own Info.plist — see bundle.sh.)
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-sectcreate",
+                              "-Xlinker", "__TEXT",
+                              "-Xlinker", "__info_plist",
+                              "-Xlinker", "Sources/DesktopPerformanceEngine/Info.plist"])
+            ]
         ),
         // Not a .testTarget: this toolchain is Command Line Tools only, which ships
         // neither XCTest nor swift-testing, so `swift test` cannot run. A plain

@@ -15,6 +15,8 @@ enum Phosphor {
     static let warn    = Color(red: 0.60, green: 0.36, blue: 0.00)   // ANSI yellow, darkened
     static let ok      = Color(red: 0.00, green: 0.45, blue: 0.10)   // ANSI green
     static let ground  = Color.white
+    /// Highlighter yellow, for the lines a `focus` re-read points at.
+    static let marker  = Color(red: 1.00, green: 0.90, blue: 0.20).opacity(0.85)
 }
 
 /// Terminal renders everything at one size in one face; the `size` argument is kept
@@ -121,6 +123,11 @@ struct TerminalView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // The `focus` re-read: a marker behind the line, the way you'd highlight the
+        // one paragraph in a printout that says where somebody lives.
+        .padding(.horizontal, line.highlight ? 6 : 0)
+        .padding(.vertical, line.highlight ? 1 : 0)
+        .background(line.highlight ? Phosphor.marker : Color.clear)
         .transition(.opacity)
     }
 

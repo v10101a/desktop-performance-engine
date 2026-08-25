@@ -15,13 +15,23 @@ final class PerformanceEngine {
     private let torus = GlassTorusController()
     private let probe = SystemProbeController()
     private let swarm = FileSwarmController()
+    private let reboot = RebootController()
+    private let oracle = OracleController()
+    private let booth = PhotoBoothController()
+    private let credits = CreditsController()
     private let context: EventContext
     private let restore: RestoreManager
     private let panic = PanicController()
 
     /// Every executor, once. The tick, `seek` and `stopAndRestore` all iterate this
     /// rather than naming each one — see the `Executor` protocol for why.
-    private var executors: [Executor] { [windows, cursor, photos, torus, probe, wallpaper, swarm] }
+    private var executors: [Executor] {
+        [windows, cursor, photos, torus, probe, wallpaper, swarm, reboot, oracle, booth, credits]
+    }
+
+    /// True once the track has ended under a held end card: the show is paused there,
+    /// not stopped, until the viewer dismisses it.
+    private(set) var holdingAtEnd = false
 
     private var timeline: LoadedTimeline?
     private var timelineDir: URL?
@@ -54,8 +64,12 @@ final class PerformanceEngine {
     init() {
         context = EventContext(windows: windows, cursor: cursor, icons: icons,
                                wallpaper: wallpaper, photos: photos, torus: torus,
-                               probe: probe, swarm: swarm)
+                               probe: probe, swarm: swarm, reboot: reboot, oracle: oracle,
+                               booth: booth, credits: credits)
         restore = RestoreManager(windows: windows)
+        credits.onDismiss = { [weak self] in
+            self?.stopAndRestore()
+        }
         cursor.onControlStarted = { [weak self] in
             self?.restore.cursorWasControlled = true
         }
@@ -78,6 +92,10 @@ final class PerformanceEngine {
         torus.bpm = tl.meta.bpm
         probe.bpm = tl.meta.bpm
         swarm.bpm = tl.meta.bpm
+        reboot.bpm = tl.meta.bpm
+        oracle.bpm = tl.meta.bpm
+        booth.bpm = tl.meta.bpm
+        credits.bpm = tl.meta.bpm
         // Writes real files, so it is opt-in per timeline like the wallpaper swap.
         swarm.enabled = tl.meta.allowDesktopFiles ?? false
         wallpaper.baseDir = timelineDir
@@ -90,7 +108,14 @@ final class PerformanceEngine {
         // Walk the disk for photos now — a photoWall event fires on a beat and a cold
         // scan takes seconds, so the index has to be warm before the clock runs.
         photos.prewarm(for: tl.events)
+        // Configure the camera session now; device discovery is far too slow for a tick.
+        booth.prewarm(for: tl.events)
+        credits.prewarm(for: tl.events)
     }
+
+    /// The resolved events, for whoever needs to know what the show is going to ask
+    /// for before it starts (`Permissions.preflight`).
+    var events: [ResolvedEvent] { timeline?.events ?? [] }
 
     var loadedInfo: String {
         guard let tl = timeline else { return "No timeline loaded" }
@@ -202,8 +227,16 @@ final class PerformanceEngine {
         guard isPlaying, let raw = clock.currentTime() else { return }
         let now = raw + offsetCorrection
 
-        // End of the piece: stop, restore, rewind the playhead to the top.
+        // End of the piece: stop, restore, rewind the playhead to the top — unless the
+        // end card asked to hold, in which case the show pauses on it and stays there
+        // until the card is dismissed (its button, Stop, or panic).
         if now >= duration {
+            if credits.isHolding {
+                if !holdingAtEnd { NSLog("[DPE] end of track — holding on the end card") }
+                holdingAtEnd = true
+                pause()
+                return
+            }
             startPosition = 0
             stopAndRestore()
             onTick?(0)
@@ -246,6 +279,13 @@ final class PerformanceEngine {
         pump.stop()
         clock.stop()
         for executor in executors { executor.closeAll() }
+        // The booth's photo is for the credits and nothing after them.
+        PhotoBoothStore.shared.discard()
+        if holdingAtEnd {
+            holdingAtEnd = false
+            startPosition = 0
+            onTick?(0)
+        }
         restore.restore()
         if iconsArmed { icons.restore() }
         if wallpaperArmed { wallpaper.restore() }

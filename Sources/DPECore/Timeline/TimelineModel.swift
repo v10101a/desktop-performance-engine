@@ -47,6 +47,12 @@ struct Meta: Decodable {
 struct MapSpec: Decodable {
     let lat: Double
     let lon: Double
+    /// Fly over the viewer's OWN location: `lat`/`lon` (and `toLat`/`toLon`) are
+    /// replaced by the most recent Location Services fix — the one the system probe
+    /// obtained, or the one the intro gate warmed up. If no fix has arrived (denied,
+    /// switched off, or still pending) the authored coordinates are the fallback.
+    /// Nothing is looked up over the network: the fix comes from CoreLocation only.
+    var here: Bool? = nil
     let toLat: Double?
     let toLon: Double?
     let altitude: Double?     // metres from the ground, default 900
@@ -63,10 +69,16 @@ struct MapSpec: Decodable {
 /// defaults — dev-tool and preview code that builds these by hand then doesn't need
 /// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "code" | "image" | "ascii" | "livecode" | "map"
+    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "livecode" | "map"
     var hex: String? = nil
     var text: String? = nil
     var path: String? = nil
+    /// `text`/`lyric` only: the type colour (`hex` is the ground). A `lyric` card is a
+    /// lyric-video frame — one line, set as large as the window allows, centred — so a
+    /// fullscreen one is the whole screen going blue with the words on it.
+    var fg: String? = nil
+    /// `text` only: a fixed point size (default 42). `lyric` always fits to the window.
+    var fontSize: Double? = nil
     /// Optional fake window chrome: "browser" | "terminal" | "mac" | "mixed" | "none".
     /// Drawn by us at any size — never a pixel-accurate imitation of real system UI.
     var chrome: String? = nil
@@ -352,6 +364,80 @@ struct SystemProbeParams: Decodable {
     var screen: Int? = nil
     /// [x, y, w, h], top-left origin. Defaults to 1060×800, centred.
     var frame: [Double]? = nil
+    /// Fired at an id that is already on screen: the terminal is cleared and ONLY these
+    /// sections are read out again, every line of them highlighted — the machine going
+    /// back to the parts that matter. Names: `geolocation`, `network`, `identity`,
+    /// `machine`, `contacts`. A new window with `focus` set reads out just those.
+    var focus: [String]? = nil
+}
+
+/// A fake reboot: the screen goes black, the boot glyph comes up, and a progress bar
+/// fills over the event's duration. Stays up until `closeWindow` by `id`, so the
+/// generator decides when the desktop "comes back". Driven by the show clock — the
+/// bar scrubs with the playhead like everything else.
+struct RebootParams: Decodable {
+    let id: String
+    var screen: Int? = nil
+    var durationBeats: Double? = nil    // how long the bar takes to fill (default 8 beats)
+    var durationSeconds: Double? = nil
+    var delayBeats: Double? = nil       // black + glyph before the bar starts (default 1)
+    var glyph: String? = nil            // the boot logo; default "\u{F8FF}" (the  glyph in Apple fonts)
+    var color: String? = nil            // glyph + bar colour (default white)
+}
+
+/// The magic torus: an alert that asks the viewer to type a question, and answers it
+/// when they click OK — or on its own after `answerBeats`, so the show can't stall on
+/// an audience that won't play. The one window in the show allowed to take keyboard
+/// focus (the text field needs it); it gives focus back the moment it answers.
+struct OracleParams: Decodable {
+    let id: String
+    var screen: Int? = nil
+    var frame: [Double]? = nil          // [x, y, w, h]; default 460×200 centred below the torus
+    var title: String? = nil            // default "hey, i'm the magic torus"
+    var body: String? = nil             // default "ask me a question"
+    var placeholder: String? = nil      // text-field ghost text
+    var answers: [String]? = nil        // default: yes / no / maybe / don't count on it / …
+    var answerBeats: Double? = nil      // auto-answer if nobody clicks (default 8)
+    var answerSeconds: Double? = nil
+    var icon: String? = nil             // as fakeDialog (default "app")
+}
+
+/// A Photo Booth: the viewer's own camera in a window, a 3·2·1 countdown in tempo, and
+/// a photo taken on the last beat. The picture is kept in memory only — never written
+/// to disk — and shown again by `credits`. Camera access is asked for at the intro
+/// gate (`Permissions.preflight`); refused, the preview is black and no photo is taken.
+struct PhotoBoothParams: Decodable {
+    let id: String
+    var screen: Int? = nil
+    var frame: [Double]? = nil          // [x, y, w, h]; default 640×480 centred
+    var title: String? = nil            // window title (default "Photo Booth")
+    var durationBeats: Double? = nil    // open → shutter (default 16)
+    var durationSeconds: Double? = nil
+    var count: Int? = nil               // countdown length (default 3)
+    var stepBeats: Double? = nil        // beats per countdown number (default 4)
+    var mirror: Bool? = nil             // mirror the preview like Photo Booth does (default true)
+    var flash: String? = nil            // shutter flash colour inside the window (default white)
+    /// Keep the window (frozen on the photo) after the shutter until `closeWindow`.
+    /// Default false: the window goes with the flash.
+    var hold: Bool? = nil
+}
+
+/// The end card: the photo the computer took, in a frame; the machine's own vitals in
+/// the probe's terminal style; an "i survived" alert; and the credits. The screen holds
+/// there — past the end of the track — until the viewer dismisses it or hits panic, so
+/// there is time to take a screenshot.
+struct CreditsParams: Decodable {
+    let id: String
+    var screen: Int? = nil
+    var lines: [String]? = nil          // credits copy, one entry per line
+    var title: String? = nil            // credits dialog title (default "credits")
+    var survivor: String? = nil         // the "i survived" alert title
+    var survivorBody: String? = nil
+    var caption: String? = nil          // under the photo
+    var showInfo: Bool? = nil           // the machine-info terminal (default true)
+    var hold: Bool? = nil               // stay up past the end of the track (default true)
+    var backdrop: String? = nil         // hex behind everything (default black)
+    var filter: String? = nil           // "instant" (default) | "chrome" | "fade" | "none"
 }
 
 /// Patterns drawn on the desktop out of real file icons. Ported from the standalone
@@ -402,6 +488,10 @@ enum EventAction {
     case deskWallpaper(DeskWallpaperParams)   // ported from the BlackWallpaper tools
     case systemProbe(SystemProbeParams)       // ported from the standalone systemprobe app
     case fileSwarm(FileSwarmParams)           // ported from the standalone FileSwarm app
+    case reboot(RebootParams)                 // the fake boot screen
+    case oracle(OracleParams)                 // the magic torus asks for a question
+    case photoBooth(PhotoBoothParams)         // the viewer's camera, 3·2·1, shutter
+    case credits(CreditsParams)               // the end card, held past the track
 }
 
 extension EventAction {
@@ -426,6 +516,10 @@ extension EventAction {
         case .deskWallpaper: return "deskWallpaper"
         case .systemProbe: return "systemProbe"
         case .fileSwarm: return "fileSwarm"
+        case .reboot: return "reboot"
+        case .oracle: return "oracle"
+        case .photoBooth: return "photoBooth"
+        case .credits: return "credits"
         }
     }
 }
@@ -463,6 +557,10 @@ struct TimelineEvent: Decodable {
         "deskWallpaper": { .deskWallpaper(try $0.decode(DeskWallpaperParams.self, forKey: .params)) },
         "systemProbe": { .systemProbe(try $0.decode(SystemProbeParams.self, forKey: .params)) },
         "fileSwarm": { .fileSwarm(try $0.decode(FileSwarmParams.self, forKey: .params)) },
+        "reboot": { .reboot(try $0.decode(RebootParams.self, forKey: .params)) },
+        "oracle": { .oracle(try $0.decode(OracleParams.self, forKey: .params)) },
+        "photoBooth": { .photoBooth(try $0.decode(PhotoBoothParams.self, forKey: .params)) },
+        "credits": { .credits(try $0.decode(CreditsParams.self, forKey: .params)) },
     ]
 
     /// Every `"type"` string the decoder accepts. Ordered, for stable test output.

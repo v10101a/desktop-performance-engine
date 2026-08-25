@@ -110,9 +110,15 @@ Test a build the way a recipient gets it, by faking the quarantine flag:
 xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/DesktopPerformanceEngine.zip
 ```
 
-The piece needs **no permission prompts** — the show uses `cursorPath` in `warp` mode
-(no Accessibility) and no `rearrangeIcons` (no Automation). It does want the network,
-for the Apple Maps flyover. Note also that `hdiutil` needs real disk-image privileges, so
+The piece asks for **Camera** (the photo booth), **Contacts** and **Location Services**
+(the probe and the map) and **Screen Recording** (the torus's reflection) — all of them
+**at the intro gate, before the first beat**, so no system dialog lands mid-song
+(`Permissions.preflight`; see Act 0). It needs no Accessibility (`cursorPath` runs in
+`warp` mode) and no Automation (no `rearrangeIcons`). It does want the network, for the
+Apple Maps flights. The `.app`'s Info.plist carries the usage strings; the bare
+`swift run` executable embeds the same strings from
+`Sources/DesktopPerformanceEngine/Info.plist` (Package.swift's linker flags), because
+macOS kills a process that touches the camera without one. Note also that `hdiutil` needs real disk-image privileges, so
 `ship.sh` won't make a `.dmg` from inside a sandboxed shell.
 
 Two things travel inside the bundle that are worth a thought before handing it out: the
@@ -129,8 +135,12 @@ on the desktop asking **DO YOU WANT THE MALWARE?** with two answers: **YES. INFE
 or **no thank you** (which quits).
 
 Cards auto-advance after their `dwell` or step on click/space; **Esc** leaves from
-anywhere; **Return** takes the default on the choice card. "Yes" starts the show through
-the same path as the Play button, so the transport stays in sync.
+anywhere; **Return** takes the default on the choice card. "Yes" raises every permission
+prompt the loaded show will need — Camera, Contacts, Location, Screen Recording, one at a
+time, only the ones the timeline actually uses — and then starts the show through the
+same path as the Play button, so the transport stays in sync. Refusals are fine: every
+consumer degrades on its own (a black booth, `<unavailable>` lines, a studio reflection,
+a map over Shanghai).
 
 Every word of it is a joke and the seal is drawn from scratch (rings, tick marks, a
 shield) rather than reproduced. Title and body both **shrink to fit** their panel, so
@@ -211,6 +221,10 @@ NSApplication — Finder automation, MapKit, engine seek — not pure logic.
 ```bash
 swift run DesktopPerformanceEngine --autoplay          # play whole show, log per-event
                                                        # timing drift, then restore + quit
+DPE_AUTOPLAY_FROM=146 DPE_AUTOPLAY_SECS=30 swift run DesktopPerformanceEngine --autoplay
+                                                       # rehearse one act: start at 146 s, quit after 30
+swift run DesktopPerformanceEngine --snapshot-acts=a.png  # the new surfaces, offscreen: lyric card,
+                                                       # boot screen, booth, oracle, end card
 swift run DesktopPerformanceEngine --snapshot=out.png  # render the window content to a PNG
 swift run DesktopPerformanceEngine --snapshot-scenes=out.png   # preview the livecode + typeText scenes
 swift run DesktopPerformanceEngine --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
@@ -265,7 +279,23 @@ conversion runs off the main thread and is cached, like the `image` kind. Works 
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
 `screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,
-`typeText`, `photoWall`, `glassTorus`, `systemProbe`.
+`typeText`, `photoWall`, `glassTorus`, `systemProbe`, `reboot`, `oracle`, `photoBooth`,
+`credits`.
+
+A `frame` width or height of **0 stretches to the far edge** (and a negative one leaves
+that much margin): `[0, 0, 0, 0]` is the whole screen on any display. The lyric cards
+use it.
+
+### `lyric` content
+
+A lyric-video frame: the ground is `hex`, the type is `fg`, and the line is set **as
+large as the window allows** — wrapped, centred both ways, never breaking a word. Full
+screen it is the whole screen going blue with the words on it; at 230 pt it is a caption
+in the torus clock. `text` kind also takes `hex`/`fg`/`fontSize` now, but at a fixed size.
+
+```jsonc
+{ "kind": "lyric", "text": "so give it to me", "hex": "#0078D7", "fg": "#F2F4FE", "chrome": "none" }
+```
 Gated off by default: `wallpaper`, `deskWallpaper` (`meta.allowWallpaper`), `fileSwarm`
 (`meta.allowDesktopFiles`).
 
@@ -274,29 +304,34 @@ The bundled default demo (`Resources/timeline.json`) is **the show**
 (`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`),
 scored bar by bar to the real track at 128.5 BPM:
 
-| bars | act | |
-|---|---|---|
-| 1–4 | **HORSE** | the Muybridge window-zoetrope runs in, gallops in place ~2 s, runs out |
-| 5–8 | **POINT** | the cursor draws one long arrow, stamped in little pages — unhurried, with the `>` head in a single stroke |
-| 8–11 | **HYDRA** | somebody using a computer: the instant the pointer finishes, a little browser opens at **exactly the spot the arrow pointed at**; the cursor drags it up by the title bar, grabs the **lower-right corner** and pulls it bigger (top-left pinned, so the code never leaves its corner), then clicks run — and only *then* does the sketch start rendering |
-| 12–15 | **MORE** | **four** more sketches, already running, with the gap closing (`SPREAD_GAPS`) |
-| — | **RISER** | the run-up collapses into **one second**: four more, each faster than the last, the final one landing on the drop (`RISER_SECONDS` / `RISER_COUNT`) |
-| 17 | **CHORUS** | the drop. Everything blows away, the background flashes on every detected **kick**, and the chaos erupts from the focal point |
-| 24 | **STROBE** | the original strobe finale (`examples/timeline_strobe.json`), spliced in verbatim at 43.35 s |
-| 33 | **LETTER** | a plain text editor opens and writes itself out in tempo (`assets/letter.txt`), short white pulses flashing behind it on every fourth kick, until it's flashed away at bar 76 |
-| 56 | **FLYOVER** | three Apple Maps flights, the kicks lighting the room back up between them |
-| 57 | **PROBE** | `system_probe` opens lower-right and types out its disclosure report — the machine reading you back to yourself — while the maps fly |
-| 68 | **SWARM** | the desktop icons themselves start drawing: `rain`, then Conway's `life` running out the track. *Gated: `ALLOW_DESKTOP_FILES=1`* |
-| 82 | **WALLPAPER** | the last act. The desktop shows a screenshot of itself, so the probe and the swarm recurse into the background; then it glitches, then strobes to the end. *Gated: `ALLOW_WALLPAPER=1`* |
-| 56 | **FLYOVER** | the letter has finished writing, so it's flashed away and the screen opens onto real Apple Maps flights over Shanghai and New York — the two cities the letter is about — kicks flashing again, until the break at 161 s clears everything |
+| time | bars | act | |
+|---|---|---|---|
+| 0:00 | 1–4 | **HORSE** | the Muybridge window-zoetrope, 96% of the screen wide (22 columns, 63 windows), runs in, gallops in place ~2 s, runs out |
+| 0:08 | 5–8 | **POINT** | the cursor draws one long arrow, stamped in little pages — unhurried, with the `>` head in a single stroke |
+| 0:13 | 8–11 | **HYDRA** | somebody using a computer: a little browser opens at **exactly the spot the arrow pointed at**; the cursor drags it up by the title bar, grabs the **lower-right corner** and pulls it bigger, then clicks run on the downbeat of bar 11 — and only *then* does the sketch start rendering |
+| 0:21 | 12–16 | **MORE** | one more sketch on **every downbeat**, each bigger than the last, scattered |
+| 0:29 | 17–24 | **CHORUS A** | the drop. The stack blows away and the screen *is* the lyric video: full-screen `lyric` cards, one phrase each, blue-on-white ↔ white-on-blue, on the beat (`lyrics.CUES`) |
+| 0:45 | 25–32 | **CHORUS B** | back to the desktop: the glass torus in the middle and the same lyrics as small windows going round it **like a clock**, accumulating; the background glitches white/blue on every third kick |
+| 1:00 | 33–40 | **BRIDGE** | `system_probe` opens centre-screen and types out its disclosure report, slowly enough to read |
+| 1:15 | 41–48 | **FOCUS** | the terminal clears and re-reads only **where you are** — geolocation + network — every line highlighted |
+| 1:30 | 49–55 | **REBOOT** | the screen goes black; the boot glyph; a progress bar filling across the phrase |
+| 1:43 | 56–61 | **VERSE 2** | the desktop comes back onto Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP; then a second flight sweeps across town |
+| 1:54 | 62–67 | **ORACLE** | the torus again, and an alert: *hey, i'm the magic torus — ask me a question.* Type, press OK, it answers (or answers by itself two bars later) |
+| 2:05 | 68–71 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1** on the downbeats of the last three bars |
+| 2:13 | 72–79 | **CHORUS C** | the shutter: one flash, the booth goes with it, and the viewer's own photos bury the screen (`photoWall`) |
+| 2:28 | 80–86 | **CHORUS D** | two bars of the eruption — windows, terminals, lyric cards and alerts bursting from the centre on kick flashes — then the **original strobe** (`examples/timeline_strobe.json`) as the finale, cut by the break |
+| 2:41 | 87→ | **CREDITS** | everything goes; the end card comes up and **holds past the end of the track**: the photo the computer took, in a frame; the machine's vitals in the probe's terminal; an *i survived DJ_DAVE malware* alert; the credits, with the one button that ends the show |
 
 The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The
 sub-bass really lands at 30.28 s, but cutting exactly on it reads as late — the eye
-needs the change to have already started when the ear arrives.
+needs the change to have already started when the ear arrives. The shutter, being an
+instant rather than a scene change, leads by only `SHUTTER_LEAD` (0.12 s).
 
 Deliberately **simple before the chorus** — one element at a time, so the viewer can
-catch on to what each one is — then all of it at once. The stretch between the strobe and the letter is **not scored yet**: a small `(kick)`
-window blinks the beat in the lower-left as a placeholder.
+catch on to what each one is — then all of it at once. Every act boundary is one
+`BAR_*` constant in the generator; the lyric-card timings are `CUES` in
+`tools/lyrics.py` — a first pass placed on the bar grid, meant to be tuned against the
+vocal by scrubbing (Inspect names each card) and nudging the numbers.
 
 The flyover uses the native `map` kind rather than a `web` Google Maps window on
 purpose — google.com is blocked from mainland China, and the piece has to work where
@@ -571,6 +606,12 @@ tile servers Maps.app uses. `style` picks how it renders:
 Regenerate the show's flights with `MAP_STYLE=hybrid python3 tools/generate_show.py` to
 compare. Anything omitted from the `to*` pose holds.
 
+**`here: true`** replaces the authored coordinates (and `toLat`/`toLon`) with the
+viewer's own location — the most recent Location Services fix, from the probe or from
+the gate's warm-up. No fix (refused, off, still pending) and the authored coordinates
+are the fallback, so the show flies somewhere either way. The show's verse 2 falls from
+2,600 km up onto wherever the machine is, in a window titled `maps://{ip}`.
+
 Three things worth knowing before performing with it:
 
 - **It needs the network.** Tiles stream from Apple; flyover's 3-D meshes are heavier
@@ -682,6 +723,90 @@ constructs a `Probe`, so nothing is asked for.
 `--test-systemprobe` covers the section builders, the formatting helpers and the reveal
 pacing. It deliberately does *not* call `Probe.start()`, because a test that fired two
 permission prompts would be a bad citizen.
+
+**`focus`** — fired at an id that is already on screen, the terminal clears and reads
+out ONLY the named sections again, every line drawn over a highlighter-yellow marker:
+the machine going back to the parts that matter. Names: `geolocation`, `network`,
+`identity`, `machine`, `contacts`. On a new window it reads out just those.
+
+```jsonc
+{ "beat": 160, "type": "systemProbe", "params": { "id": "probe", "linesPerBeat": 3,
+    "focus": ["geolocation", "network"] } }
+```
+
+The location fix the probe obtains is remembered (`LocationStore`) — it is what
+`map.here` flies to, and what `{city}` in a window title becomes; `{ip}` becomes the
+machine's own interface address. Nothing is looked up over the network for any of it.
+
+### `reboot`
+
+The fake boot screen: black, the boot glyph, and a progress bar that appears after
+`delayBeats` and fills over `durationBeats`. Stays until `closeWindow` by `id` — the
+show puts a black window under that moment so the desktop reads as *coming back*
+rather than a window closing. Driven from the show clock, so the bar scrubs.
+
+```jsonc
+{ "beat": 192, "type": "reboot", "params": { "id": "boot", "delayBeats": 3, "durationBeats": 22 } }
+```
+
+`glyph` defaults to `\u{F8FF}` — the Apple-logo private-use character every Apple
+system font carries; `color` is the glyph + bar colour.
+
+### `oracle`
+
+The magic torus. An alert asks the viewer to type a question and answers it on OK (or
+Return) — or on its own after `answerBeats`, so a viewer who won't play can't stall the
+show. It is **the one window in the piece allowed to take the keyboard** (a text field
+needs it); it is a non-activating panel, so typing into it never brings the app forward,
+and it hands key status back the moment it has answered. The same question always gets
+the same answer (a hash of the text picks from `answers`), so it feels like the torus
+knows.
+
+```jsonc
+{ "beat": 248, "type": "oracle", "params": { "id": "oracle", "frame": [1000, 350, 460, 186],
+    "title": "hey, i'm the magic torus", "body": "ask me a question",
+    "placeholder": "will you give it 2 me?", "answerBeats": 10,
+    "answers": ["yes", "no", "maybe", "don't count on it"] } }
+```
+
+### `photoBooth`
+
+Photo Booth: the viewer's own camera in one of our windows (mirrored, like the real
+one), a countdown in tempo, a photo on the last beat. `durationBeats` is open → shutter;
+the last `count` × `stepBeats` of it show the numbers, so the default 16/3/4 puts 3, 2
+and 1 on the downbeats of the last three bars and the shutter on the next. The window
+flashes and goes with the shutter (set `hold: true` to keep it, frozen on the photo).
+
+```jsonc
+{ "beat": 268, "type": "photoBooth", "params": { "id": "booth", "frame": [340, 100, 760, 590],
+    "durationBeats": 16, "count": 3, "stepBeats": 4 } }
+```
+
+**The photo never touches the disk.** It is kept in memory (`PhotoBoothStore`), shown
+by `credits`, and discarded when the show stops or is panicked — the viewer keeps it by
+screenshotting the end card, or not at all. The capture session is configured at load
+(device discovery is slow) and started only when the event fires, so the camera light
+comes on with the window, not for the whole show. No camera, or camera refused: the
+preview says so and the countdown runs anyway.
+
+### `credits`
+
+The end card: a black ground; the booth's photo in a white frame with a flattering
+filter (`filter`: `instant` default, `chrome`, `fade`, `none`); the machine's vitals in
+the probe's terminal (`showInfo`); an alert titled `survivor`; and a `credits` alert
+carrying `lines`, whose **bye** button ends the show.
+
+```jsonc
+{ "beat": 345, "type": "credits", "params": { "id": "credits",
+    "lines": ["music: Give it 2 me", "starring: you"],
+    "survivor": "i survived DJ_DAVE malware", "hold": true } }
+```
+
+**`hold`** (default true) is the reason the act exists: when the track runs out, the
+engine normally restores the desktop, which would wipe the card before anyone could
+screenshot it. With a holding credits card up, the engine **pauses on the last frame
+instead** and stays there until the card's button, the Stop button or the panic hotkey
+ends it. `--autoplay` still quits on its timer.
 
 ### `fileSwarm`
 

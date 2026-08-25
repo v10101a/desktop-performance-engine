@@ -28,6 +28,10 @@ protocol Executor: AnyObject {
 extension PhotoWallController: Executor {}
 extension GlassTorusController: Executor {}
 extension SystemProbeController: Executor {}
+extension RebootController: Executor {}
+extension OracleController: Executor {}
+extension PhotoBoothController: Executor {}
+extension CreditsController: Executor {}
 extension FileSwarmController: Executor {}
 
 /// `WallpaperController` predates the protocol and owns the plain `wallpaper` event as

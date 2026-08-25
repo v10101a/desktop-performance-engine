@@ -169,6 +169,15 @@ enum ScreenGeometryTests {
             t.near(far.maxX, sf.maxX - 36, 0.001, "negative x anchors to the right")
             t.near(far.minY, sf.minY + 36, 0.001, "negative y anchors to the bottom")
 
+            // A zero (or negative) size stretches to the far edge — the fullscreen
+            // lyric cards are authored as [0, 0, 0, 0] so they fill any display.
+            let full = ScreenGeometry.rect(from: [0, 0, 0, 0], on: screen)
+            t.near(full.width, sf.width, 0.001, "zero width fills to the right edge")
+            t.near(full.height, sf.height, 0.001, "zero height fills to the bottom edge")
+            let inset = ScreenGeometry.rect(from: [40, 40, -40, -40], on: screen)
+            t.near(inset.maxX, sf.maxX - 40, 0.001, "negative width leaves that margin on the right")
+            t.near(inset.minY, sf.minY + 40, 0.001, "negative height leaves that margin at the bottom")
+
             t.notNil(ScreenGeometry.screen(99), "out-of-range screen index falls back")
             t.notNil(ScreenGeometry.screen(-1), "negative screen index falls back")
 

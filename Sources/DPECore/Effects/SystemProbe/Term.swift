@@ -10,6 +10,20 @@ struct TermLine: Identifiable {
     var text: String
     var kind: LineKind = .plain
     var pause: Int = 0          // extra reveal ticks before this line
+    /// Drawn with a marker behind it — the probe's `focus` re-read uses this to point
+    /// at the lines that say where the viewer is.
+    var highlight: Bool = false
+}
+
+/// The same lines with the marker on every one that carries information — section
+/// rules and blank spacers stay plain, so the block still reads as a block.
+func highlighted(_ lines: [TermLine]) -> [TermLine] {
+    lines.map { l in
+        var out = l
+        let blank = l.text.trimmingCharacters(in: .whitespaces).isEmpty && l.label == nil
+        out.highlight = !(l.kind == .section || blank)
+        return out
+    }
 }
 
 func kv(_ label: String, _ value: String?, kind: LineKind = .plain) -> TermLine {
