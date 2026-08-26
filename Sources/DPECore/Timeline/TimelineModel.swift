@@ -108,6 +108,9 @@ struct OpenWindowParams: Decodable {
     var screen: Int? = nil
     let content: ContentSpec
     let frame: [Double]   // [x, y, w, h], top-left origin, relative to the target screen
+    /// `"center"`: `frame` is `[dx, dy, w, h]` — the window's centre, offset from the
+    /// screen's centre (dy positive = down). Anything else, or nothing, is top-left.
+    var anchor: String? = nil
     var animate: AnimateSpec? = nil
     /// Let the viewer grab it: draggable by its body, closable by its traffic lights.
     /// Off by default — click-through is what keeps a choreographed cursor from
@@ -437,6 +440,9 @@ struct CreditsParams: Decodable {
     var backdrop: String? = nil         // hex behind everything (default black)
     var filter: String? = nil           // "instant" (default) | "chrome" | "fade" | "none"
     var charsPerSecond: Double? = nil   // credits typing rate (default 7 — deliberately slow)
+    var linesPerSecond: Double? = nil   // set: type whole LINES at this rate, the way the probe reveals
+    var fontSize: Double? = nil         // credits type size in points (default 11, Terminal's own)
+    var photoTilt: Double? = nil        // the photo card's tilt in degrees, +ve anticlockwise (default -4)
     var tile: String? = nil             // image tiled behind the card, drifting diagonally
     var tileDriftSeconds: Double? = nil // seconds to drift one tile (default 4)
     var tilePadding: Double? = nil      // gap around each tile, as a fraction of its size (default 1.0)

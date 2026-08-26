@@ -101,6 +101,82 @@ enum StillRenderer {
         try writePNG(canvas: canvas, to: url)
     }
 
+    /// The end card, laid out the way the live one is. `--snapshot-credits=out.png`.
+    ///
+    /// The `credits` event is read from the bundled show so the still and the show can't
+    /// drift apart; the booth photo is a stand-in; the copy is fully typed. The real
+    /// windows are built in a screen-sized frame parked off-screen at (-6000, -6000) and
+    /// composited back to front, so what this shows is the actual layout code's output —
+    /// title bars, tilt, tile and all — minus the window-server shadows.
+    static func renderCredits(to url: URL) throws {
+        let size = NSScreen.main?.frame.size ?? NSSize(width: 1512, height: 982)
+        let sf = NSRect(x: -6000, y: -6000, width: size.width, height: size.height)
+
+        var params = CreditsParams(id: "snapshot", lines: ["GiveIt2Me", "by DJ_Dave", "", "Bye"])
+        var bpm = 128.0
+        if let tlURL = AppDelegate.bundledTimelineURL(), let tl = try? TimelineLoader.load(from: tlURL) {
+            bpm = tl.meta.bpm
+            for ev in tl.events {
+                if case .credits(let p) = ev.action { params = p; break }
+            }
+        }
+        params.outro = false          // the outro quits the process
+
+        let stand = NSImage(size: NSSize(width: 400, height: 300))
+        stand.lockFocus()
+        NSGradient(starting: NSColor(hex: "#FF2D95")!, ending: NSColor(hex: "#0078D7")!)?
+            .draw(in: NSRect(x: 0, y: 0, width: 400, height: 300), angle: 35)
+        NSColor(white: 1, alpha: 0.85).setFill()
+        NSBezierPath(ovalIn: NSRect(x: 150, y: 90, width: 100, height: 130)).fill()
+        stand.unlockFocus()
+        let hadPhoto = PhotoBoothStore.shared.image
+        PhotoBoothStore.shared.keep(stand)
+        defer { if let hadPhoto { PhotoBoothStore.shared.keep(hadPhoto) } else { PhotoBoothStore.shared.discard() } }
+
+        let c = CreditsController()
+        c.begin(params, at: 0, bpm: bpm, screenFrame: sf)
+        c.finishTypingForSnapshot()
+        defer { c.closeAll() }
+        // Let the windows lay out and draw once where they are.
+        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+
+        let canvas = NSView(frame: NSRect(origin: .zero, size: size))
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor.black.cgColor
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        for (win, frame) in c.windowsForSnapshot {
+            // Three of the four present with `fadeIn`, which starts at alpha 0 and
+            // animates up; land the fade first so the model values are the final ones.
+            win.alphaValue = 1
+            win.displayIfNeeded()
+            // Rendered from the LAYER tree, not `cacheDisplay`: the tiled ground is a
+            // layer with a pattern colour and no `draw(_:)`, which `cacheDisplay` skips;
+            // `render(in:)` composites every layer, title bar included.
+            guard let frameView = win.contentView?.superview, let layer = frameView.layer,
+                  let cg = CGContext(data: nil,
+                                     width: Int(frameView.bounds.width * scale),
+                                     height: Int(frameView.bounds.height * scale),
+                                     bitsPerComponent: 8, bytesPerRow: 0,
+                                     space: CGColorSpaceCreateDeviceRGB(),
+                                     bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue) else {
+                NSLog("[DPE] snapshot-credits: could not render \(win.title) \(win.frame)")
+                continue
+            }
+            cg.scaleBy(x: scale, y: scale)
+            layer.render(in: cg)
+            guard let image = cg.makeImage() else { continue }
+            // At the LAYOUT's frame, not the window's: off-screen, AppKit drags a titled
+            // window back to the nearest screen edge, so its own `frame` is not the one
+            // the card would have on a real screen.
+            let iv = NSImageView(frame: NSRect(x: frame.minX - sf.minX, y: frame.minY - sf.minY,
+                                               width: frameView.bounds.width, height: frameView.bounds.height))
+            iv.imageScaling = .scaleAxesIndependently
+            iv.image = NSImage(cgImage: image, size: frameView.bounds.size)
+            canvas.addSubview(iv)
+        }
+        try writePNG(canvas: canvas, to: url)
+    }
+
     /// Preview the restructured show's new surfaces, none of which needs a camera, a
     /// location fix or a running clock to draw: a lyric card at screen aspect, one of
     /// the clock windows, the boot screen mid-bar, Photo Booth on "2" with no camera,

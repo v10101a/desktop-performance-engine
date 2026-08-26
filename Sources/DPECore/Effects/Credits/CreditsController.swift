@@ -20,17 +20,27 @@ final class CreditsController {
         let id: String
         let windows: [NSWindow]
         let hold: Bool
-        /// The credits terminal types itself out; these drive it from `update(now:)`.
+        /// The credits terminal types itself out; these drive it from `startTyping`.
         let roll: NSTextField?
         let text: [Character]
+        /// The character counts the typing pauses at, in order: every character when it
+        /// types by the character, the end of each line when it types by the line.
+        let stops: [Int]
+        let byLine: Bool
         /// Wall-clock, not show time — see `startTyping`.
         let start: Double
-        let charsPerSecond: Double
+        /// Stops per second.
+        let rate: Double
         var shown: Int = -1
         var caretOn: Bool = true
         /// True once the last character has landed — the point the card will take a
         /// click to dismiss.
         var finished: Bool { shown >= text.count }
+        /// Back-to-front with the frame the layout gave each window, for compositing
+        /// the card into a still. (The frame is kept separately because AppKit keeps a
+        /// titled window at least partly on a screen, so off-screen the window's own
+        /// `frame` is not where the layout put it.)
+        var placed: [(window: NSWindow, frame: NSRect)] = []
     }
 
     private var credits: Credits?
@@ -56,10 +66,12 @@ final class CreditsController {
 
     // MARK: - Lifecycle
 
-    func begin(_ p: CreditsParams, at now: Double, bpm: Double) {
+    /// - Parameter screenFrame: build the card in this rect instead of on the screen —
+    ///   the still renderer's seam, so it can lay the real windows out off-screen.
+    func begin(_ p: CreditsParams, at now: Double, bpm: Double, screenFrame: NSRect? = nil) {
         teardown()
         let screen = ScreenGeometry.screen(p.screen)
-        let sf = screen.frame
+        let sf = screenFrame ?? screen.frame
         let W = sf.width, H = sf.height
         var wins: [NSWindow] = []
 
@@ -80,58 +92,57 @@ final class CreditsController {
         back.present(animate: "fadeIn")
         wins.append(back)
 
-        // 2. the photo, centred, in a white frame. Sized off the screen so it stays
-        //    the biggest thing on the card.
-        let photoW = min(W * 0.30, 440)
-        let photoH = photoW * 0.75
-        // Taller foot than the still preview's: the caption and the save button stack in it.
-        let margin: CGFloat = 16, foot: CGFloat = (p.allowSave ?? true) ? 100 : 64
-        let cardSize = NSSize(width: photoW + margin * 2, height: photoH + margin + foot)
-        // Bottom-right, deliberately lapping over the credits terminal's corner: the
-        // photo is the thing the viewer keeps, so it sits in front of the copy rather
-        // than beside it. Clamped to the screen so a small display can't push it off.
-        let cardFrame = NSRect(x: min(sf.maxX - cardSize.width - W * 0.04,
-                                      sf.maxX - cardSize.width),
-                               y: max(sf.minY + H * 0.08, sf.minY),
-                               width: cardSize.width, height: cardSize.height)
-        let card = BaseEffectWindow(contentRect: cardFrame)
-        // The one interactive thing on the card: the save button. Everything else on it
-        // is scenery, and the window still never becomes key.
-        card.ignoresMouseEvents = false
-        card.hasShadow = true
-        card.contentView = CreditsController.makePhotoCard(
-            size: cardSize, photo: PhotoBoothStore.shared.image, photoRect: NSRect(x: margin, y: foot, width: photoW, height: photoH),
-            caption: p.caption ?? CreditsController.defaultCaption(), filter: p.filter ?? "instant",
-            showsSave: p.allowSave ?? true, saveTarget: self, saveAction: #selector(savePressed))
-        card.present(animate: "springIn")
-        wins.append(card)
-
-        // 3. the machine, in the probe's terminal
-        if p.showInfo ?? true {
-            let infoW = min(W * 0.34, 520), infoH: CGFloat = 250
-            let info = EffectWindow(
-                contentRect: NSRect(x: sf.minX + W * 0.06, y: sf.minY + H * 0.10, width: infoW, height: infoH),
-                content: ContentSpec(kind: "code", text: CreditsController.machineSummary(),
-                                     chrome: "terminal", title: "system_probe — summary"))
-            info.present(animate: "fadeIn")
-            wins.append(info)
-        }
-
-        // 4. the credits — a terminal, centred, half the screen, typing itself out.
-        //    Interior blank lines are kept (they are the stanza breaks in the copy);
-        //    only leading and trailing blanks are trimmed.
+        // The copy. Interior blank lines are kept (they are the stanza breaks); only
+        // leading and trailing blanks are trimmed.
         var lines = p.lines ?? []
         while lines.first?.isEmpty == true { lines.removeFirst() }
         while lines.last?.isEmpty == true { lines.removeLast() }
         let body = lines.joined(separator: "\n")
+        let fontSize = CGFloat(p.fontSize ?? 11)
+        let rollFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
 
-        let rollFrame = NSRect(x: sf.minX + W * 0.25, y: sf.minY + H * 0.25,
-                               width: W * 0.5, height: H * 0.5)
-        let roll = EffectWindow(contentRect: rollFrame,
+        // Sizes first, then the layout places them as a group — see `layout`.
+        let photoW = min(W * 0.32, 480)
+        let photoH = photoW * 0.75
+        // Taller foot than the still preview's: the caption and the save button stack in it.
+        let margin: CGFloat = 16, foot: CGFloat = (p.allowSave ?? true) ? 108 : 70
+        let cardSize = NSSize(width: photoW + margin * 2, height: photoH + margin + foot)
+        let tilt = CGFloat(p.photoTilt ?? -4)
+        let rollSize = CreditsController.rollSize(for: lines, font: rollFont, in: sf)
+        let showInfo = p.showInfo ?? true
+        let infoSize = NSSize(width: min(W * 0.30, 440), height: 262)
+        let lay = CreditsController.layout(in: sf, photo: CreditsController.tiltedBounds(cardSize, degrees: tilt),
+                                           roll: rollSize, info: infoSize, showInfo: showInfo)
+
+        // 2. the machine, in the probe's terminal — under the credits, flush right with them
+        var info: EffectWindow?
+        if showInfo {
+            let w = EffectWindow(contentRect: lay.info,
+                                 content: ContentSpec(kind: "code", text: CreditsController.machineSummary(),
+                                                      chrome: "terminal", title: "system_probe — summary"))
+            // A size up from Terminal's 11: it sits next to the credits' big type and
+            // would otherwise read as fine print.
+            CreditsController.firstTextField(in: w.contentView)?.font =
+                .monospacedSystemFont(ofSize: 13, weight: .regular)
+            w.present(animate: "fadeIn")
+            wins.append(w)
+            info = w
+        }
+
+        // 3. the credits — a terminal sized to its copy, typing itself out.
+        let roll = EffectWindow(contentRect: lay.roll,
                                 content: ContentSpec(kind: "code", text: "",
                                                      chrome: "terminal",
                                                      title: p.title ?? "credits"))
-        // It sits UNDER the photo card, which is ordered front after it.
+        let label = CreditsController.firstTextField(in: roll.contentView)
+        label?.font = rollFont
+        // The copy starts clear of the strip the photo laps over, so no line loses its
+        // first letters under the print.
+        if let label {
+            let indent = CreditsController.photoOverlap + 12
+            label.frame = NSRect(x: label.frame.minX + indent, y: label.frame.minY,
+                                 width: label.frame.width - indent, height: label.frame.height)
+        }
         roll.present(animate: "fadeIn")
         wins.append(roll)
         // The dialog's "bye" button used to be the one affordance that ended the show.
@@ -143,6 +154,32 @@ final class CreditsController {
         let click = NSClickGestureRecognizer(target: self, action: #selector(cardClicked))
         roll.contentView?.addGestureRecognizer(click)
 
+        // 4. the photo, in a white frame, pinned on at a slight tilt and lapping over the
+        //    credits' edge: it is the thing the viewer keeps, so it sits in front.
+        //    The window is the tilted card's bounding box, clear, with the card turned
+        //    inside it — a window can't rotate, a view can.
+        let card = BaseEffectWindow(contentRect: lay.photo)
+        // The one interactive thing on the card: the save button. Everything else on it
+        // is scenery, and the window still never becomes key.
+        card.ignoresMouseEvents = false
+        card.hasShadow = true
+        let holder = NSView(frame: NSRect(origin: .zero, size: lay.photo.size))
+        holder.wantsLayer = true
+        let photoCard = CreditsController.makePhotoCard(
+            size: cardSize, photo: PhotoBoothStore.shared.image,
+            photoRect: NSRect(x: margin, y: foot, width: photoW, height: photoH),
+            caption: p.caption ?? CreditsController.defaultCaption(), filter: p.filter ?? "instant",
+            showsSave: p.allowSave ?? true, saveTarget: self, saveAction: #selector(savePressed))
+        photoCard.frame.origin = NSPoint(x: (lay.photo.width - cardSize.width) / 2,
+                                         y: (lay.photo.height - cardSize.height) / 2)
+        photoCard.frameCenterRotation = tilt
+        holder.addSubview(photoCard)
+        card.contentView = holder
+        card.present(animate: "springIn")
+        // A clear window's shadow follows its opaque pixels; ask for it once they exist.
+        card.invalidateShadow()
+        wins.append(card)
+
         // Front-to-back: photo over terminal.
         card.order(.above, relativeTo: roll.windowNumber)
 
@@ -152,11 +189,85 @@ final class CreditsController {
         outro.glitchSeconds = p.glitchSeconds ?? 0.5
         outro.bootSeconds = p.bootSeconds ?? 5
 
+        let byLine = p.linesPerSecond != nil
+        let text = Array(body)
+        var stops: [Int] = []
+        if byLine {
+            var n = 0
+            for (i, line) in lines.enumerated() {
+                n += line.count + (i > 0 ? 1 : 0)      // the newline before every line but the first
+                stops.append(n)
+            }
+        } else {
+            stops = text.isEmpty ? [] : Array(1...text.count)
+        }
         credits = Credits(id: p.id, windows: wins, hold: p.hold ?? true,
-                          roll: CreditsController.firstTextField(in: roll.contentView),
-                          text: Array(body), start: CACurrentMediaTime(),
-                          charsPerSecond: max(0.5, p.charsPerSecond ?? 7))
+                          roll: label, text: text, stops: stops, byLine: byLine,
+                          start: CACurrentMediaTime(),
+                          rate: max(0.1, byLine ? (p.linesPerSecond ?? 2) : (p.charsPerSecond ?? 7)),
+                          placed: [(back, sf)] + (info.map { [($0, lay.info)] } ?? [])
+                                  + [(roll, lay.roll), (card, lay.photo)])
         startTyping()
+    }
+
+    // MARK: - Layout
+
+    struct Layout {
+        let photo: NSRect
+        let roll: NSRect
+        let info: NSRect
+    }
+
+    /// How far the photo's box laps over the credits terminal's left edge.
+    static let photoOverlap: CGFloat = 30
+
+    /// A collage, centred as a group rather than spread to the corners: the photo on the
+    /// left, the credits beside it with the machine's summary tucked under them, flush
+    /// right. Every rect is kept on the screen by shifting, never by shrinking.
+    static func layout(in sf: NSRect, photo: NSSize, roll: NSSize, info: NSSize,
+                       showInfo: Bool) -> Layout {
+        let overlap = photoOverlap
+        let gap: CGFloat = 18
+        let groupW = photo.width - overlap + roll.width
+        let left = sf.midX - groupW / 2
+        let colH = showInfo ? roll.height + gap + info.height : roll.height
+        let colTop = sf.midY + colH / 2
+        let rollRect = NSRect(x: left + photo.width - overlap, y: colTop - roll.height,
+                              width: roll.width, height: roll.height)
+        let infoRect = NSRect(x: rollRect.maxX - info.width, y: rollRect.minY - gap - info.height,
+                              width: info.width, height: info.height)
+        // The photo rides a touch above the column's middle, the way a pinned print does.
+        let photoRect = NSRect(x: left, y: sf.midY - photo.height / 2 + sf.height * 0.02,
+                               width: photo.width, height: photo.height)
+        func onScreen(_ r: NSRect) -> NSRect {
+            let inset = sf.insetBy(dx: 12, dy: 12)
+            var out = r
+            out.origin.x = min(max(r.minX, inset.minX), max(inset.minX, inset.maxX - r.width))
+            out.origin.y = min(max(r.minY, inset.minY), max(inset.minY, inset.maxY - r.height))
+            return out
+        }
+        return Layout(photo: onScreen(photoRect), roll: onScreen(rollRect), info: onScreen(infoRect))
+    }
+
+    /// The credits terminal, sized to its copy: the longest line plus a little air across,
+    /// the line count plus a spare line down (the caret sits on its own line while the
+    /// copy types by the line), plus Terminal's insets and a title bar.
+    static func rollSize(for lines: [String], font: NSFont, in sf: NSRect) -> NSSize {
+        let lineH = NSLayoutManager().defaultLineHeight(for: font)
+        let charW = ("M" as NSString).size(withAttributes: [.font: font]).width
+        let longest = CGFloat(lines.map(\.count).max() ?? 0)
+        let w = charW * (longest + 6) + TerminalStyle.inset * 2 + photoOverlap + 12
+        let h = lineH * CGFloat(lines.count + 2) + TerminalStyle.inset * 2 + 28
+        return NSSize(width: min(sf.width * 0.46, max(sf.width * 0.28, w)),
+                      height: min(sf.height * 0.62, max(sf.height * 0.22, h)))
+    }
+
+    /// The bounding box of `size` turned by `degrees` — what the tilted card's window has
+    /// to be for none of its corners to be clipped.
+    static func tiltedBounds(_ size: NSSize, degrees: CGFloat) -> NSSize {
+        let a = abs(degrees) * .pi / 180
+        return NSSize(width: (size.width * cos(a) + size.height * sin(a)).rounded(.up),
+                      height: (size.width * sin(a) + size.height * cos(a)).rounded(.up))
     }
 
     @objc private func byePressed() { onDismiss?() }
@@ -347,6 +458,24 @@ final class CreditsController {
         credits?.roll?.stringValue.replacingOccurrences(of: "\u{2588}", with: "")
     }
 
+    /// The same, caret included. Test seam only.
+    var credits_rawTextForTesting: String? { credits?.roll?.stringValue }
+
+    /// Land the whole copy at once, without the outro. Still-renderer seam only.
+    func finishTypingForSnapshot() {
+        typeTimer?.invalidate()
+        typeTimer = nil
+        guard var c = credits else { return }
+        c.shown = c.text.count
+        c.caretOn = false
+        credits = c
+        c.roll?.stringValue = String(c.text)
+    }
+
+    /// The card's windows, back to front, each with the frame the layout gave it.
+    /// Still-renderer seam only.
+    var windowsForSnapshot: [(window: NSWindow, frame: NSRect)] { credits?.placed ?? [] }
+
     /// A click anywhere on the credits terminal ends the show — but only after the copy
     /// has finished. Before that the click lands on scenery and does nothing.
     @objc private func cardClicked() {
@@ -411,20 +540,26 @@ final class CreditsController {
         advanceTyping()
     }
 
-    /// Characters by elapsed time, caret blinking at 2 Hz, redraw only when one of them
-    /// changes. The caret is dropped once the copy is done — the card is finished, and
-    /// that is also the point it starts accepting a click.
+    /// Stops by elapsed time — characters, or whole lines when the copy types by the
+    /// line — caret blinking at 2 Hz, redraw only when one of them changes. By the line
+    /// the caret waits at the start of the NEXT line, the way a prompt does after a
+    /// command has printed; by the character it trails the last letter. The caret is
+    /// dropped once the copy is done — the card is finished, and that is also the point
+    /// it starts accepting a click.
     private func advanceTyping() {
         guard var c = credits, let label = c.roll else { typeTimer?.invalidate(); return }
         let elapsed = CACurrentMediaTime() - c.start
-        let want = min(c.text.count, max(0, Int(elapsed * c.charsPerSecond)))
-        let done = want >= c.text.count
+        let units = max(0, Int(elapsed * c.rate))
+        let want = units == 0 ? 0 : c.stops[min(units, c.stops.count) - 1]
+        let done = units >= c.stops.count
         let caret = !done && Int(elapsed * 2) % 2 == 0
         guard want != c.shown || caret != c.caretOn else { return }
         c.shown = want
         c.caretOn = caret
         credits = c
-        label.stringValue = String(c.text[0..<want]) + (caret ? "\u{2588}" : "")
+        var shown = String(c.text[0..<want])
+        if caret { shown += (c.byLine && want > 0 ? "\n" : "") + "\u{2588}" }
+        label.stringValue = shown
         if done {
             typeTimer?.invalidate()
             typeTimer = nil
@@ -467,10 +602,12 @@ final class CreditsController {
 
         let hasButton = showsSave
         let cap = NSTextField(labelWithString: caption)
-        cap.font = NSFont(name: "Noteworthy-Light", size: 15) ?? .systemFont(ofSize: 14, weight: .regular)
-        cap.textColor = NSColor(white: 0.25, alpha: 1)
+        cap.font = captionFont(size: 21)
+        cap.textColor = NSColor(white: 0.12, alpha: 1)
         cap.alignment = .center
-        cap.frame = NSRect(x: 8, y: hasButton ? 54 : 18, width: size.width - 16, height: 28)
+        cap.maximumNumberOfLines = 1
+        cap.cell?.truncatesLastVisibleLine = true
+        cap.frame = NSRect(x: 8, y: hasButton ? 60 : 22, width: size.width - 16, height: 30)
         root.addSubview(cap)
 
         if hasButton {
@@ -496,6 +633,18 @@ final class CreditsController {
             root.addSubview(save)
         }
         return root
+    }
+
+    /// The caption's face: Apple Garamond — the typeface of every Apple print ad and
+    /// manual from 1984 to the iMac — when it is installed (it never shipped with the
+    /// system; the show's machine has it), then Hoefler Text, the Garamond-ish serif
+    /// macOS does ship, then Georgia. Never a handwriting face: the card is a print
+    /// somebody kept, not a scrapbook.
+    static func captionFont(size: CGFloat) -> NSFont {
+        for name in ["AppleGaramond", "AppleGaramondLight", "HoeflerText-Regular", "Georgia"] {
+            if let f = NSFont(name: name, size: size) { return f }
+        }
+        return .systemFont(ofSize: size, weight: .regular)
     }
 
     /// So `savePressed` can find the button again and report back on it.

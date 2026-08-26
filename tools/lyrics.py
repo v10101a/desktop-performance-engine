@@ -45,29 +45,38 @@ def buttons(i):
 # The lyric video: the chorus, card by card.
 #
 # Every line of the song is chorus (it repeats each time), so one pass of these is one
-# chorus. Each entry is (beat, text): the beat is counted from the START of the chorus,
-# 32 beats = 8 bars long, and the text is what the card says. The long lines are split
-# into more than one card so each card is a phrase, not a paragraph.
+# chorus. Each entry is (when, text). ONE list drives both choruses: chorus A shows
+# each cue as a fullscreen card, chorus B opens the same cue as a small window round
+# the torus, at the same point of its own chorus. The long lines are split into more
+# than one card so each card is a phrase, not a paragraph.
 #
-# These beat offsets are a FIRST PASS placed by eye on the bar grid, not by ear — tune
-# them against the vocal by scrubbing (Inspect shows each card's id + time) and
-# nudging the numbers. Cards alternate blue-on-white / white-on-blue in the order
-# given, so inserting one flips the colours after it.
+# `when` is either of:
+#   4.0      beats from the START of the chorus (32 beats = 8 bars long; 0.4685 s/beat)
+#   "34.10s" a time in the TRACK, as heard in chorus A — read it off the waveform or a
+#            player's clock and the card lands on that instant. Mix the two freely.
+#
+# To tune by ear:  edit the numbers, then  tools/tune_lyrics.sh  (chorus A) or
+# tools/tune_lyrics.sh b  (the clock) — it regenerates the show, prints when every card
+# lands, and plays just that chorus. Cards alternate blue-on-white / white-on-blue in
+# the order given, so inserting one flips the colours after it.
+#
+# These beat offsets are a FIRST PASS placed by eye on the bar grid, not by ear.
 CUES = [
     (0.0,  "what I want"),
-    (4.0,  "I told you that i"),
-    (6.0,  "need your love"),
-    (7.0,  "so give it to me"),
+    (2.0,  "I told you that I"),
+    (4.0,  "need your love"),
+    (6.0,  "so give it to me"),
     (8.0,  "running up"),
-    (12.0, "my currents"),
-    (14.0, "i can’t get enough"),
-    (15.0, "of this feeling baby"),
-    (16.0, "all i got"),
-    (20.0, "i’m giving that"),
-    (22.0, "so give it up"),
-    (24.0, "i told you that I"),
-    (26.0, "need your love"),
-    (27.0, "so give it to me"),
+    (10.0, "my currents"),
+    (11.0, "I can’t"),
+    (12.0, "get enough"),
+    (14.0, "of this feeling baby"),
+    (16.0, "all I got"),
+    (18.0, "I’m giving that"),
+    (20.0, "so give it up"),
+    (22.0, "I told you that I"),
+    (24.0, "need your love"),
+    (26.0, "so give it to me"),
     (28.0, "need your love"),
     (30.0, "so give it to me"),
 ]

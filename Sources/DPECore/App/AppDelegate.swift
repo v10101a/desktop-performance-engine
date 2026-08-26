@@ -13,6 +13,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         for (flag, render) in [("--snapshot-gate=", StillRenderer.renderGate),
                                ("--snapshot-scenes=", StillRenderer.renderScenes),
                                ("--snapshot-acts=", StillRenderer.renderActs),
+                               ("--snapshot-credits=", StillRenderer.renderCredits),
                                ("--snapshot-chrome=", StillRenderer.renderChrome)] {
             guard let arg = CommandLine.arguments.first(where: { $0.hasPrefix(flag) }) else { continue }
             let path = String(arg.dropFirst(flag.count))

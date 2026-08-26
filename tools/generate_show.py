@@ -100,8 +100,14 @@ BAR_BREAK    = 87    # 161.01s  everything goes; the end card
 # The visuals land AHEAD of the audio drop by this much. The bass really hits at
 # bar 17 / 30.28 s, but cutting exactly on it reads as late — the eye needs the
 # change to have already started when the ear arrives.
+#
+# BOTH choruses carry it. The lyric cues are tuned by ear against chorus A, which sits
+# this far early, so the same cue only means the same word in chorus B if B sits the
+# same distance early too — without it the torus cut and every clock window came a
+# second after the words they belonged to.
 CHORUS_LEAD = 1.0
 DROP_BEAT = bar(BAR_CHORUS_A) - CHORUS_LEAD / BEAT
+CHORUS_B_BEAT = bar(BAR_CHORUS_B) - CHORUS_LEAD / BEAT
 # The shutter is an instant, not a change of scene: a whisker ahead is enough.
 SHUTTER_LEAD = 0.12
 
@@ -257,21 +263,38 @@ for wid in hydra_ids:
     add(drop + 0.05, "closeWindow", {"id": wid})
 add(drop + 0.05, "closeWindow", {"id": "trace"})     # the arrow goes too
 
-def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none"):
+def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none", anchor=None):
     blue_ground = (i % 2 == 0)
-    add(beat, "openWindow", {"id": wid, "frame": frame or fullscreen(),
-        "content": {"kind": "lyric", "text": text,
-                    "hex": BLUE if blue_ground else WHITE,
-                    "fg": WHITE if blue_ground else BLUE,
-                    "chrome": chrome, "title": "give it 2 me — lyrics"},
-        "animate": {"kind": animate}})
+    params = {"id": wid, "frame": frame or fullscreen(),
+              "content": {"kind": "lyric", "text": text,
+                          "hex": BLUE if blue_ground else WHITE,
+                          "fg": WHITE if blue_ground else BLUE,
+                          "chrome": chrome, "title": "give it 2 me — lyrics"},
+              "animate": {"kind": animate}}
+    if anchor:
+        params["anchor"] = anchor
+    add(beat, "openWindow", params)
+
+def cue_beats(when):
+    """Beats from a chorus's (lead-adjusted) start for one CUES entry.
+
+    A number is already beats from the start of the chorus. A string like "34.10s" is a
+    time in the TRACK, as heard in chorus A — read straight off the waveform or a
+    player's clock — and the card lands on exactly that instant: the chorus starts
+    CHORUS_LEAD early, so that much is folded back in. The same cue puts the clock
+    window at the same point of chorus B, which starts the same distance early.
+    """
+    if isinstance(when, str):
+        t = float(when.strip().rstrip("s"))
+        return (t - secs(bar(BAR_CHORUS_A)) + CHORUS_LEAD) / BEAT
+    return float(when)
 
 # Two fullscreen ids, alternating: the new card opens over the old one, and the old
 # one is reused for the card after that. Reopening an id is a content swap, not a
 # window create, which is what keeps this on the beat.
 n_cards = 0
-for i, (offset, text) in enumerate(lyrics.CUES):
-    lyric_card(f"ly{i % 2}", drop + offset, text, i)
+for i, (when, text) in enumerate(lyrics.CUES):
+    lyric_card(f"ly{i % 2}", drop + cue_beats(when), text, i)
     n_cards += 1
 
 # =============================================================================
@@ -279,7 +302,7 @@ for i, (offset, text) in enumerate(lyrics.CUES):
 # middle and the same lyrics come back as small windows going round it like a
 # clock, one per cue, accumulating. The background glitches white and blue.
 # =============================================================================
-b_start = bar(BAR_CHORUS_B)
+b_start = CHORUS_B_BEAT          # CHORUS_LEAD early, like the drop — see there
 add(b_start, "screenFlash", {"color": WHITE, "durationBeats": 0.5})
 add(b_start + 0.02, "closeWindow", {"id": "ly0"})
 add(b_start + 0.02, "closeWindow", {"id": "ly1"})
@@ -290,14 +313,17 @@ add(b_start, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
 CLOCK_W, CLOCK_H = round(W * 0.16), round(H * 0.12)
 rx, ry = W * 0.36, H * 0.40                      # an ellipse hugging the screen
 clock_ids = []
-for i, (offset, text) in enumerate(lyrics.CUES):
+for i, (when, text) in enumerate(lyrics.CUES):
     ang = -math.pi / 2 + 2 * math.pi * i / len(lyrics.CUES)     # 12 o'clock, clockwise
-    cx = W / 2 + rx * math.cos(ang)
-    cy = H / 2 + ry * math.sin(ang)
-    frame = [round(cx - CLOCK_W / 2), round(cy - CLOCK_H / 2), CLOCK_W, CLOCK_H]
+    # Authored from the screen's CENTRE (`anchor: center`), like the torus itself, so
+    # the ring is round it on any display. Top-left frames put the ring's centre at
+    # (W/2, H/2) of the AUTHORED size — on a bigger screen that is left of and above
+    # the torus, which is where the whole clock used to lean.
+    frame = [round(rx * math.cos(ang)), round(ry * math.sin(ang)), CLOCK_W, CLOCK_H]
     wid = f"ck{i}"
     clock_ids.append(wid)
-    lyric_card(wid, b_start + offset, text, i, frame=frame, chrome="mac", animate="springIn")
+    lyric_card(wid, b_start + cue_beats(when), text, i, frame=frame, chrome="mac",
+               animate="springIn", anchor="center")
 
 # The glitch: a short white or blue wash behind everything on every third kick, and
 # now and then two in a row — a background that can't quite hold still.
@@ -526,6 +552,9 @@ CREDITS = [
     "Bye",
 ]
 add(bar(BAR_BREAK, 1), "credits", {"id": "credits", "lines": CREDITS, "hold": True,
+    # Typed by the LINE, one per beat — the probe's cadence, not a typist's — and in
+    # type big enough to read from across the room. The photo is pinned on at a tilt.
+    "linesPerSecond": round(1 / BEAT, 3), "fontSize": 22, "photoTilt": -4,
     # Tiled behind the card, drifting diagonally one tile per 4 s. Missing file =>
     # plain black backdrop, logged, show unaffected.
     # The card's ground. White, to match the tile artwork's own field — the tile fills
@@ -596,3 +625,10 @@ print(f"  CHORUS D bar {BAR_CHORUS_D:>2}    {secs(cd):6.2f}s  eruption, {n_kick}
 print(f"  strobe   bar {BAR_STROBE:>2}    {strobe_at:6.2f}s  {n_strobe} of {len(strobe['events'])} events "
       f"before the break")
 print(f"  break    bar {BAR_BREAK:>2}    {secs(brk):6.2f}s  credits hold past the end ({DURATION:.1f}s)")
+print()
+print("  lyric cues (tools/lyrics.py CUES) — when each card lands, in the track:")
+print("   #   chorus A   chorus B   text")
+for i, (when, text) in enumerate(lyrics.CUES):
+    ta = secs(drop + cue_beats(when))
+    tb = secs(b_start + cue_beats(when))
+    print(f"  {i:>2}   {ta:6.2f}s    {tb:6.2f}s   {text}")

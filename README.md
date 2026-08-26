@@ -38,7 +38,7 @@ open -a "$PWD/build/GiveIt2Me_DJ_Dave_malware.app" --args examples/timeline_curs
 
 The bundle is **self-contained** — it carries the show, the backing track and its icon,
 so it runs from anywhere (Applications, a USB stick, another Mac). Verify a copy with:
-
+ppp
 ```bash
 /path/to/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware --check
 ```
@@ -225,6 +225,10 @@ DPE_AUTOPLAY_FROM=146 DPE_AUTOPLAY_SECS=30 swift run GiveIt2Me_DJ_Dave_malware -
                                                        # rehearse one act: start at 146 s, quit after 30
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-acts=a.png  # the new surfaces, offscreen: lyric card,
                                                        # boot screen, booth, oracle, end card
+swift run GiveIt2Me_DJ_Dave_malware --snapshot-credits=e.png  # the END CARD as laid out, at your
+                                                       # screen's size, stand-in photo, copy typed
+tools/tune_lyrics.sh [a|b]                             # regenerate + play just one chorus, to
+                                                       # tune the lyric cards by ear
 swift run GiveIt2Me_DJ_Dave_malware --snapshot=out.png  # render the window content to a PNG
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-scenes=out.png   # preview the livecode + typeText scenes
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
@@ -285,6 +289,13 @@ Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`
 A `frame` width or height of **0 stretches to the far edge** (and a negative one leaves
 that much margin): `[0, 0, 0, 0]` is the whole screen on any display. The lyric cards
 use it.
+
+`"anchor": "center"` reads `frame` as `[dx, dy, w, h]` instead: the window's **centre**,
+`dx` right of and `dy` below the screen's centre. A ring of windows authored this way is
+round the middle of any display — top-left frames are measured from a corner, so the
+same numbers drift off-centre as the screen grows (the chorus clock leaned left and up
+on anything bigger than the authored 1440×900 for exactly that reason; it is authored
+from the centre now, like the torus it circles).
 
 ### `lyric` content
 
@@ -792,14 +803,24 @@ preview says so and the countdown runs anyway.
 
 ### `credits`
 
-The end card: a black ground; the machine's vitals in the probe's terminal (`showInfo`);
-the credits, in a terminal titled `title` (default
-`credits`), centred and half the screen, **typing `lines` out** at `charsPerSecond`
-(default 7 — deliberately slow, and the card holds, so it has all the time it needs);
-and over its bottom-right corner the booth's photo in a white frame with a flattering
-filter (`filter`: `instant` default, `chrome`, `fade`, `none`) and `caption` under it
-(default *I survived DJ_Dave GiveIt2Me*), and a **save photo** button under that unless
-`allowSave` is false.
+The end card, laid out as one collage centred on the screen: on the left the booth's
+photo in a white frame — pinned on at a tilt (`photoTilt` degrees, default −4, positive
+anticlockwise), lapping over the credits' edge — with a flattering filter (`filter`:
+`instant` default, `chrome`, `fade`, `none`), `caption` under it in Apple Garamond
+(default *I survived DJ_Dave GiveIt2Me*; Hoefler Text where Garamond isn't installed),
+and a **save photo** button under that unless `allowSave` is false; beside it the
+credits, in a terminal titled `title` (default `credits`) sized to its copy, **typing
+`lines` out**; and tucked under the credits, flush right, the machine's vitals in the
+probe's terminal (`showInfo`).
+
+The credits type either **by the character** at `charsPerSecond` (default 7 —
+deliberately slow) or, when `linesPerSecond` is set, **by the line**: each line lands
+whole and the caret waits on the next one, the way the probe reveals its report. The
+show types one line per beat (`linesPerSecond` = BPM/60 ≈ 2.14), so the copy is done in
+about five seconds. `fontSize` is the credits' type size in points (default 11,
+Terminal's; the show uses 22). Preview the whole card without running the show:
+`--snapshot-credits=out.png`, which reads the bundled show's `credits` event and lays
+the real windows out off-screen at your display's size.
 
 The button writes a PNG to `~/Pictures/GiveIt2Me-<timestamp>.png` and then reports back
 on itself (*saved to Pictures*, *couldn't save*), which is the only status surface the
@@ -814,6 +835,7 @@ through like any other line. Leading and trailing blanks are trimmed.
 ```jsonc
 { "beat": 345, "type": "credits", "params": { "id": "credits",
     "lines": ["GiveIt2Me", "by DJ_Dave", "", "Bye"], "hold": true,
+    "linesPerSecond": 2.142, "fontSize": 22, "photoTilt": -4,
     "tile": "assets/credits_tile.png", "tileDriftSeconds": 4 } }
 ```
 

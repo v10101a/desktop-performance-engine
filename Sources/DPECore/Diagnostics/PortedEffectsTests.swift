@@ -186,6 +186,19 @@ enum ScreenGeometryTests {
             t.near(centred.midX, sf.midX, 0.001, "no frame given is centred in x")
             t.near(centred.midY, sf.midY, 0.001, "no frame given is centred in y")
 
+            // `anchor: "center"`: [dx, dy, w, h] places the window's CENTRE dy below and
+            // dx right of the screen's centre. This is what keeps the chorus clock round
+            // the torus on any display — the torus centres itself, and top-left frames
+            // authored for one screen size land off-centre on every other.
+            let ring = ScreenGeometry.rect(from: [100, -50, 200, 100], on: screen, anchor: "center")
+            t.near(ring.midX, sf.midX + 100, 0.001, "center anchor: dx is measured from the screen's centre")
+            t.near(ring.midY, sf.midY + 50, 0.001, "center anchor: dy is authored downwards")
+            let dead = ScreenGeometry.rect(from: [0, 0, 200, 100], on: screen, anchor: "center")
+            t.near(dead.midX, sf.midX, 0.001, "center anchor: [0, 0] is dead centre in x")
+            t.near(dead.midY, sf.midY, 0.001, "center anchor: [0, 0] is dead centre in y")
+            let plain = ScreenGeometry.rect(from: [10, 20, 100, 50], on: screen, anchor: "topLeft")
+            t.near(plain.minX, r.minX, 0.001, "an unknown anchor is top-left, as before")
+
             // An incomplete frame array is treated as absent rather than read past its end.
             let short = ScreenGeometry.rectOrCentred([10, 20], size: NSSize(width: 200, height: 100),
                                                      on: screen)

@@ -237,7 +237,8 @@ final class WindowManager {
             switch ev.action {
             case .openWindow(let p):
                 guard windows[p.id] == nil else { continue }
-                let win = EffectWindow(contentRect: rect(from: p.frame, on: screen(p.screen)),
+                let win = EffectWindow(contentRect: rect(from: p.frame, on: screen(p.screen),
+                                                         anchor: p.anchor),
                                        content: p.content)
                 windows[p.id] = win   // not ordered front; open() presents it
             case .fakeDialog(let p):
@@ -393,7 +394,7 @@ final class WindowManager {
     func openWindow(_ p: OpenWindowParams, at now: Double) {
         let scr = screen(p.screen)
         openedAt[p.id] = now
-        let frame = rect(from: p.frame, on: scr)
+        let frame = rect(from: p.frame, on: scr, anchor: p.anchor)
         jiggles[p.id] = nil
         moves[p.id] = nil
         respawns[p.id] = (p.respawn == true) ? p : nil
@@ -581,8 +582,8 @@ final class WindowManager {
 
     func screen(_ index: Int?) -> NSScreen { ScreenGeometry.screen(index) }
 
-    func rect(from frame: [Double], on screen: NSScreen,
+    func rect(from frame: [Double], on screen: NSScreen, anchor: String? = nil,
                       fallbackSize: NSSize? = nil) -> NSRect {
-        ScreenGeometry.rect(from: frame, on: screen, fallbackSize: fallbackSize)
+        ScreenGeometry.rect(from: frame, on: screen, anchor: anchor, fallbackSize: fallbackSize)
     }
 }

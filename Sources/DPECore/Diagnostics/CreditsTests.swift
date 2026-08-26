@@ -34,6 +34,64 @@ enum CreditsTests {
                      "interior blank lines survive as stanza breaks")
             c.closeAll()
 
+            // By the line: `linesPerSecond` lands whole lines, the way the probe reveals
+            // its report, so the copy is never seen half-spelt. The first thing on the
+            // terminal is the whole first line; the copy still finishes; and while it
+            // types, the caret waits on its own line under the last one, like a prompt.
+            let byLine = CreditsController()
+            byLine.begin(CreditsParams(id: "l", lines: lines, showInfo: false, linesPerSecond: 6,
+                                       outro: false),
+                         at: 0, bpm: 128)
+            var first = "", sawPromptCaret = false, final = ""
+            let lineDeadline = Date().addingTimeInterval(3.0)
+            while Date() < lineDeadline {
+                RunLoop.main.run(until: Date().addingTimeInterval(0.02))
+                let raw = byLine.credits_rawTextForTesting ?? ""
+                let typed = raw.replacingOccurrences(of: "\u{2588}", with: "")
+                if first.isEmpty, !typed.isEmpty { first = typed }
+                if raw.hasSuffix("\n\u{2588}") { sawPromptCaret = true }
+                final = typed
+                if final == lines.joined(separator: "\n") { break }
+            }
+            t.expect(first == "GiveIt2Me" || first == "GiveIt2Me\n",
+                     "typing by the line lands the whole first line at once — first saw \"\(first)\"")
+            t.expect(sawPromptCaret, "by the line, the caret waits on the next line while it types")
+            t.equal(final, lines.joined(separator: "\n"), "typing by the line finishes the copy")
+            byLine.closeAll()
+
+            // The layout is a centred group, and every window stays on the screen.
+            let sf = NSRect(x: 0, y: 0, width: 1512, height: 982)
+            let lay = CreditsController.layout(in: sf, photo: NSSize(width: 520, height: 500),
+                                               roll: NSSize(width: 450, height: 380),
+                                               info: NSSize(width: 440, height: 230), showInfo: true)
+            let groupMidX: CGFloat = (lay.photo.minX + lay.roll.maxX) / 2
+            t.near(groupMidX, sf.midX, 1,
+                   "the photo + credits group is centred on the screen")
+            t.expect(lay.photo.maxX > lay.roll.minX, "the photo laps over the credits' edge")
+            t.expect(lay.info.minY < lay.roll.minY && abs(lay.info.maxX - lay.roll.maxX) < 0.5,
+                     "the summary sits under the credits, flush right with them")
+            for r in [lay.photo, lay.roll, lay.info] {
+                t.expect(sf.contains(r), "every end-card window is on the screen — \(r)")
+            }
+            let tiny = NSRect(x: 0, y: 0, width: 1000, height: 640)
+            let squeezed = CreditsController.layout(in: tiny, photo: NSSize(width: 520, height: 500),
+                                                    roll: NSSize(width: 450, height: 380),
+                                                    info: NSSize(width: 440, height: 230), showInfo: true)
+            for r in [squeezed.photo, squeezed.roll, squeezed.info] {
+                t.expect(tiny.contains(r), "a small screen shifts the windows on rather than losing them — \(r)")
+            }
+            // A tilted card's window is its bounding box, never smaller than the card.
+            let box = CreditsController.tiltedBounds(NSSize(width: 400, height: 300), degrees: -4)
+            t.expect(box.width > 400 && box.height > 300, "the tilted card's box is larger than the card")
+            let flat = CreditsController.tiltedBounds(NSSize(width: 400, height: 300), degrees: 0)
+            t.near(flat.width, 400, 0.001, "no tilt, no growth")
+
+            // The caption is a serif — Apple Garamond where installed, Hoefler Text
+            // otherwise — never the handwriting face it used to be.
+            let face = CreditsController.captionFont(size: 20).fontName
+            t.expect(face.hasPrefix("AppleGaramond") || face.hasPrefix("HoeflerText") || face == "Georgia",
+                     "the caption face is a Mac serif — got \(face)")
+
             // The outro is on unless a show turns it off: the piece ends by quitting.
             let defaults = CreditsParams(id: "d")
             t.equal(defaults.outro ?? true, true, "outro defaults on")

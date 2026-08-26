@@ -905,7 +905,7 @@
    }
   },
   {
-   "beat": 65.858,
+   "beat": 63.858,
    "type": "openWindow",
    "params": {
     "id": "ly1",
@@ -917,7 +917,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "I told you that i",
+     "text": "I told you that I",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "none",
@@ -929,7 +929,7 @@
    }
   },
   {
-   "beat": 67.858,
+   "beat": 65.858,
    "type": "openWindow",
    "params": {
     "id": "ly0",
@@ -953,7 +953,7 @@
    }
   },
   {
-   "beat": 68.858,
+   "beat": 67.858,
    "type": "openWindow",
    "params": {
     "id": "ly1",
@@ -1001,7 +1001,7 @@
    }
   },
   {
-   "beat": 73.858,
+   "beat": 71.858,
    "type": "openWindow",
    "params": {
     "id": "ly1",
@@ -1014,6 +1014,54 @@
     "content": {
      "kind": "lyric",
      "text": "my currents",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "none",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 72.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ly0",
+    "frame": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I can\u2019t",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "none",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 73.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ly1",
+    "frame": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "get enough",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "none",
@@ -1037,33 +1085,9 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "i can\u2019t get enough",
+     "text": "of this feeling baby",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
-     "chrome": "none",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 76.858,
-   "type": "openWindow",
-   "params": {
-    "id": "ly1",
-    "frame": [
-     0,
-     0,
-     0,
-     0
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "of this feeling baby",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
      "chrome": "none",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -1076,6 +1100,30 @@
    "beat": 77.858,
    "type": "openWindow",
    "params": {
+    "id": "ly1",
+    "frame": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "all I got",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "none",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 79.858,
+   "type": "openWindow",
+   "params": {
     "id": "ly0",
     "frame": [
      0,
@@ -1085,7 +1133,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "all i got",
+     "text": "I\u2019m giving that",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "none",
@@ -1109,7 +1157,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "i\u2019m giving that",
+     "text": "so give it up",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "none",
@@ -1133,7 +1181,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "so give it up",
+     "text": "I told you that I",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "none",
@@ -1157,7 +1205,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "i told you that I",
+     "text": "need your love",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "none",
@@ -1181,33 +1229,9 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
-     "chrome": "none",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 88.858,
-   "type": "openWindow",
-   "params": {
-    "id": "ly1",
-    "frame": [
-     0,
-     0,
-     0,
-     0
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
      "chrome": "none",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -1220,7 +1244,7 @@
    "beat": 89.858,
    "type": "openWindow",
    "params": {
-    "id": "ly0",
+    "id": "ly1",
     "frame": [
      0,
      0,
@@ -1230,8 +1254,8 @@
     "content": {
      "kind": "lyric",
      "text": "need your love",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
      "chrome": "none",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -1244,7 +1268,7 @@
    "beat": 91.858,
    "type": "openWindow",
    "params": {
-    "id": "ly1",
+    "id": "ly0",
     "frame": [
      0,
      0,
@@ -1254,8 +1278,8 @@
     "content": {
      "kind": "lyric",
      "text": "so give it to me",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
      "chrome": "none",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -1265,7 +1289,7 @@
    }
   },
   {
-   "beat": 96.0,
+   "beat": 93.858,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1273,7 +1297,7 @@
    }
   },
   {
-   "beat": 96.0,
+   "beat": 93.858,
    "type": "glassTorus",
    "params": {
     "id": "torus",
@@ -1283,13 +1307,13 @@
    }
   },
   {
-   "beat": 96.0,
+   "beat": 93.858,
    "type": "openWindow",
    "params": {
     "id": "ck0",
     "frame": [
-     605,
-     36,
+     0,
+     -360,
      230,
      108
     ],
@@ -1303,25 +1327,26 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "beat": 96.02,
+   "beat": 93.878,
    "type": "closeWindow",
    "params": {
     "id": "ly0"
    }
   },
   {
-   "beat": 96.02,
+   "beat": 93.878,
    "type": "closeWindow",
    "params": {
     "id": "ly1"
    }
   },
   {
-   "t": 45.558,
+   "t": 44.404,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1329,7 +1354,7 @@
    }
   },
   {
-   "t": 45.698,
+   "t": 44.544,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
@@ -1337,35 +1362,19 @@
    }
   },
   {
-   "t": 46.607,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 46.747,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.05
-   }
-  },
-  {
-   "beat": 100.0,
+   "beat": 95.858,
    "type": "openWindow",
    "params": {
     "id": "ck1",
     "frame": [
-     803,
-     63,
+     187,
+     -336,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "I told you that i",
+     "text": "I told you that I",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -1373,25 +1382,34 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "t": 47.756,
+   "t": 45.558,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#0078D7",
     "durationSeconds": 0.08
    }
   },
   {
-   "beat": 102.0,
+   "t": 45.698,
+   "type": "screenFlash",
+   "params": {
+    "color": "#F2F4FE",
+    "durationSeconds": 0.05
+   }
+  },
+  {
+   "beat": 97.858,
    "type": "openWindow",
    "params": {
     "id": "ck2",
     "frame": [
-     972,
-     141,
+     349,
+     -266,
      230,
      108
     ],
@@ -1405,17 +1423,26 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "beat": 103.0,
+   "t": 46.607,
+   "type": "screenFlash",
+   "params": {
+    "color": "#F2F4FE",
+    "durationSeconds": 0.08
+   }
+  },
+  {
+   "beat": 99.858,
    "type": "openWindow",
    "params": {
     "id": "ck3",
     "frame": [
-     1084,
-     258,
+     464,
+     -160,
      230,
      108
     ],
@@ -1429,11 +1456,12 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "t": 48.804,
+   "t": 47.756,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
@@ -1441,13 +1469,13 @@
    }
   },
   {
-   "beat": 104.0,
+   "beat": 101.858,
    "type": "openWindow",
    "params": {
     "id": "ck4",
     "frame": [
-     1123,
-     396,
+     516,
+     -33,
      230,
      108
     ],
@@ -1461,11 +1489,12 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "t": 50.175,
+   "t": 48.804,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1473,21 +1502,13 @@
    }
   },
   {
-   "t": 50.315,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.05
-   }
-  },
-  {
-   "beat": 108.0,
+   "beat": 103.858,
    "type": "openWindow",
    "params": {
     "id": "ck5",
     "frame": [
-     1084,
-     534,
+     499,
+     99,
      230,
      108
     ],
@@ -1501,14 +1522,114 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "t": 48.944,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.05
+   }
+  },
+  {
+   "beat": 104.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck6",
+    "frame": [
+     414,
+     217,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I can\u2019t",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 105.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck7",
+    "frame": [
+     273,
+     306,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "get enough",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "t": 50.175,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.08
+   }
+  },
+  {
+   "t": 50.315,
+   "type": "screenFlash",
+   "params": {
+    "color": "#F2F4FE",
+    "durationSeconds": 0.05
+   }
+  },
+  {
+   "beat": 107.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck8",
+    "frame": [
+     95,
+     354,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "of this feeling baby",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
    }
   },
   {
    "t": 51.445,
    "type": "screenFlash",
    "params": {
-    "color": "#0078D7",
+    "color": "#F2F4FE",
     "durationSeconds": 0.08
    }
   },
@@ -1516,48 +1637,24 @@
    "t": 51.585,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
+    "color": "#0078D7",
     "durationSeconds": 0.05
    }
   },
   {
-   "beat": 110.0,
+   "beat": 109.858,
    "type": "openWindow",
    "params": {
-    "id": "ck6",
+    "id": "ck9",
     "frame": [
-     972,
-     651,
+     -95,
+     354,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "i can\u2019t get enough",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    }
-   }
-  },
-  {
-   "beat": 111.0,
-   "type": "openWindow",
-   "params": {
-    "id": "ck7",
-    "frame": [
-     803,
-     729,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "of this feeling baby",
+     "text": "all I got",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -1565,23 +1662,24 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "beat": 112.0,
+   "beat": 111.858,
    "type": "openWindow",
    "params": {
-    "id": "ck8",
+    "id": "ck10",
     "frame": [
-     605,
-     756,
+     -273,
+     306,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "all i got",
+     "text": "I\u2019m giving that",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -1589,119 +1687,32 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
    "t": 52.933,
    "type": "screenFlash",
    "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 53.073,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.05
-   }
-  },
-  {
-   "t": 53.992,
-   "type": "screenFlash",
-   "params": {
     "color": "#0078D7",
     "durationSeconds": 0.08
    }
   },
   {
-   "beat": 116.0,
+   "beat": 113.858,
    "type": "openWindow",
    "params": {
-    "id": "ck9",
+    "id": "ck11",
     "frame": [
-     407,
-     729,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "i\u2019m giving that",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    }
-   }
-  },
-  {
-   "t": 55.132,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 55.272,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.05
-   }
-  },
-  {
-   "beat": 118.0,
-   "type": "openWindow",
-   "params": {
-    "id": "ck10",
-    "frame": [
-     238,
-     651,
+     -414,
+     217,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "so give it up",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    }
-   }
-  },
-  {
-   "t": 56.18,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "beat": 120.0,
-   "type": "openWindow",
-   "params": {
-    "id": "ck11",
-    "frame": [
-     126,
-     534,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "i told you that I",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -1709,35 +1720,12 @@
     },
     "animate": {
      "kind": "springIn"
-    }
-   }
-  },
-  {
-   "beat": 122.0,
-   "type": "openWindow",
-   "params": {
-    "id": "ck12",
-    "frame": [
-     87,
-     396,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "need your love",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
     },
-    "animate": {
-     "kind": "springIn"
-    }
+    "anchor": "center"
    }
   },
   {
-   "t": 57.512,
+   "t": 53.992,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1745,43 +1733,27 @@
    }
   },
   {
-   "beat": 123.0,
-   "type": "openWindow",
+   "t": 54.132,
+   "type": "screenFlash",
    "params": {
-    "id": "ck13",
-    "frame": [
-     126,
-     258,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    }
+    "color": "#0078D7",
+    "durationSeconds": 0.05
    }
   },
   {
-   "beat": 124.0,
+   "beat": 115.858,
    "type": "openWindow",
    "params": {
-    "id": "ck14",
+    "id": "ck12",
     "frame": [
-     238,
-     141,
+     -499,
+     99,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "I told you that I",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -1789,11 +1761,12 @@
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
    }
   },
   {
-   "t": 58.801,
+   "t": 55.132,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
@@ -1801,7 +1774,98 @@
    }
   },
   {
-   "t": 58.941,
+   "beat": 117.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck13",
+    "frame": [
+     -516,
+     -33,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "t": 56.18,
+   "type": "screenFlash",
+   "params": {
+    "color": "#F2F4FE",
+    "durationSeconds": 0.08
+   }
+  },
+  {
+   "beat": 119.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck14",
+    "frame": [
+     -464,
+     -160,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "so give it to me",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 121.858,
+   "type": "openWindow",
+   "params": {
+    "id": "ck15",
+    "frame": [
+     -349,
+     -266,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "t": 57.512,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.08
+   }
+  },
+  {
+   "t": 57.652,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1809,27 +1873,36 @@
    }
   },
   {
-   "beat": 126.0,
+   "beat": 123.858,
    "type": "openWindow",
    "params": {
-    "id": "ck15",
+    "id": "ck16",
     "frame": [
-     407,
-     63,
+     -187,
+     -336,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "so give it to me",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
     "animate": {
      "kind": "springIn"
-    }
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "t": 58.801,
+   "type": "screenFlash",
+   "params": {
+    "color": "#F2F4FE",
+    "durationSeconds": 0.08
    }
   },
   {
@@ -1950,6 +2023,13 @@
    "type": "closeWindow",
    "params": {
     "id": "ck15"
+   }
+  },
+  {
+   "beat": 128.05,
+   "type": "closeWindow",
+   "params": {
+    "id": "ck16"
    }
   },
   {
@@ -2334,7 +2414,7 @@
     ],
     "content": {
      "kind": "lyric",
-     "text": "I told you that i",
+     "text": "I told you that I",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -9664,6 +9744,9 @@
      "Bye"
     ],
     "hold": true,
+    "linesPerSecond": 2.142,
+    "fontSize": 22,
+    "photoTilt": -4,
     "backdrop": "#FFFFFF",
     "tile": "assets/credits_tile.png",
     "tileDriftSeconds": 4
