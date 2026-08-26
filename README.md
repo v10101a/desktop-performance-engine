@@ -320,7 +320,7 @@ scored bar by bar to the real track at 128.5 BPM:
 | 2:05 | 68–71 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1** on the downbeats of the last three bars |
 | 2:13 | 72–79 | **CHORUS C** | the shutter: one flash, the booth goes with it, and the viewer's own photos bury the screen (`photoWall`) |
 | 2:28 | 80–86 | **CHORUS D** | two bars of the eruption — windows, terminals, lyric cards and alerts bursting from the centre on kick flashes — then the **original strobe** (`examples/timeline_strobe.json`) as the finale, cut by the break |
-| 2:41 | 87→ | **CREDITS** | everything goes; the end card comes up and **holds past the end of the track**: the photo the computer took, in a frame; the machine's vitals in the probe's terminal; an *i survived DJ_DAVE malware* alert; the credits, with the one button that ends the show |
+| 2:41 | 87→ | **CREDITS** | everything goes; the end card comes up and **holds past the end of the track**: the photo the computer took, in a frame; the machine's vitals in the probe's terminal; the credits typing themselves out in a half-screen terminal over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
 The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The
 sub-bass really lands at 30.28 s, but cutting exactly on it reads as late — the eye
@@ -782,30 +782,103 @@ flashes and goes with the shutter (set `hold: true` to keep it, frozen on the ph
     "durationBeats": 16, "count": 3, "stepBeats": 4 } }
 ```
 
-**The photo never touches the disk.** It is kept in memory (`PhotoBoothStore`), shown
-by `credits`, and discarded when the show stops or is panicked — the viewer keeps it by
-screenshotting the end card, or not at all. The capture session is configured at load
+**The show never puts the photo on disk.** It is kept in memory (`PhotoBoothStore`),
+shown by `credits`, and discarded when the show stops or is panicked. The one way it can
+be written out is the end card's **save photo** button, and only because the viewer
+pressed it — see `credits` below. The capture session is configured at load
 (device discovery is slow) and started only when the event fires, so the camera light
 comes on with the window, not for the whole show. No camera, or camera refused: the
 preview says so and the countdown runs anyway.
 
 ### `credits`
 
-The end card: a black ground; the booth's photo in a white frame with a flattering
-filter (`filter`: `instant` default, `chrome`, `fade`, `none`); the machine's vitals in
-the probe's terminal (`showInfo`); an alert titled `survivor`; and a `credits` alert
-carrying `lines`, whose **bye** button ends the show.
+The end card: a black ground; the machine's vitals in the probe's terminal (`showInfo`);
+the credits, in a terminal titled `title` (default
+`credits`), centred and half the screen, **typing `lines` out** at `charsPerSecond`
+(default 7 — deliberately slow, and the card holds, so it has all the time it needs);
+and over its bottom-right corner the booth's photo in a white frame with a flattering
+filter (`filter`: `instant` default, `chrome`, `fade`, `none`) and `caption` under it
+(default *I survived DJ_Dave GiveIt2Me*), and a **save photo** button under that unless
+`allowSave` is false.
+
+The button writes a PNG to `~/Pictures/GiveIt2Me-<timestamp>.png` and then reports back
+on itself (*saved to Pictures*, *couldn't save*), which is the only status surface the
+card has. It writes straight there rather than opening an `NSSavePanel` because the end
+card's windows sit at `.screenSaver` level — a save panel opens *behind* them, with no
+way to reach it. This is the only thing in the piece that writes the photo out, and it
+happens only on a press; the show still writes nothing on its own.
+
+Interior blank entries in `lines` are kept — they are the stanza breaks, and they type
+through like any other line. Leading and trailing blanks are trimmed.
 
 ```jsonc
 { "beat": 345, "type": "credits", "params": { "id": "credits",
-    "lines": ["music: Give it 2 me", "starring: you"],
-    "survivor": "i survived DJ_DAVE malware", "hold": true } }
+    "lines": ["GiveIt2Me", "by DJ_Dave", "", "Bye"], "hold": true,
+    "tile": "assets/credits_tile.png", "tileDriftSeconds": 4 } }
 ```
+
+`backdrop` is the card's ground — white, matching the tile artwork's own field. The tile
+fills its padding with that same colour (read from the artwork's top-left pixel), so the
+gaps between motifs are indistinguishable from the field inside them and the card reads
+as one continuous ground.
+
+Nothing in the end card writes to the tile asset. An earlier version keyed the artwork's
+white out with `NSBitmapImageRep.setColor`, which writes through to the backing store —
+and an `NSImage` loaded from a path can be backed by the mapped file, so building the
+card **edited `assets/credits_tile.png` on disk**. The keying is gone and the card is
+read-only; `CreditsTests` pins that.
+
+`tile` puts an image behind the whole card, tiled and drifting diagonally one tile per
+`tileDriftSeconds` (default 4), with `tilePadding` of gap around each motif as a
+fraction of its size (default 1.0 — a full image-width between neighbours) and
+`tileScale` for the artwork's size (default 0.05, which turns the shipped 432 px motif
+into a ~22 px one — a fine texture behind the copy rather than a picture competing with
+it). The gap is
+filled with the artwork's own top-left pixel, so a motif on a white field stays on a
+white field rather than punching the black ground through between tiles. The show uses
+`assets/credits_tile.png`; `bundle.sh`
+copies it into `Contents/Resources` alongside the audio, or the packaged `.app` would
+quietly fall back to black while the repo build looked right. The drift translates by exactly one tile per cycle, so
+the repeat is seamless. A missing file logs and falls back to the plain `backdrop`.
+
+**The outro** (`outro`, default true) is how the piece ends. `outroDelay` seconds after
+the last character lands (default 2), the machine says it has stopped responding; both
+When that alert goes up the card freezes: the tile drift stops dead (the layer's time is
+paused, not its animation removed, so the tiles hold where the eye last saw them) and
+every window on the card is desaturated and veiled in the palette grey. The alert itself
+is deliberately not frozen — it is the one part of the screen still responding.
+
+**The cursor is left alone.** macOS draws the beachball itself, for real stalls, and
+offers no API to ask for one; a hand-drawn imitation was tried and cut, because a spinner
+that is nearly-but-not-quite the system one reads as a bug rather than as the joke.
+
+Both buttons on that alert do the same thing; then `glitchSeconds` of the screen dumping its
+memory (default 0.5), a boot bar for `bootSeconds` (default 5), and the app quits.
+
+The dump is **not** the `GlitchImage` engine the wallpaper uses — that one is analogue in
+character (sine warps, chroma bleed, scanlines) and reads as a broken CRT. This is
+digital: the screen capture is pixelated to a 128-cell grid with interpolation off, every
+channel is thresholded to 0 or 255 (an eight-colour palette, no gradients), and then rows
+slip sideways by whole cells, runs are overwritten with a repeating 4-cell pattern read
+from elsewhere in the buffer, and other runs go all-bits-low or all-bits-high. It is
+drawn with `magnificationFilter = .nearest`, without which the blow-up to a 5K display
+would smooth the cells straight back out. No Screen Recording grant: the source is
+synthesised from hard blue-and-white bands instead and the sequence is unchanged.
+
+Quitting routes through `applicationWillTerminate` → `engine.stopAndRestore()`, so the
+desktop is restored before the process goes — the ending is not a way around the
+reversibility gate. Stop and the panic hotkey still end the show at any point, including
+mid-outro.
+
+Everything on the end card — the typing and the whole outro — runs on **wall-clock
+timers, not the show clock**. The card is authored on the last beat, so by then the
+engine has hit its end-of-piece branch, called `pause()` and stopped the pump; anything
+driven by `update(now:)` would freeze where it stood.
 
 **`hold`** (default true) is the reason the act exists: when the track runs out, the
 engine normally restores the desktop, which would wipe the card before anyone could
 screenshot it. With a holding credits card up, the engine **pauses on the last frame
-instead** and stays there until the card's button, the Stop button or the panic hotkey
+instead** and stays there until the finished credits terminal is clicked, the Stop button or the panic hotkey
 ends it. `--autoplay` still quits on its timer.
 
 ### `fileSwarm`

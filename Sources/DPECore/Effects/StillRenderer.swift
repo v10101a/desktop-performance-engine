@@ -104,10 +104,10 @@ enum StillRenderer {
     /// Preview the restructured show's new surfaces, none of which needs a camera, a
     /// location fix or a running clock to draw: a lyric card at screen aspect, one of
     /// the clock windows, the boot screen mid-bar, Photo Booth on "2" with no camera,
-    /// the oracle asking and answering, and the end card's photo frame + terminal +
-    /// alert. `--snapshot-acts=out.png`.
+    /// the oracle asking and answering, and the end card's photo frame, vitals terminal and
+    /// credits terminal. `--snapshot-acts=out.png`.
     static func renderActs(to url: URL) throws {
-        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1400, height: 1180))
+        let canvas = NSView(frame: NSRect(x: 0, y: 0, width: 1900, height: 2070))
         canvas.wantsLayer = true
         canvas.layer?.backgroundColor = NSColor(hex: "#1A1A20")?.cgColor
 
@@ -155,20 +155,68 @@ enum StillRenderer {
         NSBezierPath(ovalIn: NSRect(x: 150, y: 90, width: 100, height: 130)).fill()
         stand.unlockFocus()
         let photo = CreditsController.makePhotoCard(
-            size: NSSize(width: 412, height: 379), photo: stand,
-            photoRect: NSRect(x: 16, y: 64, width: 380, height: 285),
-            caption: "the computer took this · 25 Aug 2026 · 21:03", filter: "instant")
-        put(photo, 20, -30 + 30)
+            size: NSSize(width: 412, height: 415), photo: stand,
+            photoRect: NSRect(x: 16, y: 100, width: 380, height: 285),
+            caption: CreditsController.defaultCaption(), filter: "instant", showsSave: true)
+        put(photo, 20, 24)
         let info = makeEffectContentView(
             ContentSpec(kind: "code", text: CreditsController.machineSummary(), chrome: "terminal",
                         title: "system_probe — summary"),
             size: NSSize(width: 470, height: 230))
         put(info, 460, 90)
-        let surv = makeDialogContentView(title: "i survived DJ_DAVE malware",
-                                         message: "and all i got was this alert.",
-                                         buttons: ["ok"], icon: .caution,
-                                         size: NSSize(width: 440, height: 160))
-        put(surv, 950, 160)
+        // Row 4 (top): the credits terminal, caught mid-type — the surface that replaced
+        // the credits dialog. Cut off partway through the copy, the way the viewer first
+        // sees it, caret and all.
+        let creditsCopy = [
+            "GiveIt2Me", "by DJ_Dave", "produced by ninajirachi", "2026", "",
+            "Malware and mu\u{2588}",
+        ].joined(separator: "\n")
+        let roll = makeEffectContentView(
+            ContentSpec(kind: "code", text: creditsCopy, chrome: "terminal", title: "credits"),
+            size: NSSize(width: 660, height: 250))
+        put(roll, 20, 1190)
+
+        // The outro's two surfaces: the alert that ends the piece, and the boot bar it
+        // finishes on. (The glitch between them is rendered from a live screen capture,
+        // so it has no still to preview.)
+        let quit = makeDialogContentView(
+            title: "\u{201C}GiveIt2Me_DJ_Dave_malware\u{201D} is not responding.",
+            message: "The application is not responding. Do you want to force quit?",
+            buttons: ["Wait", "Force Quit"], icon: .caution,
+            size: NSSize(width: 560, height: 172))
+        put(quit, 720, 1190)
+        let outroBoot = BootView(size: NSSize(width: 380, height: 238), glyph: "\u{F8FF}", color: .white)
+        outroBoot.showsBar = true
+        outroBoot.progress = 0.88
+        put(outroBoot, 1320, 1190)
+
+        // The end card's backdrop: the tile at its authored padding, laid out the way the
+        // live card lays it out, so the spacing is checkable without running the show.
+        let tileBack = NSView(frame: NSRect(x: 0, y: 0, width: 760, height: 580))
+        tileBack.wantsLayer = true
+        tileBack.layer?.backgroundColor = NSColor.white.cgColor
+        CreditsController.addDriftingTile("assets/credits_tile.png", to: tileBack,
+                                          secondsPerTile: 4, padding: 1.0, scale: 0.05)
+        put(tileBack, 1110, 1470)
+
+        // Row 5 (top): two frames of the memory dump, run over the end card's own tile so
+        // the pixelation and the 1-bit palette are visible. Nearest-neighbour on the way
+        // up, exactly as the live sequence draws it.
+        // Decoded from the file's bytes rather than through `NSImage`, which can hand back
+        // a shared, file-backed representation.
+        let tileData = (try? Data(contentsOf: URL(fileURLWithPath:
+            resolveResourcePath("assets/credits_tile.png")))) ?? Data()
+        let tileCG = NSBitmapImageRep(data: tileData)?.cgImage
+        let dump = OutroController.previewFrames(from: tileCG, size: NSSize(width: 520, height: 325))
+        for (i, frame) in dump.prefix(2).enumerated() {
+            let v = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 325))
+            v.wantsLayer = true
+            v.layer?.magnificationFilter = .nearest
+            v.layer?.contentsGravity = .resize
+            v.layer?.contents = frame
+            put(v, 20 + CGFloat(i) * 545, 1470)
+        }
+
 
         try writePNG(canvas: canvas, to: url)
     }

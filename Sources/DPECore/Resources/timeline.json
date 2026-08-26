@@ -9651,14 +9651,22 @@
    "params": {
     "id": "credits",
     "lines": [
-     "a computer art piece",
-     "music: Give it 2 me",
-     "software: desktop performance engine",
-     "starring: you"
+     "GiveIt2Me",
+     "by DJ_Dave",
+     "produced by ninajirachi",
+     "2026",
+     "",
+     "Malware and music video",
+     "by Computer Art, LLC",
+     "Viola He",
+     "Jame Coyne",
+     "",
+     "Bye"
     ],
-    "survivor": "i survived DJ_DAVE malware",
-    "survivorBody": "and all i got was this alert.",
-    "hold": true
+    "hold": true,
+    "backdrop": "#FFFFFF",
+    "tile": "assets/credits_tile.png",
+    "tileDriftSeconds": 4
    }
   }
  ]

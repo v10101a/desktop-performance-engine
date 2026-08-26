@@ -73,6 +73,13 @@ for audio in assets/*.mp3 assets/*.m4a; do
   [ -e "$audio" ] && cp "$audio" "$APP/Contents/Resources/"
 done
 
+# Image assets the timeline names by path (the end card's tiled backdrop). Same reason
+# as the audio: the resolver checks Contents/Resources, and without this the .app falls
+# back to a plain black card while the repo build looks correct.
+for img in assets/credits_tile.png; do
+  [ -e "$img" ] && cp "$img" "$APP/Contents/Resources/"
+done
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

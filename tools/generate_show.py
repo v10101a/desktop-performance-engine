@@ -29,7 +29,7 @@ the tempo map, nothing is patched in afterwards.
   2:28  bars 80-86   CHORUS D   the eruption, then the original strobe as the finale
   2:41  bar  87      BREAK      everything goes; the end card comes up and HOLDS —
                                 the photo the computer took, the machine's vitals,
-                                an "i survived" alert, and the credits
+                                and the credits
 
     python3 tools/generate_show.py
     W=1440 H=900 COLS=22 python3 tools/generate_show.py
@@ -504,24 +504,34 @@ for ev in strobe["events"]:
 
 # =============================================================================
 # Act 14: BREAK (bar 87) — everything goes at once, and the end card comes up and
-# stays: the photo the booth took, the machine's vitals, the "i survived" alert,
-# and the credits. The engine holds on it past the end of the track.
+# stays: the photo the booth took, the machine's vitals, and the credits typing
+# themselves out. The engine holds on it past the end of the track.
 # =============================================================================
 brk = bar(BAR_BREAK)
 add(brk, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
 for wid in sorted(strobe_ids) + ["wall", "booth", "torus", "oracle", "probe"]:
     add(brk + 0.05, "closeWindow", {"id": wid})
+# One entry per line; interior blanks are the stanza breaks and are typed through.
 CREDITS = [
-    # One entry per line. Pending — the artist will supply the copy.
-    "a computer art piece",
-    "music: Give it 2 me",
-    "software: desktop performance engine",
-    "starring: you",
+    "GiveIt2Me",
+    "by DJ_Dave",
+    "produced by ninajirachi",
+    "2026",
+    "",
+    "Malware and music video",
+    "by Computer Art, LLC",
+    "Viola He",
+    "Jame Coyne",
+    "",
+    "Bye",
 ]
-add(bar(BAR_BREAK, 1), "credits", {"id": "credits", "lines": CREDITS,
-    "survivor": "i survived DJ_DAVE malware",
-    "survivorBody": "and all i got was this alert.",
-    "hold": True})
+add(bar(BAR_BREAK, 1), "credits", {"id": "credits", "lines": CREDITS, "hold": True,
+    # Tiled behind the card, drifting diagonally one tile per 4 s. Missing file =>
+    # plain black backdrop, logged, show unaffected.
+    # The card's ground. White, to match the tile artwork's own field — the tile fills
+    # its padding with that same colour, so the card reads as one continuous ground.
+    "backdrop": "#FFFFFF",
+    "tile": "assets/credits_tile.png", "tileDriftSeconds": 4})
 
 # --- markers for the scrubber: the analyser's sections plus the act boundaries ---
 markers = list(analysis["markers"])

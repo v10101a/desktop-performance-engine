@@ -60,6 +60,9 @@ final class PerformanceEngine {
     var onTick: ((Double) -> Void)?
     /// Fires when the show stops and the desktop has been restored.
     var onFinished: (() -> Void)?
+    /// Fires when the end card's outro has run to the end of its boot bar. The app quits
+    /// from here; nothing else in the show ends the process on its own.
+    var onOutroFinished: (() -> Void)?
 
     init() {
         context = EventContext(windows: windows, cursor: cursor, icons: icons,
@@ -69,6 +72,12 @@ final class PerformanceEngine {
         restore = RestoreManager(windows: windows)
         credits.onDismiss = { [weak self] in
             self?.stopAndRestore()
+        }
+        // The end card's outro finishes by quitting. `applicationWillTerminate` calls
+        // `stopAndRestore`, so the desktop is put back before the process goes —
+        // quitting is not a way to skip the reversibility gate.
+        credits.onQuit = { [weak self] in
+            self?.onOutroFinished?()
         }
         cursor.onControlStarted = { [weak self] in
             self?.restore.cursorWasControlled = true

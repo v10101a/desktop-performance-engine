@@ -79,6 +79,7 @@ public enum UnitTests {
         RendererTests.run(t)
         WindowOwnershipTests.run(t)
         ChromeTests.run(t)
+        CreditsTests.run(t)
         return t.report()
     }
 }

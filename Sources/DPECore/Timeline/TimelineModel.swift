@@ -431,13 +431,21 @@ struct CreditsParams: Decodable {
     var screen: Int? = nil
     var lines: [String]? = nil          // credits copy, one entry per line
     var title: String? = nil            // credits dialog title (default "credits")
-    var survivor: String? = nil         // the "i survived" alert title
-    var survivorBody: String? = nil
     var caption: String? = nil          // under the photo
     var showInfo: Bool? = nil           // the machine-info terminal (default true)
     var hold: Bool? = nil               // stay up past the end of the track (default true)
     var backdrop: String? = nil         // hex behind everything (default black)
     var filter: String? = nil           // "instant" (default) | "chrome" | "fade" | "none"
+    var charsPerSecond: Double? = nil   // credits typing rate (default 7 — deliberately slow)
+    var tile: String? = nil             // image tiled behind the card, drifting diagonally
+    var tileDriftSeconds: Double? = nil // seconds to drift one tile (default 4)
+    var tilePadding: Double? = nil      // gap around each tile, as a fraction of its size (default 1.0)
+    var tileScale: Double? = nil        // tile artwork redrawn at this scale (default 0.05)
+    var allowSave: Bool? = nil          // show the card's "save photo" button (default true)
+    var outro: Bool? = nil              // run the force-quit → glitch → boot → quit ending (default true)
+    var outroDelay: Double? = nil       // pause after the last character before it starts (default 2)
+    var glitchSeconds: Double? = nil    // length of the fullscreen glitch (default 0.5)
+    var bootSeconds: Double? = nil      // length of the closing boot bar (default 5)
 }
 
 /// Patterns drawn on the desktop out of real file icons. Ported from the standalone

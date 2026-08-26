@@ -85,6 +85,13 @@ final class MainWindowController: NSWindowController {
             self?.setStatus("Stopped — desktop restored")
             self?.syncTransport()
         }
+        // The end card's outro is the piece's own ending: it quits. Terminating routes
+        // through `applicationWillTerminate` → `engine.stopAndRestore()`, so the desktop
+        // is restored on the way out.
+        engine.onOutroFinished = { [weak self] in
+            self?.setStatus("Finished — quitting")
+            NSApp.terminate(nil)
+        }
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
