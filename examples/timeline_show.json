@@ -9747,6 +9747,7 @@
     "linesPerSecond": 2.142,
     "fontSize": 22,
     "photoTilt": -4,
+    "outroDelay": 6.23,
     "backdrop": "#FFFFFF",
     "tile": "assets/credits_tile.png",
     "tileDriftSeconds": 4

@@ -551,10 +551,28 @@ CREDITS = [
     "",
     "Bye",
 ]
+# The card has to finish AND then sit there before the machine gives up. Typing is by
+# the line, so the copy lands len(CREDITS)/linesPerSecond after the card comes up, and
+# the outro waits `outroDelay` on top of that before the force-quit alert.
+#
+# Sized so the finished card — photo, credits, summary, all of it — is complete and
+# still on screen until the track has actually ended, plus a beat of silence to read
+# it. At the authored tempo the copy lands at ~166.6s against a 169.9s track, so the
+# stock 2s default put the alert up at ~168.6s, over the last bar of music: the machine
+# gave up while the song was still playing. Derived rather than hard-coded so it stays
+# right if the track, the tempo or the credits copy change.
+CREDITS_LPS = round(1 / BEAT, 3)
+CARD_AT = secs(bar(BAR_BREAK, 1))
+TYPED_AT = CARD_AT + len(CREDITS) / CREDITS_LPS
+END_PAD = 3.0                    # silence after the last note before the alert
+OUTRO_DELAY = round(max(2.0, DURATION + END_PAD - TYPED_AT), 2)
+
 add(bar(BAR_BREAK, 1), "credits", {"id": "credits", "lines": CREDITS, "hold": True,
     # Typed by the LINE, one per beat — the probe's cadence, not a typist's — and in
     # type big enough to read from across the room. The photo is pinned on at a tilt.
-    "linesPerSecond": round(1 / BEAT, 3), "fontSize": 22, "photoTilt": -4,
+    "linesPerSecond": CREDITS_LPS, "fontSize": 22, "photoTilt": -4,
+    # How long the completed card holds before the force-quit alert.
+    "outroDelay": OUTRO_DELAY,
     # Tiled behind the card, drifting diagonally one tile per 4 s. Missing file =>
     # plain black backdrop, logged, show unaffected.
     # The card's ground. White, to match the tile artwork's own field — the tile fills
@@ -625,6 +643,8 @@ print(f"  CHORUS D bar {BAR_CHORUS_D:>2}    {secs(cd):6.2f}s  eruption, {n_kick}
 print(f"  strobe   bar {BAR_STROBE:>2}    {strobe_at:6.2f}s  {n_strobe} of {len(strobe['events'])} events "
       f"before the break")
 print(f"  break    bar {BAR_BREAK:>2}    {secs(brk):6.2f}s  credits hold past the end ({DURATION:.1f}s)")
+print(f"  outro              {TYPED_AT:6.2f}s  copy lands; card holds {OUTRO_DELAY:.2f}s → "
+      f"force-quit at {TYPED_AT + OUTRO_DELAY:.2f}s ({TYPED_AT + OUTRO_DELAY - DURATION:+.2f}s vs track end)")
 print()
 print("  lyric cues (tools/lyrics.py CUES) — when each card lands, in the track:")
 print("   #   chorus A   chorus B   text")
