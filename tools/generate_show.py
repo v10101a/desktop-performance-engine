@@ -61,6 +61,13 @@ AUDIO = "assets/03 - Give it 2 me.mp3"
 BLUE = "#0078D7"
 WHITE = "#F2F4FE"
 
+# The signature blue: rgb(2, 10, 245). The desktop and the restart card both take it, so
+# the ground under the whole piece is one colour. It is PALETTE[1] — the blue the horse
+# and the strobe are built from — NOT the lighter #0078D7 the lyric cards use.
+# (The face on the restart card is keyed to transparency rather than matched to it, so
+# it sits on this cleanly — see IntroGate.maskingField.)
+DJ_BLUE = "#020AF5"
+
 # --- the tempo map, straight from the analysis ---
 with open(os.path.join(ROOT, "assets", "track_analysis.json")) as f:
     analysis = json.load(f)
@@ -125,12 +132,15 @@ def fullscreen():
     return [0, 0, 0, 0]          # w/h of 0 stretch to the far edge on any display
 
 # =============================================================================
-# Act 1: HORSE (bars 1-4) — wall to wall. Run in, a SHORT gallop in place, run out.
+# Act 1: THE BLUE (bars 1-4) — the desktop itself goes DJ Dave blue and stays that way
+# for the whole show. The real wallpaper, not a window over it: `meta.allowWallpaper`
+# has to be true for this, and the controller snapshots the viewer's own picture first
+# and puts it back on stop/panic.
 # =============================================================================
+add(0, "deskWallpaper", {"id": "desk", "mode": "solid", "hex": DJ_BLUE})
+
+# The horse used to open here. It now runs across the strobe finale — see Act 13.
 frames, gc, gr, max_lit = build_frames(cols=HORSE_COLS)
-horse, horse_exit, horse_end = horse_event(frames, gc, gr, W, H, span=HORSE_SPAN,
-                                           in_beats=6, hold=5, out_beats=5)
-events.append(horse)
 
 # =============================================================================
 # Act 2: POINT (bars 5-8) — as the horse leaves, the cursor draws the arrow.
@@ -173,63 +183,21 @@ def hydra_window(wid, beat, frame, patch, running, animate="none", interactive=F
         "animate": {"kind": animate},
         "interactive": interactive, "respawn": interactive})
 
-# The scene picks up the instant the arrow's cursor finishes its glide — no gap.
-HY = p_end + 0.2
-
-# 1. it appears where the arrow points, small, code written but NOT running
-small = (min(fx - 40, W - 340), min(fy - 34, H - 220), 320, 200)
-hydra_window("hy0", HY, small, PATCHES[0], running=False,
+# The first sketch appears where the arrow pointed, already running. The cursor's
+# open-drag-resize-run choreography that used to sit here has moved to CHORUS B — see
+# "Act 5b" — so this act is now purely the stack accumulating on the downbeats.
+RUN_AT = max(p_end + 0.2, bar(BAR_HYDRA))
+first_frame = (min(fx - 40, W - 340), min(fy - 34, H - 220),
+               round(W * 0.34), round(H * 0.40))
+hydra_window("hy0", RUN_AT, first_frame, PATCHES[0], running=True,
              animate="springIn", interactive=True)
-
-# 2. the cursor takes it by the title bar and drags it up the screen — window and
-# pointer travel together, so it reads as a drag rather than the window moving itself
-grab = (small[0] + small[2] * 0.5, small[1] + 12)
-add(HY + 1, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(fx), round(fy)], [round(grab[0]), round(grab[1])]]})
-lifted = (W * 0.30, H * 0.24, small[2], small[3])
-add(HY + 2.5, "moveWindow", {"id": "hy0", "frame": [round(lifted[0]), round(lifted[1])],
-    "durationBeats": 1.6, "easing": "easeInOut"})
-add(HY + 2.5, "cursorPath", {"path": "linear", "durationBeats": 1.6, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(grab[0]), round(grab[1])],
-                               [round(lifted[0] + small[2] * 0.5), round(lifted[1] + 12)]]})
-
-# 3. resize by the LOWER-RIGHT CORNER: the top-left stays exactly where it is and the
-# window grows down and to the right, so the code never moves off its corner.
-corner = (lifted[0] + lifted[2], lifted[1] + lifted[3])
-big = (lifted[0], lifted[1], W * 0.46, H * 0.52)
-new_corner = (big[0] + big[2], big[1] + big[3])
-add(HY + 4.6, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(lifted[0] + small[2] * 0.5), round(lifted[1] + 12)],
-                               [round(corner[0]), round(corner[1])]]})
-add(HY + 6.2, "moveWindow", {"id": "hy0",
-    "frame": [round(big[0]), round(big[1]), round(big[2]), round(big[3])],
-    "durationBeats": 2, "easing": "easeOut"})
-add(HY + 6.2, "cursorPath", {"path": "linear", "durationBeats": 2, "easing": "easeOut",
-    "mode": "warp", "points": [[round(corner[0]), round(corner[1])],
-                               [round(new_corner[0]), round(new_corner[1])]]})
-# Re-open at the final size once the drag settles: the stretched-during-resize layout
-# gets rebuilt cleanly at the new dimensions. Still not running.
-add(HY + 8.4, "openWindow", {"id": "hy0",
-    "frame": [round(big[0]), round(big[1]), round(big[2]), round(big[3])],
-    "content": {"kind": "livecode", "text": PATCHES[0][0], "title": PATCHES[0][1],
-                "chrome": "browser", "hex": "#68BDF8", "running": False},
-    "animate": {"kind": "none"}, "interactive": True, "respawn": True})
-
-# 4. up to hydra's run button, top-right — and the sketch starts. The click lands on
-# the downbeat of BAR_HYDRA if the drag has left room for it, else as soon as it can.
-play = (big[0] + big[2] - 26, big[1] + 34)
-add(HY + 8.6, "cursorPath", {"path": "linear", "durationBeats": 1.4, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(new_corner[0]), round(new_corner[1])],
-                               [round(play[0]), round(play[1])]]})
-RUN_AT = max(HY + 10.2, bar(BAR_HYDRA))
-hydra_window("hy0", RUN_AT, big, PATCHES[0], running=True, interactive=True)
 add(RUN_AT, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
 
 # 5. one more on EVERY downbeat until the drop — evenly, on the beat, each bigger
 # than the last, scattered so nothing sits on anything else.
 rng = random.Random(11)
 hydra_ids = ["hy0"]
-spots = [(big[0], big[1])]
+spots = [(first_frame[0], first_frame[1])]
 
 def place(w, h):
     """A scattered spot that isn't sitting on top of one we already used."""
@@ -341,6 +309,99 @@ for i, kt in enumerate(kicks_between(b_start, bar(BAR_BRIDGE))):
         n_glitch += 1
 
 # =============================================================================
+# Act 5b: THE DRAG (54 s) — somebody using a computer, in the middle of the chorus.
+#
+# This is the choreography that used to open the show: a window appears small, the
+# cursor takes it by the title bar and hauls it up, grabs the lower-right corner and
+# pulls it bigger, then clicks run. Moved here at the artist's direction. It plays
+# against the torus rather than on an empty desktop, so it is kept to the left third —
+# the torus owns the centre and the lyric clock rings it.
+#
+# Authored in SECONDS, not bars: "54 s" is the instruction, and converting once here is
+# clearer than carrying a fractional bar around.
+# =============================================================================
+DRAG_AT = (54.0 - OFFSET) / BEAT
+DRAG_ID = "drag0"
+
+# 1. it appears, small, code written but NOT running
+d_small = (round(W * 0.05), round(H * 0.20), 320, 200)
+hydra_window(DRAG_ID, DRAG_AT, d_small, PATCHES[1], running=False,
+             animate="springIn", interactive=True)
+
+# 2. the cursor takes it by the title bar and drags it up the screen — window and
+# pointer travel together, so it reads as a drag rather than the window moving itself
+d_grab = (d_small[0] + d_small[2] * 0.5, d_small[1] + 12)
+add(DRAG_AT + 1, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(W * 0.02), round(H * 0.10)],
+                               [round(d_grab[0]), round(d_grab[1])]]})
+d_lift = (round(W * 0.06), round(H * 0.52), d_small[2], d_small[3])
+add(DRAG_AT + 2.5, "moveWindow", {"id": DRAG_ID, "frame": [d_lift[0], d_lift[1]],
+    "durationBeats": 1.6, "easing": "easeInOut"})
+add(DRAG_AT + 2.5, "cursorPath", {"path": "linear", "durationBeats": 1.6, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(d_grab[0]), round(d_grab[1])],
+                               [round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)]]})
+
+# 3. resize by the LOWER-RIGHT CORNER: the top-left stays put and the window grows down
+# and to the right, so the code never moves off its corner.
+d_corner = (d_lift[0] + d_lift[2], d_lift[1] + d_lift[3])
+d_big = (d_lift[0], d_lift[1], round(W * 0.30), round(H * 0.34))
+d_new_corner = (d_big[0] + d_big[2], d_big[1] + d_big[3])
+add(DRAG_AT + 4.6, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)],
+                               [round(d_corner[0]), round(d_corner[1])]]})
+add(DRAG_AT + 6.2, "moveWindow", {"id": DRAG_ID,
+    "frame": [d_big[0], d_big[1], d_big[2], d_big[3]],
+    "durationBeats": 2, "easing": "easeOut"})
+add(DRAG_AT + 6.2, "cursorPath", {"path": "linear", "durationBeats": 2, "easing": "easeOut",
+    "mode": "warp", "points": [[round(d_corner[0]), round(d_corner[1])],
+                               [round(d_new_corner[0]), round(d_new_corner[1])]]})
+# Re-open at the final size once the drag settles: the stretched-during-resize layout
+# gets rebuilt cleanly at the new dimensions. Still not running.
+add(DRAG_AT + 8.4, "openWindow", {"id": DRAG_ID,
+    "frame": [d_big[0], d_big[1], d_big[2], d_big[3]],
+    "content": {"kind": "livecode", "text": PATCHES[1][0], "title": PATCHES[1][1],
+                "chrome": "browser", "hex": "#68BDF8", "running": False},
+    "animate": {"kind": "none"}, "interactive": True, "respawn": True})
+
+# 4. up to hydra's run button, top-right — and the sketch starts.
+d_play = (d_big[0] + d_big[2] - 26, d_big[1] + 34)
+add(DRAG_AT + 8.6, "cursorPath", {"path": "linear", "durationBeats": 1.4, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(d_new_corner[0]), round(d_new_corner[1])],
+                               [round(d_play[0]), round(d_play[1])]]})
+DRAG_RUN = DRAG_AT + 10.2
+hydra_window(DRAG_ID, DRAG_RUN, d_big, PATCHES[1], running=True, interactive=True)
+add(DRAG_RUN, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
+# Gone before the bridge clears the desktop for the probe.
+add(bar(BAR_BRIDGE) - 0.3, "closeWindow", {"id": DRAG_ID})
+
+# =============================================================================
+# Act 5c: THE WORDS (0:54 → 1:08) — the lyric, on the desktop itself.
+#
+# The wallpaper is swapped for a card carrying one word, ten times a second, for
+# fourteen seconds. The phrase is 26 words long and so plays through about five and a
+# half times — the list wraps, it is not stretched to fit the window.
+#
+# This runs UNDER everything else: the torus and the clock through the first six
+# seconds, the probe's terminal after the bridge lands at 1:00. The desktop goes back to
+# blue the instant it ends.
+#
+# Real wallpaper, so `meta.allowWallpaper` gates it; the controller has the viewer's own
+# picture snapshotted from Act 1 and restores it on stop.
+# =============================================================================
+WORDS_AT, WORDS_END = 54.0, 68.0
+LYRIC_WORDS = ["I", "TOLD", "YOU", "THAT", "I", "NEED", "YOUR", "LOVE",
+               "SO", "GIVE", "IT", "2", "ME",
+               "RUNNIN", "UP", "MY", "CURRENTS",
+               "I", "CANT", "GET", "ENOUGH", "SO", "GIVE", "IT", "2", "ME"]
+add_t(WORDS_AT, "deskWallpaper", {
+    "id": "words", "mode": "slides", "hz": 10,      # 10 Hz = 100 ms a word
+    "images": [f"assets/lyrics_desktops/{w}.jpg" for w in LYRIC_WORDS],
+    "durationSeconds": round(WORDS_END - WORDS_AT, 3)})
+# Back to the blue. The controller's own expiry restores the VIEWER's picture, which is
+# not what Act 1 left on screen, so the ground is repainted explicitly.
+add_t(WORDS_END + 0.05, "deskWallpaper", {"id": "desk", "mode": "solid", "hex": DJ_BLUE})
+
+# =============================================================================
 # Act 6: BRIDGE (bars 33-40) — the probe. The clock goes; a terminal opens in the
 # middle and types out what the machine knows, slowly enough to be read.
 # =============================================================================
@@ -383,8 +444,10 @@ add(bar(BAR_VERSE2, -0.95), "closeWindow", {"id": "boot"})
 v2 = bar(BAR_VERSE2)
 add(v2, "closeWindow", {"id": "blackout"})
 add(v2, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
-# Fallback coordinates if there's no fix: Shanghai. `here` overrides them when there is.
-FALL = dict(lat=31.2304, lon=121.4737)
+# Where the map goes when Location Services gives us nothing (denied, switched off, or
+# still pending): downtown Los Angeles. `here=True` below overrides these whenever there
+# IS a fix, so this is the fallback, not the destination.
+FALL = dict(lat=34.0522, lon=-118.2437)
 DESCENT = dict(FALL, here=True, altitude=2_600_000, toAltitude=260,
                pitch=0, toPitch=62, heading=0, toHeading=30,
                seconds=round((bar(BAR_SWEEP) - v2) * BEAT - 0.5, 1), style=MAP_STYLE)
@@ -442,7 +505,6 @@ add(bar(BAR_CHORUS_C, 0.25), "photoWall", {"id": "wall", "fillPerBeat": 12, "chu
 # then the original strobe as the finale until the break cuts it.
 # =============================================================================
 cd = bar(BAR_CHORUS_D)
-add(cd, "screenFlash", {"color": "#FF2D95", "durationBeats": 0.75})
 add(cd + 0.05, "closeWindow", {"id": "wall"})
 
 codes = lyrics.CODE
@@ -499,12 +561,20 @@ erupt(cd + 0.1, wipe, W / 2, H / 2)
 # The background flashes on every kick under the eruption (behind the windows).
 flash_colors = ["#FEFEFE", BLUE, "#020202", "#68BDF8"]
 n_kick = 0
+# (No skip at `cd` any more: that guard existed only to stop a kick flash doubling
+# with the act-opening flash, which is gone.)
 for i, kt in enumerate(kicks_between(cd, bar(BAR_STROBE))):
-    if abs(kt - secs(cd)) < 0.25:
-        continue
     add_t(kt, "screenFlash", {"color": flash_colors[i % len(flash_colors)],
                               "durationSeconds": 0.09})
     n_kick += 1
+
+# The horse, wall to wall across the strobe. It opened the show for a long time; here it
+# reads as the thing that has been in the machine all along finally getting out. Sized to
+# land inside bars 82-87 so it exits before the break cuts everything.
+horse, horse_exit, horse_end = horse_event(frames, gc, gr, W, H, span=HORSE_SPAN,
+                                           start_beat=bar(BAR_STROBE),
+                                           in_beats=6, hold=5, out_beats=5)
+events.append(horse)
 
 # Wipe, then the ORIGINAL strobe, spliced in verbatim. Its events are authored in
 # absolute seconds, which survive the splice with a plain offset; everything past the
@@ -605,9 +675,12 @@ events.sort(key=when)
 
 doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
                 "analyzedBpm": BPM, "markers": markers,
-                # Both default false: nothing in this show writes to disk or touches
-                # the wallpaper.
-                "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") == "1",
+                # The show now paints the desktop blue in Act 1, so this is on by
+                # default — with it false the event is skipped and logged and the
+                # desktop simply never changes. WallpaperController snapshots the
+                # viewer's own picture before the first swap and restores it on stop,
+                # panic and quit. ALLOW_WALLPAPER=0 opts back out.
+                "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") != "0",
                 "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
 for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
@@ -619,13 +692,17 @@ for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
     print(f"wrote {os.path.normpath(out)}")
 
 print(f"{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}s")
-print(f"  horse    bar  1     {secs(0):6.2f}s  {gc}x{gr} grid, {max_lit} windows, "
+print(f"  horse    bar {BAR_STROBE:>2}    {secs(bar(BAR_STROBE)):6.2f}s  {gc}x{gr} grid, {max_lit} windows, "
       f"{HORSE_SPAN:.0%} of the screen, exits beat {horse_exit:.0f}")
 print(f"  point    bar {BAR_POINT:>2}     {secs(bar(BAR_POINT)):6.2f}s  ends beat {p_end:.1f} "
       f"→ focal ({fx:.0f},{fy:.0f})")
-print(f"  hydra              {secs(HY):6.2f}s  opens at the arrow's tip, runs at "
-      f"{secs(RUN_AT):.2f}s (bar {RUN_AT / 4 + 1:.2f})")
+print(f"  hydra              {secs(RUN_AT):6.2f}s  first sketch at the arrow's tip, running "
+      f"(bar {RUN_AT / 4 + 1:.2f})")
 print(f"  more     bars {more_bars[0]}-{more_bars[-1]}  one per downbeat → {len(hydra_ids)} sketches")
+print(f"  words              {WORDS_AT:6.2f}s  {len(LYRIC_WORDS)} words at 10 Hz "
+      f"→ {(WORDS_END - WORDS_AT) / (len(LYRIC_WORDS) * 0.1):.1f} passes to {WORDS_END:.0f}s")
+print(f"  drag               {secs(DRAG_AT):6.2f}s  open → drag → resize → run, "
+      f"finishes {secs(DRAG_RUN):.2f}s")
 print(f"  CHORUS A bar {BAR_CHORUS_A:>2}     {secs(drop):6.2f}s  {n_cards} lyric cards "
       f"(lead {CHORUS_LEAD:.1f}s)")
 print(f"  CHORUS B bar {BAR_CHORUS_B:>2}     {secs(b_start):6.2f}s  torus + {len(clock_ids)} clock windows, "

@@ -340,7 +340,9 @@ struct WallpaperParams: Decodable {
 /// > only in living *behind* every window.
 struct DeskWallpaperParams: Decodable {
     let id: String
-    var mode: String? = nil          // "strobe" (default) | "glitch" | "recursive"
+    var mode: String? = nil          // "strobe" (default) | "solid" | "slides" | "glitch" | "recursive"
+    var hex: String? = nil           // solid only: the colour (default the signature blue)
+    var images: [String]? = nil      // slides only: paths, cycled one per tick at `hz`
     var hz: Double? = nil            // applies per second (default 8)
     var intensity: Double? = nil     // glitch only, 0…1 (default 0.6)
     var seed: Int? = nil             // glitch only, for a reproducible tear pattern

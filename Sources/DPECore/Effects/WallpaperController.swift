@@ -70,6 +70,10 @@ final class WallpaperController {
         let hz: Double
         let intensity: Double
         let seed: UInt64
+        /// `solid` only: the colour to paint the desktop.
+        let hex: String
+        /// `slides` only: resolved file URLs, cycled one per tick.
+        let slides: [URL]
         let startTime: Double
         var endTime: Double?
         /// Timeline position of the last applied frame, for rate limiting.
@@ -95,9 +99,14 @@ final class WallpaperController {
                     hz: max(0, p.hz ?? 8),
                     intensity: min(1, max(0, p.intensity ?? 0.6)),
                     seed: UInt64(p.seed ?? 1),
+                    hex: p.hex ?? "#020AF5",
+                    slides: (p.images ?? []).map {
+                        URL(fileURLWithPath: resolveResourcePath($0))
+                    },
                     startTime: now,
                     endTime: duration.map { now + $0 })
-        NSLog("[DPE] deskWallpaper begin: mode=\(p.mode ?? "strobe") hz=\(p.hz ?? 8)")
+        NSLog("[DPE] deskWallpaper begin: mode=\(p.mode ?? "strobe") hz=\(p.hz ?? 8)"
+            + ((p.images?.isEmpty == false) ? " slides=\(p.images!.count)" : ""))
     }
 
     func stopDesk(id: String) {
@@ -138,6 +147,29 @@ final class WallpaperController {
         d.frame += 1
 
         switch d.mode {
+        case "solid":
+            // One shot: paint it once and stop. Re-applying a static colour every tick
+            // would rewrite the desktop picture at `hz` for no visible change, and the
+            // window server charges for every one of those.
+            if d.frame == 1, let url = try? WallpaperImage.solid(hex: d.hex) {
+                apply(url, to: NSScreen.screens)
+            }
+        case "slides":
+            // A word per tick, wrapping — the list is shorter than the run, so it plays
+            // through more than once. The files are handed to the window server as they
+            // are: nothing is rendered, written or cleaned up, so the only cost per tick
+            // is the swap itself.
+            guard !d.slides.isEmpty else {
+                NSLog("[DPE] deskWallpaper: slides with no images")
+                desk = nil
+                return
+            }
+            let url = d.slides[(d.frame - 1) % d.slides.count]
+            if FileManager.default.fileExists(atPath: url.path) {
+                apply(url, to: NSScreen.screens)
+            } else if d.frame == 1 {
+                NSLog("[DPE] deskWallpaper: slide missing at \(url.path)")
+            }
         case "strobe":
             // Alternate solid black and solid white on every screen.
             if let url = try? WallpaperImage.solid(gray: d.frame % 2 == 0 ? 0 : 1) {

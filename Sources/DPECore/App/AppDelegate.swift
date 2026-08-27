@@ -269,12 +269,21 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Act 0: the viewer opts in (or leaves) before anything happens. Skipped for
         // the unattended paths — --autoplay drives itself, --no-gate is the dev loop.
         if !args.contains("--autoplay") && !args.contains("--no-gate") {
+            // Nothing may start the track while the gate is up. The transport window is
+            // already on screen behind it, so without this its Play button (and the
+            // space bar) could start the show under the gate.
+            engine.disarm()
             gate = IntroGateController(
                 onStart: { [weak self] in
                     guard let self else { return }
                     // Every prompt the show will need, answered before the first beat.
+                    NSLog("[DPE] gate: yes — running preflight")
                     Permissions.preflight(for: self.engine.events) { [weak self] in
-                        self?.controller?.startShow()
+                        guard let self else { return }
+                        NSLog("[DPE] gate: preflight done — arming and starting")
+                        self.engine.arm()
+                        self.controller?.startShow()
+                        NSLog("[DPE] gate: startShow returned, isPlaying=\(self.engine.isPlaying)")
                     }
                 },
                 onExit: { NSApp.terminate(nil) })

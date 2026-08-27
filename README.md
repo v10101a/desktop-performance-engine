@@ -127,27 +127,61 @@ names real people.
 
 ### Act 0 — the intro gate
 
-Launching the app opens the piece on the **F.B.I. anti-piracy screen** every rental
-tape started with — blue field, white box, giant condensed FBI, a seal, a justified
-block of white legalese — rebuilt from shapes in `VHSWarningView`, carrying a parody
-notice and the real photosensitivity warning. It then shrinks to a small **popup window**
-on the desktop asking **DO YOU WANT THE MALWARE?** with two answers: **YES. INFECT ME.**
-or **no thank you** (which quits).
+Launching the app opens on the machine **restarting**: black, the Apple logo, a progress
+bar. When the bar lands the ground turns **DJ Dave blue** and the logo becomes the face
+(`assets/pixelface.jpg`) — the first thing the viewer sees is the show having already
+taken the computer over. The bar does not finish: it catches at **60%**, the ground cuts
+to blue and the face arrives, and only then does it fill. Drawn by `RestartCardView`, which deliberately is *not*
+`BootView` (the fake reboot and the outro share that one; the stall, the colour cut and
+the image swap are a one-off and don't belong in it).
+
+The blue is **`#020AF5`** — rgb(2, 10, 245), the signature blue, `PALETTE[1]` in the
+generator and the one the horse and the strobe are built from. The desktop wallpaper
+takes the same value, so the ground under the whole piece is one colour. The
+face is **keyed to transparency** before it is drawn (`maskingField`): the blue inside
+the JPEG is a near-pure `#001FFD`, and drawing it raw would show the logo as a rectangle
+against the ground. The keying runs on a private pixel buffer, never the source's own
+representation — `GateTests` pins that the asset file is untouched.
+
+Then a **plain macOS alert** on the desktop, built from `makeDialogContentView` — the
+same builder the show's forty-one fake dialogs use, so the first window the viewer sees
+is indistinguishable from the ones that follow. It carries the photosensitivity warning
+and the parody legalese, and asks **DO YOU WANT THE MALWARE?** with two answers:
+**YES. INFECT ME.** or **no thank you** (which quits). Either button plays
+`assets/bubble_sound.wav` before it acts.
+
+The photosensitivity notice is the part that actually matters: it is not a joke, and it
+stays in front of the viewer until they answer.
 
 Cards auto-advance after their `dwell` or step on click/space; **Esc** leaves from
 anywhere; **Return** takes the default on the choice card. "Yes" raises every permission
-prompt the loaded show will need — Camera, Contacts, Location, Screen Recording, one at a
-time, only the ones the timeline actually uses — and then starts the show through the
-same path as the Play button, so the transport stays in sync. Refusals are fine: every
-consumer degrades on its own (a black booth, `<unavailable>` lines, a studio reflection,
-a map over Shanghai).
+prompt the loaded show will need — Camera, Contacts, Screen Recording, one at a time,
+only the ones the timeline actually uses — and then starts the show through the same path
+as the Play button, so the transport stays in sync. Each of those gets **20 seconds**
+before the gate gives up on it and carries on; an unanswered prompt must never look like
+the show is broken.
 
-Every word of it is a joke and the seal is drawn from scratch (rings, tick marks, a
-shield) rather than reproduced. Title and body both **shrink to fit** their panel, so
-rewriting the copy can't push text off the card.
+**Location is asked for but not waited on.** It is the one prompt that can sit
+unanswered for 45 seconds (`LocationStore.warm`), and while it did, "yes" produced
+silence with nothing on screen to explain it — which is exactly what happens after a
+bundle-identifier change resets the machine's TCC grants. Nothing needs a fix for a
+long time: the probe is ~60 s in and says `<no fix>` without one, the map is ~103 s in
+and falls back to Los Angeles, and a fix that lands during the first minute is used by
+both.
+
+The transport is **disarmed** while the gate is up, so neither the Play button nor the
+space bar can start the show under it; the gate's "yes" arms it. Refusals are fine: every
+consumer degrades on its own (a black booth, `<unavailable>` lines, a studio reflection,
+a map over Los Angeles).
+
+`VHSWarningView` and the `.vhs` / `.popup` card styles are still in the tree but no card
+uses them — that was the F.B.I. anti-piracy screen this replaced.
 
 ```bash
 swift run GiveIt2Me_DJ_Dave_malware --no-gate                    # skip it (dev loop)
+DPE_GATE_AUTOYES=1 swift run GiveIt2Me_DJ_Dave_malware           # drive the gate: press "yes" for you
+                                                                # (--no-gate skips the gate, which is no
+                                                                # use when the answer is what you're testing)
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-gate=cards.png    # render the cards to a PNG montage
 ```
 
@@ -317,12 +351,14 @@ scored bar by bar to the real track at 128.5 BPM:
 
 | time | bars | act | |
 |---|---|---|---|
-| 0:00 | 1–4 | **HORSE** | the Muybridge window-zoetrope, 96% of the screen wide (22 columns, 63 windows), runs in, gallops in place ~2 s, runs out |
+| 0:00 | 1–4 | **THE BLUE** | the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) and stays that way for the whole show — the real wallpaper, snapshotted and restored on stop |
 | 0:08 | 5–8 | **POINT** | the cursor draws one long arrow, stamped in little pages — unhurried, with the `>` head in a single stroke |
-| 0:13 | 8–11 | **HYDRA** | somebody using a computer: a little browser opens at **exactly the spot the arrow pointed at**; the cursor drags it up by the title bar, grabs the **lower-right corner** and pulls it bigger, then clicks run on the downbeat of bar 11 — and only *then* does the sketch start rendering |
+| 0:13 | 8–11 | **HYDRA** | a little browser opens at **exactly the spot the arrow pointed at**, already running — and one more on every downbeat after it, each bigger than the last, scattered so nothing sits on anything else |
 | 0:21 | 12–16 | **MORE** | one more sketch on **every downbeat**, each bigger than the last, scattered |
 | 0:29 | 17–24 | **CHORUS A** | the drop. The stack blows away and the screen *is* the lyric video: full-screen `lyric` cards, one phrase each, blue-on-white ↔ white-on-blue, on the beat (`lyrics.CUES`) |
 | 0:45 | 25–32 | **CHORUS B** | back to the desktop: the glass torus in the middle and the same lyrics as small windows going round it **like a clock**, accumulating; the background glitches white/blue on every third kick |
+| 0:54 | — | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word, **ten times a second, for fourteen seconds** (`deskWallpaper` `slides`). 26 words, so the phrase plays through ~5½ times — the list wraps rather than being stretched to fit. Runs under the torus, then under the probe; the desktop goes back to blue at 1:08 |
+| 0:54 | — | **THE DRAG** | somebody using a computer, against the torus: a window opens small in the left third, the cursor takes it by the title bar and hauls it up, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does the sketch start rendering. Authored in seconds rather than bars, and gone before the bridge |
 | 1:00 | 33–40 | **BRIDGE** | `system_probe` opens centre-screen and types out its disclosure report, slowly enough to read |
 | 1:15 | 41–48 | **FOCUS** | the terminal clears and re-reads only **where you are** — geolocation + network — every line highlighted |
 | 1:30 | 49–55 | **REBOOT** | the screen goes black; the boot glyph; a progress bar filling across the phrase |
@@ -330,7 +366,7 @@ scored bar by bar to the real track at 128.5 BPM:
 | 1:54 | 62–67 | **ORACLE** | the torus again, and an alert: *hey, i'm the magic torus — ask me a question.* Type, press OK, it answers (or answers by itself two bars later) |
 | 2:05 | 68–71 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1** on the downbeats of the last three bars |
 | 2:13 | 72–79 | **CHORUS C** | the shutter: one flash, the booth goes with it, and the viewer's own photos bury the screen (`photoWall`) |
-| 2:28 | 80–86 | **CHORUS D** | two bars of the eruption — windows, terminals, lyric cards and alerts bursting from the centre on kick flashes — then the **original strobe** (`examples/timeline_strobe.json`) as the finale, cut by the break |
+| 2:28 | 80–86 | **CHORUS D** | two bars of the eruption — windows, terminals, lyric cards and alerts bursting from the centre on kick flashes — then the **original strobe** (`examples/timeline_strobe.json`) as the finale, cut by the break — and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops wall to wall across it, exiting before the break |
 | 2:41 | 87→ | **CREDITS** | everything goes; the end card comes up and **holds past the end of the track**: the photo the computer took, in a frame; the machine's vitals in the probe's terminal; the credits typing themselves out in a half-screen terminal over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
 The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The

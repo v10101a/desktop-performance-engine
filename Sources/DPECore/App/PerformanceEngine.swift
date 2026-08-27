@@ -171,7 +171,25 @@ final class PerformanceEngine {
 
     // MARK: - Transport
 
+    /// Whether the transport is allowed to start at all.
+    ///
+    /// The intro gate disarms it while it is up, so the track cannot begin before the
+    /// viewer has answered — not by the Play button, not by the space bar, not by any
+    /// path that reaches `play()`. Armed by default: every other entry point (the dev
+    /// loop, `--autoplay`, the tests) has no gate to wait for.
+    private(set) var isArmed = true
+
+    /// Hold the transport until the viewer opts in.
+    func disarm() { isArmed = false }
+
+    /// Release it. Called once, from the gate's "yes".
+    func arm() { isArmed = true }
+
     func play() {
+        guard isArmed else {
+            NSLog("[DPE] play refused — the intro gate has not been answered yet")
+            return
+        }
         guard let tl = timeline, !isPlaying else { return }
 
         restore.snapshotNow()

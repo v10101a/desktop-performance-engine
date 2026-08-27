@@ -13,6 +13,21 @@ Package.resolved
 # Keep the large raw master out of git; the compressed mp3 IS committed (licensed).
 song.wav
 assets/*.wav
+# …but the gate's button sound is a required runtime asset, not a master: 72 KB, named
+# by the intro gate and copied into the .app by bundle.sh. Without this exception a
+# fresh clone builds an app whose buttons are silent.
+!assets/bubble_sound.wav
+
+# Sarah's source material: 156 MB of screen recordings, layered PSDs and full-size
+# originals. The pieces the show actually loads are committed as derived copies under
+# assets/ (pixelface.jpg, lyrics_desktops/), so the masters stay out.
+assets/sarah's assets/
+
+# Reference images nothing in the piece loads. Named individually rather than by a
+# pattern: a blanket assets/*.png would have swallowed credits_tile.png and app_icon.png,
+# and a blanket rule is exactly how bubble_sound.wav ended up silently untracked.
+assets/museum-patron-Dance-I-Henri-Matisse-1909.webp
+assets/museum-patron-Dance-I-Henri-Matisse-1909 copy.png
 assets/*.aif
 assets/*.aiff
 *.mov

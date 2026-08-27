@@ -38,6 +38,8 @@ enum WallpaperImage {
 
     /// Solid-grey PNG, cached by level — the strobe reuses two files forever rather
     /// than writing a new one per toggle.
+    /// A solid grey. Kept as the `strobe` mode's entry point; `solid(hex:)` is the
+    /// general case underneath it.
     static func solid(gray: CGFloat) throws -> URL {
         let name = String(format: "solid-%03d.png", Int(gray * 255))
         let url = try supportDirectory().appendingPathComponent(name)
@@ -50,6 +52,42 @@ enum WallpaperImage {
         ) else { throw GlitchError("could not create a \(solidSize)×\(solidSize) bitmap context") }
 
         context.setFillColor(CGColor(red: gray, green: gray, blue: gray, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: solidSize, height: solidSize))
+        guard let image = context.makeImage() else {
+            throw GlitchError("could not render the solid bitmap")
+        }
+        try write(image, to: url)
+        return url
+    }
+
+    /// A solid colour, cached by hex so the show writes one file per colour no matter
+    /// how many times the event fires.
+    static func solid(hex: String) throws -> URL {
+        // Parsed straight back out of the hex and written into an sRGB context, rather
+        // than round-tripped through `NSColor.usingColorSpace(.deviceRGB)`. That
+        // conversion shifts the value — an authored rgb(2, 10, 245) came back off by ten
+        // in the blue channel — and the desktop is meant to be exactly the colour the
+        // timeline asked for.
+        var t = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.hasPrefix("#") { t.removeFirst() }
+        guard t.count == 6, let v = UInt32(t, radix: 16) else {
+            throw GlitchError("not a colour: \(hex)")
+        }
+        let r = CGFloat((v >> 16) & 0xFF) / 255
+        let g = CGFloat((v >> 8) & 0xFF) / 255
+        let b = CGFloat(v & 0xFF) / 255
+        let name = "solid-" + hex.replacingOccurrences(of: "#", with: "").lowercased() + ".png"
+        let url = try supportDirectory().appendingPathComponent(name)
+        if FileManager.default.fileExists(atPath: url.path) { written.insert(url.path); return url }
+
+        let space = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
+        guard let context = CGContext(
+            data: nil, width: solidSize, height: solidSize, bitsPerComponent: 8,
+            bytesPerRow: 0, space: space,
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else { throw GlitchError("could not create a \(solidSize)×\(solidSize) bitmap context") }
+        context.setFillColor(CGColor(colorSpace: space, components: [r, g, b, 1])
+                             ?? CGColor(red: r, green: g, blue: b, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: solidSize, height: solidSize))
         guard let image = context.makeImage() else {
             throw GlitchError("could not render the solid bitmap")

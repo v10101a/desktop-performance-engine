@@ -168,224 +168,17 @@
     "kind": "break"
    }
   ],
-  "allowWallpaper": false,
+  "allowWallpaper": true,
   "allowDesktopFiles": false
  },
  "events": [
   {
    "beat": 0,
-   "type": "sprite",
+   "type": "deskWallpaper",
    "params": {
-    "id": "horse",
-    "frames": [
-     [
-      "...........X......",
-      ".........XX...XX..",
-      "...........XXXXXX.",
-      ".XXXXXXXXX..XX....",
-      "....XXXXXXXXXX....",
-      ".....XX..XXXX.....",
-      "......X...X.......",
-      "........X.........",
-      "..................",
-      ".................."
-     ],
-     [
-      "..........XX......",
-      ".........XX...XX..",
-      "...........XXXXXX.",
-      ".XX.XXXXXX..XX...X",
-      "....XXXXXXXXXX....",
-      ".....XXX.XXXX.....",
-      ".....XXX..X.......",
-      "........XX........",
-      "..................",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XX...XX..",
-      "...........XXXXXX.",
-      ".XXXXXXXXX.XXXX..X",
-      "....XXXXXXXXXX....",
-      "......XXXXXXX.....",
-      "......XX...X......",
-      "........X.........",
-      "..................",
-      ".XX..X............"
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........XXXXXX.",
-      ".XX.XXXXXX.XXXX.XX",
-      ".X..XXXXXXXXXX....",
-      ".....XXXXXXXX.....",
-      "......XX....X.X...",
-      "......X...........",
-      ".......X..........",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XXX......",
-      "...........XXXXXX.",
-      ".XX..XXXXX.XXXX.XX",
-      ".X..XXXXXXXXXX....",
-      ".....XXXXXXXXX....",
-      ".....X.X.....XX...",
-      ".....X............",
-      "..................",
-      "...............XX."
-     ],
-     [
-      "...........X......",
-      ".........XXX......",
-      "...........XXXXXXX",
-      ".XX..XXXXX.XXXXXXX",
-      ".X..XXXXXXXXXX....",
-      "....XXXXXXXXXX....",
-      "....XXX.......X...",
-      "...X...X..........",
-      "..................",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XXX......",
-      "...........XXXXXXX",
-      ".XXXXXXXXX.XXXXXXX",
-      "....XXXXXXXXXX...X",
-      "....XXXXXXXXXXX...",
-      "...XXXX.......X...",
-      "..X..X.........X..",
-      ".X................",
-      "..........XXX..XX."
-     ],
-     [
-      "...........X......",
-      ".........XXX......",
-      "...........XXXXXXX",
-      ".XXXXXXXXX.XXXXXXX",
-      "....XXXXXXXXXX....",
-      "...XXXXXXXXXXX....",
-      "..XXXX.......X....",
-      ".X.X..............",
-      "..................",
-      ".XXXXXX..........."
-     ],
-     [
-      "...........X......",
-      ".........XXX......",
-      "...........XXXXXXX",
-      ".XXXXXXXXX.XXXXXXX",
-      "....XXXXXXXXXXX...",
-      "...XXXX.XXXXXX....",
-      "..XX........X.....",
-      "..................",
-      "..................",
-      ".................."
-     ],
-     [
-      "..........XX......",
-      ".........XX.......",
-      "...........XXXXXXX",
-      "XXXXXXXXXX..XXXXXX",
-      "...XXXXXXXXXXX....",
-      "...XXX.XXXXXXX....",
-      ".XX........X..X...",
-      "..................",
-      "..................",
-      "......X..........."
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........XXXXXXX",
-      "XXXXXXXXXX..XXXXXX",
-      "...XXXXXXXXXXX....",
-      "..XXXX..XXXXXX....",
-      ".XX.......X..X....",
-      "X.................",
-      "..................",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........XXXXXX.",
-      ".XXXXXXXXX..XXXXXX",
-      "....XXXXXXXXXX....",
-      "...XXX..XXXXXX....",
-      "..X.......X.X.....",
-      "..................",
-      "..................",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........X.XXXX.",
-      ".XXX.XXXXX..XXX.XX",
-      "....XXXXXXXXXX....",
-      "..XXXX..XXXXX.....",
-      "..........XX......",
-      "..................",
-      "..................",
-      ".................."
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........X.XXXX.",
-      "...XXXXXXX.XXXX.XX",
-      ".X..XXXXXXXXXX....",
-      "...XXXX.XXXXX.....",
-      "....X.....X.......",
-      ".........XX.......",
-      "..................",
-      "...............XX."
-     ],
-     [
-      "...........X......",
-      ".........XX.......",
-      "...........XXXXXX.",
-      "....XXXXXX.XXXX.XX",
-      "XX..XXXXXXXXXX....",
-      "....XXX.XXXXX.....",
-      "....XX....XX......",
-      ".........X........",
-      "..................",
-      ".................."
-     ]
-    ],
-    "cell": 77,
-    "cellAspect": 0.72,
-    "gap": 3,
-    "origin": [
-     -1440,
-     134
-    ],
-    "target": [
-     0,
-     134
-    ],
-    "travelBeats": 6,
-    "travelEasing": "easeOut",
-    "exit": [
-     1584,
-     134
-    ],
-    "exitBeats": 5,
-    "exitEasing": "easeIn",
-    "beatsPerFrame": 0.25,
-    "durationBeats": 16,
-    "chrome": "mixed",
-    "colors": [
-     "#F2F4FE",
-     "#020AF5",
-     "#68BDF8"
-    ]
+    "id": "desk",
+    "mode": "solid",
+    "hex": "#020AF5"
    }
   },
   {
@@ -488,195 +281,15 @@
    }
   },
   {
-   "beat": 28.302,
+   "beat": 40.0,
    "type": "openWindow",
    "params": {
     "id": "hy0",
     "frame": [
      951,
      680,
-     320,
-     200
-    ],
-    "content": {
-     "kind": "livecode",
-     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
-     "title": "hydra.ojack.xyz",
-     "chrome": "browser",
-     "hex": "#68BDF8",
-     "running": false
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true,
-    "respawn": true
-   }
-  },
-  {
-   "beat": 29.302,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "durationBeats": 1.2,
-    "easing": "easeInOut",
-    "mode": "warp",
-    "points": [
-     [
-      991,
-      728
-     ],
-     [
-      1111,
-      692
-     ]
-    ]
-   }
-  },
-  {
-   "beat": 30.802,
-   "type": "moveWindow",
-   "params": {
-    "id": "hy0",
-    "frame": [
-     432,
-     216
-    ],
-    "durationBeats": 1.6,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "beat": 30.802,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "durationBeats": 1.6,
-    "easing": "easeInOut",
-    "mode": "warp",
-    "points": [
-     [
-      1111,
-      692
-     ],
-     [
-      592,
-      228
-     ]
-    ]
-   }
-  },
-  {
-   "beat": 32.902,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "durationBeats": 1.2,
-    "easing": "easeInOut",
-    "mode": "warp",
-    "points": [
-     [
-      592,
-      228
-     ],
-     [
-      752,
-      416
-     ]
-    ]
-   }
-  },
-  {
-   "beat": 34.502,
-   "type": "moveWindow",
-   "params": {
-    "id": "hy0",
-    "frame": [
-     432,
-     216,
-     662,
-     468
-    ],
-    "durationBeats": 2,
-    "easing": "easeOut"
-   }
-  },
-  {
-   "beat": 34.502,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "durationBeats": 2,
-    "easing": "easeOut",
-    "mode": "warp",
-    "points": [
-     [
-      752,
-      416
-     ],
-     [
-      1094,
-      684
-     ]
-    ]
-   }
-  },
-  {
-   "beat": 36.702,
-   "type": "openWindow",
-   "params": {
-    "id": "hy0",
-    "frame": [
-     432,
-     216,
-     662,
-     468
-    ],
-    "content": {
-     "kind": "livecode",
-     "text": "osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()",
-     "title": "hydra.ojack.xyz",
-     "chrome": "browser",
-     "hex": "#68BDF8",
-     "running": false
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true,
-    "respawn": true
-   }
-  },
-  {
-   "beat": 36.902,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "durationBeats": 1.4,
-    "easing": "easeInOut",
-    "mode": "warp",
-    "points": [
-     [
-      1094,
-      684
-     ],
-     [
-      1068,
-      250
-     ]
-    ]
-   }
-  },
-  {
-   "beat": 40.0,
-   "type": "openWindow",
-   "params": {
-    "id": "hy0",
-    "frame": [
-     432,
-     216,
-     662,
-     468
+     490,
+     360
     ],
     "content": {
      "kind": "livecode",
@@ -687,7 +300,7 @@
      "running": true
     },
     "animate": {
-     "kind": "none"
+     "kind": "springIn"
     },
     "interactive": true,
     "respawn": true
@@ -1733,11 +1346,95 @@
    }
   },
   {
+   "beat": 114.804,
+   "type": "openWindow",
+   "params": {
+    "id": "drag0",
+    "frame": [
+     72,
+     180,
+     320,
+     200
+    ],
+    "content": {
+     "kind": "livecode",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
+     "chrome": "browser",
+     "hex": "#68BDF8",
+     "running": false
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "interactive": true,
+    "respawn": true
+   }
+  },
+  {
+   "t": 54.0,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "words",
+    "mode": "slides",
+    "hz": 10,
+    "images": [
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/TOLD.jpg",
+     "assets/lyrics_desktops/YOU.jpg",
+     "assets/lyrics_desktops/THAT.jpg",
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/NEED.jpg",
+     "assets/lyrics_desktops/YOUR.jpg",
+     "assets/lyrics_desktops/LOVE.jpg",
+     "assets/lyrics_desktops/SO.jpg",
+     "assets/lyrics_desktops/GIVE.jpg",
+     "assets/lyrics_desktops/IT.jpg",
+     "assets/lyrics_desktops/2.jpg",
+     "assets/lyrics_desktops/ME.jpg",
+     "assets/lyrics_desktops/RUNNIN.jpg",
+     "assets/lyrics_desktops/UP.jpg",
+     "assets/lyrics_desktops/MY.jpg",
+     "assets/lyrics_desktops/CURRENTS.jpg",
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/CANT.jpg",
+     "assets/lyrics_desktops/GET.jpg",
+     "assets/lyrics_desktops/ENOUGH.jpg",
+     "assets/lyrics_desktops/SO.jpg",
+     "assets/lyrics_desktops/GIVE.jpg",
+     "assets/lyrics_desktops/IT.jpg",
+     "assets/lyrics_desktops/2.jpg",
+     "assets/lyrics_desktops/ME.jpg"
+    ],
+    "durationSeconds": 14.0
+   }
+  },
+  {
    "t": 54.132,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
     "durationSeconds": 0.05
+   }
+  },
+  {
+   "beat": 115.804,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 1.2,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      29,
+      90
+     ],
+     [
+      232,
+      192
+     ]
+    ]
    }
   },
   {
@@ -1774,6 +1471,39 @@
    }
   },
   {
+   "beat": 117.304,
+   "type": "moveWindow",
+   "params": {
+    "id": "drag0",
+    "frame": [
+     86,
+     468
+    ],
+    "durationBeats": 1.6,
+    "easing": "easeInOut"
+   }
+  },
+  {
+   "beat": 117.304,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 1.6,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      232,
+      192
+     ],
+     [
+      246,
+      480
+     ]
+    ]
+   }
+  },
+  {
    "beat": 117.858,
    "type": "openWindow",
    "params": {
@@ -1796,6 +1526,26 @@
      "kind": "springIn"
     },
     "anchor": "center"
+   }
+  },
+  {
+   "beat": 119.404,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 1.2,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      246,
+      480
+     ],
+     [
+      406,
+      668
+     ]
+    ]
    }
   },
   {
@@ -1829,6 +1579,41 @@
      "kind": "springIn"
     },
     "anchor": "center"
+   }
+  },
+  {
+   "beat": 121.004,
+   "type": "moveWindow",
+   "params": {
+    "id": "drag0",
+    "frame": [
+     86,
+     468,
+     432,
+     306
+    ],
+    "durationBeats": 2,
+    "easing": "easeOut"
+   }
+  },
+  {
+   "beat": 121.004,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 2,
+    "easing": "easeOut",
+    "mode": "warp",
+    "points": [
+     [
+      406,
+      668
+     ],
+     [
+      518,
+      774
+     ]
+    ]
    }
   },
   {
@@ -1873,6 +1658,52 @@
    }
   },
   {
+   "beat": 123.204,
+   "type": "openWindow",
+   "params": {
+    "id": "drag0",
+    "frame": [
+     86,
+     468,
+     432,
+     306
+    ],
+    "content": {
+     "kind": "livecode",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
+     "chrome": "browser",
+     "hex": "#68BDF8",
+     "running": false
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true,
+    "respawn": true
+   }
+  },
+  {
+   "beat": 123.404,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 1.4,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      518,
+      774
+     ],
+     [
+      492,
+      502
+     ]
+    ]
+   }
+  },
+  {
    "beat": 123.858,
    "type": "openWindow",
    "params": {
@@ -1898,11 +1729,52 @@
    }
   },
   {
+   "beat": 125.004,
+   "type": "openWindow",
+   "params": {
+    "id": "drag0",
+    "frame": [
+     86,
+     468,
+     432,
+     306
+    ],
+    "content": {
+     "kind": "livecode",
+     "text": "osc(10, 0.01, 1.4)\n    .rotate(0, 0.4)\n    .mult(osc(10, 1).modulate(osc(10).rotate(0, -0.1), 1)).colorama().luma()\n    .color(0.1,0.9,3)\n    .scrollX(()=>time*0.1)\n    .pixelate(100)\n  .out()",
+     "title": "hydra.ojack.xyz",
+     "chrome": "browser",
+     "hex": "#68BDF8",
+     "running": true
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true,
+    "respawn": true
+   }
+  },
+  {
+   "beat": 125.004,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.06
+   }
+  },
+  {
    "t": 58.801,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
     "durationSeconds": 0.08
+   }
+  },
+  {
+   "beat": 127.7,
+   "type": "closeWindow",
+   "params": {
+    "id": "drag0"
    }
   },
   {
@@ -2054,6 +1926,15 @@
    }
   },
   {
+   "t": 68.05,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "desk",
+    "mode": "solid",
+    "hex": "#020AF5"
+   }
+  },
+  {
    "beat": 160.0,
    "type": "screenFlash",
    "params": {
@@ -2154,8 +2035,8 @@
      "chrome": "browser",
      "title": "maps://{ip}",
      "map": {
-      "lat": 31.2304,
-      "lon": 121.4737,
+      "lat": 34.0522,
+      "lon": -118.2437,
       "here": true,
       "altitude": 2600000,
       "toAltitude": 260,
@@ -2190,8 +2071,8 @@
      "chrome": "browser",
      "title": "maps://{city}",
      "map": {
-      "lat": 31.2304,
-      "lon": 121.4737,
+      "lat": 34.0522,
+      "lon": -118.2437,
       "here": true,
       "altitude": 260,
       "toAltitude": 900,
@@ -2317,14 +2198,6 @@
    }
   },
   {
-   "beat": 316.0,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FF2D95",
-    "durationBeats": 0.75
-   }
-  },
-  {
    "beat": 316.05,
    "type": "closeWindow",
    "params": {
@@ -2376,6 +2249,14 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 148.131,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
    }
   },
   {
@@ -3187,6 +3068,222 @@
     "animate": {
      "kind": "none"
     }
+   }
+  },
+  {
+   "beat": 324.0,
+   "type": "sprite",
+   "params": {
+    "id": "horse",
+    "frames": [
+     [
+      "...........X......",
+      ".........XX...XX..",
+      "...........XXXXXX.",
+      ".XXXXXXXXX..XX....",
+      "....XXXXXXXXXX....",
+      ".....XX..XXXX.....",
+      "......X...X.......",
+      "........X.........",
+      "..................",
+      ".................."
+     ],
+     [
+      "..........XX......",
+      ".........XX...XX..",
+      "...........XXXXXX.",
+      ".XX.XXXXXX..XX...X",
+      "....XXXXXXXXXX....",
+      ".....XXX.XXXX.....",
+      ".....XXX..X.......",
+      "........XX........",
+      "..................",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XX...XX..",
+      "...........XXXXXX.",
+      ".XXXXXXXXX.XXXX..X",
+      "....XXXXXXXXXX....",
+      "......XXXXXXX.....",
+      "......XX...X......",
+      "........X.........",
+      "..................",
+      ".XX..X............"
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........XXXXXX.",
+      ".XX.XXXXXX.XXXX.XX",
+      ".X..XXXXXXXXXX....",
+      ".....XXXXXXXX.....",
+      "......XX....X.X...",
+      "......X...........",
+      ".......X..........",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XXX......",
+      "...........XXXXXX.",
+      ".XX..XXXXX.XXXX.XX",
+      ".X..XXXXXXXXXX....",
+      ".....XXXXXXXXX....",
+      ".....X.X.....XX...",
+      ".....X............",
+      "..................",
+      "...............XX."
+     ],
+     [
+      "...........X......",
+      ".........XXX......",
+      "...........XXXXXXX",
+      ".XX..XXXXX.XXXXXXX",
+      ".X..XXXXXXXXXX....",
+      "....XXXXXXXXXX....",
+      "....XXX.......X...",
+      "...X...X..........",
+      "..................",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XXX......",
+      "...........XXXXXXX",
+      ".XXXXXXXXX.XXXXXXX",
+      "....XXXXXXXXXX...X",
+      "....XXXXXXXXXXX...",
+      "...XXXX.......X...",
+      "..X..X.........X..",
+      ".X................",
+      "..........XXX..XX."
+     ],
+     [
+      "...........X......",
+      ".........XXX......",
+      "...........XXXXXXX",
+      ".XXXXXXXXX.XXXXXXX",
+      "....XXXXXXXXXX....",
+      "...XXXXXXXXXXX....",
+      "..XXXX.......X....",
+      ".X.X..............",
+      "..................",
+      ".XXXXXX..........."
+     ],
+     [
+      "...........X......",
+      ".........XXX......",
+      "...........XXXXXXX",
+      ".XXXXXXXXX.XXXXXXX",
+      "....XXXXXXXXXXX...",
+      "...XXXX.XXXXXX....",
+      "..XX........X.....",
+      "..................",
+      "..................",
+      ".................."
+     ],
+     [
+      "..........XX......",
+      ".........XX.......",
+      "...........XXXXXXX",
+      "XXXXXXXXXX..XXXXXX",
+      "...XXXXXXXXXXX....",
+      "...XXX.XXXXXXX....",
+      ".XX........X..X...",
+      "..................",
+      "..................",
+      "......X..........."
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........XXXXXXX",
+      "XXXXXXXXXX..XXXXXX",
+      "...XXXXXXXXXXX....",
+      "..XXXX..XXXXXX....",
+      ".XX.......X..X....",
+      "X.................",
+      "..................",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........XXXXXX.",
+      ".XXXXXXXXX..XXXXXX",
+      "....XXXXXXXXXX....",
+      "...XXX..XXXXXX....",
+      "..X.......X.X.....",
+      "..................",
+      "..................",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........X.XXXX.",
+      ".XXX.XXXXX..XXX.XX",
+      "....XXXXXXXXXX....",
+      "..XXXX..XXXXX.....",
+      "..........XX......",
+      "..................",
+      "..................",
+      ".................."
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........X.XXXX.",
+      "...XXXXXXX.XXXX.XX",
+      ".X..XXXXXXXXXX....",
+      "...XXXX.XXXXX.....",
+      "....X.....X.......",
+      ".........XX.......",
+      "..................",
+      "...............XX."
+     ],
+     [
+      "...........X......",
+      ".........XX.......",
+      "...........XXXXXX.",
+      "....XXXXXX.XXXX.XX",
+      "XX..XXXXXXXXXX....",
+      "....XXX.XXXXX.....",
+      "....XX....XX......",
+      ".........X........",
+      "..................",
+      ".................."
+     ]
+    ],
+    "cell": 77,
+    "cellAspect": 0.72,
+    "gap": 3,
+    "origin": [
+     -1440,
+     134
+    ],
+    "target": [
+     0,
+     134
+    ],
+    "travelBeats": 6,
+    "travelEasing": "easeOut",
+    "exit": [
+     1584,
+     134
+    ],
+    "exitBeats": 5,
+    "exitEasing": "easeIn",
+    "beatsPerFrame": 0.25,
+    "durationBeats": 16,
+    "chrome": "mixed",
+    "colors": [
+     "#F2F4FE",
+     "#020AF5",
+     "#68BDF8"
+    ]
    }
   },
   {

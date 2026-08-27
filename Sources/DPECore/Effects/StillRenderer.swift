@@ -51,8 +51,16 @@ enum StillRenderer {
             let tileY = canvas.frame.height - card.height * CGFloat(i + 1)
             // Popups render at their real on-screen size, centered in the tile, so
             // the montage shows how big they actually are.
-            let size = spec.style == .popup ? IntroGate.popupSize : card
+            let size: NSSize
+            switch spec.style {
+            case .popup:    size = IntroGate.popupSize
+            case .macAlert: size = IntroGate.alertSize
+            default:        size = card
+            }
             let view = makeIntroCardView(spec, size: size)
+            // The restart card animates off a timer, and a still has no run loop to turn
+            // it. Render the moment that matters: the bar caught at 60%, ground blue.
+            (view as? RestartCardView)?.renderStatic(t: RestartCardView.stillMoment, turned: true)
             view.frame.origin = NSPoint(x: (card.width - size.width) / 2,
                                         y: tileY + (card.height - size.height) / 2)
             canvas.addSubview(view)

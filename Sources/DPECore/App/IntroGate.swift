@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 /// Act 0 — the pre-show. 
 
@@ -13,6 +14,13 @@ enum IntroCardStyle {
     /// The same VHS treatment shrunk to a small window that pops up on the desktop
     /// instead of taking the whole screen. Title and buttons only.
     case popup
+    /// A macOS restart: black, the logo, a progress bar — and at the end the ground
+    /// turns DJ Dave blue and the logo becomes the face. Drawn by `RestartCardView`.
+    case restart
+    /// A plain macOS alert on the desktop: system chrome, icon, title, body, two real
+    /// buttons. Built from `makeDialogContentView`, the same one the show's fake
+    /// dialogs use, so it is indistinguishable from the ones that follow it.
+    case macAlert
 }
 
 struct IntroCard {
@@ -30,33 +38,53 @@ struct IntroCard {
 
 enum IntroGate {
     static let script: [IntroCard] = [
+        // The machine appears to restart before the piece begins. It ends on the
+        // signature blue with the face where the logo was — the first thing the viewer
+        // sees is the show having already taken the computer over.
         IntroCard(
-            kicker: "FEDERAL BUREAU OF COMPUTER ART",
-            title: "WARNING",
-            body: """
-                  This presentation contains strobing light, rapid flashing and sudden \
-                  full-screen color for approximately three minutes. \
-
-                  Federal law provides mild civil and criminal penalties for the \
-                  unauthorized reproduction, distribution or exhibition of this software. 
-                  """,
-            accent: "#F2F4FE",
+            kicker: "",
+            title: "",
+            body: "",
+            accent: djBlue,
             dwell: 7.0,
-            style: .vhs),
+            style: .restart),
+        // The warning and the question, together, in real macOS chrome. The
+        // photosensitivity notice is the part that actually matters here; it is not a
+        // joke, and it stays in front of the viewer until they answer.
         IntroCard(
             kicker: "malware",
             title: "DO YOU WANT THE MALWARE?",
-            body: "",
+            body: """
+                  This presentation contains strobing light, rapid flashing and sudden \
+                  full-screen color for approximately three minutes.
+
+                  Federal law provides mild civil and criminal penalties for the \
+                  unauthorized reproduction, distribution or exhibition of this software.
+                  """,
             accent: "#0078D7",
             dwell: nil,
-            style: .popup,
+            style: .macAlert,
             glyph: "?")
     ]
+
+    /// The signature blue: rgb(2, 10, 245). The desktop wallpaper and the restart card
+    /// both take it, so the ground under the whole piece is one colour. It matches
+    /// `PALETTE[1]` in the generator — the blue the horse and the strobe are built from.
+    ///
+    /// It is not exactly the blue inside `pixelface.jpg` (a near-pure #001FFD), so the
+    /// face is keyed to transparency before it is drawn — see `maskingField` — rather
+    /// than relying on the two matching.
+    static let djBlue = "#020AF5"
+    static let faceAsset = "assets/pixelface.jpg"
+    static let buttonSound = "assets/bubble_sound.wav"
 
     static let backdrop = "#050508"
 
     /// On-screen size of a `.popup` card's window.
     static let popupSize = NSSize(width: 620, height: 300)
+    /// On-screen size of the `.macAlert` card's window. Taller than a stock alert
+    /// because the warning body is four lines of real text, not a one-liner.
+    static let alertSize = NSSize(width: 620, height: 250)
 }
 
 
@@ -381,6 +409,14 @@ func makeIntroCardView(_ card: IntroCard, size: NSSize,
     if card.style == .vhs || card.style == .popup {
         return VHSWarningView(card: card, size: size, onStart: onStart, onExit: onExit)
     }
+    if card.style == .restart {
+        // The bar fills over most of the card, leaving a beat on a full bar before it
+        // advances.
+        return RestartCardView(size: size, duration: (card.dwell ?? 7) * 0.82)
+    }
+    if card.style == .macAlert {
+        return GateAlertView(card, size: size, onStart: onStart, onExit: onExit)
+    }
 
     let accent = NSColor(hex: card.accent) ?? .white
     let root = NSView(frame: NSRect(origin: .zero, size: size))
@@ -530,33 +566,63 @@ final class IntroGateController {
         // A popup card stops being a takeover: the window shrinks to a small panel
         // centered on the desktop, and everything else comes back into view.
         let screen = (NSScreen.main ?? NSScreen.screens[0]).frame
+        // `.popup` and `.macAlert` stop being takeovers: the window shrinks to a panel
+        // on the desktop and everything else comes back into view.
+        let windowed = card.style == .popup || card.style == .macAlert
         let target: NSRect
-        if card.style == .popup {
-            let s = IntroGate.popupSize
+        if windowed {
+            let s = card.style == .macAlert ? IntroGate.alertSize : IntroGate.popupSize
             target = NSRect(x: screen.midX - s.width / 2, y: screen.midY - s.height / 2,
                             width: s.width, height: s.height)
         } else {
             target = screen
         }
-        if win.frame != target {
+        let reframe = {
+            guard win.frame != target else { return }
             win.setFrame(target, display: false)
-            win.backgroundColor = card.style == .popup ? .clear : (NSColor(hex: IntroGate.backdrop) ?? .black)
-            win.isOpaque = card.style != .popup
-            win.hasShadow = card.style == .popup
+            win.backgroundColor = windowed ? .clear : (NSColor(hex: IntroGate.backdrop) ?? .black)
+            win.isOpaque = !windowed
+            win.hasShadow = windowed
         }
 
-        let view = makeIntroCardView(card, size: win.frame.size,
-                                     onStart: { [weak self] in self?.dismiss(then: self?.onStart) },
-                                     onExit: { [weak self] in self?.dismiss(then: self?.onExit) })
-        if fade {
-            view.alphaValue = 0
-            win.contentView = view
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.35
-                view.animator().alphaValue = 1
+        let install = {
+            let view = makeIntroCardView(card, size: win.frame.size,
+                                         onStart: { [weak self] in self?.dismiss(then: self?.onStart) },
+                                         onExit: { [weak self] in self?.dismiss(then: self?.onExit) })
+            if fade {
+                view.alphaValue = 0
+                win.contentView = view
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.35
+                    view.animator().alphaValue = 1
+                }
+            } else {
+                win.contentView = view
             }
+        }
+        // The outgoing card fades out before the next one is built. The restart card
+        // ends on a full blue screen, and cutting straight from that to a small alert
+        // on the desktop is a jump-cut; this lets the blue go down first. The window is
+        // resized only after the fade, or the shrink happens behind the fading view.
+        if fade, let outgoing = win.contentView, outgoing.alphaValue > 0 {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.55
+                outgoing.animator().alphaValue = 0
+            }, completionHandler: {
+                reframe()
+                install()
+            })
         } else {
-            win.contentView = view
+            reframe()
+            install()
+        }
+
+        if ProcessInfo.processInfo.environment["DPE_GATE_AUTOYES"] == "1",
+           card.style == .macAlert {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak win] in
+                NSLog("[DPE] gate: DPE_GATE_AUTOYES pressing yes")
+                ((win?.contentView) as? GateAlertView)?.pressYesForTesting()
+            }
         }
 
         dwellToken &+= 1
@@ -587,5 +653,280 @@ final class IntroGateController {
             win.orderOut(nil)
             action?()
         })
+    }
+}
+
+/// The warning and the question in real macOS chrome.
+///
+/// Built from `makeDialogContentView` — the very same builder the show's fake dialogs
+/// use — so the first window the viewer sees is indistinguishable from the forty-one
+/// that follow it. The buttons that builder makes are inert scenery, so they are found
+/// by title afterwards and given the gate's actions.
+///
+/// **The view owns the action objects.** `NSControl.target` is a WEAK reference: an
+/// action object held anywhere less durable is deallocated, `target` quietly becomes
+/// nil, and the button does nothing at all when clicked. (`GateButton` sidesteps this by
+/// being its own target; this builder's buttons cannot.)
+final class GateAlertView: NSView {
+    private var actions: [GateButtonAction] = []
+
+    init(_ card: IntroCard, size: NSSize, onStart: (() -> Void)?, onExit: (() -> Void)?) {
+        super.init(frame: NSRect(origin: .zero, size: size))
+        let yes = "YES. INFECT ME."
+        let no = "no thank you"
+        let content = makeDialogContentView(title: card.title, message: card.body,
+                                            buttons: [no, yes], icon: .caution, size: size)
+        content.frame = bounds
+        content.autoresizingMask = [.width, .height]
+        addSubview(content)
+
+        for button in content.subviews.compactMap({ $0 as? NSButton }) {
+            let isYes = button.title == yes
+            // Either answer makes the sound; only then does the gate act on it. The
+            // sound is short and the dismissal fades over 0.45 s, so they overlap rather
+            // than the click being swallowed.
+            let action = GateButtonAction {
+                NSLog("[DPE] gate: answered \(isYes ? "YES" : "no")")
+                GateSound.play()
+                if isYes { onStart?() } else { onExit?() }
+            }
+            actions.append(action)                 // strong, for as long as the card lives
+            button.target = action
+            button.action = #selector(GateButtonAction.fire)
+        }
+    }
+
+    /// Press "yes" as if the viewer had. `DPE_GATE_AUTOYES=1` uses this to drive the
+    /// gate from a script — the dev loop's `--no-gate` skips the gate entirely, which is
+    /// no use when the thing being checked is what the gate's answer sets in motion.
+    func pressYesForTesting() {
+        (subviews.first?.subviews.compactMap { $0 as? NSButton }
+            .first { $0.title == "YES. INFECT ME." }?.target as? GateButtonAction)?.fire()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+}
+
+/// Target for a gate alert button. `makeDialogContentView` builds plain `NSButton`s
+/// with no target, and a closure cannot be one.
+final class GateButtonAction: NSObject {
+    private let body: () -> Void
+    init(_ body: @escaping () -> Void) { self.body = body }
+    @objc func fire() { body() }
+}
+
+// MARK: - Restart card
+
+/// The machine restarting: black, the logo, a progress bar — and then it doesn't come
+/// back the way it went down. At the end of the bar the ground turns DJ Dave blue and
+/// the logo becomes the face.
+///
+/// Deliberately NOT `BootView`, which the fake reboot and the outro both use: this one
+/// carries the colour turn and the image swap, and folding those into the shared view
+/// would put a one-off intro behaviour in the middle of two other acts. The geometry is
+/// matched to it so the two read as the same screen.
+final class RestartCardView: NSView {
+    private let track = CALayer()
+    private let fill = CALayer()
+    private let glyph = NSTextField(labelWithString: "\u{F8FF}")
+    private let face = NSImageView()
+    private let trackWidth: CGFloat
+    private var timer: Timer?
+    private let start = CACurrentMediaTime()
+    /// How long the bar takes to reach the hang point.
+    private let duration: Double
+    private var turned = false
+
+    /// Where the bar catches. It does not stop there — it stalls, the ground turns blue
+    /// and the face arrives, and then it carries on and fills. The stumble is the tell:
+    /// something interrupted the restart and the restart kept going anyway.
+    static let hangFraction: CGFloat = 0.6
+    /// The bar's life, split three ways: rise to the catch, sit there, finish.
+    static let risePortion = 0.42
+    static let pausePortion = 0.16
+
+    init(size: NSSize, duration: Double) {
+        self.duration = max(1, duration)
+        trackWidth = min(size.width * 0.20, 330)
+        super.init(frame: NSRect(origin: .zero, size: size))
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.cgColor
+
+        glyph.font = .systemFont(ofSize: size.height * 0.17, weight: .medium)
+        glyph.textColor = .white
+        glyph.alignment = .center
+        glyph.sizeToFit()
+        glyph.frame = NSRect(x: (size.width - glyph.frame.width) / 2, y: size.height * 0.50,
+                             width: glyph.frame.width, height: glyph.frame.height)
+        addSubview(glyph)
+
+        // The face sits exactly where the logo was, at the same optical size, and fades
+        // in over it — so the swap reads as the logo *becoming* the face rather than as
+        // one thing leaving and another arriving.
+        let faceH = size.height * 0.17
+        if let image = NSImage(contentsOfFile: resolveResourcePath(IntroGate.faceAsset))
+            .map(RestartCardView.maskingField) {
+            face.image = image
+            let ratio = image.size.height > 0 ? image.size.width / image.size.height : 1
+            face.frame = NSRect(x: (size.width - faceH * ratio) / 2,
+                                y: glyph.frame.midY - faceH / 2,
+                                width: faceH * ratio, height: faceH)
+        }
+        face.imageScaling = .scaleProportionallyUpOrDown
+        face.alphaValue = 0
+        addSubview(face)
+
+        let trackH: CGFloat = 6
+        track.frame = CGRect(x: (size.width - trackWidth) / 2, y: size.height * 0.415,
+                             width: trackWidth, height: trackH)
+        track.backgroundColor = NSColor(white: 0.24, alpha: 1).cgColor
+        track.cornerRadius = trackH / 2
+        track.masksToBounds = true
+        fill.frame = CGRect(x: 0, y: 0, width: 0, height: trackH)
+        fill.backgroundColor = NSColor.white.cgColor
+        fill.cornerRadius = trackH / 2
+        track.addSublayer(fill)
+        layer?.addSublayer(track)
+
+        let t = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in self?.tick() }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    deinit { timer?.invalidate() }
+
+    /// Render one frame without a clock, for the still renderer, which has no run loop
+    /// to drive the timer. `t` is 0…1 across the bar's life.
+    func renderStatic(t: Double, turned: Bool) {
+        setProgress(t)
+        if turned { turn() }
+    }
+
+    /// The moment worth putting in a still: caught at the stall, already blue.
+    static let stillMoment = risePortion + pausePortion / 2
+
+    /// Knock the artwork's own background out, so only the face draws and it sits on
+    /// whatever colour the card's ground happens to be.
+    ///
+    /// **Works on a private copy of the bitmap, never the source's own representation.**
+    /// `NSBitmapImageRep.setColor` writes through to the backing store, and an `NSImage`
+    /// loaded from a path can be backed by the mapped file — doing this in place once
+    /// edited a committed asset on disk. `GateTests` pins that the file is untouched.
+    static func maskingField(_ image: NSImage) -> NSImage {
+        var rect = NSRect(origin: .zero, size: image.size)
+        guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else {
+            return image
+        }
+        let w = cg.width, h = cg.height
+        var buf = [UInt8](repeating: 0, count: w * h * 4)
+        let space = CGColorSpaceCreateDeviceRGB()
+        let info = CGImageAlphaInfo.premultipliedLast.rawValue
+        let made: CGImage? = buf.withUnsafeMutableBytes { raw -> CGImage? in
+            guard let ctx = CGContext(data: raw.baseAddress, width: w, height: h,
+                                      bitsPerComponent: 8, bytesPerRow: w * 4,
+                                      space: space, bitmapInfo: info) else { return nil }
+            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+            guard let p = ctx.data?.bindMemory(to: UInt8.self, capacity: w * h * 4) else {
+                return nil
+            }
+            // The field colour, read from the top-left pixel.
+            let fr = Int(p[0]), fg = Int(p[1]), fb = Int(p[2])
+            // Wide tolerance: the source is a JPEG, so its flat blue is not one value.
+            let tol = 56
+            for i in stride(from: 0, to: w * h * 4, by: 4) {
+                if abs(Int(p[i]) - fr) < tol,
+                   abs(Int(p[i + 1]) - fg) < tol,
+                   abs(Int(p[i + 2]) - fb) < tol {
+                    // Premultiplied: a transparent pixel is all four bytes zero.
+                    p[i] = 0; p[i + 1] = 0; p[i + 2] = 0; p[i + 3] = 0
+                }
+            }
+            return ctx.makeImage()
+        }
+        guard let masked = made else { return image }
+        return NSImage(cgImage: masked, size: image.size)
+    }
+
+    private func tick() {
+        let t = min(1.0, (CACurrentMediaTime() - start) / duration)
+        setProgress(t)
+        // The turn happens the moment the bar catches, not when it finishes.
+        if t >= RestartCardView.risePortion { turn() }
+        if t >= 1.0 {
+            timer?.invalidate()
+            timer = nil
+        }
+    }
+
+    /// Draw the bar at `t`, where `t` is 0…1 across the bar's whole life.
+    ///
+    /// Three segments: ease up to the catch, sit at it, then ease the rest of the way.
+    /// The catch is expressed in the value that gets DRAWN, not in the input — easing a
+    /// raw 0.6 gives about 0.81, which would put the stall four-fifths along rather than
+    /// the three-fifths it is meant to read as.
+    private func setProgress(_ t: Double) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        fill.frame.size.width = trackWidth * RestartCardView.barFraction(at: t)
+        CATransaction.commit()
+    }
+
+    /// How full the bar is at `t` (0…1 across its life). Pure, so the shape can be
+    /// asserted — a still can only ever catch one frame of it, and the whole point is
+    /// what happens across three.
+    static func barFraction(at t: Double) -> CGFloat {
+        let t = min(1, max(0, t))
+        func ease(_ x: Double) -> CGFloat { CGFloat(1 - pow(1 - min(1, max(0, x)), 1.8)) }
+        if t < risePortion {
+            return hangFraction * ease(t / risePortion)
+        }
+        if t < risePortion + pausePortion {
+            return hangFraction
+        }
+        let rest = (t - risePortion - pausePortion) / max(0.001, 1 - risePortion - pausePortion)
+        return min(1, hangFraction + (1 - hangFraction) * ease(rest))
+    }
+
+    /// Black to blue, logo to face — on one frame, with no interpolation anywhere.
+    ///
+    /// A cut, deliberately: the interruption should look like the screen was switched,
+    /// not like a transition someone designed. `CATransaction` actions are disabled
+    /// because a layer's `backgroundColor` animates implicitly otherwise, which is where
+    /// the quarter-second cross-dissolve came from even with no explicit animation.
+    private func turn() {
+        guard !turned else { return }
+        turned = true
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer?.backgroundColor = (NSColor(hex: IntroGate.djBlue) ?? .systemBlue).cgColor
+        glyph.alphaValue = 0
+        face.alphaValue = 1
+        CATransaction.commit()
+    }
+}
+
+// MARK: - Gate sound
+
+/// The click the gate's buttons make. One preloaded player, reused — building an
+/// `AVAudioPlayer` at press time costs enough to land after the window has already
+/// started fading out.
+enum GateSound {
+    private static var player: AVAudioPlayer? = {
+        let path = resolveResourcePath(IntroGate.buttonSound)
+        guard FileManager.default.fileExists(atPath: path) else {
+            NSLog("[DPE] gate: button sound not found at \(path)")
+            return nil
+        }
+        let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+        p?.prepareToPlay()
+        return p
+    }()
+
+    static func play() {
+        guard let player else { return }
+        player.currentTime = 0
+        player.play()
     }
 }

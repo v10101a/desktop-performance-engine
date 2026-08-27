@@ -34,6 +34,29 @@ enum CreditsTests {
                      "interior blank lines survive as stanza breaks")
             c.closeAll()
 
+            // The restart bar: rises, catches at 60%, then finishes. A still can only
+            // catch one frame of that, so the shape is asserted here.
+            let rise = RestartCardView.risePortion, pause = RestartCardView.pausePortion
+            t.near(Double(RestartCardView.barFraction(at: 0)), 0, 0.001, "bar starts empty")
+            t.near(Double(RestartCardView.barFraction(at: rise)), 0.6, 0.001,
+                   "bar reaches exactly 60% at the catch")
+            t.near(Double(RestartCardView.barFraction(at: rise + pause)), 0.6, 0.001,
+                   "bar is still at 60% when the pause ends — it holds, not creeps")
+            t.near(Double(RestartCardView.barFraction(at: (rise + rise + pause) / 2)), 0.6, 0.001,
+                   "bar sits at 60% through the middle of the pause")
+            t.near(Double(RestartCardView.barFraction(at: 1)), 1.0, 0.001,
+                   "bar finishes full — it resumes after the pause")
+            t.expect(RestartCardView.barFraction(at: rise + pause + 0.05) > 0.6,
+                     "bar moves again once the pause is over")
+            // Monotonic: it must never go backwards at a segment join.
+            var last: CGFloat = -1, monotonic = true
+            for i in 0...200 {
+                let v = RestartCardView.barFraction(at: Double(i) / 200)
+                if v < last - 0.0001 { monotonic = false }
+                last = v
+            }
+            t.expect(monotonic, "bar never runs backwards across the joins")
+
             // By the line: `linesPerSecond` lands whole lines, the way the probe reveals
             // its report, so the copy is never seen half-spelt. The first thing on the
             // terminal is the whole first line; the copy still finishes; and while it

@@ -80,6 +80,7 @@ public enum UnitTests {
         WindowOwnershipTests.run(t)
         ChromeTests.run(t)
         CreditsTests.run(t)
+        GateTests.run(t)
         return t.report()
     }
 }

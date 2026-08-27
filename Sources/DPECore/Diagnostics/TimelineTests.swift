@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// The document format. Every event is authored as JSON by a generator, so a decoder
@@ -153,9 +154,70 @@ enum TimelineTests {
                 // The scheduler walks a single advancing cursor, so order is load-bearing.
                 let sorted = zip(tl.events, tl.events.dropFirst()).allSatisfy { $0.fireTime <= $1.fireTime }
                 t.expect(sorted, "bundled show events are sorted by fire time")
-                // The show as shipped must not touch the disk or the wallpaper.
-                t.expect(tl.meta.allowWallpaper != true, "shipped show ships wallpaper gate off")
+                // The show as shipped must not write to the disk. It DOES swap the
+                // wallpaper now — Act 1 paints the desktop DJ Dave blue — so that gate is
+                // deliberately on. The pairing below is the actual guard: the gate may
+                // only be open if the show has an event that needs it, so a stray `true`
+                // with nothing behind it still fails.
+                let swapsWallpaper = tl.events.contains {
+                    if case .deskWallpaper = $0.action { return true }; return false
+                }
+                t.equal(tl.meta.allowWallpaper == true, swapsWallpaper,
+                        "wallpaper gate is open exactly when the show swaps the wallpaper")
+                t.expect(swapsWallpaper, "shipped show paints the desktop in Act 1")
                 t.expect(tl.meta.allowDesktopFiles != true, "shipped show ships file gate off")
+
+                // The lyric wallpapers are named by path in the timeline and loaded at
+                // 10 Hz during the show. A misnamed one is silent — the desktop just
+                // keeps whatever was there — so every path is resolved up front here.
+                var slideCount = 0, missing: [String] = []
+                for ev in tl.events {
+                    guard case .deskWallpaper(let p) = ev.action, let images = p.images else { continue }
+                    slideCount += images.count
+                    for name in images where !FileManager.default.fileExists(
+                        atPath: resolveResourcePath(name)) {
+                        missing.append(name)
+                    }
+                }
+                // The desktop's blue is authored as an exact rgb triple. It is written
+                // to a PNG and handed to the window server, and a colour-space
+                // round-trip on the way shifted it by ten in the blue channel — so the
+                // file itself is checked, pixel for pixel.
+                if let solid = tl.events.compactMap({ ev -> DeskWallpaperParams? in
+                    guard case .deskWallpaper(let p) = ev.action, p.mode == "solid" else { return nil }
+                    return p
+                }).first, let hex = solid.hex {
+                    t.equal(hex.uppercased(), "#020AF5", "the desktop is authored as the signature blue")
+                    // Raw bytes out of the file, not `colorAt` — reading a pixel back
+                    // through AppKit re-interprets it against a profile and reports a
+                    // colour that is not what is stored.
+                    if let url = try? WallpaperImage.solid(hex: hex),
+                       let data = try? Data(contentsOf: url),
+                       let rep = NSBitmapImageRep(data: data),
+                       let px = rep.bitmapData {
+                        let spp = rep.samplesPerPixel
+                        let i = 4 * rep.bytesPerRow / rep.bytesPerRow + 4 * spp
+                        t.equal(Int(px[i]), 2, "wallpaper red is 2")
+                        t.equal(Int(px[i + 1]), 10, "wallpaper green is 10")
+                        t.equal(Int(px[i + 2]), 245, "wallpaper blue is 245")
+                    }
+                }
+
+                t.expect(slideCount > 0, "the show has a wallpaper slide run")
+                t.equal(missing.count, 0,
+                        "every lyric wallpaper resolves — missing: \(missing.joined(separator: ", "))")
+                // The track must not start before the viewer answers the intro gate.
+                // The transport window is on screen behind the gate, so its Play button
+                // and the space bar both reach `play()` while the gate is still up —
+                // this is what stops them. Never armed here, so nothing actually plays.
+                let engine = PerformanceEngine()
+                try? engine.loadTimeline(at: url)
+                t.expect(engine.isArmed, "a fresh engine is armed — only the gate disarms it")
+                engine.disarm()
+                engine.play()
+                t.expect(!engine.isPlaying, "a disarmed engine refuses to play")
+                engine.arm()
+                t.expect(engine.isArmed, "arming releases the transport")
             } else {
                 t.expect(false, "bundled timeline.json failed to load")
             }

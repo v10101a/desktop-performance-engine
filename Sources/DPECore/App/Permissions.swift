@@ -45,10 +45,16 @@ enum Permissions {
         }
         if location {
             steps.append { next in
-                LocationStore.shared.warm {
-                    NSLog("[DPE] preflight: location settled")
-                    next()
-                }
+                // Asked for, but NOT waited on. This is the one prompt that can sit
+                // unanswered — `warm` gives it 45 seconds — and while it does, the show
+                // has not started and nothing on screen says why. Hitting "yes" and
+                // getting silence is the worst thing the gate can do.
+                //
+                // Nothing needs a fix for a long time: the probe is ~60 s in and says
+                // `<no fix>` without one, and the map is ~103 s in and falls back to Los
+                // Angeles. A fix that arrives during the first minute is used by both.
+                LocationStore.shared.warm { NSLog("[DPE] preflight: location settled") }
+                next()
             }
         }
         if screen {
@@ -62,8 +68,29 @@ enum Permissions {
         run(steps, then: done)
     }
 
+    /// Run the steps in order, but never let one of them hold the show forever.
+    ///
+    /// The camera and contacts prompts had NO timeout: if the viewer never answers one —
+    /// or never sees it, which is the same thing from here — the show simply never
+    /// starts, with nothing on screen to say why. Location already had a 45 s escape;
+    /// this gives every step one.
     private static func run(_ steps: [(@escaping () -> Void) -> Void], then done: @escaping () -> Void) {
         guard let first = steps.first else { done(); return }
-        first { run(Array(steps.dropFirst()), then: done) }
+        var moved = false
+        let next = {
+            guard !moved else { return }
+            moved = true
+            run(Array(steps.dropFirst()), then: done)
+        }
+        first(next)
+        DispatchQueue.main.asyncAfter(deadline: .now() + stepTimeout) {
+            if !moved { NSLog("[DPE] preflight: a permission step timed out — carrying on") }
+            next()
+        }
     }
+
+    /// Long enough to read a prompt and decide; short enough that an unanswered one
+    /// doesn't look like the show is broken. Only the prompts that block reach this —
+    /// location is fired and left to settle on its own.
+    private static let stepTimeout: Double = 20
 }

@@ -76,9 +76,21 @@ done
 # Image assets the timeline names by path (the end card's tiled backdrop). Same reason
 # as the audio: the resolver checks Contents/Resources, and without this the .app falls
 # back to a plain black card while the repo build looks correct.
-for img in assets/credits_tile.png; do
+for img in assets/credits_tile.png assets/pixelface.jpg; do
   [ -e "$img" ] && cp "$img" "$APP/Contents/Resources/"
 done
+
+# The intro gate's button sound. Named explicitly rather than swept up by the audio
+# loop above, which deliberately takes only compressed formats — this one is a small
+# .wav and embedding it is the point.
+[ -e assets/bubble_sound.wav ] && cp assets/bubble_sound.wav "$APP/Contents/Resources/"
+
+# The lyric wallpapers, kept in their own folder because the timeline names them by that
+# path and the resolver checks Contents/Resources for it.
+if [ -d assets/lyrics_desktops ]; then
+  mkdir -p "$APP/Contents/Resources/assets/lyrics_desktops"
+  cp assets/lyrics_desktops/*.jpg "$APP/Contents/Resources/assets/lyrics_desktops/"
+fi
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
