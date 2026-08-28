@@ -40,7 +40,7 @@ long (2:49.85)**. One beat is 14.0 frames, one bar 56.0.
 | 10 | f 1410 | f 1412 · beat 100 | A **placeholder** centre window, to hold a single video later. | `openWindow` · `color` |
 | 11 | f 1440 | — | **TBD — deliberately empty.** | — |
 | 12 | f 1620 | f 1622 · beat 115 | The desktop becomes the **lyrics**, word by word; a **trail of windows dragged by the mouse**. | `deskWallpaper` slides + `cursorPath` + `cursorTrail` stamp |
-| 13 | f 2070 | f 2070 · beat 147 | The **magic torus**, and a window typing itself out: *"Greetings, I am the magic torus…"* | `glassTorus` + `typeText` |
+| 13 | f 2070 | f 2070 · beat 147 | The **magic torus**, and a window typing itself out: *"Greetings, I am the magic torus… ask me anything"*. At **f 2258**, once that has finished typing, it actually asks: a dialog with a **text field the viewer can type into**. It answers on Return, or by itself at f 2398, and is cut with the torus at cue 14. | `glassTorus` + `typeText` + `oracle` |
 | 14 | f 2520 | f 2519 · beat 179 | **Apple Maps**, falling out of orbit onto the viewer's own location. | `openWindow` · `map`, `here: true` |
 | 15 | f 2610 | f 2603 · beat 185 | Windows start opening, **slowly filling the screen**. | ramped `openWindow` |
 | 16 | f 2910 | f 2911 · beat 207 | The desktop **fades to black**; the windows close **one by one**. | `deskWallpaper` solid `#000000` + staggered `closeWindow` |

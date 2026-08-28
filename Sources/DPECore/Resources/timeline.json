@@ -1730,6 +1730,23 @@
    }
   },
   {
+   "beat": 160.364,
+   "type": "oracle",
+   "params": {
+    "id": "oracle",
+    "frame": [
+     58,
+     558,
+     460,
+     186
+    ],
+    "title": "hey, i'm the magic torus",
+    "body": "ask me a question",
+    "placeholder": "will you give it 2 me?",
+    "answerBeats": 10
+   }
+  },
+  {
    "beat": 178.7,
    "type": "closeWindow",
    "params": {
@@ -1741,6 +1758,13 @@
    "type": "closeWindow",
    "params": {
     "id": "greeting"
+   }
+  },
+  {
+   "beat": 178.7,
+   "type": "closeWindow",
+   "params": {
+    "id": "oracle"
    }
   },
   {

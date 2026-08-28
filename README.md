@@ -377,7 +377,7 @@ seconds, for reading.
 | 0:43 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
 | 0:47 | **VIDEO** | the middle fills with the slot a single video will take — *placeholder* |
 | 0:54 | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word (`deskWallpaper` `slides`). The event asks for ten a second; macOS gives about three (see `deskWallpaper` — a hard ceiling, not a tuning knob). Over the top, the cursor hauls a stamped trail of windows across the screen |
-| 1:09 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus…"* |
+| 1:09 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
 | 1:24 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
 | 1:27 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle |
 | 1:37 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |

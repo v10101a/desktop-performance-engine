@@ -452,12 +452,17 @@ add(wd, "cursorPath", {
     "points": [[round(x * W), round(y * H)] for x, y in DRAG_LEGS]})
 
 # =============================================================================
-# Cue 13 (1:09) — the magic torus, and a window that introduces it, typed out a
-# character at a time.
+# Cue 13 (1:09) — the magic torus. It introduces itself in typed text, and then it
+# actually asks.
 #
-# The greeting is `typeText` rather than `oracle`: the cut asks for the torus to
-# announce itself, not to open a dialog and wait for an answer. The oracle event is
-# still in the app for whenever the question comes back.
+# Two windows, in that order, because the greeting ends on "ask me anything" and that
+# has to be a real invitation: the `oracle` is the only window in the piece allowed to
+# take the keyboard, and it is what puts a text field in front of the viewer. Without
+# it the torus makes an offer the show cannot honour.
+#
+# They flank the torus rather than sitting on it — greeting bottom-right, question
+# bottom-left, same baseline. `oracle` has no `anchor`, and its own default is centred
+# on screen, which is exactly where the torus is.
 # =============================================================================
 t1 = B["torus1"]
 add(t1 - 0.3, "closeWindow", {"id": "video"})
@@ -467,10 +472,23 @@ add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
                        "size": round(min(W, H) * 0.58)})
 GREETING = ("Greetings, I am the magic torus. I rotate infinitely around an axis in "
             "the 3D plane, thus I am all knowing... ask me anything")
+GREETING_CPB = 11
 add(t1 + 1, "typeText", {"id": "greeting",
     "frame": [round(W * 0.60), round(H * 0.62), round(W * 0.36), round(H * 0.26)],
-    "text": GREETING, "charsPerBeat": 11, "fontSize": 15,
+    "text": GREETING, "charsPerBeat": GREETING_CPB, "fontSize": 15,
     "title": "torus.txt — Edited", "interactive": True})
+
+# The question comes up a beat after the greeting has finished typing — derived from the
+# copy, so rewriting the greeting moves the invitation with it rather than leaving the
+# field to appear over a half-typed sentence.
+ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB + 1
+# Long enough to type an answer into, and still answered and read before the map cuts in
+# at cue 14. A viewer who won't play cannot stall the show: it answers itself.
+ORACLE_BEATS = 10
+add(ORACLE_AT, "oracle", {"id": "oracle",
+    "frame": [round(W * 0.04), round(H * 0.62), 460, 186],
+    "title": "hey, i'm the magic torus", "body": "ask me a question",
+    "placeholder": "will you give it 2 me?", "answerBeats": ORACLE_BEATS})
 
 # The desktop goes back to blue when the words expire, under the torus.
 add(t1 + 0.1, "deskWallpaper", {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
@@ -479,7 +497,7 @@ add(t1 + 0.1, "deskWallpaper", {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
 # Cue 14 (1:24) — Apple Maps, falling out of orbit onto the viewer's own location.
 # =============================================================================
 mp = B["map"]
-for wid in ("torus", "greeting"):
+for wid in ("torus", "greeting", "oracle"):
     add(mp - 0.3, "closeWindow", {"id": wid})
 add(mp, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
 # Where the map goes when Location Services gives us nothing (denied, switched off, or
@@ -910,6 +928,10 @@ print(f"  trail    {len(trail_ids)} stamped windows over {leg} legs")
 print(f"  spiral   {len(spiral_ids)} lyric cards, r {r0:.0f}→{r1:.0f}px")
 print(f"  words    {len(LYRIC_WORDS)} slides @10 Hz authored "
       f"({secs(B['words']):.1f}s → {secs(B['torus1']):.1f}s)")
+print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.2f}s, "
+      f"question at f {frame_at(secs(ORACLE_AT))} "
+      f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
+      f"(f {frame_at(secs(ORACLE_AT + ORACLE_BEATS))}), cut at f {frame_at(secs(mp)):d}")
 print(f"  fill     {len(fill_ids)} windows, 4 beats apart → 0.25")
 print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
 print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
