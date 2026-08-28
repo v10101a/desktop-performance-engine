@@ -25,12 +25,27 @@ final class WallpaperController {
         NSLog("[DPE] wallpaper snapshot: \(original.count) screen(s)")
     }
 
+    /// Put the original wallpaper back, and make sure it is the *last* thing the
+    /// window server hears about.
+    ///
+    /// This runs on `swapQueue` rather than on the calling thread, and that is load
+    /// bearing. Every swap the show makes is issued from that queue; a restore issued
+    /// from the main thread instead is a second, unordered writer, and the agent does
+    /// not serialise the two. Measured: with the restore on main, a swap issued ~300 ms
+    /// earlier still landed *after* it and the show left a lyric card on the desktop.
+    /// One writer, in order, and the restore wins because it is genuinely last.
+    ///
+    /// `sync`, because reversibility has to have finished by the time this returns —
+    /// the caller may be `applicationWillTerminate`.
     func restore() {
         guard hasSnapshot else { return }
-        for (screen, url) in original {
-            try? NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
+        let shots = original
+        swapQueue.sync {
+            for (screen, url) in shots {
+                try? NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
+            }
         }
-        NSLog("[DPE] wallpaper restored (\(original.count) screen(s))")
+        NSLog("[DPE] wallpaper restored (\(shots.count) screen(s))")
     }
 
     // MARK: - Apply
@@ -51,11 +66,14 @@ final class WallpaperController {
             screens = NSScreen.screens
         }
         NSLog("[DPE] wallpaper set → \(url.path) exists=\(FileManager.default.fileExists(atPath: url.path)) on \(screens.count) screen(s)")
-        for screen in screens {
-            do {
-                try NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
-            } catch {
-                NSLog("[DPE] wallpaper set error: \(error)")
+        // Same single-writer rule as `apply`/`restore` — see `restore()`.
+        swapQueue.async {
+            for screen in screens {
+                do {
+                    try NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:])
+                } catch {
+                    NSLog("[DPE] wallpaper set error: \(error)")
+                }
             }
         }
     }
@@ -126,11 +144,24 @@ final class WallpaperController {
 
     /// Called each tick from the engine.
     ///
-    /// `setDesktopImageURL` blocks for roughly 58 ms per call per screen, which is why
-    /// the standalone strobe measured a ~17 Hz ceiling. That is far too slow to sit on
-    /// the pump's thread every frame, so applies are rate-limited to `hz` and the
-    /// recursive mode (which needs an async screenshot) never has more than one capture
-    /// in flight.
+    /// `setDesktopImageURL` is far slower than it looks. Measured on this machine
+    /// (macOS 26, one built-in display) it blocks for **~270–330 ms per call**, and the
+    /// cost barely moves with image size — a 64×64 solid PNG costs 268 ms and a
+    /// 3024×1964 JPEG costs 327 ms, so it is the WallpaperAgent round-trip that is
+    /// expensive, not the decode. That is a hard **~3 Hz ceiling** on how fast the
+    /// desktop can change, whatever the timeline asks for.
+    ///
+    /// Two consequences, and this method handles both:
+    ///
+    /// 1. The call must never run on the pump's thread. Left synchronous it collapsed
+    ///    the 72 Hz tick to **4 Hz** (median gap 339 ms), which stalls every other
+    ///    effect in the show for as long as the wallpaper is moving. `apply` therefore
+    ///    hands the swap to a serial background queue.
+    /// 2. Asking for more than ~3 Hz has to *drop ticks*, not queue them, or the
+    ///    backlog outlives the event and the desktop keeps changing after the section
+    ///    has ended. A tick that arrives while a swap is still in flight returns
+    ///    without advancing `frame` or `lastApply`, so no slide is skipped — the list
+    ///    simply advances at whatever rate the window server can sustain.
     func updateDesk(now: Double) {
         guard var d = desk else { return }
 
@@ -143,6 +174,10 @@ final class WallpaperController {
 
         let interval = d.hz > 0 ? 1.0 / d.hz : 0
         guard d.lastApply < 0 || now - d.lastApply >= interval else { return }
+        // The previous swap has not come back yet. Drop this tick whole — leaving
+        // `lastApply`/`frame` alone means the next tick retries the same slide rather
+        // than losing a word.
+        guard !applying else { return }
         d.lastApply = now
         d.frame += 1
 
@@ -244,10 +279,22 @@ final class WallpaperController {
         }
     }
 
+    /// Every swap the running effect makes goes through here, off the main thread.
+    ///
+    /// Serial, so swaps still land in timeline order, and `applying` is the
+    /// back-pressure signal `updateDesk` reads to decide whether to issue another one.
+    /// Both flag writes happen on the main thread, so the tick never races them.
+    private let swapQueue = DispatchQueue(label: "com.dpe.wallpaper.swap", qos: .userInitiated)
+    private var applying = false
+
     private func apply(_ url: URL, to screens: [NSScreen]) {
-        for screen in screens {
-            try? NSWorkspace.shared.setDesktopImageURL(url, for: screen,
-                                                       options: WallpaperImage.fillOptions)
+        applying = true
+        swapQueue.async { [weak self] in
+            for screen in screens {
+                try? NSWorkspace.shared.setDesktopImageURL(url, for: screen,
+                                                           options: WallpaperImage.fillOptions)
+            }
+            DispatchQueue.main.async { self?.applying = false }
         }
     }
 
