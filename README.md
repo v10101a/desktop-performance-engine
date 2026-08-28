@@ -357,7 +357,7 @@ scored bar by bar to the real track at 128.5 BPM:
 | 0:21 | 12–16 | **MORE** | one more sketch on **every downbeat**, each bigger than the last, scattered |
 | 0:29 | 17–24 | **CHORUS A** | the drop. The stack blows away and the screen *is* the lyric video: full-screen `lyric` cards, one phrase each, blue-on-white ↔ white-on-blue, on the beat (`lyrics.CUES`) |
 | 0:45 | 25–32 | **CHORUS B** | back to the desktop: the glass torus in the middle and the same lyrics as small windows going round it **like a clock**, accumulating; the background glitches white/blue on every third kick |
-| 0:54 | — | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word, **ten times a second, for fourteen seconds** (`deskWallpaper` `slides`). 26 words, so the phrase plays through ~5½ times — the list wraps rather than being stretched to fit. Runs under the torus, then under the probe; the desktop goes back to blue at 1:08 |
+| 0:54 | — | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word, for fourteen seconds (`deskWallpaper` `slides`). The event asks for ten a second; macOS gives about three (see `deskWallpaper` — it is a hard ceiling, not a tuning knob), so the 26-word list gets through roughly one and a half passes. The list wraps rather than being stretched to fit. Runs under the torus, then under the probe; the desktop goes back to blue at 1:08 |
 | 0:54 | — | **THE DRAG** | somebody using a computer, against the torus: a window opens small in the left third, the cursor takes it by the title bar and hauls it up, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does the sketch start rendering. Authored in seconds rather than bars, and gone before the bridge |
 | 1:00 | 33–40 | **BRIDGE** | `system_probe` opens centre-screen and types out its disclosure report, slowly enough to read |
 | 1:15 | 41–48 | **FOCUS** | the terminal clears and re-reads only **where you are** — geolocation + network — every line highlighted |
@@ -996,11 +996,30 @@ into one event:
 **Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
 reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.
 
-`hz` is an apply rate, not a beat division, and it has a hard ceiling that isn't ours:
-`setDesktopImageURL` blocks roughly 58 ms per screen, which the standalone app measured
-as a ~17 Hz wall, and the compositor may still drop frames. Asking for more gets you the
-ceiling. Because of that cost the applies are rate-limited off the pump rather than run
-every frame, and `recursive` never has more than one capture in flight.
+`hz` is an apply rate, not a beat division, and it has a hard ceiling that isn't ours.
+`setDesktopImageURL` measures at **~270–330 ms per call per screen** on macOS 26, and the
+cost barely moves with image size — a 64×64 solid PNG costs 268 ms and a 3024×1964 JPEG
+327 ms — so what you are paying for is the WallpaperAgent round-trip, not the decode.
+That is a **~3 Hz wall**. Asking for more gets you the wall, and the compositor may still
+drop frames on top of that. (An earlier note here claimed ~58 ms and a ~17 Hz ceiling;
+that was measured on an older system and is wrong by roughly 5×.)
+
+Two things follow, and the controller does both:
+
+- **Every swap runs off the pump.** Left on the pump's thread, a call this long collapsed
+  the 72 Hz tick to 4 Hz for the length of the event — median tick gap 339 ms, event
+  drift mean 179 ms / max 343 ms, which at 128.5 BPM is three quarters of a beat late.
+  That stalls *every* effect on screen, not just the wallpaper.
+- **Over-asking drops ticks rather than queueing them.** A tick that arrives while a swap
+  is still in flight is dropped whole, so a `slides` list plays *slower* instead of
+  skipping entries, and no backlog outlives the event. `recursive` likewise never has
+  more than one capture in flight.
+
+One further constraint, which is not obvious and bit us: **every write to the wallpaper
+must be issued from the same serial queue — including the restore.** A restore issued
+from the main thread while swaps come from a background queue is a second, unordered
+writer, and the agent does not serialise the two: a swap issued ~300 ms earlier still
+landed *after* the restore and left a lyric card on the desktop.
 
 > **Flashing imagery can trigger seizures in photosensitive epilepsy.** `screenFlash` is
 > the beat-accurate, instantly reversible way to flash the screen; `strobe` differs only
