@@ -235,8 +235,9 @@ patched in afterwards.
 
 ⚠️ The **section detector is a hint, not gospel.** On this track it put the first chorus
 at 35.87 s; a per-bar energy probe shows the sub-bass actually drops out at 26.54 s
-(bar 15), returns at 28.41 s, and the real drop lands at **30.28 s** (bar 17). The show's
-act boundaries are those verified bars, and the generator adds its own markers for them.
+(bar 15), returns at 28.41 s, and the real drop lands at **30.28 s** (bar 17). The cut no
+longer hangs off those boundaries — its cues are authored in seconds by ear (docs/CUES.md)
+— but the analyser's own markers are still merged into the scrubber alongside them.
 
 ### Tests
 
@@ -269,13 +270,15 @@ swift run GiveIt2Me_DJ_Dave_malware --snapshot-acts=a.png  # the new surfaces, o
                                                        # boot screen, booth, oracle, end card
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-credits=e.png  # the END CARD as laid out, at your
                                                        # screen's size, stand-in photo, copy typed
-tools/tune_lyrics.sh [a|b]                             # regenerate + play just one chorus, to
-                                                       # tune the lyric cards by ear
+tools/tune_lyrics.sh [a|b]                             # regenerate + play just the spiral (a) or
+                                                       # the clock (b), to tune the cards by ear
 swift run GiveIt2Me_DJ_Dave_malware --snapshot=out.png  # render the window content to a PNG
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-scenes=out.png   # preview the livecode + typeText scenes
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-torus=t.png --torus-material=chrome  # torus frame, alpha intact
 swift run GiveIt2Me_DJ_Dave_malware --snapshot-chrome=c.png     # real window chrome + alerts, alpha intact
 swift run GiveIt2Me_DJ_Dave_malware --validate=examples/timeline_show.json   # load + count a timeline
+python3 tools/lint_show.py                             # dangling ids, windows left open at the
+                                                       # end card, missing asset files
 swift run GiveIt2Me_DJ_Dave_malware --test-hydra=out.png        # nine live hydra sketches at once:
                                                        # proves they render, prints processes/MB/CPU
 swift run GiveIt2Me_DJ_Dave_malware --parse-hydra patch.txt     # what the impression reads out of a patch
@@ -335,7 +338,7 @@ use it.
 `"anchor": "center"` reads `frame` as `[dx, dy, w, h]` instead: the window's **centre**,
 `dx` right of and `dy` below the screen's centre. A ring of windows authored this way is
 round the middle of any display — top-left frames are measured from a corner, so the
-same numbers drift off-centre as the screen grows (the chorus clock leaned left and up
+same numbers drift off-centre as the screen grows (the lyric clock leaned left and up
 on anything bigger than the authored 1440×900 for exactly that reason; it is authored
 from the centre now, like the torus it circles).
 
@@ -354,39 +357,62 @@ Gated off by default: `wallpaper`, `deskWallpaper` (`meta.allowWallpaper`), `fil
 
 
 The bundled default demo (`Resources/timeline.json`) is **the show**
-(`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`),
-scored bar by bar to the real track at 128.5 BPM:
+(`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`), cut to
+the cue list in **[docs/CUES.md](docs/CUES.md)** — which is the source document. The
+generator mirrors it as the `CUES` table at the top of the file and builds everything
+from those numbers; nothing else in the repo hard-codes a time, and the two are edited
+together.
 
-| time | bars | act | |
-|---|---|---|---|
-| 0:00 | 1–4 | **THE BLUE** | the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) and stays that way for the whole show — the real wallpaper, snapshotted and restored on stop |
-| 0:08 | 5–8 | **POINT** | the cursor draws one long arrow, stamped in little pages — unhurried, with the `>` head in a single stroke |
-| 0:13 | 8–11 | **HYDRA** | a little browser opens at **exactly the spot the arrow pointed at**, already running — and one more on every downbeat after it, each bigger than the last, scattered so nothing sits on anything else |
-| 0:21 | 12–16 | **MORE** | one more sketch on **every downbeat**, each bigger than the last, scattered |
-| 0:29 | 17–24 | **CHORUS A** | the drop. The stack blows away and the screen *is* the lyric video: full-screen `lyric` cards, one phrase each, blue-on-white ↔ white-on-blue, on the beat (`lyrics.CUES`) |
-| 0:45 | 25–32 | **CHORUS B** | back to the desktop: the glass torus in the middle and the same lyrics as small windows going round it **like a clock**, accumulating; the background glitches white/blue on every third kick |
-| 0:54 | — | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word, for fourteen seconds (`deskWallpaper` `slides`). The event asks for ten a second; macOS gives about three (see `deskWallpaper` — it is a hard ceiling, not a tuning knob), so the 26-word list gets through roughly one and a half passes. The list wraps rather than being stretched to fit. Runs under the torus, then under the probe; the desktop goes back to blue at 1:08 |
-| 0:54 | — | **THE DRAG** | somebody using a computer, against the torus: a window opens small in the left third, the cursor takes it by the title bar and hauls it up, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does the sketch start rendering. Authored in seconds rather than bars, and gone before the bridge |
-| 1:00 | 33–40 | **BRIDGE** | `system_probe` opens centre-screen and types out its disclosure report, slowly enough to read |
-| 1:15 | 41–48 | **FOCUS** | the terminal clears and re-reads only **where you are** — geolocation + network — every line highlighted |
-| 1:30 | 49–55 | **REBOOT** | the screen goes black; the boot glyph; a progress bar filling across the phrase |
-| 1:43 | 56–61 | **VERSE 2** | the desktop comes back onto Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP; then a second flight sweeps across town |
-| 1:54 | 62–67 | **ORACLE** | the torus again, and an alert: *hey, i'm the magic torus — ask me a question.* Type, press OK, it answers (or answers by itself two bars later) |
-| 2:05 | 68–71 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1** on the downbeats of the last three bars |
-| 2:13 | 72–79 | **CHORUS C** | the shutter: one flash, the booth goes with it, and the viewer's own photos bury the screen (`photoWall`) |
-| 2:28 | 80–86 | **CHORUS D** | two bars of the eruption — windows, terminals, lyric cards and alerts bursting from the centre on kick flashes — then the **original strobe** (`examples/timeline_strobe.json`) as the finale, cut by the break — and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops wall to wall across it, exiting before the break |
-| 2:41 | 87→ | **CREDITS** | everything goes; the end card comes up and **holds past the end of the track**: the photo the computer took, in a frame; the machine's vitals in the probe's terminal; the credits typing themselves out in a half-screen terminal over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
+| time | cue | |
+|---|---|---|
+| 0:00 | **THE BLUE** | the intro gate, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
+| 0:16 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
+| 0:18 | **WELCOME** | a centred `ascii` terminal — *placeholder* for the glitchy ASCII piece |
+| 0:25 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
+| 0:30 | **HYDRA** | somebody using a computer: a sketch opens small, the cursor takes it by the title bar and hauls it down, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does it start rendering. Two more arrive already running |
+| 0:38 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later it is `pixelface.jpg` |
+| 0:39.5 | **THE TRAVELLER** | one window runs up and down the screen and leaves a trail of windows stamped along its path |
+| 0:43 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
+| 0:47 | **VIDEO** | the middle fills with the slot a single video will take — *placeholder* |
+| 0:54 | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word (`deskWallpaper` `slides`). The event asks for ten a second; macOS gives about three (see `deskWallpaper` — a hard ceiling, not a tuning knob). Over the top, the cursor hauls a stamped trail of windows across the screen |
+| 1:09 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus…"* |
+| 1:24 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
+| 1:27 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle |
+| 1:37 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |
+| 1:39 | **TBD** | a *placeholder* holding the slot for a graphic |
+| 1:47 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1**; the shutter lands exactly on the photo wall |
+| 1:54 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
+| 1:58 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz — one window re-opened, never shown and hidden (see the generator for why) |
+| 2:00 | **THE HORSE** | everything cuts to the bare desktop and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops across it |
+| 2:05 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by lyric windows |
+| 2:08 | **VIDEO** | all of it stays and the video slot lands on top |
+| 2:09 | **THE VOID** | torus and ring cut out from under it, leaving the slot alone on a full black window |
+| 2:16 | **TBD** | everything cuts; a *placeholder* holds the slot |
+| 2:18 | **TBD + SPINNER** | more TBD content, and the mouse spinner — **not built**, see Gaps in docs/CUES.md |
+| 2:23 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
+| 2:38 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture |
+| 2:47 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen |
+| 2:51 | **THE LAST WORDS** | the noise stops and the desktop is the lyric again — *past the last note of the track* |
+| 2:54 | **THE END CARD** | the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
-The drop fires **`CHORUS_LEAD` seconds ahead of the bass** (1.0 s by default). The
-sub-bass really lands at 30.28 s, but cutting exactly on it reads as late — the eye
-needs the change to have already started when the ear arrives. The shutter, being an
-instant rather than a scene change, leads by only `SHUTTER_LEAD` (0.12 s).
+The cue times were authored **in seconds, by ear**, so they do not land on bar lines. The
+generator puts each one on the **nearest beat** (`at()`), which moves it by at most
+0.23 s and keeps the cuts tight to the music; authoring them at their literal second
+would drift each one against the grid by a different amount, which is audible.
 
-Deliberately **simple before the chorus** — one element at a time, so the viewer can
-catch on to what each one is — then all of it at once. Every act boundary is one
-`BAR_*` constant in the generator; the lyric-card timings are `CUES` in
-`tools/lyrics.py` — a first pass placed on the bar grid, meant to be tuned against the
-vocal by scrubbing (Inspect names each card) and nudging the numbers.
+**The last two cues are past the end of the track** (169.85 s). They play over silence —
+the end card is built to hold past the last note — so the piece now finishes about
+4.8 s after the audio rather than on it.
+
+**Four slots are marked TBD** by the author and hold labelled placeholder windows, so the
+timing is real and the content can be dropped in without re-cutting anything. Two more
+placeholders stand in for the video window and the ASCII piece. `tools/lint_show.py`
+checks the generated document for dangling ids, windows left on screen at the end card,
+and missing asset files:
+
+```bash
+python3 tools/generate_show.py && python3 tools/lint_show.py
+```
 
 The flyover uses the native `map` kind rather than a `web` Google Maps window on
 purpose — google.com is blocked from mainland China, and the piece has to work where
@@ -409,10 +435,15 @@ P_COLOR=0.06 P_ALERT=0.2 python3 tools/generate_strobe.py   # per-lane pacing ov
 The committed timeline is the sanitized one. `PERSONALIZE=1` pulls your hostname, specs,
 and desktop images into the show — great locally, but don't commit that output.
 
-⚠️ **Photosensitivity:** it flashes rapidly. Measured on the current show: the chorus
-kick-flash pass peaks at **3 Hz**, but the spliced strobe finale runs a median 6.7 Hz and
-touches **20 Hz** at its fastest — inside the risk band. The intro gate warns the viewer
-before anything plays; keep that card, and re-measure if you push the cadence faster.
+⚠️ **Photosensitivity:** it flashes rapidly. Measured on the current cut, counting every
+full-screen change (`screenFlash` plus any window opened at full size): median **2.9 Hz**
+over the whole show, peaking at **12.0 Hz** — the busiest second is 13 changes at 1:58,
+where the face strobes over the photo wall. The spliced strobe at 2:47 runs a median
+6.7 Hz and peaks at 11.8 Hz. All of that is below the 15–20 Hz risk band, which is
+deliberate and worth keeping: the previous cut touched 20 Hz. The intro gate warns the
+viewer before anything plays; keep that card, and **re-measure if you push the cadence
+faster** — the numbers above come straight out of the generated timeline, so a short
+script over `Resources/timeline.json` reproduces them.
 
 ### Performance notes
 
