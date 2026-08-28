@@ -2588,7 +2588,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ cool graphic ]\n\nTBD \u2014 1:39 \u2192 1:47",
+     "text": "[ cool graphic ]\n\nTBD \u2014 f 2967 \u2192 f 3205",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,
@@ -4007,7 +4007,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ ??? ]\n\nTBD \u2014 2:16 \u2192 2:18",
+     "text": "[ ??? ]\n\nTBD \u2014 f 4074 \u2192 f 4144",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,
@@ -4040,7 +4040,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ ??? ]  +  mouse spinner\n\nTBD \u2014 2:18 \u2192 2:23\nthe spinner needs a new event",
+     "text": "[ ??? ]  +  mouse spinner\n\nTBD \u2014 f 4144 \u2192 f 4284\nthe spinner needs a new event",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,

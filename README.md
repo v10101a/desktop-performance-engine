@@ -358,10 +358,12 @@ Gated off by default: `wallpaper`, `deskWallpaper` (`meta.allowWallpaper`), `fil
 
 The bundled default demo (`Resources/timeline.json`) is **the show**
 (`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`), cut to
-the cue list in **[docs/CUES.md](docs/CUES.md)** — which is the source document. The
-generator mirrors it as the `CUES` table at the top of the file and builds everything
-from those numbers; nothing else in the repo hard-codes a time, and the two are edited
-together.
+the cue list in **[docs/CUES.md](docs/CUES.md)** — which is the source document, written
+in frames at 30 fps (the rate the transport counts in, so its numbers are the ones on the
+scrubber). The generator mirrors it as the `CUES` table at the top of the file and builds
+everything from those numbers; nothing else in the repo hard-codes a time, and **the two
+are edited together — see CLAUDE.md**. The table below is the same cut in minutes and
+seconds, for reading.
 
 | time | cue | |
 |---|---|---|

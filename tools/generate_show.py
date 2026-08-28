@@ -1,18 +1,23 @@
 """The show, cut to docs/CUES.md.
 
-`docs/CUES.md` is the source document — one row per cue, authored in seconds by ear
-against the recording. `CUES` below mirrors it, and everything in this file hangs off
-those numbers; edit the two together.
+`docs/CUES.md` is the source document — one row per cue, authored by ear against the
+recording. `CUES` below mirrors it, and everything in this file hangs off those numbers.
+**Edit the two together, in both directions** — see CLAUDE.md.
 
     python3 tools/generate_show.py
     W=1440 H=900 COLS=22 python3 tools/generate_show.py
 
 Writes examples/timeline_show.json and Sources/DPECore/Resources/timeline.json.
 
+`CUES` is in SECONDS, because that is what the engine runs on. The cue sheet is in
+FRAMES at 30 fps, because that is what the app's transport counts in and therefore what
+you read off the scrubber. This script prints both mapped against each other, and those
+printed frames must match the table in docs/CUES.md.
+
 The cue times do NOT land on bar lines — they were read off a player's clock, not
 counted in bars — so `at()` puts each one on the NEAREST BEAT. That moves a cue by at
-most half a beat (0.23 s) and keeps every cut tight to the music; authoring them at
-their literal second instead would drift each one against the grid by a different
+most half a beat (7 frames) and keeps every cut tight to the music; authoring them at
+their literal position instead would drift each one against the grid by a different
 amount, which is audible on the hard cuts.
 
 Seeded, so the show is identical take to take.
@@ -62,6 +67,20 @@ def secs(beat):
 def at(t):
     """The beat nearest the authored second `t` — see the module docstring."""
     return round((t - OFFSET) / BEAT)
+
+# docs/CUES.md is written in frames, and so is everything this script prints. 30 fps is
+# not a property of the engine — it runs off the audio clock in seconds and quantises
+# nothing — it is the rate the app's own transport counts in (`MainWindowController.fps`),
+# so a frame number here is the number on the scrubber. Change one, change the other.
+FPS = 30
+
+def frame_at(t):
+    """The frame the transport shows at second `t`.
+
+    NOT `frame`: `lyric_card` and `placeholder` both take a `frame` argument, and a
+    module-level function by that name is invisible inside them.
+    """
+    return int(t * FPS)
 
 # =============================================================================
 # THE CUE LIST — docs/CUES.md, in seconds. Every act below indexes this by name;
@@ -536,8 +555,11 @@ for i, wid in enumerate(fill_ids):
 # =============================================================================
 # Cue 17 (1:39) — TBD: a cool graphic. PLACEHOLDER holding the slot open.
 # =============================================================================
+# Labelled in FRAMES, like the cue sheet — the slot is reviewed against the scrubber,
+# and derived rather than typed so a moved cue relabels itself.
 placeholder("tbd1", B["tbd_099"],
-            "[ cool graphic ]\n\nTBD — 1:39 → 1:47",
+            f"[ cool graphic ]\n\nTBD — f {frame_at(secs(B['tbd_099']))} → "
+            f"f {frame_at(secs(B['booth']))}",
             [0, 0, round(W * 0.44), round(H * 0.38)], title="tbd.graphic")
 
 # =============================================================================
@@ -651,7 +673,9 @@ placeholder("video", v3 + 0.1, VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
 # =============================================================================
 add(B["tbd_136"], "closeWindow", {"id": "void"})
 add(B["tbd_136"], "closeWindow", {"id": "video"})
-placeholder("tbd2", B["tbd_136"], "[ ??? ]\n\nTBD — 2:16 → 2:18",
+placeholder("tbd2", B["tbd_136"],
+            f"[ ??? ]\n\nTBD — f {frame_at(secs(B['tbd_136']))} → "
+            f"f {frame_at(secs(B['spinner']))}",
             [0, 0, round(W * 0.40), round(H * 0.34)], title="tbd.2")
 
 # =============================================================================
@@ -662,7 +686,8 @@ placeholder("tbd2", B["tbd_136"], "[ ??? ]\n\nTBD — 2:16 → 2:18",
 # =============================================================================
 add(B["spinner"] - 0.2, "closeWindow", {"id": "tbd2"})
 placeholder("tbd3", B["spinner"],
-            "[ ??? ]  +  mouse spinner\n\nTBD — 2:18 → 2:23\nthe spinner needs a new event",
+            f"[ ??? ]  +  mouse spinner\n\nTBD — f {frame_at(secs(B['spinner']))} → "
+            f"f {frame_at(secs(B['spam']))}\nthe spinner needs a new event",
             [0, 0, round(W * 0.46), round(H * 0.36)], title="tbd.3")
 
 # =============================================================================
@@ -868,11 +893,16 @@ for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
         json.dump(doc, f, indent=1)
     print(f"wrote {os.path.normpath(out)}")
 
-print(f"\n{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}s")
-print(f"  {'cue':<11} {'authored':>9} {'on the grid':>12}  {'drift':>6}")
+print(f"\n{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}s "
+      f"({frame_at(DURATION)} frames)")
+# Reported in FRAMES, because that is the unit docs/CUES.md is written in and the unit
+# the app's own transport counts in — a number printed here should be findable on the
+# scrubber without converting anything.
+print(f"  {'cue':<11} {'authored':>9} {'fires on':>10} {'drift':>7}  {'':>4}")
 for i, (name, t) in enumerate(CUES.items(), start=1):
     g = secs(B[name])
-    print(f"  {i:>2} {name:<11} {t:8.2f}s {g:11.2f}s  {g - t:+6.2f}"
+    print(f"  {i:>2} {name:<11} {'f ' + str(frame_at(t)):>9} {'f ' + str(frame_at(g)):>10} "
+          f"{frame_at(g) - frame_at(t):+7d}f"
           + ("   (past the end of the track)" if g > DURATION else ""))
 print()
 print(f"  hydra    {len(hydra_ids)} sketches, dragged one runs at {secs(HYDRA_RUN):.2f}s")
