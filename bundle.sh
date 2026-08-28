@@ -117,12 +117,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <string>The photo wall reads image files from your Documents folder to show them during a performance. Nothing is copied, moved or modified.</string>
     <key>NSDownloadsFolderUsageDescription</key>
     <string>The photo wall reads image files from your Downloads folder to show them during a performance. Nothing is copied, moved or modified.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>The photo wall reads image files to show them during a performance. Nothing is copied, moved or modified.</string>
     <key>NSCameraUsageDescription</key>
     <string>The photo booth shows your camera during a performance and takes one photo for the end card. It is kept in memory only and discarded when the show ends.</string>
-    <key>NSContactsUsageDescription</key>
-    <string>The system probe reads your own "me" card to show you what this machine knows about you. Nothing leaves this computer.</string>
     <key>NSLocationUsageDescription</key>
     <string>The system probe and the map show where this machine is. Nothing leaves this computer.</string>
     <key>NSLocationWhenInUseUsageDescription</key>

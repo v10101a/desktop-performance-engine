@@ -28,27 +28,27 @@ final class TorusRenderer: NSObject, MTKViewDelegate {
         super.init()
     }
 
-    /// Locates the window on the captured display so the shader can turn a
-    /// reflection ray into a point on the real desktop.
+    /// Locates the window on the display the desktop picture belongs to, so the
+    /// shader can turn a reflection ray into a point on that desktop.
     ///
     /// Everything is kept in points and normalised by the display's own size, so
-    /// the capture's pixel resolution and the screen's backing scale never enter
+    /// the picture's pixel resolution and the screen's backing scale never enter
     /// the maths. NSScreen's origin is bottom-left and textures are top-left, so
     /// the y coordinate is flipped here.
     private func applyMirrorGeometry(to settings: inout RenderSettings, view: MTKView) {
         guard
-            environment.screenTexture != nil,
+            environment.desktopTexture != nil,
             let window = view.window,
             let screen = window.screen,
             let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
         else { return }
 
-        // We only capture one display; on another one the mapping would be
+        // The picture belongs to one display; on another one the mapping would be
         // wrong, so fall back to the surround rather than mirror the wrong thing.
-        guard CGDirectDisplayID(number.uint32Value) == environment.capturedDisplayID else {
+        guard CGDirectDisplayID(number.uint32Value) == environment.desktopDisplayID else {
             if !hasWarnedAboutDisplay {
                 hasWarnedAboutDisplay = true
-                glassTorusLog.notice("window is on a display that is not being captured; mirror disabled")
+                glassTorusLog.notice("window is on a display the desktop picture is not for; mirror disabled")
             }
             return
         }
@@ -71,10 +71,6 @@ final class TorusRenderer: NSObject, MTKViewDelegate {
     func draw(in view: MTKView) {
         guard let buffer = commandQueue.makeCommandBuffer() else { return }
 
-        // Blit the newest captured frame in before the render encoder opens —
-        // Metal does not allow nested encoders on one command buffer.
-        environment.update(using: buffer)
-
         guard
             let descriptor = view.currentRenderPassDescriptor,
             let drawable = view.currentDrawable,
@@ -87,7 +83,7 @@ final class TorusRenderer: NSObject, MTKViewDelegate {
         let size = view.drawableSize
         var settings = RenderSettings(
             surround: environment.studioTexture,
-            screen: environment.screenTexture ?? environment.studioTexture
+            screen: environment.desktopTexture ?? environment.studioTexture
         )
         settings.aspect = size.height > 0 ? Float(size.width / size.height) : 1
         settings.elapsed = elapsed

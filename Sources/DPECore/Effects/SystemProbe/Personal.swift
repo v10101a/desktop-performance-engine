@@ -1,6 +1,5 @@
 import Foundation
 import CoreLocation
-import Contacts
 
 // MARK: - Geolocation
 
@@ -95,47 +94,5 @@ final class LocationProbe: NSObject, CLLocationManagerDelegate {
             }
             self.deliver(lines)
         }
-    }
-}
-
-// MARK: - Address book "me" card
-
-func contactCard(_ emit: @escaping ([TermLine]) -> Void) {
-    let store = CNContactStore()
-    store.requestAccess(for: .contacts) { granted, _ in
-        var out = section("address book · me card")
-        guard granted else {
-            out.append(warn("  contacts access denied — personal card not read"))
-            emit(out); return
-        }
-        let keys: [CNKeyDescriptor] = [
-            CNContactGivenNameKey, CNContactFamilyNameKey, CNContactOrganizationNameKey,
-            CNContactJobTitleKey, CNContactEmailAddressesKey, CNContactPhoneNumbersKey,
-            CNContactPostalAddressesKey, CNContactBirthdayKey
-        ].map { $0 as CNKeyDescriptor }
-        guard let me = try? store.unifiedMeContactWithKeys(toFetch: keys) else {
-            out.append(note("  no \"me\" card is set in Contacts"))
-            emit(out); return
-        }
-        let name = [me.givenName, me.familyName].filter { !$0.isEmpty }.joined(separator: " ")
-        if !name.isEmpty { out.append(kv("  name on card", name, kind: .alert)) }
-        if !me.organizationName.isEmpty { out.append(kv("  organization", me.organizationName)) }
-        if !me.jobTitle.isEmpty { out.append(kv("  job title", me.jobTitle)) }
-        for e in me.emailAddresses.prefix(4) {
-            out.append(kv("  email", e.value as String, kind: .alert))
-        }
-        for p in me.phoneNumbers.prefix(4) {
-            out.append(kv("  phone", p.value.stringValue, kind: .alert))
-        }
-        for a in me.postalAddresses.prefix(3) {
-            let f = CNPostalAddressFormatter.string(from: a.value, style: .mailingAddress)
-                .replacingOccurrences(of: "\n", with: ", ")
-            out.append(kv("  postal address", f, kind: .alert))
-        }
-        if let b = me.birthday, let m = b.month, let d = b.day {
-            out.append(kv("  birthday", "\(m)/\(d)" + (b.year.map { "/\($0)" } ?? ""), kind: .alert))
-        }
-        if out.count <= 2 { out.append(note("  me card exists but contains no readable fields")) }
-        emit(out)
     }
 }

@@ -82,6 +82,12 @@ final class PerformanceEngine {
         cursor.onControlStarted = { [weak self] in
             self?.restore.cursorWasControlled = true
         }
+        // The glass reflects the desktop picture the machine had before the show swapped
+        // the wallpaper, so it has to read it through the controller holding the snapshot
+        // rather than asking the window server for whatever is up at the time.
+        torus.desktopPictureURL = { [wallpaper] screen in
+            wallpaper.desktopPictureURL(for: screen)
+        }
         panic.onPanic = { [weak self] in
             self?.stopAndRestore()
         }

@@ -1,5 +1,9 @@
 import Foundation
 
+/// The home folders the census reports on. Shared with `Permissions.preflight`, which
+/// warms the gated ones at the intro gate so their prompts don't land over the report.
+let censusFolderNames = ["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music"]
+
 func storageSection() -> [TermLine] {
     var out = section("storage")
     let keys: [URLResourceKey] = [
@@ -49,7 +53,7 @@ func storageSection() -> [TermLine] {
     out.append(TermLine(text: "", kind: .plain))
     out.append(TermLine(text: "  home directory census", kind: .section))
     let fm = FileManager.default
-    for name in ["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music"] {
+    for name in censusFolderNames {
         let dir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(name)
         guard let items = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey],
                                                       options: [.skipsHiddenFiles]) else {

@@ -2,8 +2,8 @@ import AppKit
 import MetalKit
 
 /// A tumbling glass or mirror-metal torus in a borderless, fully transparent window,
-/// refracting a live capture of the screen behind it — the standalone `GlassTorus` app,
-/// driven by the show clock.
+/// refracting the viewer's desktop picture — the standalone `GlassTorus` app, driven by
+/// the show clock.
 ///
 /// **What changed in the port.**
 ///
@@ -11,15 +11,15 @@ import MetalKit
 ///   `update(now:)`, with `elapsed` written from the timeline position. The tumble
 ///   therefore scrubs with the playhead, freezes when the transport stops, and is
 ///   identical take to take. The standalone app accumulated wall-clock deltas.
-/// - **The capture keeps the show visible.** See `ScreenEnvironment.start` — excluding
-///   the whole app would have hidden the photo wall and every effect window from the
-///   glass, which is the one thing the merge is for.
+/// - **The reflection is a picture, not a capture.** See `ScreenEnvironment` — the live
+///   ScreenCaptureKit stream is gone, and with it the Screen Recording permission. What
+///   the glass shows is the desktop picture the machine had before the show swapped it.
 /// - **Metal is built lazily.** The device, pipeline and environment are only created
-///   when a `glassTorus` event actually fires, so a show that never uses one neither
-///   pays for the pipeline nor triggers the Screen Recording prompt.
+///   when a `glassTorus` event actually fires, so a show that never uses one does not
+///   pay for the pipeline.
 ///
-/// **Reversibility.** One window, no cursor warp, no icon moves. `closeAll()` closes it
-/// and stops the capture stream, which is what the panic hotkey reaches.
+/// **Reversibility.** One window, no cursor warp, no icon moves. `closeAll()` closes it,
+/// which is what the panic hotkey reaches.
 ///
 /// Like the other executors, every method here is called on the main thread by the
 /// display pump — see `EventContext.execute`.
@@ -42,9 +42,14 @@ final class GlassTorusController {
     private var device: MTLDevice?
     private var scene: TorusScene?
     private var environment: ScreenEnvironment?
-    private var captureStarted = false
+    private var environmentLoaded = false
 
     var bpm: Double = 120
+
+    /// Supplies the desktop picture the metal reflects. Set by `PerformanceEngine`, so
+    /// the torus can reach the wallpaper snapshot without holding the controller that
+    /// owns it — and so a show with no `deskWallpaper` still gets the live wallpaper.
+    var desktopPictureURL: ((NSScreen?) -> URL?)?
 
     // MARK: - Lifecycle
 
@@ -102,14 +107,14 @@ final class GlassTorusController {
                       speed: p.speed ?? 1.0, startTime: now,
                       endTime: duration.map { now + $0 })
 
-        // Only now, with the window ordered in, so ScreenCaptureKit can find it in the
-        // window list to exclude it. Requesting the stream is async and non-blocking:
-        // the torus renders against the studio environment until frames arrive, and
-        // keeps rendering against it if Screen Recording is refused.
-        if !captureStarted {
-            captureStarted = true
-            environment.start(excludingWindowNumber: window.windowNumber,
-                              excludeWholeApp: !(p.reflectShow ?? true))
+        // Once per run: the picture does not change, and a second torus reuses the
+        // texture the first one loaded. The load is async and non-blocking — the torus
+        // renders against the studio environment until it lands, and keeps rendering
+        // against it if there is no readable wallpaper file.
+        if !environmentLoaded {
+            environmentLoaded = true
+            environment.start(desktopPicture: desktopPictureURL?(window.screen),
+                              on: window.screen)
         }
     }
 
@@ -119,13 +124,10 @@ final class GlassTorusController {
         teardown()
     }
 
-    /// Idempotent. Closes the window and stops the capture stream.
+    /// Idempotent. Closes the window; the loaded environment is kept, since a later
+    /// torus in the same run reflects the same desktop picture.
     func closeAll() {
         teardown()
-        if captureStarted {
-            environment?.stop()
-            captureStarted = false
-        }
     }
 
     private func teardown() {

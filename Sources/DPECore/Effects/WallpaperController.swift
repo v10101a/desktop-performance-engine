@@ -15,6 +15,21 @@ final class WallpaperController {
 
     var hasSnapshot: Bool { !original.isEmpty }
 
+    /// The desktop picture as it was before the show touched it — what the glass torus
+    /// reflects now that it no longer captures the screen.
+    ///
+    /// Prefers the snapshot, which is taken before the first swap. Without one the
+    /// wallpaper has not been changed — either the swap is off, or no `deskWallpaper`
+    /// has fired yet — so the live value is still the original.
+    func desktopPictureURL(for screen: NSScreen?) -> URL? {
+        if let screen, let match = original.first(where: { $0.screen == screen }) {
+            return match.url
+        }
+        if let first = original.first?.url { return first }
+        guard let screen = screen ?? NSScreen.main else { return nil }
+        return NSWorkspace.shared.desktopImageURL(for: screen)
+    }
+
     // MARK: - Snapshot / restore
 
     func snapshot() {

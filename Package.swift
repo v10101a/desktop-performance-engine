@@ -26,8 +26,8 @@ let package = Package(
             path: "Sources/GiveIt2Me_DJ_Dave_malware",
             exclude: ["Info.plist"],
             // Embed the usage strings into the bare executable: without them macOS kills
-            // the process the moment it touches the camera, Contacts or Location Services
-            // under `swift run`. (The .app has its own Info.plist — see bundle.sh.)
+            // the process the moment it touches the camera or Location Services under
+            // `swift run`. (The .app has its own Info.plist — see bundle.sh.)
             linkerSettings: [
                 .unsafeFlags(["-Xlinker", "-sectcreate",
                               "-Xlinker", "__TEXT",

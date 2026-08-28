@@ -307,10 +307,6 @@ struct GlassTorusParams: Decodable {
     var size: Double? = nil           // square side, if `frame` is omitted
     /// "screenSaver" (default, above the menu bar) | "floating" | "normal"
     var level: String? = nil
-    /// true (default): the glass reflects the running show — the photo wall, every
-    /// effect window. false excludes the whole app from the capture, which is what the
-    /// standalone app did, leaving only the bare desktop to refract.
-    var reflectShow: Bool? = nil
 }
 
 struct WallpaperParams: Decodable {

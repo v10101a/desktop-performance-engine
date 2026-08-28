@@ -24,9 +24,9 @@ enum SnapshotError: Error, CustomStringConvertible {
 /// actually renders inside the show without granting Screen Recording or taking over
 /// the display — `--test-glasstorus` drives it.
 enum Snapshot {
-    /// `environmentPath` substitutes a still image for the live screen capture,
-    /// which is how the reflection maths can be checked without Screen Recording
-    /// permission. Nil uses the procedural studio environment.
+    /// `environmentPath` substitutes a chosen image for the desktop picture the show
+    /// reflects, which is how the reflection maths can be checked against a known
+    /// input. Nil uses the procedural studio environment.
     static func write(
         to path: String,
         size: Int,
@@ -46,7 +46,10 @@ enum Snapshot {
         }
 
         let studio = try StudioEnvironment.makeTexture(device: device)
-        let screen = try environmentPath.map { try loadEnvironment(path: $0, device: device) } ?? studio
+        let screen = try environmentPath.map {
+            try ScreenEnvironment.loadEnvironment(
+                url: URL(fileURLWithPath: $0), device: device, maxPixel: nil)
+        } ?? studio
         let preset = MaterialPreset.all.first { $0.name == metal } ?? MaterialPreset.all[0]
 
         let multisample = MTLTextureDescriptor.texture2DDescriptor(
@@ -118,37 +121,6 @@ enum Snapshot {
         buffer.waitUntilCompleted()
 
         try writePNG(from: resolveTexture, size: size, to: path)
-    }
-
-    /// Loads any ImageIO-readable file as an equirectangular environment map.
-    private static func loadEnvironment(path: String, device: MTLDevice) throws -> MTLTexture {
-        let url = URL(fileURLWithPath: path)
-        guard
-            let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
-        else { throw SnapshotError.setupFailed("could not read environment image at \(path)") }
-
-        let width = image.width, height = image.height
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        // premultipliedFirst + little-endian lays the bytes out as BGRA, which is
-        // what .bgra8Unorm expects.
-        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue
-            | CGBitmapInfo.byteOrder32Little.rawValue
-        guard let context = CGContext(
-            data: &pixels, width: width, height: height,
-            bitsPerComponent: 8, bytesPerRow: width * 4,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: bitmapInfo
-        ) else { throw SnapshotError.setupFailed("could not decode environment image") }
-        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-
-        guard let texture = ScreenEnvironment.makeMipmappedTexture(
-            device: device, width: width, height: height
-        ) else { throw SnapshotError.setupFailed("could not allocate the environment texture") }
-
-        try StudioEnvironment.upload(
-            pixels: pixels, width: width, height: height, to: texture, device: device
-        )
-        return texture
     }
 
     private static func writePNG(from texture: MTLTexture, size: Int, to path: String) throws {

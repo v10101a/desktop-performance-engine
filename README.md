@@ -110,12 +110,20 @@ Test a build the way a recipient gets it, by faking the quarantine flag:
 xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/GiveIt2Me_DJ_Dave_malware.zip
 ```
 
-The piece asks for **Camera** (the photo booth), **Contacts** and **Location Services**
-(the probe and the map) and **Screen Recording** (the torus's reflection) — all of them
-**at the intro gate, before the first beat**, so no system dialog lands mid-song
-(`Permissions.preflight`; see Act 0). It needs no Accessibility (`cursorPath` runs in
-`warp` mode) and no Automation (no `rearrangeIcons`). It does want the network, for the
-Apple Maps flights. The `.app`'s Info.plist carries the usage strings; the bare
+The piece asks for **Camera** (the photo booth) and **Location Services** (the probe and
+the map) — both **at the intro gate, before the first beat**, so no system dialog lands
+mid-song (`Permissions.preflight`; see Act 0). It needs no Accessibility (`cursorPath`
+runs in `warp` mode), no Automation (no `rearrangeIcons`), no Contacts, no Bluetooth and
+no Screen Recording. It does want the network, for the Apple Maps flights.
+
+That includes the two macOS has no request API for. **Files and Folders** — the photo
+wall's roots and the probe's home-directory census both read `~/Desktop`, `~/Documents`
+and `~/Downloads` — and **Automation → Finder**, which `rearrangeIcons` and `fileSwarm`
+need, are only ever raised by doing the thing, so the gate does it early and throws the
+result away: a directory listing nobody reads, an Apple event that asks Finder for
+nothing. Grubby, and the only way to keep those dialogs off the middle of the show, where
+they used to land at ~60 s and ~133 s. `Permissions.plan` is the list, and
+`PermissionsTests` pins it without firing a single prompt. The `.app`'s Info.plist carries the usage strings; the bare
 `swift run` executable embeds the same strings from
 `Sources/GiveIt2Me_DJ_Dave_malware/Info.plist` (Package.swift's linker flags), because
 macOS kills a process that touches the camera without one. Note also that `hdiutil` needs real disk-image privileges, so
@@ -155,8 +163,8 @@ stays in front of the viewer until they answer.
 
 Cards auto-advance after their `dwell` or step on click/space; **Esc** leaves from
 anywhere; **Return** takes the default on the choice card. "Yes" raises every permission
-prompt the loaded show will need — Camera, Contacts, Screen Recording, one at a time,
-only the ones the timeline actually uses — and then starts the show through the same path
+prompt the loaded show will need — Camera, Location Services and one per gated
+folder, in that order, one at a time, only the ones the timeline actually uses — and then starts the show through the same path
 as the Play button, so the transport stays in sync. Each of those gets **20 seconds**
 before the gate gives up on it and carries on; an unanswered prompt must never look like
 the show is broken.
@@ -687,7 +695,8 @@ can tell a flight that isn't running from tiles that haven't loaded.
 ### `glassTorus`
 
 A tumbling glass (or mirror-metal) torus in a borderless, fully transparent window,
-refracting a live capture of the screen behind it. Ported from the standalone
+refracting the desktop picture the machine had before the show started. Ported from the
+standalone
 `GlassTorus` app; `TorusScene` (pipeline + Metal shader source), `TorusMesh`, `Math`
 and `Snapshot` are that app's code unchanged, under `Effects/GlassTorus/`.
 
@@ -719,19 +728,22 @@ Three things the port had to change:
   the pump with `elapsed` written from the timeline position, so the tumble scrubs with
   the playhead, freezes when the transport stops, and is identical take to take. The
   standalone renderer accumulated wall-clock deltas.
-- **The glass reflects the show.** The standalone app excluded its whole *application*
-  from the capture to stop the reflection recursing into itself. Inside the show that
-  would exclude the show — the photo wall, every effect window — leaving only the bare
-  desktop to refract. Only the torus's own window is excluded now, which is the minimum
-  that breaks the feedback loop. Set `reflectShow: false` for the old behaviour.
+- **The glass reflects a picture, not a capture.** The standalone app ran a live
+  ScreenCaptureKit stream of the display, which cost **Screen Recording** — the one
+  permission here that no prompt can settle, since macOS sends the viewer to System
+  Settings and wants a relaunch. The plane is now the viewer's own desktop picture, read
+  from the file `WallpaperController` snapshots before the show swaps the wallpaper to
+  blue. Still this machine's desktop; it just no longer moves, and no longer catches the
+  show layered on top. The `reflectShow` param went with the capture.
 - **The window never takes focus and has no keys.** The standalone app's shortcuts
   (material, roughness, plane, pause, quit) are authored per event instead, and `Esc`
   belongs to the panic hotkey.
 
-Metal is built lazily, on the first `glassTorus` event: a show that never uses one
-neither compiles the pipeline nor triggers the **Screen Recording** prompt. That
-permission is optional — refused, the torus falls back to the procedural studio
-environment and still runs, it just reflects a studio instead of your desktop.
+Metal is built lazily, on the first `glassTorus` event: a show that never uses one does
+not compile the pipeline. The desktop picture is decoded off the main thread and capped
+at 1024 px on its long edge — a synchronous decode there cost 48 ms and pushed the worst
+event drift of the run to 131 ms. Until it lands, and if the file cannot be read at all,
+the torus reflects the procedural studio environment and still runs.
 
 Verify headlessly with `--test-glasstorus`: it compiles the pipeline on the real GPU
 (the shaders are built from source at runtime, so a clean build proves nothing about
@@ -746,8 +758,7 @@ combination the two ports are for.
 
 The `system_probe` disclosure report typing itself out in a window: a terminal reading
 back everything this machine knows about whoever is sitting at it — hardware, storage,
-displays, network, battery, the Contacts "me" card, a location fix. Ported from the
-standalone systemprobe app.
+displays, network, battery, a location fix. Ported from the standalone systemprobe app.
 
 ```jsonc
 { "beat": 224, "type": "systemProbe", "params": {
@@ -761,20 +772,24 @@ editing the report doesn't retime the scene. The standalone app ran the reveal o
 when the transport stops, and lands the same line on the same beat every take. Section
 gathering still happens off the main thread and splices in as it lands.
 
-**This event triggers two TCC prompts the rest of the show doesn't**: Contacts and
-Location Services, for the identity section. That is the point of the piece, but it is
-worth knowing before you run it in front of people. Refused, those lines read
-`<unavailable>` and the report continues. A show with no `systemProbe` event never
-constructs a `Probe`, so nothing is asked for.
+**This event triggers one TCC prompt the rest of the show doesn't**: Location Services,
+for the geolocation section. That is the point of the piece, but it is worth knowing
+before you run it in front of people. Refused, those lines read `<unavailable>` and the
+report continues. A show with no `systemProbe` event never constructs a `Probe`, so
+nothing is asked for.
+
+The report used to read the Contacts "me" card and list paired Bluetooth devices too.
+Both are gone, along with their usage strings — the probe now discloses only what needs
+no permission beyond the location fix.
 
 `--test-systemprobe` covers the section builders, the formatting helpers and the reveal
-pacing. It deliberately does *not* call `Probe.start()`, because a test that fired two
-permission prompts would be a bad citizen.
+pacing. It deliberately does *not* call `Probe.start()`, because a test that fired a
+permission prompt would be a bad citizen.
 
 **`focus`** — fired at an id that is already on screen, the terminal clears and reads
 out ONLY the named sections again, every line drawn over a highlighter-yellow marker:
 the machine going back to the parts that matter. Names: `geolocation`, `network`,
-`identity`, `machine`, `contacts`. On a new window it reads out just those.
+`identity`, `machine`. On a new window it reads out just those.
 
 ```jsonc
 { "beat": 160, "type": "systemProbe", "params": { "id": "probe", "linesPerBeat": 3,

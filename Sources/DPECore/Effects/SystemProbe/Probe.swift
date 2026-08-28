@@ -55,10 +55,7 @@ final class Probe: ObservableObject {
         gather { storageSection() }
         gather { devicesSection(displays: displays) }
 
-        pendingAsync += 2
-        contactCard { [weak self] lines in
-            Task { @MainActor in self?.enqueue(lines); self?.pendingAsync -= 1 }
-        }
+        pendingAsync += 1
         locationProbe.run { [weak self] lines in
             Task { @MainActor in self?.enqueue(lines); self?.pendingAsync -= 1 }
         }
@@ -98,11 +95,6 @@ final class Probe: ObservableObject {
                 gather(highlight: true) { identitySection() }
             case "machine":
                 gather(highlight: true) { machineSection() }
-            case "contacts":
-                pendingAsync += 1
-                contactCard { [weak self] lines in
-                    Task { @MainActor in self?.enqueue(highlighted(lines)); self?.pendingAsync -= 1 }
-                }
             default:
                 queue.append(warn("  unknown section \"\(name)\" — skipped"))
             }

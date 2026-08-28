@@ -2,7 +2,6 @@ import Foundation
 import AppKit
 import IOKit
 import IOKit.usb
-import IOBluetooth
 import CoreWLAN
 import Darwin
 
@@ -48,25 +47,6 @@ func usbLines() -> [TermLine] {
         }
     }
     if out.isEmpty { out.append(note("  no external usb devices attached")) }
-    return out
-}
-
-// MARK: - Bluetooth
-
-func bluetoothLines() -> [TermLine] {
-    var out: [TermLine] = []
-    guard let paired = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice], !paired.isEmpty else {
-        out.append(note("  no paired bluetooth devices visible (permission may be required)"))
-        return out
-    }
-    for d in paired.prefix(24) {
-        let name = d.name ?? d.nameOrAddress ?? "unnamed"
-        let connected = d.isConnected()
-        out.append(TermLine(label: "  bluetooth", text: name + (connected ? "   ● CONNECTED" : "   ○ paired"),
-                            kind: connected ? .alert : .dim))
-        out.append(kv("    address", d.addressString, kind: connected ? .plain : .dim))
-        if let last = d.recentAccessDate() { out.append(kv("    last seen", stamp(last), kind: .dim)) }
-    }
     return out
 }
 
@@ -170,9 +150,6 @@ func devicesSection(displays: [TermLine]) -> [TermLine] {
     out.append(TermLine(text: "", kind: .plain))
     out.append(TermLine(text: "  ── usb bus ──", kind: .section))
     out.append(contentsOf: usbLines())
-    out.append(TermLine(text: "", kind: .plain))
-    out.append(TermLine(text: "  ── bluetooth ──", kind: .section))
-    out.append(contentsOf: bluetoothLines())
     out.append(TermLine(text: "", kind: .plain))
     out.append(TermLine(text: "  ── network ──", kind: .section))
     out.append(contentsOf: networkLines())

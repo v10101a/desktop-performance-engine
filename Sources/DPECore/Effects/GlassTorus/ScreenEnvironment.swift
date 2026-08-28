@@ -1,7 +1,7 @@
-import CoreMedia
-import CoreVideo
+import AppKit
+import CoreGraphics
+import ImageIO
 import Metal
-import ScreenCaptureKit
 import os
 import simd
 
@@ -11,41 +11,36 @@ let glassTorusLog = Logger(subsystem: "com.computerart.glasstorus", category: "e
 
 /// Supplies the environment map the metal reflects.
 ///
-/// Preferred source is a live ScreenCaptureKit stream of the display, so the
-/// torus mirrors whatever is behind it.
+/// **Changed: the desktop plane is a picture, not a capture.** This used to run a live
+/// ScreenCaptureKit stream of the display, so the glass refracted whatever was behind it
+/// — the photo wall, every effect window, the show itself. That cost Screen Recording,
+/// which is the one permission here that cannot be settled by a prompt: macOS sends the
+/// viewer to System Settings and wants a relaunch, so a "no" (or an unanswered dialog)
+/// left the torus reflecting a procedural studio for the rest of the run.
 ///
-/// **Changed in the port.** The standalone app excluded its whole *application*
-/// from the capture to stop the reflection recursing. Inside the show that would
-/// exclude the show — the photo wall, every effect window — and the torus would
-/// refract nothing but the bare desktop behind it all. Here only the torus's own
-/// window is excluded (`excludingWindowNumber`), which is the minimum needed to
-/// break the feedback loop, so the glass picks up the performance happening
-/// underneath it. Pass `excludeWholeApp` to get the standalone behaviour back.
+/// The plane is now the viewer's own desktop picture, read from the file
+/// `WallpaperController` snapshots before the show swaps the wallpaper to blue. The torus
+/// still shows *this* machine's desktop, which is the point of it; it just no longer
+/// moves, and no longer catches the show layered on top.
 ///
-/// Screen Recording is a TCC-gated permission we may simply not have, so
-/// `texture` is always valid: it starts as a procedural studio environment and
-/// is only replaced once frames actually arrive.
-final class ScreenEnvironment: NSObject, SCStreamOutput, SCStreamDelegate {
+/// Either way there is always something to reflect: the surround is the procedural studio
+/// from the start, and the desktop picture only ever replaces the plane.
+final class ScreenEnvironment {
     private let device: MTLDevice
-    private let sampleQueue = DispatchQueue(label: "com.computerart.glasstorus.capture")
-
-    private var textureCache: CVMetalTextureCache?
-    private var stream: SCStream?
-
-    private let bufferLock = NSLock()
-    private var pendingBuffer: CVPixelBuffer?
-    private var hasLoggedFirstFrame = false
 
     /// Equirectangular surround, always present — used for reflection rays that
     /// miss the desktop plane, and as the ambient term.
     private(set) var studioTexture: MTLTexture
 
-    /// Live capture of `capturedDisplayID`, nil until the first frame lands.
-    /// Both are read on the render thread only.
-    private(set) var screenTexture: MTLTexture?
-    private(set) var capturedDisplayID: CGDirectDisplayID = 0
+    /// The desktop picture. Nil until the decode lands, and after it if the file could
+    /// not be read. Written and read on the main thread only — the show renders from
+    /// `GlassTorusController.update(now:)`, which the display pump drives on main — so
+    /// the decode hops back there to publish and no lock is needed.
+    private(set) var desktopTexture: MTLTexture?
 
-    var isLive: Bool { screenTexture != nil }
+    /// The display the picture was read for. The mirror maths maps window coordinates
+    /// into this display's space, so on any other screen it must not be used.
+    private(set) var desktopDisplayID: CGDirectDisplayID = 0
 
     private let statusLock = NSLock()
     private var _status: String
@@ -62,179 +57,96 @@ final class ScreenEnvironment: NSObject, SCStreamOutput, SCStreamDelegate {
     init(device: MTLDevice) throws {
         self.device = device
         self.studioTexture = try StudioEnvironment.makeTexture(device: device)
-        self._status = "studio environment (capture not started)"
-        super.init()
+        self._status = "studio environment (no desktop picture loaded)"
     }
 
-    // MARK: - Capture
+    // MARK: - Desktop picture
 
-    /// - Parameters:
-    ///   - excludingWindowNumber: `NSWindow.windowNumber` of the torus window, kept out
-    ///     of the capture so its own image cannot feed back into itself.
-    ///   - excludeWholeApp: exclude every window this app owns instead, which is what
-    ///     the standalone app did — the torus then reflects only what is behind the show.
-    func start(excludingWindowNumber: Int? = nil, excludeWholeApp: Bool = false) {
-        guard CVMetalTextureCacheCreate(nil, nil, device, nil, &textureCache) == kCVReturnSuccess else {
-            setStatus("studio environment (no Metal texture cache)")
+    /// Load `url` as the plane the metal reflects.
+    ///
+    /// Off the main thread, for the same reason the capture it replaces was async: this
+    /// is called from `begin()`, which the display pump runs between frames, and a
+    /// synchronous decode there stalls the show. Measured on this machine: a 5 MB HEIC
+    /// wallpaper cost 48 ms, which on top of the ~80 ms Metal pipeline compile in
+    /// `ensureScene` pushed the worst event drift of the run from 8 ms to 131 ms — a
+    /// third of a beat, landing on the frame the torus appears.
+    ///
+    /// The torus renders against the studio surround for the handful of frames until the
+    /// picture lands, which is exactly what it used to do while the capture warmed up.
+    ///
+    /// The decode is capped at `maxEnvironmentPixel` on the long edge. The stream this
+    /// replaces ran at 720 px wide, so decoding a 6K wallpaper in full would buy detail
+    /// no reflection can show.
+    func start(desktopPicture url: URL?, on screen: NSScreen?) {
+        guard let url else {
+            setStatus("studio environment (no desktop picture to read)")
             return
         }
-
-        // All of this runs off the main thread on purpose. Both the TCC request
-        // and SCShareableContent block until the user answers the permission
-        // prompt; on the main thread that would stall the window and the render
-        // loop behind a dialog, so the torus would not appear until you replied.
-        Task.detached(priority: .utility) { [weak self] in
-            guard let self else { return }
-
-            // Preflight before touching SCShareableContent: that call blocks
-            // until TCC resolves, so with an unanswered prompt it simply never
-            // returns and the app sits silently on the fallback.
-            if !CGPreflightScreenCaptureAccess() {
-                self.setStatus("requesting Screen Recording permission")
-                guard CGRequestScreenCaptureAccess() else {
-                    self.setStatus("studio environment — grant Screen Recording in "
-                        + "System Settings ▸ Privacy & Security, then relaunch")
-                    return
-                }
-            }
-
+        let device = self.device
+        let displayID = screen.flatMap(WallpaperImage.displayID(of:)) ?? 0
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
-                let content = try await SCShareableContent.excludingDesktopWindows(
-                    false, onScreenWindowsOnly: true
-                )
-                guard let display = content.displays.first else {
-                    setStatus("studio environment (no display to capture)")
-                    return
+                let texture = try Self.loadEnvironment(
+                    url: url, device: device, maxPixel: Self.maxEnvironmentPixel)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.desktopTexture = texture
+                    self.desktopDisplayID = displayID
+                    self.setStatus("reflecting the desktop picture \(url.lastPathComponent)")
                 }
-
-                // Breaking the feedback loop. Excluding the single torus window is
-                // enough and leaves the rest of the show visible to the glass; falling
-                // back to whole-app exclusion only if that window isn't in the list yet
-                // (it is ordered in before start() is called, so this is belt-and-braces
-                // — an un-excluded torus would recurse into its own reflection).
-                let ownWindow = excludingWindowNumber.flatMap { number in
-                    content.windows.first { $0.windowID == CGWindowID(number) }
-                }
-                let filter: SCContentFilter
-                if !excludeWholeApp, let ownWindow {
-                    filter = SCContentFilter(display: display, excludingWindows: [ownWindow])
-                } else {
-                    let ownApplications = content.applications.filter {
-                        $0.bundleIdentifier == Bundle.main.bundleIdentifier
-                    }
-                    filter = SCContentFilter(
-                        display: display,
-                        excludingApplications: ownApplications,
-                        exceptingWindows: []
-                    )
-                }
-
-                let configuration = SCStreamConfiguration()
-                let targetWidth = 720
-                let scale = Double(targetWidth) / Double(display.width)
-                configuration.width = targetWidth
-                configuration.height = max(2, Int((Double(display.height) * scale).rounded()))
-                configuration.pixelFormat = kCVPixelFormatType_32BGRA
-                configuration.colorSpaceName = CGColorSpace.sRGB
-                configuration.minimumFrameInterval = CMTime(value: 1, timescale: 20)
-                configuration.queueDepth = 3
-                configuration.showsCursor = false
-
-                let stream = SCStream(filter: filter, configuration: configuration, delegate: self)
-                try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: sampleQueue)
-                try await stream.startCapture()
-                self.stream = stream
-                self.capturedDisplayID = display.displayID
-                let scope = (!excludeWholeApp && ownWindow != nil) ? "show visible" : "show excluded"
-                setStatus("reflecting display \(display.displayID) at "
-                    + "\(configuration.width)×\(configuration.height) (\(scope))")
             } catch {
-                setStatus("studio environment — screen capture unavailable: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self?.setStatus("studio environment — could not read the desktop "
+                        + "picture: \(error)")
+                }
             }
         }
     }
 
-    func stop() {
-        stream?.stopCapture { _ in }
-        stream = nil
-    }
+    static let maxEnvironmentPixel = 1024
 
-    func stream(
-        _ stream: SCStream,
-        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
-        of type: SCStreamOutputType
-    ) {
-        guard type == .screen, let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-
-        // The compositor also emits idle/blank frames; only `.complete` ones
-        // carry new pixels.
-        if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)
-            as? [[SCStreamFrameInfo: Any]],
-           let raw = attachments.first?[.status] as? Int,
-           SCFrameStatus(rawValue: raw) != .complete {
-            return
+    /// Loads any ImageIO-readable file as an equirectangular environment map.
+    ///
+    /// `maxPixel` caps the long edge; ImageIO subsamples while decoding rather than
+    /// afterwards, so a huge wallpaper costs about what a small one does. Pass nil for
+    /// the full-size decode `Snapshot` wants.
+    static func loadEnvironment(url: URL, device: MTLDevice, maxPixel: Int?) throws -> MTLTexture {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+            throw SceneError.setupFailed("could not read environment image at \(url.path)")
+        }
+        let decoded: CGImage?
+        if let maxPixel {
+            decoded = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: maxPixel
+            ] as CFDictionary)
+        } else {
+            decoded = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        }
+        guard let image = decoded else {
+            throw SceneError.setupFailed("could not decode environment image at \(url.path)")
         }
 
-        bufferLock.lock()
-        pendingBuffer = buffer
-        bufferLock.unlock()
-    }
+        let width = image.width, height = image.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        // premultipliedFirst + little-endian lays the bytes out as BGRA, which is
+        // what .bgra8Unorm expects.
+        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue
+            | CGBitmapInfo.byteOrder32Little.rawValue
+        guard let context = CGContext(
+            data: &pixels, width: width, height: height,
+            bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: bitmapInfo
+        ) else { throw SceneError.setupFailed("could not decode environment image") }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-    func stream(_ stream: SCStream, didStopWithError error: Error) {
-        setStatus("studio environment — capture stopped: \(error.localizedDescription)")
-    }
-
-    // MARK: - Per-frame upload
-
-    /// Must be called before the render encoder is created: it opens its own
-    /// blit encoder on the same command buffer, and Metal forbids nesting.
-    func update(using commandBuffer: MTLCommandBuffer) {
-        bufferLock.lock()
-        let buffer = pendingBuffer
-        pendingBuffer = nil
-        bufferLock.unlock()
-
-        guard let buffer, let cache = textureCache else { return }
-
-        let width = CVPixelBufferGetWidth(buffer)
-        let height = CVPixelBufferGetHeight(buffer)
-
-        var cvTexture: CVMetalTexture?
-        let result = CVMetalTextureCacheCreateTextureFromImage(
-            nil, cache, buffer, nil, .bgra8Unorm, width, height, 0, &cvTexture
-        )
-        guard result == kCVReturnSuccess,
-              let cvTexture,
-              let source = CVMetalTextureGetTexture(cvTexture)
-        else { return }
-
-        if screenTexture?.width != width || screenTexture?.height != height {
-            screenTexture = Self.makeMipmappedTexture(device: device, width: width, height: height)
+        guard let texture = makeMipmappedTexture(device: device, width: width, height: height) else {
+            throw SceneError.setupFailed("could not allocate the environment texture")
         }
-        guard let destination = screenTexture,
-              let blit = commandBuffer.makeBlitCommandEncoder()
-        else { return }
-
-        blit.copy(
-            from: source, sourceSlice: 0, sourceLevel: 0,
-            sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
-            sourceSize: MTLSize(width: width, height: height, depth: 1),
-            to: destination, destinationSlice: 0, destinationLevel: 0,
-            destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0)
-        )
-        blit.generateMipmaps(for: destination)
-        blit.endEncoding()
-
-        // Keep the cache-backed texture alive until the GPU is done with it.
-        commandBuffer.addCompletedHandler { _ in _ = cvTexture }
-
-        if !hasLoggedFirstFrame {
-            hasLoggedFirstFrame = true
-            glassTorusLog.notice(
-                "first captured frame uploaded: \(width, privacy: .public)×\(height, privacy: .public)"
-            )
-        }
-        CVMetalTextureCacheFlush(cache, 0)
+        try StudioEnvironment.upload(
+            pixels: pixels, width: width, height: height, to: texture, device: device)
+        return texture
     }
 
     static func makeMipmappedTexture(device: MTLDevice, width: Int, height: Int) -> MTLTexture? {

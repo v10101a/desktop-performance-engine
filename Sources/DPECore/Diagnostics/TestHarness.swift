@@ -81,6 +81,7 @@ public enum UnitTests {
         ChromeTests.run(t)
         CreditsTests.run(t)
         GateTests.run(t)
+        PermissionsTests.run(t)
         return t.report()
     }
 }
