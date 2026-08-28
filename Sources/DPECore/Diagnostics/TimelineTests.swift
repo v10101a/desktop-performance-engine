@@ -27,6 +27,13 @@ enum TimelineTests {
 
             // --- the restructured show's new acts ---
 
+            // A scheduled slide run: one landing time per image, `hz` irrelevant.
+            if let ev = decode(#"{"beat":0,"type":"deskWallpaper","params":{"id":"w","mode":"slides","images":["a.jpg","b.jpg"],"at":[0.0,0.47],"durationSeconds":5}}"#),
+               case .deskWallpaper(let p) = ev.action {
+                t.equal(p.at ?? [], [0.0, 0.47], "deskWallpaper at schedule decodes")
+            } else { t.expect(false, "scheduled deskWallpaper failed to decode") }
+
+
             if let ev = decode(#"{"beat":4,"type":"reboot","params":{"id":"boot","durationBeats":12,"delayBeats":2}}"#),
                case .reboot(let p) = ev.action {
                 t.equal(p.durationBeats ?? -1, 12, "reboot durationBeats")
@@ -167,10 +174,10 @@ enum TimelineTests {
                 t.expect(swapsWallpaper, "shipped show paints the desktop in Act 1")
                 t.expect(tl.meta.allowDesktopFiles != true, "shipped show ships file gate off")
 
-                // The lyric wallpapers are named by path in the timeline and loaded at
-                // 10 Hz during the show. A misnamed one is silent — the desktop just
-                // keeps whatever was there — so every path is resolved up front here.
-                var slideCount = 0, missing: [String] = []
+                // The lyric wallpapers are named by path in the timeline and swapped in
+                // during the show. A misnamed one is silent — the desktop just keeps
+                // whatever was there — so every path is resolved up front here.
+                var slideCount = 0, missing: [String] = [], timedRuns = 0
                 for ev in tl.events {
                     guard case .deskWallpaper(let p) = ev.action, let images = p.images else { continue }
                     slideCount += images.count
@@ -178,7 +185,26 @@ enum TimelineTests {
                         atPath: resolveResourcePath(name)) {
                         missing.append(name)
                     }
+                    // A scheduled run (the lyric on the desktop, cue 12) carries one
+                    // landing time per image, ascending, inside the run — a word landing
+                    // after the run ends would never show.
+                    guard let at = p.at else { continue }
+                    timedRuns += 1
+                    t.equal(at.count, images.count, "one landing time per desktop word")
+                    t.expect(zip(at, at.dropFirst()).allSatisfy { $0 < $1 },
+                             "desktop words land in ascending order")
+                    t.expect(at.first ?? -1 >= 0, "the first desktop word lands after the run starts")
+                    if let dur = p.durationSeconds {
+                        t.expect((at.last ?? .infinity) < dur,
+                                 "the last desktop word lands before the run ends")
+                    }
+                    // The words are a chorus, not a strobe: nothing lands faster than a
+                    // sixteenth at 128.5 BPM (~117 ms), which is where the flashing was.
+                    let gaps = zip(at, at.dropFirst()).map { $1 - $0 }
+                    t.expect((gaps.min() ?? 1) > 0.11,
+                             "desktop words are paced to the lyric, not flashed (min gap \(gaps.min() ?? 0)s)")
                 }
+                t.expect(timedRuns >= 1, "the lyric wallpaper run (cue 12) carries an `at` schedule")
                 // The desktop's blue is authored as an exact rgb triple. It is written
                 // to a PNG and handed to the window server, and a colour-space
                 // round-trip on the way shifted it by ten in the blue channel — so the

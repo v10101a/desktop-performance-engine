@@ -41,10 +41,11 @@ it runs off the audio clock in seconds and quantises nothing — it is the rate 
 transport counts in (`MainWindowController.fps`), so a frame number in the sheet is the
 number on the scrubber. `frame = floor(seconds × 30)`.
 
-Cues are authored **by ear, in seconds**, so they do not land on bar lines. The generator
-puts each on the **nearest beat** (`at()`), which moves a cue by at most 7 frames. Keep
-that: authoring each cue at its literal position drifts them against the grid by
-different amounts, which is audible on the hard cuts.
+The track is **twelve 8-bar phrases** (`PHRASES` in the generator, "The phrases" in the
+sheet), each verified in the audio. Every cue is a position inside one — `(phrase, bars
+in, beats in)` — so `(phrase, 0, 0)` is the changeover and the hooks are `(chorus, 5, 0)`.
+Keep that: a cue never reaches past its own phrase, and moving a phrase moves its cues.
+The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by hand.
 
 ## Everything else
 

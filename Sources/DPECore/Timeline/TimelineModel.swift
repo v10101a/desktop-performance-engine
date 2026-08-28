@@ -339,6 +339,11 @@ struct DeskWallpaperParams: Decodable {
     var mode: String? = nil          // "strobe" (default) | "solid" | "slides" | "glitch" | "recursive"
     var hex: String? = nil           // solid only: the colour (default the signature blue)
     var images: [String]? = nil      // slides only: paths, cycled one per tick at `hz`
+    /// `slides` only: a schedule instead of a rate — seconds from the event's start at
+    /// which each image lands, one per entry of `images`, ascending. With it the list is
+    /// played ONCE, in time (the lyric on the desktop follows the sung words), the last
+    /// image holds until the event ends, and `hz` is ignored.
+    var at: [Double]? = nil
     var hz: Double? = nil            // applies per second (default 8)
     var intensity: Double? = nil     // glitch only, 0…1 (default 0.6)
     var seed: Int? = nil             // glitch only, for a reproducible tear pattern

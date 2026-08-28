@@ -18,22 +18,32 @@ so give it to me
 
 ## Where these appear in the show
 
-**All of it is chorus** — each chorus sings the whole lyric — so the first chorus is a
-lyric video: full-screen cards, one phrase per card, and the second chorus puts the same
-phrases in small windows round the torus. **One list times both**: the card timings are
-`CUES` in `tools/lyrics.py`, `(when, text)`, and each cue is a fullscreen card in chorus A
-and a clock window at the same point of chorus B.
+**All of it is chorus** — each chorus sings the whole lyric, 8 bars — and one list times
+everything: `CUES` in `tools/lyrics.py`, `(when, word)`, **one entry per sung word,
+tuned by ear**. `when` is beats from the lyric's own zero — *what I want*, the pickup,
+which is sung one bar before the chorus's downbeat (`CHORUS_LEAD` in the generator) —
+or a time in the track as a string (`"34.10s"`). `PHRASES` is the same lyric in phrases,
+and `phrase_cues()` times each phrase off the `CUES` entry its first word starts on, so
+tuning a word moves its phrase too.
 
-`when` is either **beats from the start of the chorus** (`4.0`; 32 beats = 8 bars, 0.4685 s
-a beat) or **a time in the track**, as a string (`"34.10s"`) — as heard in chorus A, read
-straight off the waveform or a player's clock; the card lands on that instant. The two
-forms mix freely.
+In the cut (`docs/CUES.md`):
 
-To tune by ear: edit the numbers, then `tools/tune_lyrics.sh` (chorus A) or
+- **cue 9, the spiral** (CHORUS 1A, the drop, 0:30.28) — every phrase of the lyric, one
+  card each, landing on its sung line (the first line is the pickup and lands with the
+  drop; the last at 0:43.06). Cards are set in Hack Bold (`LyricFont` in
+  `EffectWindow.swift` — the one place every lyric card's face comes from).
+- **cue 12, the desktop** (CHORUS 1B, 0:45.22) — the whole lyric again, one wallpaper card
+  per sung word from `assets/lyrics_desktops/<WORD>.jpg` (named as sung: RUNNIN, CANT, 2;
+  a whole-cue card such as `NEED YOUR LOVE.jpg` wins if present; a word with no card is
+  skipped and the generator lists it — WHAT, WANT, OF, THIS, FEELING, BABY, ALL, GOT, IM,
+  GIVING are still missing).
+- **cue 22, the clock** (INSTRUMENTAL A + 6 bars, 1:56) — the phrase texts round the
+  torus, spread evenly; nobody is singing there.
+
+To tune by ear: edit the numbers, then `tools/tune_lyrics.sh` (the spiral) or
 `tools/tune_lyrics.sh b` (the clock). It regenerates the show, prints when every card
-lands in the track, and plays just that chorus full-screen from two seconds before it.
-The timings are a first pass on the bar grid. When they're right,
-`python3 tools/generate_show.py && ./bundle.sh` for the `.app`.
+and word lands in the track, and plays just that section from a couple of seconds before
+it. When they're right, `python3 tools/generate_show.py && ./bundle.sh` for the `.app`.
 
 Every `fakeDialog` in the piece draws its title and body from these lines — see
 `tools/lyrics.py`, which is the single source both generators import. The lines

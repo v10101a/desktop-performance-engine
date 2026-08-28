@@ -344,6 +344,9 @@ from the centre now, like the torus it circles).
 
 ### `lyric` content
 
+Every lyric card is set in **Hack Bold** (`assets/fonts/hack`, registered at run time by
+`LyricFont` in `EffectWindow.swift`; the system heavy face if the file is missing).
+
 A lyric-video frame: the ground is `hex`, the type is `fg`, and the line is set **as
 large as the window allows** — wrapped, centred both ways, never breaking a word. Full
 screen it is the whole screen going blue with the words on it; at 230 pt it is a caption
@@ -368,34 +371,34 @@ seconds, for reading.
 | time | cue | |
 |---|---|---|
 | 0:00 | **THE BLUE** | the intro gate, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
-| 0:16 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
-| 0:18 | **WELCOME** | a centred `ascii` terminal — *placeholder* for the glitchy ASCII piece |
-| 0:25 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
-| 0:30 | **HYDRA** | somebody using a computer: a sketch opens small, the cursor takes it by the title bar and hauls it down, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does it start rendering. Two more arrive already running |
-| 0:38 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later it is `pixelface.jpg` |
+| 0:06 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
+| 0:08 | **WELCOME** | a centred `ascii` terminal — *placeholder* for the glitchy ASCII piece |
+| 0:15 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
+| 0:20 | **HYDRA** | somebody using a computer: a sketch opens small, the cursor takes it by the title bar and hauls it down, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does it start rendering. Two more arrive already running |
+| 0:28 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later it is `pixelface.jpg` |
 | 0:39.5 | **THE TRAVELLER** | one window runs up and down the screen and leaves a trail of windows stamped along its path |
-| 0:43 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
-| 0:47 | **VIDEO** | the middle fills with the slot a single video will take — *placeholder* |
-| 0:54 | **THE WORDS** | the lyric on the desktop itself: the wallpaper is swapped for a card carrying one word (`deskWallpaper` `slides`). The event asks for ten a second; macOS gives about three (see `deskWallpaper` — a hard ceiling, not a tuning knob). Over the top, the cursor hauls a stamped trail of windows across the screen |
-| 1:09 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
-| 1:24 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
-| 1:27 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle |
-| 1:37 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |
-| 1:39 | **TBD** | a *placeholder* holding the slot for a graphic |
-| 1:47 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1**; the shutter lands exactly on the photo wall |
-| 1:54 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
-| 1:58 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz — one window re-opened, never shown and hidden (see the generator for why) |
-| 2:00 | **THE HORSE** | everything cuts to the bare desktop and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops across it |
-| 2:05 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by lyric windows |
-| 2:08 | **VIDEO** | all of it stays and the video slot lands on top |
-| 2:09 | **THE VOID** | torus and ring cut out from under it, leaving the slot alone on a full black window |
-| 2:16 | **TBD** | everything cuts; a *placeholder* holds the slot |
-| 2:18 | **TBD + SPINNER** | more TBD content, and the mouse spinner — **not built**, see Gaps in docs/CUES.md |
-| 2:23 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
-| 2:38 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture |
-| 2:47 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen |
-| 2:51 | **THE LAST WORDS** | the noise stops and the desktop is the lyric again — *past the last note of the track* |
-| 2:54 | **THE END CARD** | the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
+| 0:30 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
+| 0:38 | **VIDEO** | the middle fills with the slot a single video will take — *placeholder* |
+| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the wallpaper is swapped for a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each swap issued ~300 ms early so it is seen on the word). macOS sustains about three swaps a second (see `deskWallpaper` — a hard ceiling, not a tuning knob), so a word it cannot fit is skipped, not queued. Over the top, the cursor hauls a stamped trail of windows across the screen |
+| 1:00 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
+| 1:15 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
+| 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle |
+| 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |
+| 1:30 | **TBD** | a *placeholder* holding the slot for a graphic |
+| 1:37 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1**; the shutter lands exactly on the photo wall |
+| 1:43 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
+| 1:49 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz — one window re-opened, never shown and hidden (see the generator for why) |
+| 1:51 | **THE HORSE** | everything cuts to the bare desktop and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops across it |
+| 1:56 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by lyric windows |
+| 1:58 | **VIDEO** | all of it stays and the video slot lands on top |
+| 1:59 | **THE VOID** | torus and ring cut out from under it, leaving the slot alone on a full black window |
+| 2:06 | **TBD** | everything cuts; a *placeholder* holds the slot |
+| 2:08 | **TBD + SPINNER** | more TBD content, and the mouse spinner — **not built**, see Gaps in docs/CUES.md |
+| 2:13 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
+| 2:27 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture |
+| 2:38 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen |
+| 2:40 | **THE LAST WORDS** | the noise stops and the desktop is the lyric again — *past the last note of the track* |
+| 2:44 | **THE END CARD** | the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
 The cue times were authored **in seconds, by ear**, so they do not land on bar lines. The
 generator puts each one on the **nearest beat** (`at()`), which moves it by at most
@@ -1080,6 +1083,21 @@ path, not a copy, so they have to stay on disk while displayed) and swept on res
 `--test-wallpaper` checks the gate, the glitch engine's determinism, and that frames are
 written and swept. It never calls `setDesktopImageURL` — a test that changed your actual
 wallpaper would be a bad citizen.
+
+**A schedule instead of a rate.** `slides` also takes `at`: seconds from the event's
+start at which each image lands, one per image, ascending. The list then plays **once**,
+in time, the last image holds until the run ends, and `hz` is ignored:
+
+```jsonc
+{ "t": 53.96, "type": "deskWallpaper", "params": { "id": "words", "mode": "slides",
+    "images": ["assets/lyrics_desktops/I.jpg", "assets/lyrics_desktops/TOLD.jpg"],
+    "at": [0, 0.233], "durationSeconds": 15 } }
+```
+
+This is how the lyric lands on the desktop word by word (cue 12): the times come from
+`tools/lyrics.py`, and the generator issues the event ~300 ms before the first word so
+each swap is *seen* on the word. The ~3 Hz ceiling still applies — a word the window
+server cannot fit is skipped, never queued behind the one being sung.
 
 ### `photoWall`
 

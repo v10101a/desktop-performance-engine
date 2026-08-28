@@ -24,21 +24,33 @@
     "kind": "section"
    },
    {
+    "t": 6.93,
+    "bar": 4,
+    "label": "desktop back",
+    "kind": "section"
+   },
+   {
+    "t": 8.8,
+    "bar": 5,
+    "label": "welcome (ascii)",
+    "kind": "section"
+   },
+   {
     "t": 15.33,
     "bar": 9,
     "label": "section (low)",
     "kind": "section"
    },
    {
-    "t": 15.8,
+    "t": 15.34,
     "bar": 9,
-    "label": "desktop back",
+    "label": "system probe",
     "kind": "section"
    },
    {
-    "t": 18.14,
-    "bar": 10,
-    "label": "welcome (ascii)",
+    "t": 20.94,
+    "bar": 12,
+    "label": "hydra dragged in",
     "kind": "section"
    },
    {
@@ -48,15 +60,27 @@
     "kind": "section"
    },
    {
-    "t": 25.14,
-    "bar": 14,
-    "label": "system probe",
+    "t": 28.88,
+    "bar": 16,
+    "label": "blue again",
     "kind": "section"
    },
    {
-    "t": 29.81,
-    "bar": 16,
-    "label": "hydra dragged in",
+    "t": 30.28,
+    "bar": 17,
+    "label": "pixelface desktop",
+    "kind": "section"
+   },
+   {
+    "t": 30.28,
+    "bar": 17,
+    "label": "traveller + trail",
+    "kind": "section"
+   },
+   {
+    "t": 30.28,
+    "bar": 17,
+    "label": "lyric spiral",
     "kind": "section"
    },
    {
@@ -68,25 +92,13 @@
    {
     "t": 38.22,
     "bar": 21,
-    "label": "blue again",
+    "label": "video slot",
     "kind": "section"
    },
    {
     "t": 39.15,
     "bar": 21,
-    "label": "pixelface desktop",
-    "kind": "section"
-   },
-   {
-    "t": 39.62,
-    "bar": 22,
-    "label": "traveller + trail",
-    "kind": "section"
-   },
-   {
-    "t": 42.89,
-    "bar": 23,
-    "label": "lyric spiral",
+    "label": "TBD",
     "kind": "section"
    },
    {
@@ -96,20 +108,8 @@
     "kind": "section"
    },
    {
-    "t": 47.09,
-    "bar": 26,
-    "label": "video slot",
-    "kind": "section"
-   },
-   {
-    "t": 48.02,
-    "bar": 26,
-    "label": "TBD",
-    "kind": "section"
-   },
-   {
-    "t": 54.09,
-    "bar": 29,
+    "t": 45.22,
+    "bar": 25,
     "label": "lyrics desktop + drag",
     "kind": "drop"
    },
@@ -120,8 +120,8 @@
     "kind": "section"
    },
    {
-    "t": 69.03,
-    "bar": 37,
+    "t": 60.16,
+    "bar": 33,
     "label": "magic torus + greeting",
     "kind": "drop"
    },
@@ -132,14 +132,14 @@
     "kind": "section"
    },
    {
-    "t": 83.97,
-    "bar": 45,
+    "t": 75.1,
+    "bar": 41,
     "label": "maps: here",
     "kind": "section"
    },
    {
-    "t": 86.78,
-    "bar": 47,
+    "t": 77.9,
+    "bar": 42,
     "label": "windows fill",
     "kind": "section"
    },
@@ -150,15 +150,21 @@
     "kind": "section"
    },
    {
-    "t": 97.05,
-    "bar": 52,
+    "t": 88.18,
+    "bar": 48,
     "label": "to black",
     "kind": "break"
    },
    {
-    "t": 98.92,
-    "bar": 53,
+    "t": 90.04,
+    "bar": 49,
     "label": "TBD graphic",
+    "kind": "section"
+   },
+   {
+    "t": 97.75,
+    "bar": 53,
+    "label": "photo booth",
     "kind": "section"
    },
    {
@@ -168,15 +174,27 @@
     "kind": "section"
    },
    {
-    "t": 106.85,
-    "bar": 58,
-    "label": "photo booth",
+    "t": 103.35,
+    "bar": 56,
+    "label": "photo wall",
     "kind": "section"
    },
    {
-    "t": 113.86,
-    "bar": 61,
-    "label": "photo wall",
+    "t": 109.19,
+    "bar": 59,
+    "label": "pixelface strobe",
+    "kind": "section"
+   },
+   {
+    "t": 111.06,
+    "bar": 60,
+    "label": "the horse",
+    "kind": "drop"
+   },
+   {
+    "t": 116.19,
+    "bar": 63,
+    "label": "torus + lyric clock",
     "kind": "section"
    },
    {
@@ -186,21 +204,21 @@
     "kind": "section"
    },
    {
-    "t": 118.06,
+    "t": 118.99,
     "bar": 64,
-    "label": "pixelface strobe",
+    "label": "video on top",
     "kind": "section"
    },
    {
     "t": 119.93,
     "bar": 65,
-    "label": "the horse",
-    "kind": "drop"
+    "label": "black + video",
+    "kind": "section"
    },
    {
-    "t": 125.06,
-    "bar": 67,
-    "label": "torus + lyric clock",
+    "t": 126.93,
+    "bar": 68,
+    "label": "TBD",
     "kind": "section"
    },
    {
@@ -210,28 +228,16 @@
     "kind": "section"
    },
    {
-    "t": 127.87,
-    "bar": 69,
-    "label": "video on top",
-    "kind": "section"
-   },
-   {
     "t": 128.8,
     "bar": 69,
-    "label": "black + video",
-    "kind": "section"
-   },
-   {
-    "t": 135.8,
-    "bar": 73,
-    "label": "TBD",
-    "kind": "section"
-   },
-   {
-    "t": 138.14,
-    "bar": 74,
     "label": "TBD + spinner",
     "kind": "section"
+   },
+   {
+    "t": 133.0,
+    "bar": 72,
+    "label": "UI spam",
+    "kind": "drop"
    },
    {
     "t": 140.48,
@@ -240,15 +246,21 @@
     "kind": "section"
    },
    {
-    "t": 142.81,
-    "bar": 77,
-    "label": "UI spam",
-    "kind": "drop"
+    "t": 147.94,
+    "bar": 80,
+    "label": "wallpaper glitch",
+    "kind": "section"
    },
    {
     "t": 158.22,
     "bar": 85,
-    "label": "wallpaper glitch",
+    "label": "everything glitches",
+    "kind": "drop"
+   },
+   {
+    "t": 160.55,
+    "bar": 86,
+    "label": "lyrics desktop",
     "kind": "section"
    },
    {
@@ -258,20 +270,8 @@
     "kind": "break"
    },
    {
-    "t": 167.09,
-    "bar": 90,
-    "label": "everything glitches",
-    "kind": "drop"
-   },
-   {
-    "t": 170.82,
-    "bar": 92,
-    "label": "lyrics desktop",
-    "kind": "section"
-   },
-   {
-    "t": 174.09,
-    "bar": 94,
+    "t": 164.75,
+    "bar": 89,
     "label": "the end card",
     "kind": "break"
    }
@@ -287,11 +287,11 @@
     "id": "desk",
     "mode": "solid",
     "hex": "#020AF5",
-    "durationSeconds": 15.409
+    "durationSeconds": 6.537
    }
   },
   {
-   "beat": 33,
+   "beat": 14,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -299,7 +299,7 @@
    }
   },
   {
-   "beat": 38,
+   "beat": 18,
    "type": "openWindow",
    "params": {
     "id": "welcome",
@@ -324,14 +324,14 @@
    }
   },
   {
-   "beat": 53,
+   "beat": 32,
    "type": "closeWindow",
    "params": {
     "id": "welcome"
    }
   },
   {
-   "beat": 53,
+   "beat": 32,
    "type": "systemProbe",
    "params": {
     "id": "probe",
@@ -345,7 +345,7 @@
    }
   },
   {
-   "beat": 63,
+   "beat": 44,
    "type": "openWindow",
    "params": {
     "id": "hy0",
@@ -371,7 +371,7 @@
    }
   },
   {
-   "beat": 64,
+   "beat": 45,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -391,7 +391,7 @@
    }
   },
   {
-   "beat": 65.4,
+   "beat": 46.4,
    "type": "moveWindow",
    "params": {
     "id": "hy0",
@@ -404,7 +404,7 @@
    }
   },
   {
-   "beat": 65.4,
+   "beat": 46.4,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -424,7 +424,7 @@
    }
   },
   {
-   "beat": 67.2,
+   "beat": 48.2,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -444,7 +444,7 @@
    }
   },
   {
-   "beat": 68.4,
+   "beat": 49.4,
    "type": "moveWindow",
    "params": {
     "id": "hy0",
@@ -459,7 +459,7 @@
    }
   },
   {
-   "beat": 68.4,
+   "beat": 49.4,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -479,7 +479,7 @@
    }
   },
   {
-   "beat": 70.4,
+   "beat": 51.4,
    "type": "openWindow",
    "params": {
     "id": "hy0",
@@ -505,7 +505,7 @@
    }
   },
   {
-   "beat": 70.6,
+   "beat": 51.6,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -525,7 +525,7 @@
    }
   },
   {
-   "beat": 72.0,
+   "beat": 53.0,
    "type": "openWindow",
    "params": {
     "id": "hy0",
@@ -551,7 +551,7 @@
    }
   },
   {
-   "beat": 72.0,
+   "beat": 53.0,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -559,7 +559,7 @@
    }
   },
   {
-   "beat": 74.0,
+   "beat": 55.0,
    "type": "openWindow",
    "params": {
     "id": "hy1",
@@ -585,7 +585,7 @@
    }
   },
   {
-   "beat": 76.0,
+   "beat": 57.0,
    "type": "openWindow",
    "params": {
     "id": "hy2",
@@ -611,35 +611,35 @@
    }
   },
   {
-   "beat": 80.8,
+   "beat": 60.8,
    "type": "closeWindow",
    "params": {
     "id": "hy0"
    }
   },
   {
-   "beat": 80.8,
+   "beat": 60.8,
    "type": "closeWindow",
    "params": {
     "id": "hy1"
    }
   },
   {
-   "beat": 80.8,
+   "beat": 60.8,
    "type": "closeWindow",
    "params": {
     "id": "hy2"
    }
   },
   {
-   "beat": 80.8,
+   "beat": 60.8,
    "type": "closeWindow",
    "params": {
     "id": "probe"
    }
   },
   {
-   "beat": 81,
+   "beat": 61,
    "type": "deskWallpaper",
    "params": {
     "id": "desk2",
@@ -648,7 +648,7 @@
    }
   },
   {
-   "beat": 81,
+   "beat": 61,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -656,7 +656,7 @@
    }
   },
   {
-   "beat": 83,
+   "beat": 64,
    "type": "deskWallpaper",
    "params": {
     "id": "face",
@@ -668,7 +668,7 @@
    }
   },
   {
-   "beat": 84,
+   "beat": 64,
    "type": "openWindow",
    "params": {
     "id": "traveller",
@@ -691,7 +691,7 @@
    }
   },
   {
-   "beat": 84,
+   "beat": 64,
    "type": "moveWindow",
    "params": {
     "id": "traveller",
@@ -704,7 +704,57 @@
    }
   },
   {
-   "beat": 84.438,
+   "beat": 64,
+   "type": "openWindow",
+   "params": {
+    "id": "sp0",
+    "frame": [
+     0,
+     -144,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "what I want",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 64,
+   "type": "openWindow",
+   "params": {
+    "id": "sp1",
+    "frame": [
+     105,
+     -142,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I told you that I",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 64.438,
    "type": "openWindow",
    "params": {
     "id": "tr0",
@@ -726,7 +776,7 @@
    }
   },
   {
-   "beat": 84.875,
+   "beat": 64.875,
    "type": "openWindow",
    "params": {
     "id": "tr1",
@@ -748,7 +798,7 @@
    }
   },
   {
-   "beat": 85.312,
+   "beat": 65.312,
    "type": "openWindow",
    "params": {
     "id": "tr2",
@@ -770,7 +820,7 @@
    }
   },
   {
-   "beat": 85.75,
+   "beat": 65.75,
    "type": "moveWindow",
    "params": {
     "id": "traveller",
@@ -783,7 +833,32 @@
    }
   },
   {
-   "beat": 86.188,
+   "beat": 65.858,
+   "type": "openWindow",
+   "params": {
+    "id": "sp2",
+    "frame": [
+     205,
+     -96,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 66.188,
    "type": "openWindow",
    "params": {
     "id": "tr3",
@@ -805,7 +880,7 @@
    }
   },
   {
-   "beat": 86.625,
+   "beat": 66.625,
    "type": "openWindow",
    "params": {
     "id": "tr4",
@@ -827,7 +902,7 @@
    }
   },
   {
-   "beat": 87.062,
+   "beat": 67.062,
    "type": "openWindow",
    "params": {
     "id": "tr5",
@@ -849,7 +924,32 @@
    }
   },
   {
-   "beat": 87.5,
+   "beat": 67.358,
+   "type": "openWindow",
+   "params": {
+    "id": "sp3",
+    "frame": [
+     267,
+     -12,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "so give it to me",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 67.5,
    "type": "moveWindow",
    "params": {
     "id": "traveller",
@@ -862,7 +962,7 @@
    }
   },
   {
-   "beat": 87.938,
+   "beat": 67.938,
    "type": "openWindow",
    "params": {
     "id": "tr6",
@@ -884,7 +984,7 @@
    }
   },
   {
-   "beat": 88.375,
+   "beat": 68.375,
    "type": "openWindow",
    "params": {
     "id": "tr7",
@@ -906,7 +1006,7 @@
    }
   },
   {
-   "beat": 88.812,
+   "beat": 68.812,
    "type": "openWindow",
    "params": {
     "id": "tr8",
@@ -928,115 +1028,50 @@
    }
   },
   {
-   "beat": 91.0,
-   "type": "openWindow",
+   "beat": 69.25,
+   "type": "moveWindow",
    "params": {
-    "id": "sp0",
+    "id": "traveller",
     "frame": [
-     0,
-     -144,
-     216,
-     99
+     576,
+     648
     ],
-    "content": {
-     "kind": "lyric",
-     "text": "what I want",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
+    "durationBeats": 1.75,
+    "easing": "easeInOut"
    }
   },
   {
-   "beat": 92.324,
+   "beat": 69.688,
    "type": "openWindow",
    "params": {
-    "id": "sp1",
+    "id": "tr9",
     "frame": [
-     99,
-     -143,
-     216,
-     99
+     576,
+     91,
+     179,
+     109
     ],
     "content": {
-     "kind": "lyric",
-     "text": "I told you that I",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "\u2026"
     },
     "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
+     "kind": "none"
+    }
    }
   },
   {
-   "beat": 93.647,
-   "type": "openWindow",
-   "params": {
-    "id": "sp2",
-    "frame": [
-     194,
-     -104,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "need your love",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 94.971,
-   "type": "openWindow",
-   "params": {
-    "id": "sp3",
-    "frame": [
-     260,
-     -30,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 96.294,
+   "beat": 69.858,
    "type": "openWindow",
    "params": {
     "id": "sp4",
     "frame": [
-     272,
-     65,
-     216,
-     99
+     264,
+     92,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
@@ -1053,15 +1088,59 @@
    }
   },
   {
-   "beat": 97.618,
+   "beat": 70.125,
+   "type": "openWindow",
+   "params": {
+    "id": "tr10",
+    "frame": [
+     639,
+     351,
+     179,
+     109
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "\u2026"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 70.562,
+   "type": "openWindow",
+   "params": {
+    "id": "tr11",
+    "frame": [
+     513,
+     611,
+     179,
+     109
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "\u2026"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 71.858,
    "type": "openWindow",
    "params": {
     "id": "sp5",
     "frame": [
-     218,
-     161,
-     216,
-     99
+     186,
+     189,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
@@ -1078,19 +1157,19 @@
    }
   },
   {
-   "beat": 98.941,
+   "beat": 72.858,
    "type": "openWindow",
    "params": {
     "id": "sp6",
     "frame": [
-     102,
-     233,
-     216,
-     99
+     43,
+     250,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
-     "text": "I can\u2019t",
+     "text": "I can\u2019t get enough",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -1103,7 +1182,82 @@
    }
   },
   {
-   "beat": 100,
+   "beat": 75.358,
+   "type": "openWindow",
+   "params": {
+    "id": "sp7",
+    "frame": [
+     -134,
+     251,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "of this feeling baby",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 77.858,
+   "type": "openWindow",
+   "params": {
+    "id": "sp8",
+    "frame": [
+     -300,
+     184,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "all I got",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 79.358,
+   "type": "openWindow",
+   "params": {
+    "id": "sp9",
+    "frame": [
+     -406,
+     57,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I\u2019m giving that",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 81,
    "type": "openWindow",
    "params": {
     "id": "video",
@@ -1129,121 +1283,21 @@
    }
   },
   {
-   "beat": 100.265,
-   "type": "openWindow",
-   "params": {
-    "id": "sp7",
-    "frame": [
-     -55,
-     259,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "get enough",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 101.588,
-   "type": "openWindow",
-   "params": {
-    "id": "sp8",
-    "frame": [
-     -221,
-     226,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "of this feeling baby",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 102.912,
-   "type": "openWindow",
-   "params": {
-    "id": "sp9",
-    "frame": [
-     -356,
-     134,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "all I got",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 104.235,
+   "beat": 81.358,
    "type": "openWindow",
    "params": {
     "id": "sp10",
     "frame": [
-     -422,
-     0,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "I\u2019m giving that",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 105.559,
-   "type": "openWindow",
-   "params": {
-    "id": "sp11",
-    "frame": [
-     -396,
-     -150,
-     216,
-     99
+     -416,
+     -100,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
      "text": "so give it up",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -1254,19 +1308,44 @@
    }
   },
   {
-   "beat": 106.882,
+   "beat": 83.358,
    "type": "openWindow",
    "params": {
-    "id": "sp12",
+    "id": "sp11",
     "frame": [
-     -275,
-     -280,
-     216,
-     99
+     -316,
+     -249,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
      "text": "I told you that I",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 85.858,
+   "type": "openWindow",
+   "params": {
+    "id": "sp12",
+    "frame": [
+     -121,
+     -349,
+     346,
+     144
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -1279,19 +1358,19 @@
    }
   },
   {
-   "beat": 108.206,
+   "beat": 87.358,
    "type": "openWindow",
    "params": {
     "id": "sp13",
     "frame": [
-     -77,
-     -359,
-     216,
-     99
+     127,
+     -366,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -1304,19 +1383,19 @@
    }
   },
   {
-   "beat": 109.529,
+   "beat": 89.858,
    "type": "openWindow",
    "params": {
     "id": "sp14",
     "frame": [
-     159,
-     -362,
-     216,
-     99
+     366,
+     -289,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
-     "text": "so give it to me",
+     "text": "need your love",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -1329,19 +1408,19 @@
    }
   },
   {
-   "beat": 110.853,
+   "beat": 91.358,
    "type": "openWindow",
    "params": {
     "id": "sp15",
     "frame": [
-     379,
-     -281,
-     216,
-     99
+     532,
+     -128,
+     346,
+     144
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -1354,227 +1433,216 @@
    }
   },
   {
-   "beat": 112.176,
-   "type": "openWindow",
-   "params": {
-    "id": "sp16",
-    "frame": [
-     532,
-     -128,
-     216,
-     99
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp0"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp1"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp2"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp3"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp4"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp5"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp6"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp7"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp8"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp9"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp10"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp11"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp12"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp13"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp14"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "sp15"
    }
   },
   {
-   "beat": 114.6,
-   "type": "closeWindow",
-   "params": {
-    "id": "sp16"
-   }
-  },
-  {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr0"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr1"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr2"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr3"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr4"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr5"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr6"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr7"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "tr8"
    }
   },
   {
-   "beat": 114.6,
+   "beat": 93.516,
+   "type": "closeWindow",
+   "params": {
+    "id": "tr9"
+   }
+  },
+  {
+   "beat": 93.516,
+   "type": "closeWindow",
+   "params": {
+    "id": "tr10"
+   }
+  },
+  {
+   "beat": 93.516,
+   "type": "closeWindow",
+   "params": {
+    "id": "tr11"
+   }
+  },
+  {
+   "beat": 93.516,
    "type": "closeWindow",
    "params": {
     "id": "traveller"
    }
   },
   {
-   "beat": 115,
+   "t": 44.153,
    "type": "deskWallpaper",
    "params": {
     "id": "words",
     "mode": "slides",
-    "hz": 10,
     "images": [
+     "assets/lyrics_desktops/I.jpg",
      "assets/lyrics_desktops/I.jpg",
      "assets/lyrics_desktops/TOLD.jpg",
      "assets/lyrics_desktops/YOU.jpg",
@@ -1596,17 +1664,90 @@
      "assets/lyrics_desktops/CANT.jpg",
      "assets/lyrics_desktops/GET.jpg",
      "assets/lyrics_desktops/ENOUGH.jpg",
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/THAT.jpg",
+     "assets/lyrics_desktops/SO.jpg",
+     "assets/lyrics_desktops/GIVE.jpg",
+     "assets/lyrics_desktops/IT.jpg",
+     "assets/lyrics_desktops/UP.jpg",
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/TOLD.jpg",
+     "assets/lyrics_desktops/YOU.jpg",
+     "assets/lyrics_desktops/THAT.jpg",
+     "assets/lyrics_desktops/I.jpg",
+     "assets/lyrics_desktops/NEED.jpg",
+     "assets/lyrics_desktops/YOUR.jpg",
+     "assets/lyrics_desktops/LOVE.jpg",
+     "assets/lyrics_desktops/SO.jpg",
+     "assets/lyrics_desktops/GIVE.jpg",
+     "assets/lyrics_desktops/IT.jpg",
+     "assets/lyrics_desktops/2.jpg",
+     "assets/lyrics_desktops/ME.jpg",
+     "assets/lyrics_desktops/NEED.jpg",
+     "assets/lyrics_desktops/YOUR.jpg",
+     "assets/lyrics_desktops/LOVE.jpg",
      "assets/lyrics_desktops/SO.jpg",
      "assets/lyrics_desktops/GIVE.jpg",
      "assets/lyrics_desktops/IT.jpg",
      "assets/lyrics_desktops/2.jpg",
      "assets/lyrics_desktops/ME.jpg"
     ],
-    "durationSeconds": 14.942
+    "at": [
+     0.0,
+     0.467,
+     0.7,
+     0.934,
+     1.167,
+     1.401,
+     1.634,
+     1.868,
+     2.101,
+     2.335,
+     2.568,
+     2.802,
+     3.035,
+     3.268,
+     3.502,
+     3.969,
+     4.436,
+     4.669,
+     4.903,
+     5.136,
+     5.37,
+     5.603,
+     7.471,
+     8.638,
+     8.872,
+     9.105,
+     9.339,
+     9.572,
+     9.805,
+     10.039,
+     10.272,
+     10.506,
+     10.739,
+     10.973,
+     11.16,
+     11.346,
+     11.673,
+     11.907,
+     12.14,
+     12.374,
+     12.607,
+     12.84,
+     13.027,
+     13.214,
+     13.541,
+     13.774,
+     14.008,
+     14.241,
+     14.475
+    ],
+    "durationSeconds": 16.008
    }
   },
   {
-   "beat": 115,
+   "beat": 96,
    "type": "cursorTrail",
    "params": {
     "id": "drag",
@@ -1627,7 +1768,7 @@
    }
   },
   {
-   "beat": 115,
+   "beat": 96,
    "type": "cursorPath",
    "params": {
     "path": "catmullRom",
@@ -1671,21 +1812,21 @@
    }
   },
   {
-   "beat": 146.7,
+   "beat": 127.7,
    "type": "closeWindow",
    "params": {
     "id": "video"
    }
   },
   {
-   "beat": 146.7,
+   "beat": 127.7,
    "type": "closeWindow",
    "params": {
     "id": "drag"
    }
   },
   {
-   "beat": 147,
+   "beat": 128,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1693,7 +1834,7 @@
    }
   },
   {
-   "beat": 147,
+   "beat": 128,
    "type": "glassTorus",
    "params": {
     "id": "torus",
@@ -1703,7 +1844,7 @@
    }
   },
   {
-   "beat": 147.1,
+   "beat": 128.1,
    "type": "deskWallpaper",
    "params": {
     "id": "desk3",
@@ -1712,7 +1853,7 @@
    }
   },
   {
-   "beat": 148,
+   "beat": 129,
    "type": "typeText",
    "params": {
     "id": "greeting",
@@ -1730,7 +1871,7 @@
    }
   },
   {
-   "beat": 160.364,
+   "beat": 141.364,
    "type": "oracle",
    "params": {
     "id": "oracle",
@@ -1747,28 +1888,28 @@
    }
   },
   {
-   "beat": 178.7,
+   "beat": 159.7,
    "type": "closeWindow",
    "params": {
     "id": "torus"
    }
   },
   {
-   "beat": 178.7,
+   "beat": 159.7,
    "type": "closeWindow",
    "params": {
     "id": "greeting"
    }
   },
   {
-   "beat": 178.7,
+   "beat": 159.7,
    "type": "closeWindow",
    "params": {
     "id": "oracle"
    }
   },
   {
-   "beat": 179,
+   "beat": 160,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -1776,7 +1917,7 @@
    }
   },
   {
-   "beat": 179,
+   "beat": 160,
    "type": "openWindow",
    "params": {
     "id": "map0",
@@ -1812,7 +1953,7 @@
    }
   },
   {
-   "beat": 185,
+   "beat": 166,
    "type": "openWindow",
    "params": {
     "id": "fw0",
@@ -1835,7 +1976,7 @@
    }
   },
   {
-   "beat": 189.25,
+   "beat": 170.25,
    "type": "fakeDialog",
    "params": {
     "id": "fw1",
@@ -1855,7 +1996,7 @@
    }
   },
   {
-   "beat": 192.104,
+   "beat": 173.104,
    "type": "openWindow",
    "params": {
     "id": "fw2",
@@ -1878,7 +2019,7 @@
    }
   },
   {
-   "beat": 194.188,
+   "beat": 175.188,
    "type": "fakeDialog",
    "params": {
     "id": "fw3",
@@ -1897,7 +2038,7 @@
    }
   },
   {
-   "beat": 195.794,
+   "beat": 176.794,
    "type": "openWindow",
    "params": {
     "id": "fw4",
@@ -1920,7 +2061,7 @@
    }
   },
   {
-   "beat": 197.082,
+   "beat": 178.082,
    "type": "openWindow",
    "params": {
     "id": "fw5",
@@ -1943,7 +2084,7 @@
    }
   },
   {
-   "beat": 198.145,
+   "beat": 179.145,
    "type": "fakeDialog",
    "params": {
     "id": "fw6",
@@ -1963,7 +2104,7 @@
    }
   },
   {
-   "beat": 199.043,
+   "beat": 180.043,
    "type": "openWindow",
    "params": {
     "id": "fw7",
@@ -1986,7 +2127,7 @@
    }
   },
   {
-   "beat": 199.816,
+   "beat": 180.816,
    "type": "openWindow",
    "params": {
     "id": "fw8",
@@ -2009,7 +2150,7 @@
    }
   },
   {
-   "beat": 200.493,
+   "beat": 181.493,
    "type": "fakeDialog",
    "params": {
     "id": "fw9",
@@ -2029,7 +2170,7 @@
    }
   },
   {
-   "beat": 201.093,
+   "beat": 182.093,
    "type": "openWindow",
    "params": {
     "id": "fw10",
@@ -2052,7 +2193,7 @@
    }
   },
   {
-   "beat": 201.631,
+   "beat": 182.631,
    "type": "openWindow",
    "params": {
     "id": "fw11",
@@ -2075,7 +2216,7 @@
    }
   },
   {
-   "beat": 202.119,
+   "beat": 183.119,
    "type": "openWindow",
    "params": {
     "id": "fw12",
@@ -2098,7 +2239,7 @@
    }
   },
   {
-   "beat": 202.566,
+   "beat": 183.566,
    "type": "openWindow",
    "params": {
     "id": "fw13",
@@ -2121,7 +2262,7 @@
    }
   },
   {
-   "beat": 202.979,
+   "beat": 183.979,
    "type": "openWindow",
    "params": {
     "id": "fw14",
@@ -2144,7 +2285,7 @@
    }
   },
   {
-   "beat": 203.362,
+   "beat": 184.362,
    "type": "openWindow",
    "params": {
     "id": "fw15",
@@ -2167,7 +2308,7 @@
    }
   },
   {
-   "beat": 203.722,
+   "beat": 184.722,
    "type": "openWindow",
    "params": {
     "id": "fw16",
@@ -2190,7 +2331,7 @@
    }
   },
   {
-   "beat": 204.061,
+   "beat": 185.061,
    "type": "openWindow",
    "params": {
     "id": "fw17",
@@ -2213,7 +2354,7 @@
    }
   },
   {
-   "beat": 204.382,
+   "beat": 185.382,
    "type": "openWindow",
    "params": {
     "id": "fw18",
@@ -2236,7 +2377,7 @@
    }
   },
   {
-   "beat": 204.689,
+   "beat": 185.689,
    "type": "fakeDialog",
    "params": {
     "id": "fw19",
@@ -2256,7 +2397,7 @@
    }
   },
   {
-   "beat": 204.983,
+   "beat": 185.983,
    "type": "openWindow",
    "params": {
     "id": "fw20",
@@ -2279,7 +2420,7 @@
    }
   },
   {
-   "beat": 205.266,
+   "beat": 186.266,
    "type": "openWindow",
    "params": {
     "id": "fw21",
@@ -2302,7 +2443,7 @@
    }
   },
   {
-   "beat": 205.541,
+   "beat": 186.541,
    "type": "openWindow",
    "params": {
     "id": "fw22",
@@ -2325,7 +2466,7 @@
    }
   },
   {
-   "beat": 205.809,
+   "beat": 186.809,
    "type": "openWindow",
    "params": {
     "id": "fw23",
@@ -2348,7 +2489,7 @@
    }
   },
   {
-   "beat": 206.071,
+   "beat": 187.071,
    "type": "openWindow",
    "params": {
     "id": "fw24",
@@ -2371,7 +2512,7 @@
    }
   },
   {
-   "beat": 206.328,
+   "beat": 187.328,
    "type": "openWindow",
    "params": {
     "id": "fw25",
@@ -2394,7 +2535,7 @@
    }
   },
   {
-   "beat": 207,
+   "beat": 188,
    "type": "deskWallpaper",
    "params": {
     "id": "dark",
@@ -2403,7 +2544,7 @@
    }
   },
   {
-   "beat": 207,
+   "beat": 188,
    "type": "screenFlash",
    "params": {
     "color": "#000000",
@@ -2411,196 +2552,196 @@
    }
   },
   {
-   "beat": 207.2,
+   "beat": 188.2,
    "type": "closeWindow",
    "params": {
     "id": "map0"
    }
   },
   {
-   "beat": 207.2,
+   "beat": 188.2,
    "type": "closeWindow",
    "params": {
     "id": "fw0"
    }
   },
   {
-   "beat": 207.344,
+   "beat": 188.344,
    "type": "closeWindow",
    "params": {
     "id": "fw1"
    }
   },
   {
-   "beat": 207.488,
+   "beat": 188.488,
    "type": "closeWindow",
    "params": {
     "id": "fw2"
    }
   },
   {
-   "beat": 207.632,
+   "beat": 188.632,
    "type": "closeWindow",
    "params": {
     "id": "fw3"
    }
   },
   {
-   "beat": 207.776,
+   "beat": 188.776,
    "type": "closeWindow",
    "params": {
     "id": "fw4"
    }
   },
   {
-   "beat": 207.92,
+   "beat": 188.92,
    "type": "closeWindow",
    "params": {
     "id": "fw5"
    }
   },
   {
-   "beat": 208.064,
+   "beat": 189.064,
    "type": "closeWindow",
    "params": {
     "id": "fw6"
    }
   },
   {
-   "beat": 208.208,
+   "beat": 189.208,
    "type": "closeWindow",
    "params": {
     "id": "fw7"
    }
   },
   {
-   "beat": 208.352,
+   "beat": 189.352,
    "type": "closeWindow",
    "params": {
     "id": "fw8"
    }
   },
   {
-   "beat": 208.496,
+   "beat": 189.496,
    "type": "closeWindow",
    "params": {
     "id": "fw9"
    }
   },
   {
-   "beat": 208.64,
+   "beat": 189.64,
    "type": "closeWindow",
    "params": {
     "id": "fw10"
    }
   },
   {
-   "beat": 208.784,
+   "beat": 189.784,
    "type": "closeWindow",
    "params": {
     "id": "fw11"
    }
   },
   {
-   "beat": 208.928,
+   "beat": 189.928,
    "type": "closeWindow",
    "params": {
     "id": "fw12"
    }
   },
   {
-   "beat": 209.072,
+   "beat": 190.072,
    "type": "closeWindow",
    "params": {
     "id": "fw13"
    }
   },
   {
-   "beat": 209.216,
+   "beat": 190.216,
    "type": "closeWindow",
    "params": {
     "id": "fw14"
    }
   },
   {
-   "beat": 209.36,
+   "beat": 190.36,
    "type": "closeWindow",
    "params": {
     "id": "fw15"
    }
   },
   {
-   "beat": 209.504,
+   "beat": 190.504,
    "type": "closeWindow",
    "params": {
     "id": "fw16"
    }
   },
   {
-   "beat": 209.648,
+   "beat": 190.648,
    "type": "closeWindow",
    "params": {
     "id": "fw17"
    }
   },
   {
-   "beat": 209.792,
+   "beat": 190.792,
    "type": "closeWindow",
    "params": {
     "id": "fw18"
    }
   },
   {
-   "beat": 209.936,
+   "beat": 190.936,
    "type": "closeWindow",
    "params": {
     "id": "fw19"
    }
   },
   {
-   "beat": 210.08,
+   "beat": 191.08,
    "type": "closeWindow",
    "params": {
     "id": "fw20"
    }
   },
   {
-   "beat": 210.224,
+   "beat": 191.224,
    "type": "closeWindow",
    "params": {
     "id": "fw21"
    }
   },
   {
-   "beat": 210.368,
+   "beat": 191.368,
    "type": "closeWindow",
    "params": {
     "id": "fw22"
    }
   },
   {
-   "beat": 210.512,
+   "beat": 191.512,
    "type": "closeWindow",
    "params": {
     "id": "fw23"
    }
   },
   {
-   "beat": 210.656,
+   "beat": 191.656,
    "type": "closeWindow",
    "params": {
     "id": "fw24"
    }
   },
   {
-   "beat": 210.8,
+   "beat": 191.8,
    "type": "closeWindow",
    "params": {
     "id": "fw25"
    }
   },
   {
-   "beat": 211,
+   "beat": 192,
    "type": "openWindow",
    "params": {
     "id": "tbd1",
@@ -2612,7 +2753,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ cool graphic ]\n\nTBD \u2014 f 2967 \u2192 f 3205",
+     "text": "[ cool graphic ]\n\nTBD \u2014 f 2701 \u2192 f 2932",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,
@@ -2626,14 +2767,14 @@
    }
   },
   {
-   "beat": 227.7,
+   "beat": 208.2,
    "type": "closeWindow",
    "params": {
     "id": "tbd1"
    }
   },
   {
-   "beat": 228,
+   "beat": 208.5,
    "type": "photoBooth",
    "params": {
     "id": "booth",
@@ -2643,13 +2784,13 @@
      749,
      584
     ],
-    "durationBeats": 15,
+    "durationBeats": 12.0,
     "count": 3,
     "stepBeats": 4
    }
   },
   {
-   "beat": 242.88,
+   "beat": 220.38,
    "type": "screenFlash",
    "params": {
     "color": "#FFFFFF",
@@ -2657,7 +2798,7 @@
    }
   },
   {
-   "beat": 243.25,
+   "beat": 220.75,
    "type": "photoWall",
    "params": {
     "id": "wall",
@@ -2669,7 +2810,7 @@
    }
   },
   {
-   "beat": 252,
+   "beat": 233,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2690,7 +2831,7 @@
    }
   },
   {
-   "beat": 252.178,
+   "beat": 233.178,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2711,7 +2852,7 @@
    }
   },
   {
-   "beat": 252.357,
+   "beat": 233.357,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2732,7 +2873,7 @@
    }
   },
   {
-   "beat": 252.535,
+   "beat": 233.535,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2753,7 +2894,7 @@
    }
   },
   {
-   "beat": 252.714,
+   "beat": 233.714,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2774,7 +2915,7 @@
    }
   },
   {
-   "beat": 252.892,
+   "beat": 233.892,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2795,7 +2936,7 @@
    }
   },
   {
-   "beat": 253.071,
+   "beat": 234.071,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2816,7 +2957,7 @@
    }
   },
   {
-   "beat": 253.249,
+   "beat": 234.249,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2837,7 +2978,7 @@
    }
   },
   {
-   "beat": 253.428,
+   "beat": 234.428,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2858,7 +2999,7 @@
    }
   },
   {
-   "beat": 253.606,
+   "beat": 234.606,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2879,7 +3020,7 @@
    }
   },
   {
-   "beat": 253.785,
+   "beat": 234.785,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2900,7 +3041,7 @@
    }
   },
   {
-   "beat": 253.963,
+   "beat": 234.963,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2921,7 +3062,7 @@
    }
   },
   {
-   "beat": 254.142,
+   "beat": 235.142,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2942,7 +3083,7 @@
    }
   },
   {
-   "beat": 254.32,
+   "beat": 235.32,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2963,7 +3104,7 @@
    }
   },
   {
-   "beat": 254.499,
+   "beat": 235.499,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -2984,7 +3125,7 @@
    }
   },
   {
-   "beat": 254.677,
+   "beat": 235.677,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3005,7 +3146,7 @@
    }
   },
   {
-   "beat": 254.856,
+   "beat": 235.856,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3026,7 +3167,7 @@
    }
   },
   {
-   "beat": 255.034,
+   "beat": 236.034,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3047,7 +3188,7 @@
    }
   },
   {
-   "beat": 255.212,
+   "beat": 236.212,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3068,7 +3209,7 @@
    }
   },
   {
-   "beat": 255.391,
+   "beat": 236.391,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3089,7 +3230,7 @@
    }
   },
   {
-   "beat": 255.569,
+   "beat": 236.569,
    "type": "openWindow",
    "params": {
     "id": "faceflash",
@@ -3110,28 +3251,28 @@
    }
   },
   {
-   "beat": 255.7,
+   "beat": 236.7,
    "type": "closeWindow",
    "params": {
     "id": "faceflash"
    }
   },
   {
-   "beat": 255.8,
+   "beat": 236.8,
    "type": "closeWindow",
    "params": {
     "id": "wall"
    }
   },
   {
-   "beat": 255.8,
+   "beat": 236.8,
    "type": "closeWindow",
    "params": {
     "id": "booth"
    }
   },
   {
-   "beat": 256,
+   "beat": 237,
    "type": "deskWallpaper",
    "params": {
     "id": "desk4",
@@ -3140,7 +3281,7 @@
    }
   },
   {
-   "beat": 256,
+   "beat": 237,
    "type": "sprite",
    "params": {
     "id": "horse",
@@ -3356,14 +3497,14 @@
    }
   },
   {
-   "beat": 267,
+   "beat": 248,
    "type": "closeWindow",
    "params": {
     "id": "horse"
    }
   },
   {
-   "beat": 267,
+   "beat": 248,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -3371,7 +3512,7 @@
    }
   },
   {
-   "beat": 267,
+   "beat": 248,
    "type": "glassTorus",
    "params": {
     "id": "torus",
@@ -3381,7 +3522,7 @@
    }
   },
   {
-   "beat": 267.3,
+   "beat": 248.3,
    "type": "openWindow",
    "params": {
     "id": "ck0",
@@ -3406,13 +3547,13 @@
    }
   },
   {
-   "beat": 267.624,
+   "beat": 248.644,
    "type": "openWindow",
    "params": {
     "id": "ck1",
     "frame": [
-     187,
-     -336,
+     198,
+     -333,
      230,
      108
     ],
@@ -3431,13 +3572,13 @@
    }
   },
   {
-   "beat": 267.947,
+   "beat": 248.988,
    "type": "openWindow",
    "params": {
     "id": "ck2",
     "frame": [
-     349,
-     -266,
+     367,
+     -255,
      230,
      108
     ],
@@ -3456,13 +3597,13 @@
    }
   },
   {
-   "beat": 268.271,
+   "beat": 249.331,
    "type": "openWindow",
    "params": {
     "id": "ck3",
     "frame": [
-     464,
-     -160,
+     479,
+     -138,
      230,
      108
     ],
@@ -3481,13 +3622,13 @@
    }
   },
   {
-   "beat": 268.594,
+   "beat": 249.675,
    "type": "openWindow",
    "params": {
     "id": "ck4",
     "frame": [
-     516,
-     -33,
+     518,
+     0,
      230,
      108
     ],
@@ -3506,13 +3647,13 @@
    }
   },
   {
-   "beat": 268.918,
+   "beat": 250.019,
    "type": "openWindow",
    "params": {
     "id": "ck5",
     "frame": [
-     499,
-     99,
+     479,
+     138,
      230,
      108
     ],
@@ -3531,19 +3672,19 @@
    }
   },
   {
-   "beat": 269.241,
+   "beat": 250.363,
    "type": "openWindow",
    "params": {
     "id": "ck6",
     "frame": [
-     414,
-     217,
+     367,
+     255,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "I can\u2019t",
+     "text": "I can\u2019t get enough",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -3556,46 +3697,21 @@
    }
   },
   {
-   "beat": 269.565,
+   "beat": 250.706,
    "type": "openWindow",
    "params": {
     "id": "ck7",
     "frame": [
-     273,
-     306,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "get enough",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 269.888,
-   "type": "openWindow",
-   "params": {
-    "id": "ck8",
-    "frame": [
-     95,
-     354,
+     198,
+     333,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "of this feeling baby",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -3606,21 +3722,21 @@
    }
   },
   {
-   "beat": 270.212,
+   "beat": 251.05,
    "type": "openWindow",
    "params": {
-    "id": "ck9",
+    "id": "ck8",
     "frame": [
-     -95,
-     354,
+     0,
+     360,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "all I got",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -3631,21 +3747,21 @@
    }
   },
   {
-   "beat": 270.535,
+   "beat": 251.394,
    "type": "openWindow",
    "params": {
-    "id": "ck10",
+    "id": "ck9",
     "frame": [
-     -273,
-     306,
+     -198,
+     333,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "I\u2019m giving that",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -3656,21 +3772,21 @@
    }
   },
   {
-   "beat": 270.859,
+   "beat": 251.738,
    "type": "openWindow",
    "params": {
-    "id": "ck11",
+    "id": "ck10",
     "frame": [
-     -414,
-     217,
+     -367,
+     255,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "so give it up",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
     },
@@ -3681,19 +3797,44 @@
    }
   },
   {
-   "beat": 271.182,
+   "beat": 252.081,
    "type": "openWindow",
    "params": {
-    "id": "ck12",
+    "id": "ck11",
     "frame": [
-     -499,
-     99,
+     -479,
+     138,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
      "text": "I told you that I",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "anchor": "center"
+   }
+  },
+  {
+   "beat": 252.425,
+   "type": "openWindow",
+   "params": {
+    "id": "ck12",
+    "frame": [
+     -518,
+     0,
+     230,
+     108
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -3706,19 +3847,19 @@
    }
   },
   {
-   "beat": 271.506,
+   "beat": 252.769,
    "type": "openWindow",
    "params": {
     "id": "ck13",
     "frame": [
-     -516,
-     -33,
+     -479,
+     -138,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -3731,19 +3872,19 @@
    }
   },
   {
-   "beat": 271.829,
+   "beat": 253.113,
    "type": "openWindow",
    "params": {
     "id": "ck14",
     "frame": [
-     -464,
-     -160,
+     -367,
+     -255,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "so give it to me",
+     "text": "need your love",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -3756,19 +3897,19 @@
    }
   },
   {
-   "beat": 272.153,
+   "beat": 253.456,
    "type": "openWindow",
    "params": {
     "id": "ck15",
     "frame": [
-     -349,
-     -266,
+     -198,
+     -333,
      230,
      108
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -3781,32 +3922,7 @@
    }
   },
   {
-   "beat": 272.476,
-   "type": "openWindow",
-   "params": {
-    "id": "ck16",
-    "frame": [
-     -187,
-     -336,
-     230,
-     108
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "anchor": "center"
-   }
-  },
-  {
-   "beat": 273,
+   "beat": 254,
    "type": "openWindow",
    "params": {
     "id": "video",
@@ -3832,133 +3948,126 @@
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck0"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck1"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck2"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck3"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck4"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck5"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck6"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck7"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck8"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck9"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck10"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck11"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck12"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck13"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck14"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "ck15"
    }
   },
   {
-   "beat": 275,
-   "type": "closeWindow",
-   "params": {
-    "id": "ck16"
-   }
-  },
-  {
-   "beat": 275,
+   "beat": 256,
    "type": "closeWindow",
    "params": {
     "id": "torus"
    }
   },
   {
-   "beat": 275,
+   "beat": 256,
    "type": "openWindow",
    "params": {
     "id": "void",
@@ -3979,7 +4088,7 @@
    }
   },
   {
-   "beat": 275.1,
+   "beat": 256.1,
    "type": "openWindow",
    "params": {
     "id": "video",
@@ -4005,21 +4114,21 @@
    }
   },
   {
-   "beat": 290,
+   "beat": 271,
    "type": "closeWindow",
    "params": {
     "id": "void"
    }
   },
   {
-   "beat": 290,
+   "beat": 271,
    "type": "closeWindow",
    "params": {
     "id": "video"
    }
   },
   {
-   "beat": 290,
+   "beat": 271,
    "type": "openWindow",
    "params": {
     "id": "tbd2",
@@ -4031,7 +4140,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ ??? ]\n\nTBD \u2014 f 4074 \u2192 f 4144",
+     "text": "[ ??? ]\n\nTBD \u2014 f 3807 \u2192 f 3863",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,
@@ -4045,14 +4154,14 @@
    }
   },
   {
-   "beat": 294.8,
+   "beat": 274.8,
    "type": "closeWindow",
    "params": {
     "id": "tbd2"
    }
   },
   {
-   "beat": 295,
+   "beat": 275,
    "type": "openWindow",
    "params": {
     "id": "tbd3",
@@ -4064,7 +4173,7 @@
     ],
     "content": {
      "kind": "text",
-     "text": "[ ??? ]  +  mouse spinner\n\nTBD \u2014 f 4144 \u2192 f 4284\nthe spinner needs a new event",
+     "text": "[ ??? ]  +  mouse spinner\n\nTBD \u2014 f 3863 \u2192 f 3990\nthe spinner needs a new event",
      "hex": "#000000",
      "fg": "#F2F4FE",
      "fontSize": 26,
@@ -4078,14 +4187,14 @@
    }
   },
   {
-   "beat": 304.8,
+   "beat": 283.8,
    "type": "closeWindow",
    "params": {
     "id": "tbd3"
    }
   },
   {
-   "beat": 305,
+   "beat": 284,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -4093,7 +4202,7 @@
    }
   },
   {
-   "beat": 305,
+   "beat": 284,
    "type": "openWindow",
    "params": {
     "id": "w0",
@@ -4117,7 +4226,15 @@
    }
   },
   {
-   "beat": 305.23,
+   "t": 133.019,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 284.23,
    "type": "openWindow",
    "params": {
     "id": "w1",
@@ -4140,15 +4257,7 @@
    }
   },
   {
-   "t": 142.948,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 305.414,
+   "beat": 284.414,
    "type": "openWindow",
    "params": {
     "id": "w2",
@@ -4171,7 +4280,7 @@
    }
   },
   {
-   "beat": 305.622,
+   "beat": 284.622,
    "type": "openWindow",
    "params": {
     "id": "w3",
@@ -4195,7 +4304,15 @@
    }
   },
   {
-   "beat": 305.881,
+   "t": 133.362,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 284.881,
    "type": "openWindow",
    "params": {
     "id": "w4",
@@ -4218,7 +4335,7 @@
    }
   },
   {
-   "beat": 306.149,
+   "beat": 285.149,
    "type": "jiggle",
    "params": {
     "id": "w4",
@@ -4228,15 +4345,7 @@
    }
   },
   {
-   "t": 143.405,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 306.378,
+   "beat": 285.378,
    "type": "openWindow",
    "params": {
     "id": "w5",
@@ -4259,7 +4368,15 @@
    }
   },
   {
-   "beat": 306.662,
+   "t": 133.715,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 285.662,
    "type": "fakeDialog",
    "params": {
     "id": "d0",
@@ -4271,19 +4388,19 @@
     "icon": "critical",
     "frame": [
      988,
-     293,
+     292,
      460,
      190
     ]
    }
   },
   {
-   "beat": 306.86,
+   "beat": 285.86,
    "type": "openWindow",
    "params": {
     "id": "w6",
     "frame": [
-     995,
+     996,
      415,
      386,
      305
@@ -4302,23 +4419,15 @@
    }
   },
   {
-   "t": 143.745,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 307.167,
+   "beat": 286.167,
    "type": "openWindow",
    "params": {
     "id": "w7",
     "frame": [
-     387,
+     386,
      10,
-     375,
-     279
+     376,
+     280
     ],
     "content": {
      "kind": "lyric",
@@ -4334,7 +4443,7 @@
    }
   },
   {
-   "beat": 307.468,
+   "beat": 286.468,
    "type": "fakeDialog",
    "params": {
     "id": "d1",
@@ -4354,12 +4463,20 @@
    }
   },
   {
-   "beat": 307.74,
+   "t": 134.164,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 286.74,
    "type": "openWindow",
    "params": {
     "id": "w8",
     "frame": [
-     837,
+     838,
      10,
      329,
      229
@@ -4377,22 +4494,14 @@
    }
   },
   {
-   "t": 144.096,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 308.056,
+   "beat": 287.056,
    "type": "openWindow",
    "params": {
     "id": "w9",
     "frame": [
-     193,
+     192,
      42,
-     363,
+     364,
      238
     ],
     "content": {
@@ -4408,7 +4517,15 @@
    }
   },
   {
-   "beat": 308.368,
+   "t": 134.516,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 287.368,
    "type": "openWindow",
    "params": {
     "id": "w10",
@@ -4431,23 +4548,15 @@
    }
   },
   {
-   "t": 144.445,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 308.585,
+   "beat": 287.585,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
-     208,
-     531,
-     428,
-     359
+     207,
+     530,
+     429,
+     360
     ],
     "content": {
      "kind": "color",
@@ -4462,15 +4571,15 @@
    }
   },
   {
-   "beat": 308.859,
+   "beat": 287.859,
    "type": "openWindow",
    "params": {
     "id": "w12",
     "frame": [
-     732,
-     40,
-     316,
-     212
+     731,
+     39,
+     317,
+     213
     ],
     "content": {
      "kind": "color",
@@ -4485,7 +4594,15 @@
    }
   },
   {
-   "beat": 309.082,
+   "t": 134.866,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 288.082,
    "type": "fakeDialog",
    "params": {
     "id": "d2",
@@ -4505,23 +4622,15 @@
    }
   },
   {
-   "t": 144.792,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 309.325,
+   "beat": 288.325,
    "type": "openWindow",
    "params": {
     "id": "w13",
     "frame": [
-     1031,
+     1030,
      117,
-     399,
-     295
+     400,
+     296
     ],
     "content": {
      "kind": "color",
@@ -4536,15 +4645,15 @@
    }
   },
   {
-   "beat": 309.595,
+   "beat": 288.595,
    "type": "openWindow",
    "params": {
     "id": "w0",
     "frame": [
-     893,
+     894,
      497,
-     323,
-     207
+     324,
+     208
     ],
     "content": {
      "kind": "color",
@@ -4559,14 +4668,22 @@
    }
   },
   {
-   "beat": 309.855,
+   "t": 135.221,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 288.855,
    "type": "openWindow",
    "params": {
     "id": "w1",
     "frame": [
-     1018,
-     166,
-     390,
+     1019,
+     165,
+     391,
      241
     ],
     "content": {
@@ -4582,7 +4699,7 @@
    }
   },
   {
-   "beat": 310.068,
+   "beat": 289.068,
    "type": "jiggle",
    "params": {
     "id": "w1",
@@ -4592,21 +4709,13 @@
    }
   },
   {
-   "t": 145.25,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 310.313,
+   "beat": 289.313,
    "type": "openWindow",
    "params": {
     "id": "w2",
     "frame": [
-     1000,
-     604,
+     1001,
+     605,
      309,
      212
     ],
@@ -4623,7 +4732,15 @@
    }
   },
   {
-   "beat": 310.519,
+   "t": 135.57,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 289.519,
    "type": "fakeDialog",
    "params": {
     "id": "d3",
@@ -4634,15 +4751,15 @@
     ],
     "icon": "critical",
     "frame": [
-     91,
-     554,
+     90,
+     553,
      460,
      190
     ]
    }
   },
   {
-   "beat": 310.738,
+   "beat": 289.738,
    "type": "jiggle",
    "params": {
     "id": "w2",
@@ -4652,15 +4769,15 @@
    }
   },
   {
-   "beat": 310.967,
+   "beat": 289.967,
    "type": "openWindow",
    "params": {
     "id": "w3",
     "frame": [
-     119,
-     197,
-     377,
-     286
+     118,
+     196,
+     378,
+     287
     ],
     "content": {
      "kind": "code",
@@ -4675,15 +4792,7 @@
    }
   },
   {
-   "t": 145.712,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 311.263,
+   "beat": 290.263,
    "type": "openWindow",
    "params": {
     "id": "w4",
@@ -4706,7 +4815,15 @@
    }
   },
   {
-   "beat": 311.556,
+   "t": 136.02,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 290.556,
    "type": "fakeDialog",
    "params": {
     "id": "d0",
@@ -4719,22 +4836,22 @@
     "icon": "caution",
     "frame": [
      699,
-     618,
+     617,
      460,
      190
     ]
    }
   },
   {
-   "beat": 311.84,
+   "beat": 290.84,
    "type": "openWindow",
    "params": {
     "id": "w5",
     "frame": [
-     1032,
+     1033,
      277,
-     310,
-     194
+     311,
+     195
     ],
     "content": {
      "kind": "lyric",
@@ -4750,7 +4867,7 @@
    }
   },
   {
-   "beat": 312.065,
+   "beat": 291.065,
    "type": "jiggle",
    "params": {
     "id": "w5",
@@ -4760,15 +4877,15 @@
    }
   },
   {
-   "t": 146.175,
+   "t": 136.37,
    "type": "screenFlash",
    "params": {
-    "color": "#FEFEFE",
+    "color": "#0078D7",
     "durationSeconds": 0.09
    }
   },
   {
-   "beat": 312.292,
+   "beat": 291.292,
    "type": "fakeDialog",
    "params": {
     "id": "d1",
@@ -4787,7 +4904,7 @@
    }
   },
   {
-   "beat": 312.497,
+   "beat": 291.497,
    "type": "jiggle",
    "params": {
     "id": "w5",
@@ -4797,7 +4914,7 @@
    }
   },
   {
-   "beat": 312.78,
+   "beat": 291.78,
    "type": "jiggle",
    "params": {
     "id": "w5",
@@ -4807,15 +4924,23 @@
    }
   },
   {
-   "beat": 312.959,
+   "t": 136.712,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 291.959,
    "type": "openWindow",
    "params": {
     "id": "w6",
     "frame": [
      10,
      416,
-     412,
-     310
+     413,
+     311
     ],
     "content": {
      "kind": "code",
@@ -4830,15 +4955,7 @@
    }
   },
   {
-   "t": 146.65,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 313.233,
+   "beat": 292.233,
    "type": "jiggle",
    "params": {
     "id": "w6",
@@ -4848,7 +4965,7 @@
    }
   },
   {
-   "beat": 313.505,
+   "beat": 292.505,
    "type": "fakeDialog",
    "params": {
     "id": "d2",
@@ -4860,7 +4977,7 @@
     ],
     "icon": "caution",
     "frame": [
-     1030,
+     1031,
      75,
      460,
      190
@@ -4868,15 +4985,23 @@
    }
   },
   {
-   "beat": 313.712,
+   "t": 137.059,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 292.712,
    "type": "openWindow",
    "params": {
     "id": "w7",
     "frame": [
-     427,
-     633,
-     344,
-     257
+     426,
+     632,
+     345,
+     258
     ],
     "content": {
      "kind": "color",
@@ -4891,15 +5016,15 @@
    }
   },
   {
-   "beat": 313.896,
+   "beat": 292.896,
    "type": "openWindow",
    "params": {
     "id": "w8",
     "frame": [
-     1008,
+     1009,
      10,
-     417,
-     335
+     418,
+     336
     ],
     "content": {
      "kind": "lyric",
@@ -4915,15 +5040,7 @@
    }
   },
   {
-   "t": 147.097,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 314.195,
+   "beat": 293.195,
    "type": "jiggle",
    "params": {
     "id": "w8",
@@ -4933,15 +5050,23 @@
    }
   },
   {
-   "beat": 314.487,
+   "t": 137.407,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 293.487,
    "type": "openWindow",
    "params": {
     "id": "w9",
     "frame": [
      648,
      10,
-     332,
-     211
+     333,
+     212
     ],
     "content": {
      "kind": "code",
@@ -4956,15 +5081,15 @@
    }
   },
   {
-   "beat": 314.745,
+   "beat": 293.745,
    "type": "openWindow",
    "params": {
     "id": "w10",
     "frame": [
-     37,
-     234,
-     402,
-     320
+     34,
+     233,
+     404,
+     322
     ],
     "content": {
      "kind": "color",
@@ -4979,15 +5104,7 @@
    }
   },
   {
-   "t": 147.438,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 314.962,
+   "beat": 293.962,
    "type": "jiggle",
    "params": {
     "id": "w10",
@@ -4997,19 +5114,19 @@
    }
   },
   {
-   "beat": 315.203,
+   "beat": 294.203,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
      10,
-     276,
-     397,
-     307
+     275,
+     398,
+     308
     ],
     "content": {
      "kind": "lyric",
-     "text": "I can\u2019t",
+     "text": "I can\u2019t get enough",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -5021,7 +5138,15 @@
    }
   },
   {
-   "beat": 315.458,
+   "t": 137.865,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 294.458,
    "type": "jiggle",
    "params": {
     "id": "w11",
@@ -5031,23 +5156,15 @@
    }
   },
   {
-   "t": 147.788,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 315.672,
+   "beat": 294.672,
    "type": "openWindow",
    "params": {
     "id": "w12",
     "frame": [
-     974,
-     106,
-     456,
-     289
+     972,
+     104,
+     458,
+     291
     ],
     "content": {
      "kind": "color",
@@ -5062,7 +5179,7 @@
    }
   },
   {
-   "beat": 315.948,
+   "beat": 294.948,
    "type": "fakeDialog",
    "params": {
     "id": "d3",
@@ -5082,19 +5199,19 @@
    }
   },
   {
-   "beat": 316.264,
+   "beat": 295.264,
    "type": "openWindow",
    "params": {
     "id": "w13",
     "frame": [
-     137,
-     664,
-     356,
-     226
+     134,
+     663,
+     358,
+     227
     ],
     "content": {
      "kind": "lyric",
-     "text": "get enough",
+     "text": "of this feeling baby",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -5106,23 +5223,23 @@
    }
   },
   {
-   "t": 148.131,
+   "t": 138.327,
    "type": "screenFlash",
    "params": {
-    "color": "#0078D7",
+    "color": "#020202",
     "durationSeconds": 0.09
    }
   },
   {
-   "beat": 316.551,
+   "beat": 295.551,
    "type": "openWindow",
    "params": {
     "id": "w0",
     "frame": [
-     861,
-     44,
-     342,
-     262
+     862,
+     42,
+     343,
+     263
     ],
     "content": {
      "kind": "color",
@@ -5137,15 +5254,15 @@
    }
   },
   {
-   "beat": 316.786,
+   "beat": 295.786,
    "type": "openWindow",
    "params": {
     "id": "w1",
     "frame": [
-     224,
-     662,
-     330,
-     228
+     222,
+     661,
+     331,
+     229
     ],
     "content": {
      "kind": "color",
@@ -5160,7 +5277,7 @@
    }
   },
   {
-   "beat": 316.964,
+   "beat": 295.964,
    "type": "jiggle",
    "params": {
     "id": "w1",
@@ -5170,15 +5287,7 @@
    }
   },
   {
-   "t": 148.484,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 317.257,
+   "beat": 296.257,
    "type": "fakeDialog",
    "params": {
     "id": "d0",
@@ -5189,23 +5298,31 @@
     ],
     "icon": "critical",
     "frame": [
-     1068,
-     669,
+     1066,
+     668,
      460,
      190
     ]
    }
   },
   {
-   "beat": 317.473,
+   "t": 138.79,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 296.473,
    "type": "openWindow",
    "params": {
     "id": "w2",
     "frame": [
-     98,
+     95,
      461,
-     478,
-     385
+     480,
+     386
     ],
     "content": {
      "kind": "color",
@@ -5220,14 +5337,14 @@
    }
   },
   {
-   "beat": 317.725,
+   "beat": 296.725,
    "type": "openWindow",
    "params": {
     "id": "w3",
     "frame": [
-     273,
+     271,
      596,
-     367,
+     368,
      294
     ],
     "content": {
@@ -5243,15 +5360,15 @@
    }
   },
   {
-   "beat": 317.903,
+   "beat": 296.903,
    "type": "openWindow",
    "params": {
     "id": "w4",
     "frame": [
-     479,
-     611,
-     426,
-     279
+     478,
+     609,
+     428,
+     281
     ],
     "content": {
      "kind": "color",
@@ -5266,19 +5383,19 @@
    }
   },
   {
-   "beat": 318.128,
+   "beat": 297.128,
    "type": "openWindow",
    "params": {
     "id": "w5",
     "frame": [
-     1064,
-     72,
-     366,
-     231
+     1062,
+     70,
+     368,
+     233
     ],
     "content": {
      "kind": "lyric",
-     "text": "of this feeling baby",
+     "text": "all I got",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -5290,23 +5407,15 @@
    }
   },
   {
-   "t": 148.942,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 318.339,
+   "beat": 297.339,
    "type": "openWindow",
    "params": {
     "id": "w6",
     "frame": [
      784,
-     677,
-     328,
-     213
+     675,
+     330,
+     215
     ],
     "content": {
      "kind": "color",
@@ -5321,7 +5430,15 @@
    }
   },
   {
-   "beat": 318.545,
+   "t": 139.253,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 297.545,
    "type": "jiggle",
    "params": {
     "id": "w6",
@@ -5331,15 +5448,15 @@
    }
   },
   {
-   "beat": 318.726,
+   "beat": 297.726,
    "type": "openWindow",
    "params": {
     "id": "w7",
     "frame": [
-     72,
-     255,
-     497,
-     362
+     68,
+     254,
+     499,
+     364
     ],
     "content": {
      "kind": "color",
@@ -5354,27 +5471,19 @@
    }
   },
   {
-   "t": 149.285,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 319.023,
+   "beat": 298.023,
    "type": "openWindow",
    "params": {
     "id": "w8",
     "frame": [
      10,
-     302,
-     472,
-     330
+     301,
+     475,
+     332
     ],
     "content": {
      "kind": "lyric",
-     "text": "all I got",
+     "text": "I\u2019m giving that",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -5386,15 +5495,15 @@
    }
   },
   {
-   "beat": 319.302,
+   "beat": 298.302,
    "type": "openWindow",
    "params": {
     "id": "w9",
     "frame": [
-     67,
-     523,
-     473,
-     367
+     63,
+     520,
+     476,
+     370
     ],
     "content": {
      "kind": "code",
@@ -5409,7 +5518,7 @@
    }
   },
   {
-   "t": 149.635,
+   "t": 139.712,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
@@ -5417,7 +5526,7 @@
    }
   },
   {
-   "beat": 319.625,
+   "beat": 298.625,
    "type": "jiggle",
    "params": {
     "id": "w9",
@@ -5427,7 +5536,7 @@
    }
   },
   {
-   "beat": 319.865,
+   "beat": 298.865,
    "type": "jiggle",
    "params": {
     "id": "w9",
@@ -5437,15 +5546,23 @@
    }
   },
   {
-   "beat": 320.129,
+   "t": 140.06,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 299.129,
    "type": "openWindow",
    "params": {
     "id": "w10",
     "frame": [
-     1071,
-     514,
-     359,
-     240
+     1069,
+     515,
+     361,
+     241
     ],
     "content": {
      "kind": "color",
@@ -5460,23 +5577,15 @@
    }
   },
   {
-   "t": 149.991,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 320.45,
+   "beat": 299.45,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
-     489,
-     549,
-     504,
-     341
+     488,
+     547,
+     507,
+     343
     ],
     "content": {
      "kind": "color",
@@ -5491,15 +5600,15 @@
    }
   },
   {
-   "beat": 320.638,
+   "beat": 299.638,
    "type": "openWindow",
    "params": {
     "id": "w12",
     "frame": [
-     251,
+     248,
      10,
-     373,
-     296
+     375,
+     298
     ],
     "content": {
      "kind": "color",
@@ -5514,7 +5623,15 @@
    }
   },
   {
-   "beat": 320.901,
+   "t": 140.404,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 299.901,
    "type": "jiggle",
    "params": {
     "id": "w12",
@@ -5524,15 +5641,7 @@
    }
   },
   {
-   "t": 150.331,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 321.204,
+   "beat": 300.204,
    "type": "fakeDialog",
    "params": {
     "id": "d1",
@@ -5544,7 +5653,7 @@
     ],
     "icon": "caution",
     "frame": [
-     846,
+     847,
      10,
      460,
      190
@@ -5552,7 +5661,7 @@
    }
   },
   {
-   "beat": 321.487,
+   "beat": 300.487,
    "type": "fakeDialog",
    "params": {
     "id": "d2",
@@ -5563,15 +5672,15 @@
     ],
     "icon": "critical",
     "frame": [
-     371,
-     607,
+     368,
+     605,
      460,
      190
     ]
    }
   },
   {
-   "beat": 321.769,
+   "beat": 300.769,
    "type": "jiggle",
    "params": {
     "id": "w12",
@@ -5581,7 +5690,7 @@
    }
   },
   {
-   "beat": 322.057,
+   "beat": 301.057,
    "type": "fakeDialog",
    "params": {
     "id": "d3",
@@ -5593,7 +5702,7 @@
     ],
     "icon": "caution",
     "frame": [
-     794,
+     795,
      10,
      460,
      190
@@ -5601,7 +5710,7 @@
    }
   },
   {
-   "t": 150.789,
+   "t": 141.077,
    "type": "screenFlash",
    "params": {
     "color": "#FEFEFE",
@@ -5609,15 +5718,15 @@
    }
   },
   {
-   "beat": 322.339,
+   "beat": 301.339,
    "type": "openWindow",
    "params": {
     "id": "w13",
     "frame": [
-     61,
+     56,
      10,
-     349,
-     213
+     351,
+     214
     ],
     "content": {
      "kind": "code",
@@ -5632,277 +5741,15 @@
    }
   },
   {
-   "beat": 322.57,
+   "beat": 301.57,
    "type": "openWindow",
    "params": {
     "id": "w0",
     "frame": [
-     1092,
-     510,
-     338,
-     248
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 151.139,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 322.865,
-   "type": "openWindow",
-   "params": {
-    "id": "w1",
-    "frame": [
-     10,
-     270,
-     436,
-     333
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 323.051,
-   "type": "jiggle",
-   "params": {
-    "id": "w1",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "beat": 323.3,
-   "type": "openWindow",
-   "params": {
-    "id": "w2",
-    "frame": [
-     10,
+     1090,
+     511,
      340,
-     466,
-     369
-    ],
-    "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 323.487,
-   "type": "openWindow",
-   "params": {
-    "id": "w3",
-    "frame": [
-     469,
-     567,
-     478,
-     323
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "I\u2019m giving that",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 151.481,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 323.664,
-   "type": "openWindow",
-   "params": {
-    "id": "w4",
-    "frame": [
-     435,
-     530,
-     466,
-     360
-    ],
-    "content": {
-     "kind": "code",
-     "text": "function giveItUp() {\n  return all.i.got;   // i\u2019m giving that\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 323.945,
-   "type": "openWindow",
-   "params": {
-    "id": "w5",
-    "frame": [
-     10,
-     358,
-     485,
-     411
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it up",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 324.167,
-   "type": "openWindow",
-   "params": {
-    "id": "w6",
-    "frame": [
-     73,
-     405,
-     395,
-     245
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "I told you that I",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 151.828,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 324.491,
-   "type": "openWindow",
-   "params": {
-    "id": "w7",
-    "frame": [
-     10,
-     460,
-     517,
-     430
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 324.745,
-   "type": "jiggle",
-   "params": {
-    "id": "w7",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "beat": 325.025,
-   "type": "openWindow",
-   "params": {
-    "id": "w8",
-    "frame": [
-     916,
-     10,
-     437,
-     265
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 152.177,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 325.261,
-   "type": "openWindow",
-   "params": {
-    "id": "w9",
-    "frame": [
-     10,
-     627,
-     417,
-     263
+     249
     ],
     "content": {
      "kind": "color",
@@ -5917,153 +5764,14 @@
    }
   },
   {
-   "beat": 325.562,
+   "beat": 301.865,
    "type": "openWindow",
    "params": {
-    "id": "w10",
+    "id": "w1",
     "frame": [
-     906,
-     38,
-     483,
-     399
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 325.795,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     904,
-     475,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 326.012,
-   "type": "jiggle",
-   "params": {
-    "id": "w10",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "t": 152.634,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 326.253,
-   "type": "openWindow",
-   "params": {
-    "id": "w11",
-    "frame": [
-     551,
      10,
-     501,
-     354
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 326.569,
-   "type": "openWindow",
-   "params": {
-    "id": "w12",
-    "frame": [
-     416,
-     10,
-     358,
-     280
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "need your love",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 326.857,
-   "type": "openWindow",
-   "params": {
-    "id": "w13",
-    "frame": [
-     383,
-     591,
-     359,
-     299
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 153.096,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020202",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 327.074,
-   "type": "openWindow",
-   "params": {
-    "id": "w0",
-    "frame": [
-     442,
-     10,
-     479,
+     269,
+     439,
      336
     ],
     "content": {
@@ -6079,19 +5787,60 @@
    }
   },
   {
-   "beat": 327.308,
-   "type": "openWindow",
+   "beat": 302.051,
+   "type": "jiggle",
    "params": {
     "id": "w1",
+    "durationBeats": 1.5,
+    "amplitude": 18,
+    "frequency": 9
+   }
+  },
+  {
+   "beat": 302.3,
+   "type": "openWindow",
+   "params": {
+    "id": "w2",
     "frame": [
-     791,
-     566,
-     392,
-     324
+     10,
+     339,
+     469,
+     371
+    ],
+    "content": {
+     "kind": "code",
+     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
+     "chrome": "terminal",
+     "title": "haunt.sh"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 141.558,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 302.487,
+   "type": "openWindow",
+   "params": {
+    "id": "w3",
+    "frame": [
+     468,
+     565,
+     481,
+     325
     ],
     "content": {
      "kind": "lyric",
-     "text": "so give it to me",
+     "text": "so give it up",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -6103,15 +5852,86 @@
    }
   },
   {
-   "beat": 327.516,
+   "beat": 302.664,
    "type": "openWindow",
    "params": {
-    "id": "w2",
+    "id": "w4",
     "frame": [
-     989,
-     292,
-     441,
-     280
+     433,
+     527,
+     469,
+     363
+    ],
+    "content": {
+     "kind": "code",
+     "text": "function giveItUp() {\n  return all.i.got;   // i\u2019m giving that\n}",
+     "chrome": "terminal",
+     "title": "haunt.sh"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 302.945,
+   "type": "openWindow",
+   "params": {
+    "id": "w5",
+    "frame": [
+     10,
+     357,
+     488,
+     414
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I told you that I",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 303.167,
+   "type": "openWindow",
+   "params": {
+    "id": "w6",
+    "frame": [
+     68,
+     405,
+     398,
+     246
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 303.491,
+   "type": "openWindow",
+   "params": {
+    "id": "w7",
+    "frame": [
+     10,
+     457,
+     520,
+     433
     ],
     "content": {
      "kind": "color",
@@ -6126,15 +5946,33 @@
    }
   },
   {
-   "beat": 327.775,
+   "beat": 303.745,
+   "type": "jiggle",
+   "params": {
+    "id": "w7",
+    "durationBeats": 1.5,
+    "amplitude": 18,
+    "frequency": 9
+   }
+  },
+  {
+   "t": 142.25,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 304.025,
    "type": "openWindow",
    "params": {
-    "id": "w3",
+    "id": "w8",
     "frame": [
-     75,
-     556,
-     514,
-     334
+     918,
+     10,
+     440,
+     267
     ],
     "content": {
      "kind": "color",
@@ -6149,7 +5987,53 @@
    }
   },
   {
-   "t": 153.56,
+   "beat": 304.261,
+   "type": "openWindow",
+   "params": {
+    "id": "w9",
+    "frame": [
+     10,
+     626,
+     419,
+     264
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 304.562,
+   "type": "openWindow",
+   "params": {
+    "id": "w10",
+    "frame": [
+     907,
+     34,
+     487,
+     402
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 142.607,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -6157,19 +6041,80 @@
    }
   },
   {
-   "beat": 328.062,
+   "beat": 304.795,
+   "type": "fakeDialog",
+   "params": {
+    "id": "d0",
+    "title": "all i got",
+    "body": "i\u2019m giving that so give it up",
+    "buttons": [
+     "not now",
+     "ok"
+    ],
+    "icon": "info",
+    "frame": [
+     901,
+     473,
+     460,
+     190
+    ]
+   }
+  },
+  {
+   "beat": 305.012,
+   "type": "jiggle",
+   "params": {
+    "id": "w10",
+    "durationBeats": 1.5,
+    "amplitude": 18,
+    "frequency": 9
+   }
+  },
+  {
+   "beat": 305.253,
    "type": "openWindow",
    "params": {
-    "id": "w4",
+    "id": "w11",
     "frame": [
-     401,
-     525,
+     550,
+     10,
      504,
-     365
+     356
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 142.948,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 305.569,
+   "type": "openWindow",
+   "params": {
+    "id": "w12",
+    "frame": [
+     414,
+     10,
+     361,
+     283
     ],
     "content": {
      "kind": "lyric",
-     "text": "need your love",
+     "text": "so give it to me",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -6181,15 +6126,171 @@
    }
   },
   {
-   "beat": 328.291,
+   "beat": 305.857,
+   "type": "openWindow",
+   "params": {
+    "id": "w13",
+    "frame": [
+     380,
+     589,
+     362,
+     301
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 306.074,
+   "type": "openWindow",
+   "params": {
+    "id": "w0",
+    "frame": [
+     440,
+     10,
+     483,
+     339
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 143.405,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 306.308,
+   "type": "openWindow",
+   "params": {
+    "id": "w1",
+    "frame": [
+     792,
+     564,
+     395,
+     326
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "need your love",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 306.516,
+   "type": "openWindow",
+   "params": {
+    "id": "w2",
+    "frame": [
+     986,
+     291,
+     444,
+     282
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 306.775,
+   "type": "openWindow",
+   "params": {
+    "id": "w3",
+    "frame": [
+     70,
+     553,
+     518,
+     337
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 143.745,
+   "type": "screenFlash",
+   "params": {
+    "color": "#020202",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 307.062,
+   "type": "openWindow",
+   "params": {
+    "id": "w4",
+    "frame": [
+     398,
+     522,
+     508,
+     368
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "so give it to me",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 307.291,
    "type": "openWindow",
    "params": {
     "id": "w5",
     "frame": [
      10,
-     108,
-     513,
-     417
+     106,
+     517,
+     420
     ],
     "content": {
      "kind": "color",
@@ -6204,15 +6305,15 @@
    }
   },
   {
-   "beat": 328.562,
+   "beat": 307.562,
    "type": "openWindow",
    "params": {
     "id": "w6",
     "frame": [
-     223,
-     453,
-     519,
-     437
+     219,
+     450,
+     523,
+     440
     ],
     "content": {
      "kind": "color",
@@ -6227,7 +6328,15 @@
    }
   },
   {
-   "beat": 328.872,
+   "t": 144.096,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 307.872,
    "type": "jiggle",
    "params": {
     "id": "w6",
@@ -6237,23 +6346,15 @@
    }
   },
   {
-   "t": 154.023,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 329.171,
+   "beat": 308.171,
    "type": "openWindow",
    "params": {
     "id": "w7",
     "frame": [
-     1022,
-     182,
-     408,
-     256
+     1018,
+     180,
+     412,
+     258
     ],
     "content": {
      "kind": "color",
@@ -6268,15 +6369,15 @@
    }
   },
   {
-   "beat": 329.454,
+   "beat": 308.454,
    "type": "openWindow",
    "params": {
     "id": "w8",
     "frame": [
-     561,
+     560,
      10,
-     452,
-     334
+     455,
+     336
     ],
     "content": {
      "kind": "color",
@@ -6291,84 +6392,22 @@
    }
   },
   {
-   "beat": 329.767,
-   "type": "openWindow",
-   "params": {
-    "id": "w9",
-    "frame": [
-     287,
-     634,
-     386,
-     256
-    ],
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 329.957,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     1030,
-     115,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 154.481,
+   "t": 144.445,
    "type": "screenFlash",
    "params": {
-    "color": "#0078D7",
+    "color": "#FEFEFE",
     "durationSeconds": 0.09
    }
   },
   {
-   "beat": 330.132,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d2",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
-    "frame": [
-     1011,
-     292,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 330.343,
+   "beat": 308.767,
    "type": "openWindow",
    "params": {
-    "id": "w10",
+    "id": "w9",
     "frame": [
-     10,
-     123,
-     369,
+     282,
+     631,
+     390,
      259
     ],
     "content": {
@@ -6384,15 +6423,85 @@
    }
   },
   {
-   "beat": 330.522,
+   "beat": 308.957,
+   "type": "fakeDialog",
+   "params": {
+    "id": "d1",
+    "title": "i told you that I",
+    "body": "need your love so give it to me",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "critical",
+    "frame": [
+     1027,
+     112,
+     460,
+     190
+    ]
+   }
+  },
+  {
+   "beat": 309.132,
+   "type": "fakeDialog",
+   "params": {
+    "id": "d2",
+    "title": "need your love",
+    "body": "so give it to me",
+    "buttons": [
+     "more",
+     "ok"
+    ],
+    "icon": "caution",
+    "frame": [
+     1008,
+     291,
+     460,
+     190
+    ]
+   }
+  },
+  {
+   "t": 144.792,
+   "type": "screenFlash",
+   "params": {
+    "color": "#0078D7",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 309.343,
+   "type": "openWindow",
+   "params": {
+    "id": "w10",
+    "frame": [
+     10,
+     120,
+     372,
+     261
+    ],
+    "content": {
+     "kind": "code",
+     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
+     "chrome": "terminal",
+     "title": "haunt.sh"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 309.522,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
-     190,
+     185,
      10,
-     449,
-     298
+     453,
+     301
     ],
     "content": {
      "kind": "code",
@@ -6407,15 +6516,15 @@
    }
   },
   {
-   "beat": 330.731,
+   "beat": 309.731,
    "type": "openWindow",
    "params": {
     "id": "w12",
     "frame": [
-     247,
-     543,
-     450,
-     347
+     243,
+     540,
+     454,
+     350
     ],
     "content": {
      "kind": "color",
@@ -6430,7 +6539,30 @@
    }
   },
   {
-   "t": 154.829,
+   "beat": 309.981,
+   "type": "openWindow",
+   "params": {
+    "id": "w13",
+    "frame": [
+     997,
+     172,
+     433,
+     349
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 145.25,
    "type": "screenFlash",
    "params": {
     "color": "#020202",
@@ -6438,14 +6570,38 @@
    }
   },
   {
-   "beat": 330.981,
+   "beat": 310.29,
    "type": "openWindow",
    "params": {
-    "id": "w13",
+    "id": "w0",
     "frame": [
-     1001,
-     175,
-     429,
+     106,
+     10,
+     496,
+     409
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "what I want",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 310.601,
+   "type": "openWindow",
+   "params": {
+    "id": "w1",
+    "frame": [
+     32,
+     10,
+     563,
      345
     ],
     "content": {
@@ -6461,70 +6617,15 @@
    }
   },
   {
-   "beat": 331.29,
-   "type": "openWindow",
-   "params": {
-    "id": "w0",
-    "frame": [
-     112,
-     10,
-     492,
-     405
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 155.173,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 331.601,
-   "type": "openWindow",
-   "params": {
-    "id": "w1",
-    "frame": [
-     38,
-     10,
-     558,
-     342
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 331.883,
+   "beat": 310.883,
    "type": "openWindow",
    "params": {
     "id": "w2",
     "frame": [
      10,
      444,
-     516,
-     350
+     520,
+     353
     ],
     "content": {
      "kind": "color",
@@ -6539,15 +6640,15 @@
    }
   },
   {
-   "beat": 332.107,
+   "beat": 311.107,
    "type": "openWindow",
    "params": {
     "id": "w3",
     "frame": [
-     906,
-     77,
-     524,
-     319
+     901,
+     73,
+     529,
+     322
     ],
     "content": {
      "kind": "code",
@@ -6562,15 +6663,23 @@
    }
   },
   {
-   "beat": 332.408,
+   "t": 145.712,
+   "type": "screenFlash",
+   "params": {
+    "color": "#68BDF8",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 311.408,
    "type": "openWindow",
    "params": {
     "id": "w4",
     "frame": [
      10,
-     646,
-     393,
-     243
+     644,
+     397,
+     246
     ],
     "content": {
      "kind": "color",
@@ -6585,7 +6694,7 @@
    }
   },
   {
-   "beat": 332.602,
+   "beat": 311.602,
    "type": "fakeDialog",
    "params": {
     "id": "d3",
@@ -6596,23 +6705,23 @@
     ],
     "icon": "critical",
     "frame": [
-     732,
-     531,
+     733,
+     528,
      460,
      190
     ]
    }
   },
   {
-   "beat": 332.841,
+   "beat": 311.841,
    "type": "openWindow",
    "params": {
     "id": "w5",
     "frame": [
-     11,
-     345,
-     450,
-     373
+     10,
+     344,
+     454,
+     377
     ],
     "content": {
      "kind": "color",
@@ -6627,23 +6736,15 @@
    }
   },
   {
-   "t": 155.846,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 333.088,
+   "beat": 312.088,
    "type": "openWindow",
    "params": {
     "id": "w6",
     "frame": [
-     477,
-     537,
-     504,
-     353
+     475,
+     533,
+     509,
+     357
     ],
     "content": {
      "kind": "color",
@@ -6658,15 +6759,23 @@
    }
   },
   {
-   "beat": 333.401,
+   "t": 146.175,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 312.401,
    "type": "openWindow",
    "params": {
     "id": "w7",
     "frame": [
-     429,
+     426,
      10,
-     563,
-     386
+     568,
+     389
     ],
     "content": {
      "kind": "color",
@@ -6681,7 +6790,7 @@
    }
   },
   {
-   "beat": 333.683,
+   "beat": 312.683,
    "type": "jiggle",
    "params": {
     "id": "w7",
@@ -6691,7 +6800,7 @@
    }
   },
   {
-   "beat": 333.953,
+   "beat": 312.953,
    "type": "jiggle",
    "params": {
     "id": "w7",
@@ -6701,7 +6810,7 @@
    }
   },
   {
-   "t": 156.327,
+   "t": 146.65,
    "type": "screenFlash",
    "params": {
     "color": "#0078D7",
@@ -6709,7 +6818,7 @@
    }
   },
   {
-   "beat": 334.271,
+   "beat": 313.271,
    "type": "jiggle",
    "params": {
     "id": "w7",
@@ -6719,15 +6828,15 @@
    }
   },
   {
-   "beat": 334.474,
+   "beat": 313.474,
    "type": "openWindow",
    "params": {
     "id": "w8",
     "frame": [
-     383,
+     379,
      10,
-     553,
-     439
+     559,
+     443
     ],
     "content": {
      "kind": "code",
@@ -6742,15 +6851,15 @@
    }
   },
   {
-   "beat": 334.778,
+   "beat": 313.778,
    "type": "openWindow",
    "params": {
     "id": "w9",
     "frame": [
      611,
      10,
-     507,
-     369
+     511,
+     372
     ],
     "content": {
      "kind": "color",
@@ -6765,7 +6874,7 @@
    }
   },
   {
-   "beat": 334.963,
+   "beat": 313.963,
    "type": "jiggle",
    "params": {
     "id": "w9",
@@ -6775,7 +6884,7 @@
    }
   },
   {
-   "t": 156.914,
+   "t": 147.097,
    "type": "screenFlash",
    "params": {
     "color": "#020202",
@@ -6783,7 +6892,7 @@
    }
   },
   {
-   "beat": 335.286,
+   "beat": 314.286,
    "type": "fakeDialog",
    "params": {
     "id": "d0",
@@ -6795,15 +6904,15 @@
     ],
     "icon": "caution",
     "frame": [
-     1028,
-     599,
+     1024,
+     596,
      460,
      190
     ]
    }
   },
   {
-   "beat": 335.528,
+   "beat": 314.528,
    "type": "fakeDialog",
    "params": {
     "id": "d1",
@@ -6816,26 +6925,26 @@
     "icon": "info",
     "frame": [
      10,
-     493,
+     490,
      460,
      190
     ]
    }
   },
   {
-   "beat": 335.83,
+   "beat": 314.83,
    "type": "openWindow",
    "params": {
     "id": "w10",
     "frame": [
-     865,
-     510,
-     565,
-     380
+     860,
+     506,
+     570,
+     384
     ],
     "content": {
      "kind": "lyric",
-     "text": "what I want",
+     "text": "I told you that I",
      "hex": "#F2F4FE",
      "fg": "#0078D7",
      "chrome": "mac",
@@ -6847,7 +6956,7 @@
    }
   },
   {
-   "t": 157.285,
+   "t": 147.438,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -6855,15 +6964,15 @@
    }
   },
   {
-   "beat": 336.061,
+   "beat": 315.061,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
-     760,
-     600,
-     438,
-     290
+     761,
+     598,
+     442,
+     292
     ],
     "content": {
      "kind": "color",
@@ -6878,15 +6987,15 @@
    }
   },
   {
-   "beat": 336.295,
+   "beat": 315.295,
    "type": "openWindow",
    "params": {
     "id": "w12",
     "frame": [
      10,
-     232,
-     436,
-     350
+     230,
+     440,
+     353
     ],
     "content": {
      "kind": "code",
@@ -6901,15 +7010,15 @@
    }
   },
   {
-   "beat": 336.486,
+   "beat": 315.486,
    "type": "openWindow",
    "params": {
     "id": "w13",
     "frame": [
-     733,
+     734,
      10,
-     569,
-     471
+     574,
+     476
     ],
     "content": {
      "kind": "color",
@@ -6924,19 +7033,27 @@
    }
   },
   {
-   "beat": 336.668,
+   "t": 147.788,
+   "type": "screenFlash",
+   "params": {
+    "color": "#FEFEFE",
+    "durationSeconds": 0.09
+   }
+  },
+  {
+   "beat": 315.668,
    "type": "openWindow",
    "params": {
     "id": "w0",
     "frame": [
-     866,
+     868,
      10,
-     429,
-     265
+     433,
+     268
     ],
     "content": {
      "kind": "lyric",
-     "text": "I told you that I",
+     "text": "need your love",
      "hex": "#0078D7",
      "fg": "#F2F4FE",
      "chrome": "mac",
@@ -6948,15 +7065,15 @@
    }
   },
   {
-   "beat": 336.87,
+   "beat": 315.87,
    "type": "openWindow",
    "params": {
     "id": "w1",
     "frame": [
-     574,
+     573,
      10,
-     533,
-     321
+     538,
+     324
     ],
     "content": {
      "kind": "code",
@@ -6971,128 +7088,24 @@
    }
   },
   {
-   "t": 157.701,
-   "type": "screenFlash",
-   "params": {
-    "color": "#FEFEFE",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 337.097,
-   "type": "openWindow",
-   "params": {
-    "id": "w2",
-    "frame": [
-     248,
-     552,
-     398,
-     338
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 337.395,
-   "type": "openWindow",
-   "params": {
-    "id": "w3",
-    "frame": [
-     10,
-     564,
-     526,
-     326
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 337.58,
-   "type": "openWindow",
-   "params": {
-    "id": "w4",
-    "frame": [
-     35,
-     502,
-     511,
-     388
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 337.795,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d2",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     10,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 158.174,
-   "type": "screenFlash",
-   "params": {
-    "color": "#0078D7",
-    "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 338,
+   "beat": 316,
    "type": "deskWallpaper",
    "params": {
     "id": "gl0",
     "mode": "glitch",
-    "hz": 2.5,
+    "hz": 1.5,
     "intensity": 0.55,
     "seed": 1000,
     "durationSeconds": 1.6
    }
   },
   {
-   "beat": 341.427,
+   "beat": 319.427,
    "type": "deskWallpaper",
    "params": {
     "id": "gl1",
     "mode": "slides",
-    "hz": 6,
+    "hz": 2,
     "images": [
      "assets/lyrics_desktops/I.jpg",
      "assets/lyrics_desktops/TOLD.jpg",
@@ -7125,24 +7138,24 @@
    }
   },
   {
-   "beat": 344.853,
+   "beat": 322.853,
    "type": "deskWallpaper",
    "params": {
     "id": "gl2",
     "mode": "glitch",
-    "hz": 2.5,
+    "hz": 1.5,
     "intensity": 0.7100000000000001,
     "seed": 1002,
     "durationSeconds": 1.6
    }
   },
   {
-   "beat": 348.28,
+   "beat": 326.28,
    "type": "deskWallpaper",
    "params": {
     "id": "gl3",
     "mode": "slides",
-    "hz": 6,
+    "hz": 2,
     "images": [
      "assets/lyrics_desktops/I.jpg",
      "assets/lyrics_desktops/TOLD.jpg",
@@ -7175,24 +7188,24 @@
    }
   },
   {
-   "beat": 351.707,
+   "beat": 329.707,
    "type": "deskWallpaper",
    "params": {
     "id": "gl4",
     "mode": "glitch",
-    "hz": 2.5,
+    "hz": 1.5,
     "intensity": 0.63,
     "seed": 1004,
     "durationSeconds": 1.6
    }
   },
   {
-   "beat": 355.133,
+   "beat": 333.133,
    "type": "deskWallpaper",
    "params": {
     "id": "gl5",
     "mode": "slides",
-    "hz": 6,
+    "hz": 2,
     "images": [
      "assets/lyrics_desktops/I.jpg",
      "assets/lyrics_desktops/TOLD.jpg",
@@ -7225,42 +7238,19 @@
    }
   },
   {
-   "beat": 357,
-   "type": "openWindow",
-   "params": {
-    "id": "w5",
-    "frame": [
-     968,
-     344,
-     393,
-     315
-    ],
-    "content": {
-     "kind": "code",
-     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 357,
+   "beat": 336.56,
    "type": "deskWallpaper",
    "params": {
-    "id": "glall",
+    "id": "gl6",
     "mode": "glitch",
-    "hz": 3,
-    "intensity": 0.85,
-    "seed": 77,
-    "durationSeconds": 3.735
+    "hz": 1.5,
+    "intensity": 0.55,
+    "seed": 1006,
+    "durationSeconds": 1.6
    }
   },
   {
-   "t": 167.088,
+   "t": 158.216,
    "type": "openWindow",
    "params": {
     "id": "c0",
@@ -7280,7 +7270,42 @@
    }
   },
   {
-   "t": 167.138,
+   "beat": 338,
+   "type": "openWindow",
+   "params": {
+    "id": "w2",
+    "frame": [
+     399,
+     615,
+     281,
+     239
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "springIn"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "beat": 338,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "glall",
+    "mode": "glitch",
+    "hz": 1,
+    "intensity": 0.85,
+    "seed": 77,
+    "durationSeconds": 2.335
+   }
+  },
+  {
+   "t": 158.266,
    "type": "screenFlash",
    "params": {
     "color": "#020AF5",
@@ -7288,7 +7313,7 @@
    }
   },
   {
-   "t": 167.168,
+   "t": 158.296,
    "type": "openWindow",
    "params": {
     "id": "c1",
@@ -7308,27 +7333,30 @@
    }
   },
   {
-   "beat": 357.205,
-   "type": "fakeDialog",
+   "beat": 338.214,
+   "type": "openWindow",
    "params": {
-    "id": "d3",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
+    "id": "w3",
     "frame": [
-     901,
-     317,
-     460,
-     190
-    ]
+     216,
+     657,
+     376,
+     233
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
    }
   },
   {
-   "t": 167.248,
+   "t": 158.376,
    "type": "openWindow",
    "params": {
     "id": "c2",
@@ -7348,31 +7376,30 @@
    }
   },
   {
-   "beat": 357.374,
+   "beat": 338.364,
    "type": "openWindow",
    "params": {
-    "id": "w6",
+    "id": "w4",
     "frame": [
-     10,
-     504,
-     305,
-     184
+     244,
+     535,
+     369,
+     280
     ],
     "content": {
-     "kind": "lyric",
-     "text": "need your love",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
     },
     "animate": {
      "kind": "none"
-    }
+    },
+    "interactive": true
    }
   },
   {
-   "t": 167.288,
+   "t": 158.416,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -7380,7 +7407,7 @@
    }
   },
   {
-   "t": 167.328,
+   "t": 158.456,
    "type": "openWindow",
    "params": {
     "id": "c3",
@@ -7400,31 +7427,26 @@
    }
   },
   {
-   "beat": 357.57,
-   "type": "openWindow",
+   "beat": 338.52,
+   "type": "fakeDialog",
    "params": {
-    "id": "w7",
-    "frame": [
-     1049,
-     626,
-     381,
-     264
+    "id": "d2",
+    "title": "i told you that I",
+    "body": "need your love so give it to me",
+    "buttons": [
+     "ok"
     ],
-    "content": {
-     "kind": "lyric",
-     "text": "so give it to me",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
+    "icon": "critical",
+    "frame": [
+     222,
+     10,
+     460,
+     190
+    ]
    }
   },
   {
-   "t": 167.408,
+   "t": 158.536,
    "type": "openWindow",
    "params": {
     "id": "c4",
@@ -7444,31 +7466,30 @@
    }
   },
   {
-   "beat": 357.72,
+   "beat": 338.741,
    "type": "openWindow",
    "params": {
-    "id": "w8",
+    "id": "w5",
     "frame": [
-     80,
-     258,
-     432,
-     271
+     990,
+     338,
+     416,
+     333
     ],
     "content": {
-     "kind": "lyric",
-     "text": "running up",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
+     "kind": "code",
+     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
+     "chrome": "terminal",
+     "title": "haunt.sh"
     },
     "animate": {
      "kind": "none"
-    }
+    },
+    "interactive": true
    }
   },
   {
-   "t": 167.438,
+   "t": 158.566,
    "type": "fakeDialog",
    "params": {
     "id": "al0",
@@ -7487,7 +7508,7 @@
    }
   },
   {
-   "t": 167.438,
+   "t": 158.566,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -7495,7 +7516,7 @@
    }
   },
   {
-   "t": 167.488,
+   "t": 158.616,
    "type": "openWindow",
    "params": {
     "id": "c5",
@@ -7515,7 +7536,7 @@
    }
   },
   {
-   "t": 167.488,
+   "t": 158.616,
    "type": "openWindow",
    "params": {
     "id": "m0",
@@ -7535,7 +7556,7 @@
    }
   },
   {
-   "t": 167.488,
+   "t": 158.616,
    "type": "openWindow",
    "params": {
     "id": "m1",
@@ -7555,7 +7576,7 @@
    }
   },
   {
-   "t": 167.488,
+   "t": 158.616,
    "type": "openWindow",
    "params": {
     "id": "m2",
@@ -7575,7 +7596,7 @@
    }
   },
   {
-   "t": 167.488,
+   "t": 158.616,
    "type": "openWindow",
    "params": {
     "id": "m3",
@@ -7595,17 +7616,27 @@
    }
   },
   {
-   "beat": 357.933,
-   "type": "jiggle",
+   "beat": 338.946,
+   "type": "fakeDialog",
    "params": {
-    "id": "w8",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
+    "id": "d3",
+    "title": "need your love",
+    "body": "so give it to me",
+    "buttons": [
+     "more",
+     "ok"
+    ],
+    "icon": "caution",
+    "frame": [
+     920,
+     309,
+     460,
+     190
+    ]
    }
   },
   {
-   "t": 167.568,
+   "t": 158.696,
    "type": "openWindow",
    "params": {
     "id": "c6",
@@ -7625,7 +7656,7 @@
    }
   },
   {
-   "t": 167.588,
+   "t": 158.716,
    "type": "openWindow",
    "params": {
     "id": "kd0",
@@ -7645,7 +7676,7 @@
    }
   },
   {
-   "t": 167.588,
+   "t": 158.716,
    "type": "screenFlash",
    "params": {
     "color": "#669DF6",
@@ -7653,30 +7684,31 @@
    }
   },
   {
-   "beat": 358.111,
+   "beat": 339.116,
    "type": "openWindow",
    "params": {
-    "id": "w9",
+    "id": "w6",
     "frame": [
-     870,
-     141,
-     352,
-     291
+     10,
+     510,
+     326,
+     197
     ],
     "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
+     "kind": "lyric",
+     "text": "so give it to me",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
     },
     "animate": {
      "kind": "none"
-    },
-    "interactive": true
+    }
    }
   },
   {
-   "t": 167.648,
+   "t": 158.776,
    "type": "openWindow",
    "params": {
     "id": "c7",
@@ -7696,7 +7728,7 @@
    }
   },
   {
-   "t": 167.688,
+   "t": 158.816,
    "type": "moveWindow",
    "params": {
     "id": "m0",
@@ -7709,31 +7741,7 @@
    }
   },
   {
-   "beat": 358.306,
-   "type": "openWindow",
-   "params": {
-    "id": "w10",
-    "frame": [
-     69,
-     10,
-     393,
-     255
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "my currents",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 167.698,
+   "t": 158.826,
    "type": "fakeDialog",
    "params": {
     "id": "al1",
@@ -7753,7 +7761,31 @@
    }
   },
   {
-   "t": 167.708,
+   "beat": 339.311,
+   "type": "openWindow",
+   "params": {
+    "id": "w7",
+    "frame": [
+     1021,
+     607,
+     409,
+     283
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "running up",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "t": 158.836,
    "type": "jiggle",
    "params": {
     "id": "m0",
@@ -7763,7 +7795,7 @@
    }
   },
   {
-   "t": 167.728,
+   "t": 158.856,
    "type": "openWindow",
    "params": {
     "id": "c0",
@@ -7783,7 +7815,7 @@
    }
   },
   {
-   "t": 167.738,
+   "t": 158.866,
    "type": "screenFlash",
    "params": {
     "color": "#C1C7D6",
@@ -7791,30 +7823,31 @@
    }
   },
   {
-   "beat": 358.493,
+   "beat": 339.461,
    "type": "openWindow",
    "params": {
-    "id": "w11",
+    "id": "w8",
     "frame": [
-     902,
-     201,
-     320,
-     221
+     21,
+     242,
+     466,
+     292
     ],
     "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
+     "kind": "lyric",
+     "text": "my currents",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
     },
     "animate": {
      "kind": "none"
-    },
-    "interactive": true
+    }
    }
   },
   {
-   "t": 167.808,
+   "t": 158.936,
    "type": "openWindow",
    "params": {
     "id": "c1",
@@ -7834,7 +7867,7 @@
    }
   },
   {
-   "t": 167.818,
+   "t": 158.946,
    "type": "moveWindow",
    "params": {
     "id": "m1",
@@ -7847,30 +7880,17 @@
    }
   },
   {
-   "beat": 358.68,
-   "type": "openWindow",
+   "beat": 339.674,
+   "type": "jiggle",
    "params": {
-    "id": "w12",
-    "frame": [
-     993,
-     457,
-     437,
-     275
-    ],
-    "content": {
-     "kind": "code",
-     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "w8",
+    "durationBeats": 1.5,
+    "amplitude": 18,
+    "frequency": 9
    }
   },
   {
-   "t": 167.888,
+   "t": 159.016,
    "type": "openWindow",
    "params": {
     "id": "c2",
@@ -7890,7 +7910,7 @@
    }
   },
   {
-   "t": 167.888,
+   "t": 159.016,
    "type": "screenFlash",
    "params": {
     "color": "#6C86E2",
@@ -7898,7 +7918,7 @@
    }
   },
   {
-   "t": 167.948,
+   "t": 159.076,
    "type": "moveWindow",
    "params": {
     "id": "m2",
@@ -7911,7 +7931,30 @@
    }
   },
   {
-   "t": 167.958,
+   "beat": 339.852,
+   "type": "openWindow",
+   "params": {
+    "id": "w9",
+    "frame": [
+     890,
+     110,
+     384,
+     317
+    ],
+    "content": {
+     "kind": "code",
+     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
+     "chrome": "terminal",
+     "title": "haunt.sh"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 159.086,
    "type": "fakeDialog",
    "params": {
     "id": "al2",
@@ -7931,7 +7974,7 @@
    }
   },
   {
-   "t": 167.968,
+   "t": 159.096,
    "type": "openWindow",
    "params": {
     "id": "c3",
@@ -7951,30 +7994,7 @@
    }
   },
   {
-   "beat": 358.897,
-   "type": "openWindow",
-   "params": {
-    "id": "w13",
-    "frame": [
-     175,
-     10,
-     352,
-     233
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 167.988,
+   "t": 159.116,
    "type": "openWindow",
    "params": {
     "id": "ss0",
@@ -7994,7 +8014,7 @@
    }
   },
   {
-   "t": 168.038,
+   "t": 159.166,
    "type": "screenFlash",
    "params": {
     "color": "#020AF5",
@@ -8002,7 +8022,31 @@
    }
   },
   {
-   "t": 168.048,
+   "beat": 340.047,
+   "type": "openWindow",
+   "params": {
+    "id": "w10",
+    "frame": [
+     10,
+     10,
+     430,
+     279
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "I can\u2019t get enough",
+     "hex": "#0078D7",
+     "fg": "#F2F4FE",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "t": 159.176,
    "type": "openWindow",
    "params": {
     "id": "c4",
@@ -8022,26 +8066,7 @@
    }
   },
   {
-   "beat": 359.071,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     252,
-     68,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 168.078,
+   "t": 159.206,
    "type": "moveWindow",
    "params": {
     "id": "m3",
@@ -8054,7 +8079,7 @@
    }
   },
   {
-   "t": 168.088,
+   "t": 159.216,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8074,7 +8099,7 @@
    }
   },
   {
-   "t": 168.128,
+   "t": 159.256,
    "type": "openWindow",
    "params": {
     "id": "c5",
@@ -8094,7 +8119,30 @@
    }
   },
   {
-   "t": 168.138,
+   "beat": 340.234,
+   "type": "openWindow",
+   "params": {
+    "id": "w11",
+    "frame": [
+     927,
+     172,
+     353,
+     244
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 159.266,
    "type": "openWindow",
    "params": {
     "id": "kd1",
@@ -8114,30 +8162,7 @@
    }
   },
   {
-   "beat": 359.281,
-   "type": "openWindow",
-   "params": {
-    "id": "w0",
-    "frame": [
-     753,
-     647,
-     387,
-     243
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 168.188,
+   "t": 159.316,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -8145,7 +8170,7 @@
    }
   },
   {
-   "t": 168.208,
+   "t": 159.336,
    "type": "openWindow",
    "params": {
     "id": "c6",
@@ -8165,7 +8190,7 @@
    }
   },
   {
-   "t": 168.208,
+   "t": 159.336,
    "type": "moveWindow",
    "params": {
     "id": "m0",
@@ -8178,7 +8203,7 @@
    }
   },
   {
-   "t": 168.218,
+   "t": 159.346,
    "type": "fakeDialog",
    "params": {
     "id": "al3",
@@ -8197,7 +8222,30 @@
    }
   },
   {
-   "t": 168.228,
+   "beat": 340.421,
+   "type": "openWindow",
+   "params": {
+    "id": "w12",
+    "frame": [
+     947,
+     462,
+     483,
+     304
+    ],
+    "content": {
+     "kind": "code",
+     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}",
+     "chrome": "terminal",
+     "title": "haunt.sh"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 159.356,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8217,17 +8265,7 @@
    }
   },
   {
-   "beat": 359.494,
-   "type": "jiggle",
-   "params": {
-    "id": "w0",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "t": 168.288,
+   "t": 159.416,
    "type": "openWindow",
    "params": {
     "id": "c7",
@@ -8247,21 +8285,21 @@
    }
   },
   {
-   "beat": 359.654,
+   "beat": 340.639,
    "type": "openWindow",
    "params": {
-    "id": "w1",
+    "id": "w13",
     "frame": [
-     988,
-     526,
-     442,
-     364
+     103,
+     10,
+     391,
+     259
     ],
     "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
     },
     "animate": {
      "kind": "none"
@@ -8270,7 +8308,7 @@
    }
   },
   {
-   "t": 168.338,
+   "t": 159.466,
    "type": "moveWindow",
    "params": {
     "id": "m1",
@@ -8283,7 +8321,7 @@
    }
   },
   {
-   "t": 168.338,
+   "t": 159.466,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -8291,7 +8329,7 @@
    }
   },
   {
-   "t": 168.368,
+   "t": 159.496,
    "type": "openWindow",
    "params": {
     "id": "c0",
@@ -8311,7 +8349,7 @@
    }
   },
   {
-   "t": 168.368,
+   "t": 159.496,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8331,30 +8369,26 @@
    }
   },
   {
-   "beat": 359.804,
-   "type": "openWindow",
+   "beat": 340.812,
+   "type": "fakeDialog",
    "params": {
-    "id": "w2",
-    "frame": [
-     197,
-     47,
-     435,
-     273
+    "id": "d0",
+    "title": "what I want",
+    "body": "I told you that i need your love so give it to me",
+    "buttons": [
+     "ok"
     ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "icon": "critical",
+    "frame": [
+     191,
+     17,
+     460,
+     190
+    ]
    }
   },
   {
-   "t": 168.448,
+   "t": 159.576,
    "type": "openWindow",
    "params": {
     "id": "c1",
@@ -8374,7 +8408,7 @@
    }
   },
   {
-   "t": 168.468,
+   "t": 159.596,
    "type": "moveWindow",
    "params": {
     "id": "m2",
@@ -8387,7 +8421,7 @@
    }
   },
   {
-   "t": 168.478,
+   "t": 159.606,
    "type": "fakeDialog",
    "params": {
     "id": "al0",
@@ -8407,7 +8441,7 @@
    }
   },
   {
-   "t": 168.488,
+   "t": 159.616,
    "type": "jiggle",
    "params": {
     "id": "m2",
@@ -8417,7 +8451,7 @@
    }
   },
   {
-   "t": 168.488,
+   "t": 159.616,
    "type": "screenFlash",
    "params": {
     "color": "#669DF6",
@@ -8425,27 +8459,30 @@
    }
   },
   {
-   "beat": 360.017,
-   "type": "fakeDialog",
+   "beat": 341.022,
+   "type": "openWindow",
    "params": {
-    "id": "d1",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
+    "id": "w0",
     "frame": [
-     236,
-     10,
-     460,
-     190
-    ]
+     763,
+     618,
+     434,
+     272
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
    }
   },
   {
-   "t": 168.508,
+   "t": 159.636,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8465,7 +8502,7 @@
    }
   },
   {
-   "t": 168.528,
+   "t": 159.656,
    "type": "openWindow",
    "params": {
     "id": "c2",
@@ -8485,31 +8522,7 @@
    }
   },
   {
-   "beat": 360.209,
-   "type": "openWindow",
-   "params": {
-    "id": "w3",
-    "frame": [
-     290,
-     536,
-     429,
-     354
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "I can\u2019t",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 168.598,
+   "t": 159.726,
    "type": "moveWindow",
    "params": {
     "id": "m3",
@@ -8522,7 +8535,17 @@
    }
   },
   {
-   "t": 168.608,
+   "beat": 341.235,
+   "type": "jiggle",
+   "params": {
+    "id": "w0",
+    "durationBeats": 1.5,
+    "amplitude": 18,
+    "frequency": 9
+   }
+  },
+  {
+   "t": 159.736,
    "type": "openWindow",
    "params": {
     "id": "c3",
@@ -8542,7 +8565,7 @@
    }
   },
   {
-   "t": 168.638,
+   "t": 159.766,
    "type": "openWindow",
    "params": {
     "id": "ss1",
@@ -8562,7 +8585,7 @@
    }
   },
   {
-   "t": 168.638,
+   "t": 159.766,
    "type": "screenFlash",
    "params": {
     "color": "#C1C7D6",
@@ -8570,7 +8593,7 @@
    }
   },
   {
-   "t": 168.648,
+   "t": 159.776,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8590,21 +8613,21 @@
    }
   },
   {
-   "beat": 360.362,
+   "beat": 341.395,
    "type": "openWindow",
    "params": {
-    "id": "w4",
+    "id": "w1",
     "frame": [
-     10,
-     381,
-     428,
-     323
+     930,
+     478,
+     500,
+     412
     ],
     "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
+     "kind": "code",
+     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
+     "chrome": "terminal",
+     "title": "haunt.sh"
     },
     "animate": {
      "kind": "none"
@@ -8613,7 +8636,7 @@
    }
   },
   {
-   "t": 168.688,
+   "t": 159.816,
    "type": "openWindow",
    "params": {
     "id": "c4",
@@ -8633,7 +8656,7 @@
    }
   },
   {
-   "t": 168.688,
+   "t": 159.816,
    "type": "openWindow",
    "params": {
     "id": "kd0",
@@ -8653,30 +8676,7 @@
    }
   },
   {
-   "beat": 360.512,
-   "type": "openWindow",
-   "params": {
-    "id": "w5",
-    "frame": [
-     917,
-     88,
-     447,
-     368
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 168.728,
+   "t": 159.856,
    "type": "moveWindow",
    "params": {
     "id": "m0",
@@ -8689,7 +8689,7 @@
    }
   },
   {
-   "t": 168.738,
+   "t": 159.866,
    "type": "fakeDialog",
    "params": {
     "id": "al1",
@@ -8708,7 +8708,30 @@
    }
   },
   {
-   "t": 168.768,
+   "beat": 341.545,
+   "type": "openWindow",
+   "params": {
+    "id": "w2",
+    "frame": [
+     117,
+     10,
+     494,
+     310
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#0B0E16",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 159.896,
    "type": "openWindow",
    "params": {
     "id": "c5",
@@ -8728,7 +8751,7 @@
    }
   },
   {
-   "t": 168.788,
+   "t": 159.916,
    "type": "screenFlash",
    "params": {
     "color": "#6C86E2",
@@ -8736,7 +8759,7 @@
    }
   },
   {
-   "t": 168.788,
+   "t": 159.916,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8756,30 +8779,27 @@
    }
   },
   {
-   "beat": 360.696,
-   "type": "openWindow",
+   "beat": 341.758,
+   "type": "fakeDialog",
    "params": {
-    "id": "w6",
-    "frame": [
-     71,
-     531,
-     486,
-     359
+    "id": "d1",
+    "title": "running up",
+    "body": "my currents i can\u2019t get enough of this feeling baby",
+    "buttons": [
+     "ok",
+     "more"
     ],
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "icon": "caution",
+    "frame": [
+     159,
+     10,
+     460,
+     190
+    ]
    }
   },
   {
-   "t": 168.848,
+   "t": 159.976,
    "type": "openWindow",
    "params": {
     "id": "c6",
@@ -8799,7 +8819,7 @@
    }
   },
   {
-   "t": 168.858,
+   "t": 159.986,
    "type": "moveWindow",
    "params": {
     "id": "m1",
@@ -8812,30 +8832,7 @@
    }
   },
   {
-   "beat": 360.849,
-   "type": "openWindow",
-   "params": {
-    "id": "w7",
-    "frame": [
-     864,
-     10,
-     464,
-     321
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 168.928,
+   "t": 160.056,
    "type": "openWindow",
    "params": {
     "id": "c7",
@@ -8855,7 +8852,7 @@
    }
   },
   {
-   "t": 168.928,
+   "t": 160.056,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8875,7 +8872,31 @@
    }
   },
   {
-   "t": 168.938,
+   "beat": 341.95,
+   "type": "openWindow",
+   "params": {
+    "id": "w3",
+    "frame": [
+     221,
+     484,
+     491,
+     406
+    ],
+    "content": {
+     "kind": "lyric",
+     "text": "of this feeling baby",
+     "hex": "#F2F4FE",
+     "fg": "#0078D7",
+     "chrome": "mac",
+     "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "t": 160.066,
    "type": "screenFlash",
    "params": {
     "color": "#020AF5",
@@ -8883,30 +8904,7 @@
    }
   },
   {
-   "beat": 361.014,
-   "type": "openWindow",
-   "params": {
-    "id": "w8",
-    "frame": [
-     10,
-     555,
-     363,
-     285
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 168.988,
+   "t": 160.116,
    "type": "moveWindow",
    "params": {
     "id": "m2",
@@ -8919,7 +8917,7 @@
    }
   },
   {
-   "t": 168.998,
+   "t": 160.126,
    "type": "fakeDialog",
    "params": {
     "id": "al2",
@@ -8939,7 +8937,30 @@
    }
   },
   {
-   "t": 169.008,
+   "beat": 342.104,
+   "type": "openWindow",
+   "params": {
+    "id": "w4",
+    "frame": [
+     10,
+     375,
+     492,
+     371
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
+   }
+  },
+  {
+   "t": 160.136,
    "type": "openWindow",
    "params": {
     "id": "c0",
@@ -8959,7 +8980,7 @@
    }
   },
   {
-   "t": 169.068,
+   "t": 160.196,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -8979,27 +9000,30 @@
    }
   },
   {
-   "beat": 361.244,
-   "type": "fakeDialog",
+   "beat": 342.254,
+   "type": "openWindow",
    "params": {
-    "id": "d2",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
+    "id": "w5",
     "frame": [
-     928,
-     10,
-     460,
-     190
-    ]
+     914,
+     27,
+     516,
+     425
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    },
+    "interactive": true
    }
   },
   {
-   "t": 169.088,
+   "t": 160.216,
    "type": "openWindow",
    "params": {
     "id": "c1",
@@ -9019,7 +9043,7 @@
    }
   },
   {
-   "t": 169.088,
+   "t": 160.216,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -9027,7 +9051,7 @@
    }
   },
   {
-   "t": 169.118,
+   "t": 160.246,
    "type": "moveWindow",
    "params": {
     "id": "m3",
@@ -9040,21 +9064,21 @@
    }
   },
   {
-   "beat": 361.394,
+   "beat": 342.437,
    "type": "openWindow",
    "params": {
-    "id": "w9",
+    "id": "w6",
     "frame": [
-     140,
      10,
-     415,
-     287
+     474,
+     563,
+     416
     ],
     "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
+     "kind": "code",
+     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
+     "chrome": "terminal",
+     "title": "haunt.sh"
     },
     "animate": {
      "kind": "none"
@@ -9063,7 +9087,7 @@
    }
   },
   {
-   "t": 169.168,
+   "t": 160.296,
    "type": "openWindow",
    "params": {
     "id": "c2",
@@ -9083,7 +9107,7 @@
    }
   },
   {
-   "t": 169.208,
+   "t": 160.336,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -9103,19 +9127,19 @@
    }
   },
   {
-   "beat": 361.591,
+   "beat": 342.59,
    "type": "openWindow",
    "params": {
-    "id": "w10",
+    "id": "w7",
     "frame": [
-     946,
-     330,
-     407,
-     255
+     890,
+     10,
+     540,
+     374
     ],
     "content": {
      "kind": "color",
-     "hex": "#020AF5",
+     "hex": "#68BDF8",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -9126,7 +9150,7 @@
    }
   },
   {
-   "t": 169.238,
+   "t": 160.366,
    "type": "openWindow",
    "params": {
     "id": "kd1",
@@ -9146,7 +9170,7 @@
    }
   },
   {
-   "t": 169.238,
+   "t": 160.366,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
@@ -9154,7 +9178,7 @@
    }
   },
   {
-   "t": 169.248,
+   "t": 160.376,
    "type": "openWindow",
    "params": {
     "id": "c3",
@@ -9174,7 +9198,7 @@
    }
   },
   {
-   "t": 169.248,
+   "t": 160.376,
    "type": "moveWindow",
    "params": {
     "id": "m0",
@@ -9187,7 +9211,7 @@
    }
   },
   {
-   "t": 169.258,
+   "t": 160.386,
    "type": "fakeDialog",
    "params": {
     "id": "al3",
@@ -9207,7 +9231,7 @@
    }
   },
   {
-   "t": 169.268,
+   "t": 160.396,
    "type": "jiggle",
    "params": {
     "id": "m0",
@@ -9217,7 +9241,7 @@
    }
   },
   {
-   "t": 169.288,
+   "t": 160.416,
    "type": "openWindow",
    "params": {
     "id": "ss0",
@@ -9237,19 +9261,19 @@
    }
   },
   {
-   "beat": 361.749,
+   "beat": 342.755,
    "type": "openWindow",
    "params": {
-    "id": "w11",
+    "id": "w8",
     "frame": [
-     152,
-     570,
-     500,
-     320
+     10,
+     557,
+     424,
+     333
     ],
     "content": {
      "kind": "color",
-     "hex": "#020AF5",
+     "hex": "#68BDF8",
      "chrome": "mixed",
      "title": "look://again"
     },
@@ -9260,7 +9284,7 @@
    }
   },
   {
-   "t": 169.328,
+   "t": 160.456,
    "type": "openWindow",
    "params": {
     "id": "c4",
@@ -9280,7 +9304,7 @@
    }
   },
   {
-   "t": 169.348,
+   "t": 160.476,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -9300,1095 +9324,10 @@
    }
   },
   {
-   "t": 169.378,
-   "type": "moveWindow",
-   "params": {
-    "id": "m1",
-    "frame": [
-     573,
-     229
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "beat": 361.924,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     762,
-     574,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.388,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 169.408,
-   "type": "openWindow",
-   "params": {
-    "id": "c5",
-    "content": {
-     "kind": "color",
-     "hex": "#6C86E2"
-    },
-    "frame": [
-     337,
-     363,
-     217,
-     263
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 169.488,
-   "type": "openWindow",
-   "params": {
-    "id": "c6",
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5"
-    },
-    "frame": [
-     510,
-     490,
-     270,
-     180
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 169.488,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 362.154,
-   "type": "openWindow",
-   "params": {
-    "id": "w12",
-    "frame": [
-     655,
-     10,
-     522,
-     391
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "get enough",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 169.508,
-   "type": "moveWindow",
-   "params": {
-    "id": "m2",
-    "frame": [
-     794,
-     392
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 169.518,
-   "type": "fakeDialog",
-   "params": {
-    "id": "al0",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     368,
-     572,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.538,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 169.568,
-   "type": "openWindow",
-   "params": {
-    "id": "c7",
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE"
-    },
-    "frame": [
-     683,
-     617,
-     323,
-     217
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 362.345,
-   "type": "openWindow",
-   "params": {
-    "id": "w13",
-    "frame": [
-     10,
-     364,
-     383,
-     230
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 169.628,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "t": 169.638,
-   "type": "moveWindow",
-   "params": {
-    "id": "m3",
-    "frame": [
-     1015,
-     555
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 169.648,
-   "type": "openWindow",
-   "params": {
-    "id": "c0",
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8"
-    },
-    "frame": [
-     856,
-     626,
-     226,
-     254
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 362.497,
-   "type": "jiggle",
-   "params": {
-    "id": "w13",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "t": 169.688,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "beat": 362.647,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
-    "frame": [
-     82,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.728,
-   "type": "openWindow",
-   "params": {
-    "id": "c1",
-    "content": {
-     "kind": "color",
-     "hex": "#669DF6"
-    },
-    "frame": [
-     1029,
-     191,
-     279,
-     171
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 169.768,
-   "type": "moveWindow",
-   "params": {
-    "id": "m0",
-    "frame": [
-     1236,
-     700
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 169.768,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "t": 169.778,
-   "type": "fakeDialog",
-   "params": {
-    "id": "al1",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
-    "frame": [
-     649,
-     211,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.788,
-   "type": "openWindow",
-   "params": {
-    "id": "kd0",
-    "content": {
-     "kind": "code",
-     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}"
-    },
-    "frame": [
-     258,
-     284,
-     470,
-     300
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 362.797,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     357,
-     588,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.808,
-   "type": "openWindow",
-   "params": {
-    "id": "c2",
-    "content": {
-     "kind": "color",
-     "hex": "#C1C7D6"
-    },
-    "frame": [
-     1202,
-     318,
-     182,
-     208
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 169.838,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 169.888,
-   "type": "openWindow",
-   "params": {
-    "id": "c3",
-    "content": {
-     "kind": "color",
-     "hex": "#6C86E2"
-    },
-    "frame": [
-     175,
-     445,
-     235,
-     245
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 363.0,
+   "beat": 342.985,
    "type": "fakeDialog",
    "params": {
     "id": "d2",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     719,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 169.898,
-   "type": "moveWindow",
-   "params": {
-    "id": "m1",
-    "frame": [
-     257,
-     221
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 169.908,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "t": 169.938,
-   "type": "openWindow",
-   "params": {
-    "id": "ss1",
-    "content": {
-     "kind": "code",
-     "text": "$ whoami\nyou@Your-Mac\n\nhost   : your-mac\nmodel  : Mac\nmacOS  : 15.0 (24A000)\ncpu    : 10 cores\nmemory : 16 GB\nloadavg: 1.20 3.40 5.60 "
-    },
-    "frame": [
-     909,
-     600,
-     440,
-     280
-    ],
-    "animate": {
-     "kind": "fadeIn"
-    }
-   }
-  },
-  {
-   "t": 169.968,
-   "type": "openWindow",
-   "params": {
-    "id": "c4",
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5"
-    },
-    "frame": [
-     348,
-     572,
-     288,
-     162
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 363.175,
-   "type": "openWindow",
-   "params": {
-    "id": "w0",
-    "frame": [
-     950,
-     639,
-     411,
-     251
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 169.988,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 170.028,
-   "type": "moveWindow",
-   "params": {
-    "id": "m2",
-    "frame": [
-     478,
-     384
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.038,
-   "type": "fakeDialog",
-   "params": {
-    "id": "al2",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     930,
-     410,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 363.33,
-   "type": "openWindow",
-   "params": {
-    "id": "w1",
-    "frame": [
-     10,
-     504,
-     528,
-     386
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.048,
-   "type": "openWindow",
-   "params": {
-    "id": "c5",
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE"
-    },
-    "frame": [
-     521,
-     681,
-     191,
-     199
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.048,
-   "type": "jiggle",
-   "params": {
-    "id": "m2",
-    "durationSeconds": 0.4,
-    "amplitude": 26,
-    "frequency": 15
-   }
-  },
-  {
-   "t": 170.048,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 363.511,
-   "type": "openWindow",
-   "params": {
-    "id": "w2",
-    "frame": [
-     887,
-     10,
-     543,
-     353
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.128,
-   "type": "openWindow",
-   "params": {
-    "id": "c6",
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8"
-    },
-    "frame": [
-     694,
-     146,
-     244,
-     236
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.138,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 170.158,
-   "type": "moveWindow",
-   "params": {
-    "id": "m3",
-    "frame": [
-     699,
-     547
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.188,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 363.679,
-   "type": "jiggle",
-   "params": {
-    "id": "w2",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "t": 170.208,
-   "type": "openWindow",
-   "params": {
-    "id": "c7",
-    "content": {
-     "kind": "color",
-     "hex": "#669DF6"
-    },
-    "frame": [
-     867,
-     273,
-     297,
-     153
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.288,
-   "type": "openWindow",
-   "params": {
-    "id": "c0",
-    "content": {
-     "kind": "color",
-     "hex": "#C1C7D6"
-    },
-    "frame": [
-     1040,
-     400,
-     200,
-     190
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.288,
-   "type": "moveWindow",
-   "params": {
-    "id": "m0",
-    "frame": [
-     920,
-     700
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.288,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 170.298,
-   "type": "fakeDialog",
-   "params": {
-    "id": "al3",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     211,
-     609,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 363.896,
-   "type": "openWindow",
-   "params": {
-    "id": "w3",
-    "frame": [
-     10,
-     428,
-     486,
-     292
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.328,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "t": 170.338,
-   "type": "openWindow",
-   "params": {
-    "id": "kd1",
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}"
-    },
-    "frame": [
-     565,
-     475,
-     470,
-     300
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.368,
-   "type": "openWindow",
-   "params": {
-    "id": "c1",
-    "content": {
-     "kind": "color",
-     "hex": "#6C86E2"
-    },
-    "frame": [
-     1213,
-     527,
-     253,
-     227
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 364.055,
-   "type": "openWindow",
-   "params": {
-    "id": "w4",
-    "frame": [
-     114,
-     10,
-     393,
-     325
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.418,
-   "type": "moveWindow",
-   "params": {
-    "id": "m1",
-    "frame": [
-     1141,
-     213
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.438,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 170.448,
-   "type": "openWindow",
-   "params": {
-    "id": "c2",
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5"
-    },
-    "frame": [
-     186,
-     616,
-     306,
-     264
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.468,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 364.248,
-   "type": "openWindow",
-   "params": {
-    "id": "w5",
-    "frame": [
-     900,
-     211,
-     530,
-     322
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.528,
-   "type": "openWindow",
-   "params": {
-    "id": "c3",
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE"
-    },
-    "frame": [
-     359,
-     101,
-     209,
-     181
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.548,
-   "type": "moveWindow",
-   "params": {
-    "id": "m2",
-    "frame": [
-     162,
-     376
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.558,
-   "type": "fakeDialog",
-   "params": {
-    "id": "al0",
     "title": "all i got",
     "body": "i\u2019m giving that so give it up",
     "buttons": [
@@ -10397,27 +9336,7 @@
     ],
     "icon": "info",
     "frame": [
-     492,
-     248,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 364.454,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     55,
+     841,
      10,
      460,
      190
@@ -10425,198 +9344,7 @@
    }
   },
   {
-   "t": 170.588,
-   "type": "openWindow",
-   "params": {
-    "id": "ss0",
-    "content": {
-     "kind": "code",
-     "text": "$ uptime\n22:22  up 3 days,  4:20, 2 users, load averages: 1.20 3.40 5.60\n\ndisk / : 420G used / 994G (44%)\nen0    : 192.168.0.42\n\n[ system integrity: questionable ]"
-    },
-    "frame": [
-     172,
-     222,
-     440,
-     280
-    ],
-    "animate": {
-     "kind": "fadeIn"
-    }
-   }
-  },
-  {
-   "t": 170.588,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 170.608,
-   "type": "openWindow",
-   "params": {
-    "id": "c4",
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8"
-    },
-    "frame": [
-     532,
-     228,
-     262,
-     218
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.608,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "beat": 364.676,
-   "type": "openWindow",
-   "params": {
-    "id": "w6",
-    "frame": [
-     778,
-     10,
-     586,
-     490
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "t": 170.678,
-   "type": "moveWindow",
-   "params": {
-    "id": "m3",
-    "frame": [
-     383,
-     539
-    ],
-    "durationSeconds": 0.2,
-    "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 170.688,
-   "type": "openWindow",
-   "params": {
-    "id": "c5",
-    "content": {
-     "kind": "color",
-     "hex": "#669DF6"
-    },
-    "frame": [
-     705,
-     355,
-     315,
-     255
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "t": 170.738,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "beat": 364.826,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     876,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "t": 170.748,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
-   "t": 170.768,
-   "type": "openWindow",
-   "params": {
-    "id": "c6",
-    "content": {
-     "kind": "color",
-     "hex": "#C1C7D6"
-    },
-    "frame": [
-     878,
-     482,
-     218,
-     172
-    ],
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 365,
+   "beat": 343,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -10624,7 +9352,7 @@
    }
   },
   {
-   "beat": 365,
+   "beat": 343,
    "type": "deskWallpaper",
    "params": {
     "id": "lastwords",
@@ -10658,277 +9386,277 @@
      "assets/lyrics_desktops/2.jpg",
      "assets/lyrics_desktops/ME.jpg"
     ],
-    "durationSeconds": 3.268
+    "durationSeconds": 4.202
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "al0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "al1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "al2"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "al3"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c2"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c3"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c4"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c5"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c6"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "c7"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "kd0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "kd1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "m0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "m1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "m2"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "m3"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "ss0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "ss1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w2"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w3"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w4"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w5"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w6"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w7"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w8"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w9"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w10"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w11"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w12"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "w13"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "d0"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "d1"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "d2"
    }
   },
   {
-   "beat": 365.05,
+   "beat": 343.05,
    "type": "closeWindow",
    "params": {
     "id": "d3"
    }
   },
   {
-   "beat": 372,
+   "beat": 352,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -10936,7 +9664,7 @@
    }
   },
   {
-   "beat": 372,
+   "beat": 352,
    "type": "credits",
    "params": {
     "id": "credits",

@@ -69,6 +69,12 @@ fi
 # Embed the compressed backing track(s) so the .app is self-contained and plays
 # anywhere, not just from inside the repo tree. The resolver checks Contents/Resources.
 # Only compressed formats — embedding raw .wav would re-bloat the bundle.
+# The lyric face (EffectWindow's LyricFont registers it from this path at run time).
+if [ -d assets/fonts/hack ]; then
+  mkdir -p "$APP/Contents/Resources/assets/fonts"
+  cp -R assets/fonts/hack "$APP/Contents/Resources/assets/fonts/"
+fi
+
 for audio in assets/*.mp3 assets/*.m4a; do
   [ -e "$audio" ] && cp "$audio" "$APP/Contents/Resources/"
 done

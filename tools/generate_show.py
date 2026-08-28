@@ -9,16 +9,25 @@ recording. `CUES` below mirrors it, and everything in this file hangs off those 
 
 Writes examples/timeline_show.json and Sources/DPECore/Resources/timeline.json.
 
-`CUES` is in SECONDS, because that is what the engine runs on. The cue sheet is in
-FRAMES at 30 fps, because that is what the app's transport counts in and therefore what
-you read off the scrubber. This script prints both mapped against each other, and those
-printed frames must match the table in docs/CUES.md.
+The recut's seconds were read off a video whose clock starts ~9 s (≈ 270 frames, the
+boot-up sequence) BEFORE the music — shifted back by RECUT_SHIFT they land on the
+phrase starts, which unshifted they missed by a beat or a bar. `WAS` keeps the original
+numbers so the printout shows each cue against where the recut actually fired it.
 
-The cue times do NOT land on bar lines — they were read off a player's clock, not
-counted in bars — so `at()` puts each one on the NEAREST BEAT. That moves a cue by at
-most half a beat (7 frames) and keeps every cut tight to the music; authoring them at
-their literal position instead would drift each one against the grid by a different
-amount, which is audible on the hard cuts.
+The track is twelve 8-bar PHRASES (INTRO A/B, CHORUS 1A/1B, BRIDGE A/B, BREAKDOWN,
+INSTRUMENTAL A/B, CHORUS 2A/2B, BREAK), each one verified in the audio; `PHRASES` is
+the bar each starts on. Every cue is a position INSIDE a phrase — `(phrase, bars in,
+beats in)` — so `(phrase, 0, 0)` is that phrase's downbeat, the changeover, and moving a
+phrase moves its cues with it without touching the next one. The engine runs in beats;
+the cue sheet is in FRAMES at 30 fps because that is what the app's transport shows.
+This script prints every cue's phrase position and frame, and those frames must match
+docs/CUES.md.
+
+The lyric is timed by `tools/lyrics.py`: `CUES` is the sung words, tuned by ear, in
+beats from the lyric's own zero ("what I want", the pickup, which sits CHORUS_LEAD
+before the phrase's downbeat); `phrase_cues()` derives the phrase timings from it. The
+spiral (cue 9) and the desktop words (cue 12) both read that list at CHORUS 1B's
+position, so tuning a word moves both.
 
 Seeded, so the show is identical take to take.
 """
@@ -64,10 +73,6 @@ def secs(beat):
     """Absolute seconds for a timeline beat (matches the loader's beat→time math)."""
     return OFFSET + beat * BEAT
 
-def at(t):
-    """The beat nearest the authored second `t` — see the module docstring."""
-    return round((t - OFFSET) / BEAT)
-
 # docs/CUES.md is written in frames, and so is everything this script prints. 30 fps is
 # not a property of the engine — it runs off the audio clock in seconds and quantises
 # nothing — it is the rate the app's own transport counts in (`MainWindowController.fps`),
@@ -83,44 +88,100 @@ def frame_at(t):
     return int(t * FPS)
 
 # =============================================================================
-# THE CUE LIST — docs/CUES.md, in seconds. Every act below indexes this by name;
-# no act computes a time of its own.
+# THE PHRASES — the track's twelve 8-bar phrases, each verified in the audio (per-bar
+# loudness, bass and vocal energy, kicks; 2026-08-28). docs/CUES.md carries the same
+# table. Bars count from the first downbeat; bar 17 is the drop.
+# =============================================================================
+PHRASES = {
+    "introA":         1,     #  0:00.40
+    "introB":         9,     #  0:15.34
+    "chorus1A":      17,     #  0:30.28  THE DROP — vocals in; the hook lands in bar 22
+    "chorus1B":      25,     #  0:45.22  the lyric again; the hook in bar 30
+    "bridgeA":       33,     #  1:00.16  vocals out, the beat carries
+    "bridgeB":       41,     #  1:15.10  vocals back
+    "breakdown":     49,     #  1:30.04  bass leaves at 52, the kicks stop 53–55
+    "instrumentalA": 57,     #  1:44.99  full beat, no vocals
+    "instrumentalB": 65,     #  1:59.93  the vocal pickup returns in bar 72
+    "chorus2A":      73,     #  2:14.87  vocals in; the hook in bar 78
+    "chorus2B":      81,     #  2:29.81  the hook in bar 86, right before the break
+    "break":         87,     #  2:41.02  everything stops; the file ends 2:49.85
+}
+def phrase_beat(name):
+    return (PHRASES[name] - 1) * 4
+
+# =============================================================================
+# THE CUE LIST — docs/CUES.md. Every cue is (phrase, bars in, beats in); (p, 0, 0) is
+# the phrase's downbeat, the changeover; (chorus, -1, 0) is the bar before it, where the
+# vocal comes in ("what I want"). Every hook is at (chorus, 5, 0). Beats may be halves. `WAS` is the
+# recut's authored second for each cue (whole seconds, snapped to the nearest beat),
+# kept so the printout shows exactly what moved and by how much.
 # =============================================================================
 CUES = {
-    "blue":        0.0,      #  1  intro gate + the desktop goes DJ blue
-    "restore":    16.0,      #  2  blue goes, the viewer's own wallpaper is back
-    "welcome":    18.0,      #  3  the ASCII welcome window
-    "probe":      25.0,      #  4  the system probe
-    "hydra":      30.0,      #  5  sketches dragged onto the screen
-    "blue2":      38.0,      #  6  blue again
-    "face":       39.0,      #  7  the desktop becomes pixelface.jpg
-    "traveller":  39.5,      #  8  one window up and down, trailing windows
-    "spiral":     43.0,      #  9  the spiral of lyrics
-    "video1":     47.0,      # 10  placeholder for a video
-    "tbd_048":    48.0,      # 11  TBD — deliberately empty
-    "words":      54.0,      # 12  the lyrics on the desktop, dragged trail
-    "torus1":     69.0,      # 13  the magic torus, and it introduces itself
-    "map":        84.0,      # 14  Apple Maps onto the viewer's location
-    "fill":       87.0,      # 15  windows start filling the screen
-    "black":      97.0,      # 16  desktop to black, windows close one by one
-    "tbd_099":    99.0,      # 17  TBD — cool graphic
-    "booth":     107.0,      # 18  Photo Booth, 3·2·1, shutter
-    "wall":      114.0,      # 19  the viewer's own photos fill the screen
-    "facestrobe":118.0,      # 20  pixelface strobes over the wall
-    "horse":     120.0,      # 21  everything cuts; the horse
-    "torus2":    125.0,      # 22  glass torus + a circle of lyric windows
-    "video2":    128.0,      # 23  the video placeholder on top of all of it
-    "video3":    129.0,      # 24  cut to black, video placeholder alone on it
-    "tbd_136":   136.0,      # 25  everything cuts; TBD
-    "spinner":   138.0,      # 26  TBD + the mouse spinner
-    "spam":      143.0,      # 27  a ton of crazy UI windows
-    "glitch":    158.0,      # 28  the wallpaper glitches, lyrics glitch with it
-    "allglitch": 167.0,      # 29  windows + the whole screen glitching
-    "lastwords": 171.0,      # 30  the lyrics desktop
-    "ending":    174.0,      # 31  the end card
+    "blue":       ("introA",        0, 0),   #  1  intro gate + the desktop goes DJ blue
+    "restore":    ("introA",        3, 2),   #  2  blue goes, the viewer's own wallpaper is back
+    "welcome":    ("introA",        4, 2),   #  3  the ASCII welcome window
+    "probe":      ("introB",        0, 0),   #  4  the system probe
+    "hydra":      ("introB",        3, 0),   #  5  sketches dragged onto the screen
+    "blue2":      ("introB",        7, 1),   #  6  blue again — the bar before the drop
+    "face":       ("chorus1A",      0, 0),   #  7  THE DROP: the desktop becomes pixelface.jpg
+    "traveller":  ("chorus1A",      0, 0),   #  8  one window up and down, trailing windows
+    "spiral":     ("chorus1A",      0, 0),   #  9  the drop: the spiral of lyrics, every phrase on its sung line
+    "video1":     ("chorus1A",      4, 1),   # 10  placeholder for a video
+    "tbd_048":    ("chorus1A",      4, 3),   # 11  TBD — deliberately empty
+    "words":      ("chorus1B",      0, 0),   # 12  the whole lyric on the desktop, word by word as sung
+    "torus1":     ("bridgeA",       0, 0),   # 13  vocals out: the magic torus introduces itself
+    "map":        ("bridgeB",       0, 0),   # 14  vocals back: Apple Maps onto the viewer's location
+    "fill":       ("bridgeB",       1, 2),   # 15  windows start filling the screen
+    "black":      ("bridgeB",       7, 0),   # 16  the bar before the breakdown: desktop to black
+    "tbd_099":    ("breakdown",     0, 0),   # 17  TBD — cool graphic
+    "booth":      ("breakdown",     4, 0.5), # 18  the kicks stop: Photo Booth; 3·2·1 a bar apart, the shutter on `wall`
+    "wall":       ("breakdown",     7, 0.5), # 19  the bass hits back in (an "and", half a beat into bar 56): shutter + the photo wall
+    "facestrobe": ("instrumentalA", 2, 1),   # 20  pixelface strobes over the wall
+    "horse":      ("instrumentalA", 3, 1),   # 21  everything cuts; the horse
+    "torus2":     ("instrumentalA", 6, 0),   # 22  glass torus + a circle of lyric windows
+    "video2":     ("instrumentalA", 7, 2),   # 23  the video placeholder on top of all of it
+    "video3":     ("instrumentalB", 0, 0),   # 24  cut to black, video placeholder alone on it
+    "tbd_136":    ("instrumentalB", 3, 3),   # 25  everything cuts; TBD
+    "spinner":    ("instrumentalB", 4, 3),   # 26  TBD + the mouse spinner
+    "spam":       ("chorus2A",     -1, 0),   # 27  the vocal pickup bar (72): a ton of crazy UI windows
+    "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the wallpaper glitches, lyrics glitch with it
+    "allglitch":  ("chorus2B",      4, 2),   # 29  windows + the whole screen glitching
+    "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6; a beat early so the ~300 ms swap is SEEN on the stop
+    "ending":     ("break",         2, 0),   # 31  the end card
 }
-B = {name: at(t) for name, t in CUES.items()}
-B["blue"] = 0                            # the first event is beat 0, not a snap
+# The recut's authored seconds, and the clock they were read on: a video with ~9 s of
+# boot-up before the music. `WAS - RECUT_SHIFT` is where each cue sits in the track.
+RECUT_SHIFT = 9.0
+WAS = {"blue": 0.0, "restore": 16.0, "welcome": 18.0, "probe": 25.0, "hydra": 30.0,
+       "blue2": 38.0, "face": 39.0, "traveller": 39.5, "spiral": 43.0, "video1": 47.0,
+       "tbd_048": 48.0, "words": 54.0, "torus1": 69.0, "map": 84.0, "fill": 87.0,
+       "black": 97.0, "tbd_099": 99.0, "booth": 107.0, "wall": 114.0, "facestrobe": 118.0,
+       "horse": 120.0, "torus2": 125.0, "video2": 128.0, "video3": 129.0, "tbd_136": 136.0,
+       "spinner": 138.0, "spam": 143.0, "glitch": 158.0, "allglitch": 167.0,
+       "lastwords": 171.0, "ending": 174.0}
+B = {name: phrase_beat(p) + bars * 4 + beats for name, (p, bars, beats) in CUES.items()}
+# A cue may sit up to a bar BEFORE its phrase: the vocal pickup bar of a chorus, or the
+# beat before a stop so a wallpaper swap is seen on it. Never past the phrase's end.
+for name, (p, bars, beats) in CUES.items():
+    assert -4 <= bars * 4 + beats < 32 or p == "break", f"{name}: {bars} bars {beats} beats is outside {p}"
+
+# --- the lyric's clock ---
+# lyrics.CUES counts beats from the lyric's own zero: "what I want", the pickup, which
+# is sung one bar before the chorus's downbeat. CHORUS_LEAD is that lead, in seconds —
+# the artist tuned CUES against chorus 1A with the cards starting 1 s before bar 17, so
+# the same list read at chorus 1B's position sits 1 s before bar 25.
+CHORUS_LEAD = 1.0
+def lyric_zero(phrase):
+    return phrase_beat(phrase) - CHORUS_LEAD / BEAT
+def lyric_beat(zero, when):
+    """A lyrics.py cue → absolute beat: beats from the lyric's zero, or a "34.10s" track time."""
+    if isinstance(when, str) and when.endswith("s"):
+        return (float(when[:-1]) - OFFSET) / BEAT
+    return zero + when
+phrases = lyrics.phrase_cues()             # [(when, phrase, line)], timed off the tuned words
+phrase_texts = [p for _, p, _ in phrases]
+n_cue = len(phrases)
+HOOK_AT = next(when for when, _, line in phrases if line == 6)   # "I told you that I", second time
 
 events = []
 def add(beat, typ, params):
@@ -335,7 +396,7 @@ add(B["face"], "deskWallpaper", {"id": "face", "mode": "slides", "hz": 0.1,
 # the traveller has moved on. They are closed together at cue 12.
 # =============================================================================
 tv = B["traveller"]
-TRAVEL_END = B["spiral"] - 0.5
+TRAVEL_END = tv + 8                          # two bars up and down, under the spiral
 TRAVEL_W, TRAVEL_H = round(W * 0.20), round(H * 0.22)
 tx = round((W - TRAVEL_W) / 2)
 y_top, y_bot = round(H * 0.06), round(H - TRAVEL_H - H * 0.06)
@@ -381,19 +442,24 @@ while b + LEG <= TRAVEL_END:
 # there four seconds later.
 # =============================================================================
 sp = B["spiral"]
-SPIRAL_END = B["words"] - 1.5
-CARD_W, CARD_H = round(W * 0.15), round(H * 0.11)
-n_cue = len(lyrics.CUES)
-step = (SPIRAL_END - sp) / n_cue
+zero_1A = lyric_zero("chorus1A")
+# Chorus 1A's whole lyric, each card landing ON its sung phrase (lyrics.py, read at
+# chorus 1A's position). The first line is the pickup, sung a bar before the drop; it
+# and anything else already sung when the cue fires land on the cue, so the spiral opens
+# with the drop and reads from the first line. The desktop takes the lyric again at
+# chorus 1B (cue 12).
+spiral_phrases = [(when, text) for when, text, _ in phrases]
+n_sp = len(spiral_phrases)
+CARD_W, CARD_H = round(W * 0.24), round(H * 0.16)
 r0, r1 = min(W, H) * 0.16, min(W, H) * 0.46
 spiral_ids = []
-for i, (_, text) in enumerate(lyrics.CUES):
-    u = i / max(1, n_cue - 1)
+for i, (when, text) in enumerate(spiral_phrases):
+    u = i / max(1, n_sp - 1)
     ang = -math.pi / 2 + 2.4 * math.pi * u          # a bit over one full turn
     r = r0 + (r1 - r0) * u
     wid = f"sp{i}"
     spiral_ids.append(wid)
-    lyric_card(wid, sp + i * step, text, i,
+    lyric_card(wid, max(sp, lyric_beat(zero_1A, when)), text, i,
                frame=[round(r * math.cos(ang) * 1.35), round(r * math.sin(ang)),
                       CARD_W, CARD_H],
                chrome="mac", animate="springIn", anchor="center")
@@ -422,18 +488,65 @@ placeholder("video", B["video1"], VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
 #
 # The spiral and the traveller's trail go here — the desktop is the picture now.
 # =============================================================================
-wd = B["words"]
-for wid in spiral_ids + trail_ids + ["traveller"]:
-    add(wd - 0.4, "closeWindow", {"id": wid})
+wd = B["words"]                     # chorus 1B; the run starts on the pickup, one bar before
+zero_1B = lyric_zero("chorus1B")
 
+# The cards, one file per word as it is sung (RUNNIN, CANT, 2) in assets/lyrics_desktops.
+# A cue whose whole text has a card ("NEED YOUR LOVE.jpg") is one card; otherwise its
+# words are spread evenly to the next cue, one card each. A word with no file is skipped
+# — the previous word holds — and listed below, so a new cue is never a silent gap.
+WORDS_DIR = "assets/lyrics_desktops"
+def word_key(word):
+    key = word.upper().replace("’", "").replace("'", "").strip(".,!?:;")
+    return {"RUNNING": "RUNNIN", "TO": "2"}.get(key, key)
+def card_path(key):
+    path = f"{WORDS_DIR}/{key}.jpg"
+    return path if os.path.exists(os.path.join(ROOT, path)) else None
+def cue_cards(text):
+    words = text.split()
+    if len(words) > 1:
+        whole = card_path(" ".join(word_key(w) for w in words))
+        if whole:
+            return [(text, whole)]
+    return [(w, card_path(word_key(w))) for w in words]
+
+# The schedule: the whole lyric (lyrics.CUES, 32 beats) at chorus 1B's position. Each word is applied DESK_LATENCY before it is sung — the swap takes
+# ~300 ms to show (WallpaperController) — so the picture changes ON the word. The
+# window server sustains ~3 Hz; a word it cannot fit is skipped, not queued.
+lyric_end = zero_1B + 32
+word_times = [lyric_beat(zero_1B, when) for when, _ in lyrics.CUES] + [lyric_end]
+word_slides, words_missing, words_interpolated = [], [], []
+for k, (when, text) in enumerate(lyrics.CUES):
+    b0, b1 = word_times[k], word_times[k + 1]
+    cards = cue_cards(text)
+    if len(cards) > 1:
+        words_interpolated.append(text)
+    for j, (label, img) in enumerate(cards):
+        if img is None:
+            if word_key(label) not in words_missing:
+                words_missing.append(word_key(label))
+            continue
+        word_slides.append((secs(b0 + (b1 - b0) * j / len(cards)), img))
+if not word_slides:
+    sys.exit("CHORUS 1B: no desktop word has a card")
+DESK_LATENCY = 0.30
+words_first = word_slides[0][0]
+words_event_at = words_first - DESK_LATENCY
+words_event_beat = (words_event_at - OFFSET) / BEAT
+for wid in spiral_ids + trail_ids + ["traveller"]:
+    add(words_event_beat - 0.2, "closeWindow", {"id": wid})
+add_t(words_event_at, "deskWallpaper", {
+    "id": "words", "mode": "slides",
+    "images": [img for _, img in word_slides],
+    "at": [round(t - words_first, 3) for t, _ in word_slides],
+    "durationSeconds": round(secs(B["torus1"]) - words_event_at, 3)})
+
+# The old word list, still the deck the glitch (cue 28) and the last words (cue 30) draw from.
 LYRIC_WORDS = ["I", "TOLD", "YOU", "THAT", "I", "NEED", "YOUR", "LOVE",
                "SO", "GIVE", "IT", "2", "ME",
                "RUNNIN", "UP", "MY", "CURRENTS",
                "I", "CANT", "GET", "ENOUGH", "SO", "GIVE", "IT", "2", "ME"]
 WORD_SLIDES = [f"assets/lyrics_desktops/{w}.jpg" for w in LYRIC_WORDS]
-add(wd, "deskWallpaper", {"id": "words", "mode": "slides", "hz": 10,
-                          "images": WORD_SLIDES,
-                          "durationSeconds": round(secs(B["torus1"]) - secs(wd), 3)})
 
 # The cursor hauls a stamped trail across the screen. `stamp` drops a breadcrumb window
 # every `spacing` px of travel and leaves it there, so what the pointer draws stays
@@ -658,7 +771,7 @@ CLOCK_W, CLOCK_H = round(W * 0.16), round(H * 0.12)
 rx, ry = W * 0.36, H * 0.40
 clock_ids = []
 clock_span = (B["video2"] - t2) - 0.5
-for i, (_, text) in enumerate(lyrics.CUES):
+for i, text in enumerate(phrase_texts):
     ang = -math.pi / 2 + 2 * math.pi * i / n_cue            # 12 o'clock, clockwise
     wid = f"ck{i}"
     clock_ids.append(wid)
@@ -736,7 +849,7 @@ def erupt(b0, b1, cx, cy, rate=0.25):
                 "interactive": True})
             chaos["w"] += 1
         elif roll < 0.58:
-            _, text = lyrics.CUES[chaos["l"] % n_cue]
+            text = phrase_texts[chaos["l"] % n_cue]
             lyric_card(f"w{chaos['w'] % 14}", b, text, chaos["l"],
                        frame=[round(x), round(y), max(w, 260), h], chrome="mac")
             chaos["w"] += 1; chaos["l"] += 1
@@ -776,18 +889,22 @@ for i, kt in enumerate(kicks_between(sm, B["glitch"])):
 # with it: the two alternate, so the tear keeps landing on a different picture.
 #
 # `glitch` re-corrupts the SNAPSHOT every pass, not the current wallpaper, so it never
-# compounds into noise — but it renders a full-size bitmap per frame, hence the low hz.
+# compounds into noise — but every pass is a bitmap render AND a ~300 ms desktop swap,
+# and the swap is WindowServer time that every window on screen pays for. At 2.5 Hz
+# glitch + 6 Hz words this section had the desktop changing ~5×/s for ten seconds and
+# the whole machine stuttered through it; ~1.5–2 swaps/s reads the same and leaves the
+# server room to move windows.
 # =============================================================================
 gl = B["glitch"]
 seg, b, gi = 1.6 / BEAT, B["glitch"], 0        # ~1.6 s a segment
 n_glitch = 0
 while b < B["allglitch"]:
     if gi % 2 == 0:
-        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "glitch", "hz": 2.5,
+        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "glitch", "hz": 1.5,
                                  "intensity": 0.55 + 0.08 * (gi % 3), "seed": 1000 + gi,
                                  "durationSeconds": round(seg * BEAT, 3)})
     else:
-        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "slides", "hz": 6,
+        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "slides", "hz": 2,
                                  "images": WORD_SLIDES,
                                  "durationSeconds": round(seg * BEAT, 3)})
     n_glitch += 1
@@ -803,7 +920,9 @@ while b < B["allglitch"]:
 # =============================================================================
 ag = B["allglitch"]
 erupt(ag, B["lastwords"], W / 2, H / 2, rate=0.18)
-add(ag, "deskWallpaper", {"id": "glall", "mode": "glitch", "hz": 3, "intensity": 0.85,
+# Under the strobe the desktop is mostly covered; 1 Hz is plenty, and the strobe's own
+# ~43 events/s is what the server should be spending itself on.
+add(ag, "deskWallpaper", {"id": "glall", "mode": "glitch", "hz": 1, "intensity": 0.85,
                           "seed": 77,
                           "durationSeconds": round((B["lastwords"] - ag) * BEAT, 3)})
 
@@ -916,18 +1035,24 @@ print(f"\n{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1
 # Reported in FRAMES, because that is the unit docs/CUES.md is written in and the unit
 # the app's own transport counts in — a number printed here should be findable on the
 # scrubber without converting anything.
-print(f"  {'cue':<11} {'authored':>9} {'fires on':>10} {'drift':>7}  {'':>4}")
-for i, (name, t) in enumerate(CUES.items(), start=1):
+print(f"  {'cue':<11} {'phrase':<14} {'in':>6} {'fires on':>10} {'beat':>5}  {'vs recut−9s':>11}")
+for i, (name, (p, bars, beats)) in enumerate(CUES.items(), start=1):
     g = secs(B[name])
-    print(f"  {i:>2} {name:<11} {'f ' + str(frame_at(t)):>9} {'f ' + str(frame_at(g)):>10} "
-          f"{frame_at(g) - frame_at(t):+7d}f"
+    was_beat = 0 if name == "blue" else round((WAS[name] - RECUT_SHIFT - OFFSET) / BEAT)   # the recut, on the track's clock
+    print(f"  {i:>2} {name:<11} {p:<14} {bars:>2}.{beats:<4g} {'f ' + str(frame_at(g)):>10} {B[name]:>5g}  "
+          f"{frame_at(g) - frame_at(secs(was_beat)):+8d}f"
           + ("   (past the end of the track)" if g > DURATION else ""))
 print()
 print(f"  hydra    {len(hydra_ids)} sketches, dragged one runs at {secs(HYDRA_RUN):.2f}s")
 print(f"  trail    {len(trail_ids)} stamped windows over {leg} legs")
 print(f"  spiral   {len(spiral_ids)} lyric cards, r {r0:.0f}→{r1:.0f}px")
-print(f"  words    {len(LYRIC_WORDS)} slides @10 Hz authored "
-      f"({secs(B['words']):.1f}s → {secs(B['torus1']):.1f}s)")
+print(f"  words    {len(word_slides)} desktop words on the sung lyric, {words_first:.2f}s → "
+      f"{word_slides[-1][0]:.2f}s, last holds to {secs(B['torus1']):.1f}s "
+      f"(applied {DESK_LATENCY * 1000:.0f} ms early; min gap "
+      f"{min(b - a for (a, _), (b, _) in zip(word_slides, word_slides[1:])):.2f}s)"
+      + (f"\n           no card yet for: {', '.join(words_missing)}" if words_missing else "")
+      + (f"\n           inner words spread evenly in: {', '.join(repr(t) for t in words_interpolated)}"
+         if words_interpolated else ""))
 print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.2f}s, "
       f"question at f {frame_at(secs(ORACLE_AT))} "
       f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
@@ -943,9 +1068,9 @@ print(f"  glitch   {n_glitch} wallpaper segments, then {n_strobe} of "
 print(f"  outro    copy lands {TYPED_AT:.2f}s, holds {OUTRO_DELAY:.1f}s → quit at "
       f"{TYPED_AT + OUTRO_DELAY:.2f}s ({TYPED_AT + OUTRO_DELAY - DURATION:+.2f}s vs track end)")
 print()
-print("  lyric cues (tools/lyrics.py CUES) — when each card lands, in the track:")
+print("  lyric phrases (tools/lyrics.py PHRASES, timed off CUES) — spiral cards at chorus 1A, the clock:")
 print("   #    spiral      clock    text")
-for i, (_, text) in enumerate(lyrics.CUES):
-    ta = secs(sp + i * step)
+for i, (when, text, _) in enumerate(phrases):
+    ta = f"{secs(max(sp, lyric_beat(zero_1A, when))):6.2f}s"
     tb = secs(t2 + 0.3 + clock_span * i / n_cue)
-    print(f"  {i:>2}   {ta:6.2f}s   {tb:7.2f}s   {text}")
+    print(f"  {i:>2}   {ta:>8}   {tb:7.2f}s   {text}")

@@ -379,7 +379,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         var pt = max(12, size.height * 0.22)
         var fit = NSSize.zero
         while pt > 8 {
-            let font = NSFont.systemFont(ofSize: pt, weight: .heavy)
+            let font = LyricFont.font(ofSize: pt)
             label.font = font
             fit = label.sizeThatFits(NSSize(width: room.width, height: .greatestFiniteMagnitude))
             let widest = (content.text ?? "").split(separator: " ")
@@ -860,5 +860,32 @@ final class FlashWindow: BaseEffectWindow {
             self.colorLayerView.layer?.opacity = 0
             CATransaction.commit()
         }
+    }
+}
+
+
+// MARK: - The lyric face
+
+/// Every lyric card is set in Hack Bold — the face in `assets/fonts/hack`, registered
+/// with the font manager the first time a card is built, so the file never has to be
+/// installed on the viewer's machine. If the file is missing (a stripped bundle) the
+/// cards fall back to the system's heavy face rather than to nothing.
+enum LyricFont {
+    static let family = "Hack-Bold"
+    private static let registered: Bool = {
+        let path = resolveResourcePath("assets/fonts/hack/Hack-Bold.ttf")
+        guard FileManager.default.fileExists(atPath: path) else {
+            NSLog("[DPE] lyric font: assets/fonts/hack/Hack-Bold.ttf not found — using the system face")
+            return false
+        }
+        var error: Unmanaged<CFError>?
+        let ok = CTFontManagerRegisterFontsForURL(URL(fileURLWithPath: path) as CFURL, .process, &error)
+        // "Already registered" is a failure by the API's lights and a success by ours.
+        return ok || NSFont(name: family, size: 12) != nil
+    }()
+
+    static func font(ofSize pt: CGFloat) -> NSFont {
+        if registered, let f = NSFont(name: family, size: pt) { return f }
+        return .systemFont(ofSize: pt, weight: .heavy)
     }
 }

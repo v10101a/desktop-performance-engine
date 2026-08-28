@@ -107,6 +107,11 @@ final class WallpaperController {
         let hex: String
         /// `slides` only: resolved file URLs, cycled one per tick.
         let slides: [URL]
+        /// `slides` only, optional: when each slide lands, in seconds from `startTime`.
+        /// Non-empty means the run is a schedule, not a rate — see `updateDesk`.
+        let slideTimes: [Double]
+        /// Index of the last scheduled slide applied; −1 before the first.
+        var slide = -1
         let startTime: Double
         var endTime: Double?
         /// Timeline position of the last applied frame, for rate limiting.
@@ -136,10 +141,12 @@ final class WallpaperController {
                     slides: (p.images ?? []).map {
                         URL(fileURLWithPath: resolveResourcePath($0))
                     },
+                    slideTimes: p.at ?? [],
                     startTime: now,
                     endTime: duration.map { now + $0 })
         NSLog("[DPE] deskWallpaper begin: mode=\(p.mode ?? "strobe") hz=\(p.hz ?? 8)"
-            + ((p.images?.isEmpty == false) ? " slides=\(p.images!.count)" : ""))
+            + ((p.images?.isEmpty == false) ? " slides=\(p.images!.count)" : "")
+            + ((p.at?.isEmpty == false) ? " timed" : ""))
     }
 
     func stopDesk(id: String) {
@@ -184,6 +191,30 @@ final class WallpaperController {
             desk = nil
             restore()
             WallpaperImage.cleanUp()
+            return
+        }
+
+        // A SCHEDULED slide run is not rate-limited: each image lands on its own time
+        // (the lyric on the desktop lands on the sung word, off the same cues as the
+        // lyric cards) and nothing is written between two times. The list plays once
+        // and the last image holds; `hz` does not apply. The same back-pressure as
+        // below: while a swap is in flight the tick is dropped, and the next tick
+        // applies whatever is due THEN — a word the window server could not fit is
+        // skipped, not queued behind the one being sung.
+        if d.mode == "slides", !d.slideTimes.isEmpty {
+            guard !applying else { return }
+            let elapsed = now - d.startTime
+            let due = d.slideTimes.lastIndex { $0 <= elapsed } ?? -1
+            if due != d.slide, due >= 0, due < d.slides.count {
+                let url = d.slides[due]
+                if FileManager.default.fileExists(atPath: url.path) {
+                    apply(url, to: NSScreen.screens)
+                } else {
+                    NSLog("[DPE] deskWallpaper: slide missing at \(url.path)")
+                }
+                d.slide = due
+            }
+            desk = d
             return
         }
 
@@ -240,16 +271,32 @@ final class WallpaperController {
     /// Displacement + channel split + block corruption over whatever the wallpaper was
     /// when the show started — read from the snapshot, not from the current wallpaper,
     /// or each pass would compound the last and dissolve to noise in a second.
+    /// The snapshot, decoded and scaled once: every glitch frame reads the same source,
+    /// and decoding a multi-megapixel wallpaper per frame was most of the frame's cost.
+    /// 1280 px on the long edge — the tear is coarse by design, and this is a quarter
+    /// of the pixels of 2048 through displace + corrupt + encode + the WallpaperAgent.
+    private var glitchSource: (url: URL, bitmap: Bitmap)?
+    private static let glitchMaxEdge = 1280
+
     private func applyGlitch(_ d: inout Desk) {
         guard !d.busy, let source = original.first?.url else { return }
         d.busy = true
         let settings = GlitchSettings(intensity: d.intensity, seed: d.seed &+ UInt64(d.frame))
         let sequence = d.frame
+        let cached = glitchSource?.url == source ? glitchSource?.bitmap : nil
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             defer { DispatchQueue.main.async { self?.desk?.busy = false } }
-            guard let image = try? WallpaperImage.load(at: source),
-                  let bitmap = try? Bitmap.render(image, maxEdge: 2048),
-                  let glitched = try? glitch(bitmap, settings: settings),
+            let bitmap: Bitmap
+            if let cached {
+                bitmap = cached
+            } else {
+                guard let image = try? WallpaperImage.load(at: source),
+                      let fresh = try? Bitmap.render(image, maxEdge: Self.glitchMaxEdge)
+                else { return }
+                bitmap = fresh
+                DispatchQueue.main.async { self?.glitchSource = (source, fresh) }
+            }
+            guard let glitched = try? glitch(bitmap, settings: settings),
                   let out = try? glitched.makeImage(),
                   let url = try? WallpaperImage.uniqueURL(prefix: "glitch", sequence: sequence),
                   (try? WallpaperImage.write(out, to: url)) != nil
