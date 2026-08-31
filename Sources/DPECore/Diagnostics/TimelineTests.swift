@@ -33,6 +33,37 @@ enum TimelineTests {
                 t.equal(p.at ?? [], [0.0, 0.47], "deskWallpaper at schedule decodes")
             } else { t.expect(false, "scheduled deskWallpaper failed to decode") }
 
+            // The welcome card: a Terminal window typing itself out by the line, the
+            // credits' surface and the credits' cadence.
+            if let ev = decode(#"{"beat":18,"type":"typeText","params":{"id":"w","frame":[0,0,400,300],"text":"a\nbb","chrome":"terminal","linesPerBeat":1,"fontSize":20}}"#),
+               case .typeText(let p) = ev.action {
+                t.equal(p.chrome ?? "", "terminal", "typeText chrome decodes")
+                t.equal(p.linesPerBeat ?? -1, 1, "typeText linesPerBeat decodes")
+            } else { t.expect(false, "terminal typeText failed to decode") }
+
+            // A torn card in the fill (cue 15).
+            if let ev = decode(#"{"beat":166,"type":"openWindow","params":{"id":"g","frame":[0,0,300,200],"content":{"kind":"glitch","path":"assets/pixelface.jpg","intensity":0.45,"seed":4100,"chrome":"mixed"}}}"#),
+               case .openWindow(let p) = ev.action {
+                t.equal(p.content.kind, "glitch", "glitch content kind decodes")
+                t.equal(p.content.intensity ?? -1, 0.45, "glitch intensity decodes")
+                t.equal(p.content.seed ?? -1, 4100, "glitch seed decodes")
+            } else { t.expect(false, "glitch content failed to decode") }
+
+            // The GLSL graphic (cue 17).
+            if let ev = decode(#"{"beat":192,"type":"openWindow","params":{"id":"g","frame":[0,0,700,460],"content":{"kind":"shader","path":"assets/shaders/graphic.frag","drop":0.0}}}"#),
+               case .openWindow(let p) = ev.action {
+                t.equal(p.content.kind, "shader", "shader content kind decodes")
+                t.equal(p.content.drop ?? -1, 0.0, "shader drop uniform decodes")
+            } else { t.expect(false, "shader content failed to decode") }
+
+            // A running automaton in the fill (cue 15).
+            if let ev = decode(#"{"beat":166,"type":"openWindow","params":{"id":"a","frame":[0,0,300,200],"content":{"kind":"automaton","rule":110,"seed":110,"hz":10,"fontSize":9}}}"#),
+               case .openWindow(let p) = ev.action {
+                t.equal(p.content.rule ?? -1, 110, "automaton rule decodes")
+                t.equal(p.content.hz ?? -1, 10, "automaton hz decodes")
+            } else { t.expect(false, "automaton content failed to decode") }
+
+
 
             if let ev = decode(#"{"beat":4,"type":"reboot","params":{"id":"boot","durationBeats":12,"delayBeats":2}}"#),
                case .reboot(let p) = ev.action {
@@ -205,6 +236,257 @@ enum TimelineTests {
                              "desktop words are paced to the lyric, not flashed (min gap \(gaps.min() ?? 0)s)")
                 }
                 t.expect(timedRuns >= 1, "the lyric wallpaper run (cue 12) carries an `at` schedule")
+
+                // Every window that writes itself out has to FINISH before the cut takes
+                // it away — a welcome card cut off mid-sentence reads as a bug, not as a
+                // beat. Checked against the `closeWindow` aimed at its own id.
+                for ev in tl.events {
+                    guard case .typeText(let p) = ev.action else { continue }
+                    let lines = p.text.components(separatedBy: "\n").count
+                    let units = p.linesPerBeat.map { (Double(lines), $0) }
+                             ?? (Double(p.text.count), p.charsPerBeat ?? 16)
+                    let typedBeats = units.0 / max(0.001, units.1)
+                    let closedAt = tl.events.first {
+                        if case .closeWindow(let c) = $0.action { return c.id == p.id && $0.fireTime > ev.fireTime }
+                        return false
+                    }?.fireTime
+                    guard let closedAt else { continue }
+                    let roomBeats = (closedAt - ev.fireTime) * tl.meta.bpm / 60.0
+                    t.expect(typedBeats <= roomBeats,
+                             "typeText \(p.id) finishes (\(typedBeats) beats) before its close (\(roomBeats) beats)")
+                }
+
+                // The torn cards in the fill name their source by path, and a misnamed
+                // one is silent — the window just stays empty for the whole act. The
+                // tear is also a pure function of (image, intensity, seed), so an
+                // out-of-range intensity or a missing seed would be a different picture
+                // every take in a show that is otherwise identical take to take.
+                var tornCards = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action, p.content.kind == "glitch" else { continue }
+                    tornCards += 1
+                    let path = p.content.path ?? ""
+                    t.expect(FileManager.default.fileExists(atPath: resolveResourcePath(path)),
+                             "torn card \(p.id) resolves \(path)")
+                    let intensity = p.content.intensity ?? -1
+                    t.expect(intensity > 0 && intensity <= 1,
+                             "torn card \(p.id) intensity \(intensity) is in 0…1")
+                    t.expect(p.content.seed != nil, "torn card \(p.id) is seeded")
+                }
+                t.expect(tornCards >= 1, "the fill carries torn cards (cue 15)")
+
+                // The automata cards in the fill run in the engine — the timeline
+                // carries only the rule, so the numbers it carries have to be ones a
+                // rule can actually be. An out-of-range rule truncates silently to a
+                // different automaton, and hz 0 would freeze the window solid.
+                var automata = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "automaton" else { continue }
+                    automata += 1
+                    let rule = p.content.rule ?? -1
+                    t.expect(rule >= 0 && rule <= 255, "\(p.id) rule \(rule) is an 8-bit rule")
+                    t.expect((p.content.hz ?? 0) > 0, "\(p.id) scrolls")
+                }
+                t.expect(automata >= 1, "the fill carries automata cards (cue 15)")
+
+                // The shader windows name a .frag by path and it has to be there — a
+                // missing one is a black window, same as a broken one. And it has to be
+                // pure ASCII: GLSL ES 1.00 restricts the character set and ANGLE
+                // enforces it at the lexer, so a single em dash in a COMMENT fails the
+                // compile with an empty info log and no other symptom. One did.
+                var shaders = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "shader" else { continue }
+                    shaders += 1
+                    let path = resolveResourcePath(p.content.path ?? "")
+                    guard let src = try? String(contentsOfFile: path, encoding: .utf8) else {
+                        t.expect(false, "shader \(p.id) resolves \(p.content.path ?? "")")
+                        continue
+                    }
+                    t.expect(src.allSatisfy(\.isASCII),
+                             "shader \(p.id) is pure ASCII (comments included)")
+                    t.expect(src.contains("void main"), "shader \(p.id) has a main()")
+                }
+                // Cue 7's desktop is a BAKED wallpaper (assets/pixelface_desktop.jpg,
+                // written by the generator), not the raw artwork stretched over the
+                // screen. It used to be composed at run time from `pixelface.jpg` plus a
+                // `fit: center` on the event, which is one more thing to go wrong at show
+                // time than a picture is. Measured from the file: the face has to be
+                // small ON it, or we have shipped a full-screen face again.
+                for ev in tl.events {
+                    guard case .deskWallpaper(let p) = ev.action,
+                          let first = p.images?.first, first.contains("pixelface") else { continue }
+                    guard let img = NSImage(contentsOfFile: resolveResourcePath(first)),
+                          let bmp = img.representations.first as? NSBitmapImageRep else {
+                        t.expect(false, "the face wallpaper resolves (\(first))"); continue
+                    }
+                    t.expect(bmp.pixelsWide > 1200 && bmp.pixelsHigh > 800,
+                             "the face wallpaper is desktop-sized "
+                             + "(\(bmp.pixelsWide)x\(bmp.pixelsHigh))")
+                    // The ground is the artwork's own field colour, so "not the ground"
+                    // finds only the face's light features -- and a STRETCHED face would
+                    // spread those over the whole picture. Placed, they sit in a small
+                    // box in the middle.
+                    // Distance from the GROUND, not brightness: HSB brightness is the
+                    // max channel, and this ground is #001FFD -- a blue of 253 -- so
+                    // every pixel of it reads as "bright" and the whole picture matched.
+                    guard let ground = bmp.colorAt(x: 2, y: 2)?.usingColorSpace(.deviceRGB)
+                    else { t.expect(false, "the wallpaper has a ground"); continue }
+                    var minY = bmp.pixelsHigh, maxY = 0, found = false
+                    for y in stride(from: 0, to: bmp.pixelsHigh, by: 4) {
+                        for x in stride(from: 0, to: bmp.pixelsWide, by: 4) {
+                            guard let c = bmp.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
+                                  abs(c.redComponent - ground.redComponent) > 0.08
+                                    || abs(c.greenComponent - ground.greenComponent) > 0.08
+                                    || abs(c.blueComponent - ground.blueComponent) > 0.08
+                            else { continue }
+                            minY = min(minY, y); maxY = max(maxY, y); found = true
+                        }
+                    }
+                    t.expect(found, "the face is on the wallpaper at all")
+                    let boxH = Double(maxY - minY) / Double(bmp.pixelsHigh)
+                    t.expect(found && boxH > 0.02 && boxH < 0.30,
+                             "the face is placed small, not stretched (its features span "
+                             + "\(Int(boxH * 100))% of the wallpaper's height)")
+                }
+
+                // The fireworks (cue 10) are a TRANSPARENT FULL-SCREEN overlay: the
+                // spiral of lyrics is still winding out underneath and has to show
+                // through. `[0,0,0,0]` is the fullscreen sentinel; any chrome would
+                // paint a ground and hide what it is supposed to be thrown over.
+                var fireworks = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "fileworks" else { continue }
+                    fireworks += 1
+                    t.equal(p.frame, [0, 0, 0, 0], "the fireworks fill the screen")
+                    t.equal(p.content.chrome ?? "", "none", "the fireworks wear no chrome")
+                    t.expect(p.content.seed != nil, "the fireworks are seeded")
+                }
+                t.expect(fireworks == 1, "the show carries the fireworks once (cue 10)")
+
+                // The cursor swarm (cue 25) is a transparent full-screen overlay, same
+                // as the fireworks: it chases the pointer across the whole screen, and
+                // any chrome would paint a ground over what it is chasing across.
+                var swarms = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "cursors" else { continue }
+                    swarms += 1
+                    t.equal(p.frame, [0, 0, 0, 0], "the cursor swarm fills the screen")
+                    t.equal(p.content.chrome ?? "", "none", "the cursor swarm wears no chrome")
+                    t.expect(p.content.seed != nil, "the cursor swarm is seeded")
+                }
+                t.expect(swarms == 1, "the show carries the cursor swarm once (cue 25)")
+
+                // The mandala (cue 26): the third transparent full-screen overlay, and
+                // the same rule applies -- chrome would paint a ground over the piece.
+                var mandalas = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "mandala" else { continue }
+                    mandalas += 1
+                    t.equal(p.frame, [0, 0, 0, 0], "the mandala fills the screen")
+                    t.equal(p.content.chrome ?? "", "none", "the mandala wears no chrome")
+                    t.expect((p.content.cols ?? 0) >= 2, "the mandala has rings")
+                }
+                t.expect(mandalas == 1, "the show carries the mandala once (cue 26)")
+
+                // A quarter of the eruption's flat cards come up packed with macOS UI
+                // instead. The rate is what is authored, so this checks the proportion
+                // rather than a count -- and that every one is seeded, since an unseeded
+                // pile would differ take to take in a show that is otherwise identical.
+                var flatCards = 0, packedCards = 0
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.id.hasPrefix("w"), Int(p.id.dropFirst()) != nil else { continue }
+                    if p.content.kind == "color" { flatCards += 1 }
+                    if p.content.kind == "uichaos" {
+                        packedCards += 1
+                        t.expect(p.content.seed != nil, "packed window \(p.id) is seeded")
+                    }
+                }
+                let slots = flatCards + packedCards
+                let share = slots > 0 ? Double(packedCards) / Double(slots) : 0
+                t.expect(share > 0.15 && share < 0.40,
+                         "about a quarter of the eruption's flat cards are packed with UI "
+                         + "(\(packedCards) of \(slots))")
+
+                t.expect(shaders >= 1, "the show carries the GLSL graphic (cue 17)")
+                // Its host page has to ship too, or every shader window is black.
+                t.expect(bundledResource("shader", "html") != nil,
+                         "the GLSL host page is in this build")
+
+                // `beginMove` DROPS a move aimed at an id that isn't open yet — silently,
+                // with a log line nobody reads mid-show. Every move in the show must
+                // therefore land strictly after its window's open.
+                var firstOpen: [String: Double] = [:]
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action else { continue }
+                    if firstOpen[p.id] == nil { firstOpen[p.id] = ev.fireTime }
+                }
+                let orphanMoves = tl.events.compactMap { ev -> String? in
+                    guard case .moveWindow(let p) = ev.action,
+                          (firstOpen[p.id] ?? .infinity) >= ev.fireTime else { return nil }
+                    return p.id
+                }
+                t.expect(orphanMoves.isEmpty,
+                         "every moveWindow fires after its window opens "
+                         + "(\(Set(orphanMoves).sorted().joined(separator: ", ")))")
+
+                // The traveller's trail (cue 8) is a DELAY LINE: identical copies of the
+                // leader, each one frame further behind and 1% of the screen further
+                // left. Every invariant here is one that has already bitten once —
+                // opens tied on the same beat leave the stack to the loader's sort,
+                // which is not guaranteed stable, and an inverted stack shows the OLDEST
+                // copy in front with the leader buried behind it.
+                let chain = ["traveller"] + (1...20).map { "tr\($0)" }
+                let chainOpens = chain.compactMap { id in firstOpen[id].map { (id, $0) } }
+                t.equal(chainOpens.count, chain.count, "every link of the trail opens")
+                let openTimes = Set(chainOpens.map(\.1))
+                t.equal(openTimes.count, chainOpens.count,
+                        "no two links of the trail open on the same instant")
+                // Deepest first, leader last: presentation order IS z-order.
+                if let leader = firstOpen["traveller"] {
+                    t.expect(chainOpens.filter { $0.0 != "traveller" }.allSatisfy { $0.1 < leader },
+                             "the leader opens in front of every copy behind it")
+                }
+                // Link k lags the leader by k frames and sits k% of the screen left of
+                // it — checked on the first leg, which every link walks.
+                let legMoves = chain.compactMap { id -> (String, Double, Double)? in
+                    guard let ev = tl.events.first(where: {
+                        if case .moveWindow(let p) = $0.action { return p.id == id }
+                        return false
+                    }), case .moveWindow(let p) = ev.action, !p.frame.isEmpty else { return nil }
+                    return (id, ev.fireTime, p.frame[0])
+                }
+                t.equal(legMoves.count, chain.count, "every link walks the first leg")
+                let lags = zip(legMoves, legMoves.dropFirst()).map { $1.1 - $0.1 }
+                t.expect(lags.allSatisfy { $0 > 0.001 },
+                         "each link lags the one in front of it by a real interval")
+                t.expect(zip(legMoves, legMoves.dropFirst()).allSatisfy { $1.2 < $0.2 },
+                         "each link sits to the left of the one in front of it")
+
+                // A terminal's label WRAPS, and a wrapped line reads as a bug in a
+                // window pretending to be Terminal. The generator sizes the frame from
+                // an estimate of SF Mono's advance; this is the same measurement taken
+                // against the real font, so an estimate that drifts fails here rather
+                // than on screen.
+                for ev in tl.events {
+                    guard case .typeText(let p) = ev.action, p.chrome == "terminal",
+                          p.frame.count == 4 else { continue }
+                    let font = NSFont.monospacedSystemFont(ofSize: CGFloat(p.fontSize ?? 11),
+                                                           weight: .regular)
+                    let widest = p.text.components(separatedBy: "\n")
+                        .map { ($0 as NSString).size(withAttributes: [.font: font]).width }
+                        .max() ?? 0
+                    let room = CGFloat(p.frame[2]) - TerminalStyle.inset * 2
+                    t.expect(widest <= room,
+                             "typeText \(p.id) copy fits its terminal without wrapping "
+                             + "(\(Int(widest.rounded()))pt of \(Int(room))pt)")
+                }
                 // The desktop's blue is authored as an exact rgb triple. It is written
                 // to a PNG and handed to the window server, and a colour-space
                 // round-trip on the way shifted it by ten in the blue channel — so the

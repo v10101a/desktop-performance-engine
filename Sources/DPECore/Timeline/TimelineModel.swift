@@ -69,7 +69,7 @@ struct MapSpec: Decodable {
 /// defaults — dev-tool and preview code that builds these by hand then doesn't need
 /// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "livecode" | "map"
+    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "glitch" | "automaton" | "shader" | "uichaos" | "fileworks" | "cursors" | "mandala" | "livecode" | "map"
     var hex: String? = nil
     var text: String? = nil
     var path: String? = nil
@@ -97,6 +97,18 @@ struct ContentSpec: Decodable {
     var invert: Bool? = nil     // flip the light/dark ramp
     var colorized: Bool? = nil  // tint each glyph with its source pixel color
     var ramp: String? = nil     // custom character ramp (dark→light)
+    // "shader" kind: a GLSL fragment shader at `path`, run live in a WebGL context.
+    // These are the artist's own scalar uniforms; the samplers the shaders declare are
+    // bound to black by the host (see shader.html).
+    var drop: Double? = nil
+    var vol: Double? = nil
+    var midi: Double? = nil
+    // "automaton" kind: an elementary cellular automaton, running and scrolling.
+    var rule: Int? = nil        // Wolfram's numbering, 0…255 (default 30)
+    var hz: Double? = nil       // generations per second (default 12)
+    // "glitch" kind: `path` torn once by the wallpaper's own glitch pass.
+    var intensity: Double? = nil   // 0…1, scales every part of the tear (default 0.6)
+    var seed: Int? = nil           // the tear is a pure function of this — same every take
 }
 
 struct AnimateSpec: Decodable {
@@ -230,8 +242,8 @@ struct CursorTrailParams: Decodable {
     let durationSeconds: Double?
 }
 
-/// A text editor that opens and writes itself out, in tempo. `charsPerBeat` sets the
-/// typing rate (a rate, not a duration, so editing the copy doesn't retime the scene);
+/// A window that opens and writes itself out, in tempo. `charsPerBeat` sets the typing
+/// rate (a rate, not a duration, so editing the copy doesn't retime the scene);
 /// `durationBeats` is optional and only trims the scene short. The window stays up,
 /// caret blinking, until `closeWindow` by `id`.
 struct TypeTextParams: Decodable {
@@ -240,11 +252,19 @@ struct TypeTextParams: Decodable {
     let frame: [Double]           // [x, y, w, h], top-left origin
     let text: String
     var charsPerBeat: Double? = nil     // default 16
+    /// Type whole LINES at this rate instead of characters, the way the end card's
+    /// credits do — the caret then waits at the start of the next line, the way a
+    /// prompt does after a command has printed. Set it and `charsPerBeat` is ignored.
+    var linesPerBeat: Double? = nil
     var durationBeats: Double? = nil
     var durationSeconds: Double? = nil
     var title: String? = nil            // window chrome title, e.g. "Untitled 2"
-    var fontSize: Double? = nil         // default 13
-    /// Let the viewer pick the document up and move it around while it types.
+    var fontSize: Double? = nil         // default 13 ("mac"), 11 ("terminal")
+    /// Which surface writes itself out: `"mac"` (default) is a white document in real
+    /// macOS chrome; `"terminal"` is Terminal.app's own window — the same surface the
+    /// credits type into, monospaced with a block cursor.
+    var chrome: String? = nil
+    /// Let the viewer pick the window up and move it around while it types.
     var interactive: Bool? = nil
 }
 
@@ -368,8 +388,12 @@ struct SystemProbeParams: Decodable {
     var durationBeats: Double? = nil
     var durationSeconds: Double? = nil
     var screen: Int? = nil
-    /// [x, y, w, h], top-left origin. Defaults to 1060×800, centred.
+    /// [x, y, w, h], top-left origin — the OUTER frame, title bar included. Defaults
+    /// to 1060×800, centred.
     var frame: [Double]? = nil
+    /// The title bar's text. The report wears real macOS chrome like the rest of the
+    /// show's big windows, so it needs a name; it is the command that produced it.
+    var title: String? = nil        // default "./scan_identity"
     /// Fired at an id that is already on screen: the terminal is cleared and ONLY these
     /// sections are read out again, every line of them highlighted — the machine going
     /// back to the parts that matter. Names: `geolocation`, `network`, `identity`,

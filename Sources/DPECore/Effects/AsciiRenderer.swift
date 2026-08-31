@@ -125,6 +125,33 @@ func loadAsciiImageAsync(path: String, cols: Int, invert: Bool, colorized: Bool,
 
 /// Resolve a resource path (absolute, cwd-relative, or found under an `assets/` folder
 /// beside the app/executable) — same strategy as the audio resolver.
+/// A resource that ships INSIDE the build — a page, a library, the timeline — resolved
+/// the way the app actually finds things: the flat `Contents/Resources` of a real .app
+/// first, then whichever SwiftPM resource bundle is present, then `Bundle.module` for
+/// `swift run` in the tree.
+///
+/// Deliberately NOT `resolveResourcePath`, which resolves AUTHORED paths (`assets/...`)
+/// against the working directory and the bundle. Things the timeline names live under
+/// `assets/`; things the binary carries do not, and looking for the latter with the
+/// former finds nothing — which is exactly how `shader.html` came up missing the first
+/// time it ran.
+func bundledResource(_ name: String, _ ext: String) -> URL? {
+    let fm = FileManager.default
+    if let res = Bundle.main.resourceURL {
+        let flat = res.appendingPathComponent("\(name).\(ext)")
+        if fm.fileExists(atPath: flat.path) { return flat }
+        // The bundle name is derived from the package and target, so it is scanned for
+        // rather than hardcoded — the engine/editor split renamed it once already.
+        if let entries = try? fm.contentsOfDirectory(at: res, includingPropertiesForKeys: nil) {
+            for b in entries where b.pathExtension == "bundle" {
+                let url = b.appendingPathComponent("\(name).\(ext)")
+                if fm.fileExists(atPath: url.path) { return url }
+            }
+        }
+    }
+    return Bundle.module.url(forResource: name, withExtension: ext)
+}
+
 func resolveResourcePath(_ name: String) -> String {
     let fm = FileManager.default
     if name.hasPrefix("/") { return name }

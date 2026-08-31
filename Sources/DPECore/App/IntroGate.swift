@@ -745,6 +745,13 @@ final class RestartCardView: NSView {
     static let risePortion = 0.42
     static let pausePortion = 0.16
 
+    /// The logo's height, as a fraction of the screen. macOS draws its own restart logo
+    /// a good deal smaller than this used to be (0.17); at 0.1275 the card reads as the
+    /// real screen rather than as a poster of it. The FACE inherits the same number —
+    /// the swap only works as the logo *becoming* the face if the two are one size, so
+    /// they must not drift apart.
+    static let logoHeight: CGFloat = 0.1275
+
     init(size: NSSize, duration: Double) {
         self.duration = max(1, duration)
         trackWidth = min(size.width * 0.20, 330)
@@ -752,7 +759,7 @@ final class RestartCardView: NSView {
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
 
-        glyph.font = .systemFont(ofSize: size.height * 0.17, weight: .medium)
+        glyph.font = .systemFont(ofSize: size.height * RestartCardView.logoHeight, weight: .medium)
         glyph.textColor = .white
         glyph.alignment = .center
         glyph.sizeToFit()
@@ -763,7 +770,7 @@ final class RestartCardView: NSView {
         // The face sits exactly where the logo was, at the same optical size, and fades
         // in over it — so the swap reads as the logo *becoming* the face rather than as
         // one thing leaving and another arriving.
-        let faceH = size.height * 0.17
+        let faceH = size.height * RestartCardView.logoHeight
         if let image = NSImage(contentsOfFile: resolveResourcePath(IntroGate.faceAsset))
             .map(RestartCardView.maskingField) {
             face.image = image

@@ -148,6 +148,49 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Same idea as --test-hydra, for the GLSL windows: put the real shader on a
+        // real GL canvas and look at what comes out. A fragment shader that fails to
+        // compile renders black, which is indistinguishable from one that renders black,
+        // so "it built" proves nothing here. `--test-shader=out.png` keeps the frame.
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("--test-shader") }) {
+            runShaderSelfTest()
+            return
+        }
+
+        // The fireworks: a transparent overlay whose whole content is motion, so a
+        // still of frame one is an empty window and proves nothing. This runs it for
+        // real, long enough for shells to rise and burst, then counts what is in the
+        // air. `--test-fileworks=out.png` keeps the frame.
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("--test-fileworks") }) {
+            runFileworksSelfTest()
+            return
+        }
+
+        // The cursor swarm: it chases the real pointer, so a still proves nothing
+        // unless the pointer has been somewhere. This drives the mouse across the
+        // window itself and then looks at where the swarm went and which way the
+        // arrows are pointing. `--test-cursors=out.png` keeps the frame.
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("--test-cursors") }) {
+            runCursorSwarmSelfTest()
+            return
+        }
+
+        // The mandala: rings that counter-rotate, so a still of one frame cannot show
+        // whether anything turns. This samples the positions, waits, and samples again.
+        if CommandLine.arguments.contains(where: { $0.hasPrefix("--test-mandala") }) {
+            runMandalaSelfTest()
+            return
+        }
+
+        // What each of the continuously-running views costs the MAIN THREAD, which is
+        // the thing that matters: `DisplayPump` is vsync-driven and coalesced, so it
+        // silently drops ticks whenever main is busy, and a view that hogs it does not
+        // look slow itself -- it makes the whole show slow.
+        if CommandLine.arguments.contains("--bench-views") {
+            runViewBenchmark()
+            return
+        }
+
         if CommandLine.arguments.contains("--test-sprites") {
             runSpriteSelfTest()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
@@ -363,6 +406,312 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// fine". So this puts the show's own first sketch on a live canvas, captures the
     /// window through the window server (the only way to get a web view's pixels; an
     /// off-screen `cacheDisplay` returns an empty rectangle) and counts what lit up.
+    /// Does the shipped shader actually render? Builds the show's own `shader` windows
+    /// through `makeEffectContentView`, gives the page and the GL context time to
+    /// compile and draw, then measures the frame. `ShaderCanvasView` logs the compile
+    /// error separately — between the two, a black window is never ambiguous.
+    /// Does the desktop actually go up in the air? Runs the real view on a real window
+    /// for a few seconds and reports how many sparks are in flight — an empty sky means
+    /// the shells never launched or never burst, and neither is visible in a still of
+    /// the first frame.
+    private func runFileworksSelfTest() {
+        var spec: ContentSpec?
+        if let url = AppDelegate.bundledTimelineURL(),
+           let timeline = try? TimelineLoader.load(from: url) {
+            for ev in timeline.events {
+                if case .openWindow(let p) = ev.action, p.content.kind == "fileworks" {
+                    spec = p.content; break
+                }
+            }
+        }
+        guard let spec else {
+            NSLog("[DPE] fileworks: no fileworks window in the timeline; nothing to test")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+        let size = NSSize(width: 1100, height: 700)
+        let host = NSWindow(contentRect: NSRect(x: 60, y: 60, width: size.width, height: size.height),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        // The view is transparent by design; the test gives it a dark ground so the
+        // icons are legible in the capture. In the show that ground is the piece itself.
+        host.backgroundColor = NSColor(white: 0.06, alpha: 1)
+        let root = NSView(frame: NSRect(origin: .zero, size: size))
+        root.wantsLayer = true
+        let fw = FileworksView(size: size, seed: spec.seed ?? 7,
+                               hz: spec.hz ?? 1.6, intensity: spec.intensity ?? 1.0)
+        root.addSubview(fw)
+        host.contentView = root
+        host.orderFrontRegardless()
+        NSLog("[DPE] fileworks: \(fw.cardCountForTesting) distinct icon cards")
+
+        // Five seconds: the launch rate is ~1.6/s and a shell takes about a second to
+        // reach its fuse, so this is several full bursts.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            let live = fw.liveSparksForTesting
+            let spread = fw.spreadForTesting
+            NSLog("[DPE] fileworks: \(live) sparks in the air, spread \(spread.w)x\(spread.h)pt "
+                + "of \(Int(size.width))x\(Int(size.height)), "
+                + "\(fw.stepsForTesting) steps, \(fw.burstsForTesting) bursts")
+            NSLog("[DPE] fileworks: LIVE = \(live > 0)  (expect true)")
+            if let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                  CGWindowID(host.windowNumber),
+                                                  [.boundsIgnoreFraming, .bestResolution]),
+               let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-fileworks=") }) {
+                let path = String(arg.dropFirst("--test-fileworks=".count))
+                let rep = NSBitmapImageRep(cgImage: shot)
+                if let png = rep.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                    NSLog("[DPE] fileworks: wrote \(path)")
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// Do the pointers actually chase, and do they face where they are going?
+    ///
+    /// The pointer is WARPED across the window during the run — otherwise the swarm
+    /// converges on wherever the mouse happens to be resting and the headings are
+    /// whatever they were at spawn, which would pass a static check while proving none
+    /// of the behaviour.
+    /// Does the mandala actually turn, and do the rings turn against each other?
+    /// Stand each heavy view up on its own and measure what the main thread has left.
+    ///
+    /// The probe is a 60 Hz timer counting its own firings: with main free it lands
+    /// close to 60/s, and every tick it misses is a tick the display pump would also
+    /// have missed. That is the number that shows up as "the app got slower".
+    private func runViewBenchmark() {
+        let size = NSSize(width: 1440, height: 900)
+        func make(_ name: String) -> NSView? {
+            switch name {
+            case "fileworks": return FileworksView(size: size, seed: 1046, hz: 1.0, intensity: 1.0)
+            case "cursors":   return CursorSwarmView(size: size, seed: 3136, count: 90)
+            case "mandala":   return MandalaView(size: size, seed: 3863, rings: 5, intensity: 1.0)
+            case "automaton": return AutomatonView(size: NSSize(width: 330, height: 240),
+                                                   rule: 30, seed: 0, fontSize: 9, hz: 14)
+            case "uichaos":   return UIChaosView(size: NSSize(width: 360, height: 240),
+                                                 seed: 900, density: 1.15)
+            default:          return nil
+            }
+        }
+        let names = ["baseline", "fileworks", "cursors", "mandala", "automaton", "uichaos", "all"]
+        var index = 0
+        // ONE window for the whole run, its content swapped each round. Closing a window
+        // between rounds ends the app: it is the only one open, and AppKit terminates on
+        // the last one. Swapping the content view also releases the previous round's
+        // views, which is what stops their timers (`viewDidMoveToWindow`).
+        let w = NSWindow(contentRect: NSRect(origin: .zero, size: size),
+                         styleMask: [.borderless], backing: .buffered, defer: false)
+        w.backgroundColor = .black
+        w.orderFrontRegardless()
+
+        func run(_ next: @escaping () -> Void) {
+            guard index < names.count else { next(); return }
+            let name = names[index]
+            index += 1
+            let root = NSView(frame: NSRect(origin: .zero, size: size))
+            root.wantsLayer = true
+            var built = 0
+            if name == "all" {
+                for n in ["fileworks", "cursors", "mandala"] {
+                    if let v = make(n) { root.addSubview(v); built += 1 }
+                }
+            } else if let v = make(name) {
+                root.addSubview(v); built = 1
+            }
+            w.contentView = root
+
+            var ticks = 0
+            let t0 = CACurrentMediaTime()
+            let probe = Timer(timeInterval: 1.0 / 60.0, repeats: true) { _ in ticks += 1 }
+            RunLoop.main.add(probe, forMode: .common)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                probe.invalidate()
+                let secs = CACurrentMediaTime() - t0
+                NSLog("%@", String(format: "[DPE] bench %-10s %5.1f probe-Hz of 60  (%d view(s))",
+                                   (name as NSString).utf8String!, Double(ticks) / secs, built))
+                run(next)
+            }
+        }
+        run { NSApp.terminate(nil) }
+    }
+
+    private func runMandalaSelfTest() {
+        var spec: ContentSpec?
+        if let url = AppDelegate.bundledTimelineURL(),
+           let timeline = try? TimelineLoader.load(from: url) {
+            for ev in timeline.events {
+                if case .openWindow(let p) = ev.action, p.content.kind == "mandala" {
+                    spec = p.content; break
+                }
+            }
+        }
+        guard let spec else {
+            NSLog("[DPE] mandala: no mandala in the timeline; nothing to test")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+        let size = NSSize(width: 900, height: 700)
+        let host = NSWindow(contentRect: NSRect(x: 60, y: 60, width: size.width, height: size.height),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        host.backgroundColor = NSColor(white: 0.06, alpha: 1)
+        let root = NSView(frame: NSRect(origin: .zero, size: size))
+        root.wantsLayer = true
+        let mv = MandalaView(size: size, seed: spec.seed ?? 5,
+                             rings: spec.cols ?? 5, intensity: spec.intensity ?? 1.0)
+        root.addSubview(mv)
+        host.contentView = root
+        host.orderFrontRegardless()
+        let speeds = mv.ringSpeedsForTesting
+        let alternating = zip(speeds, speeds.dropFirst()).allSatisfy { $0 * $1 < 0 }
+        NSLog("[DPE] mandala: \(mv.countForTesting) beach balls, \(speeds.count) rings, "
+            + "counter-rotating = \(alternating)")
+        let before = mv.positionsForTesting
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            let after = mv.positionsForTesting
+            let moved = zip(before, after).filter { hypot($0.x - $1.x, $0.y - $1.y) > 4 }.count
+            NSLog("[DPE] mandala: \(moved)/\(after.count) balls moved")
+            NSLog("[DPE] mandala: LIVE = \(moved > after.count / 2 && alternating)  (expect true)")
+            if let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                  CGWindowID(host.windowNumber),
+                                                  [.boundsIgnoreFraming, .bestResolution]),
+               let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-mandala=") }) {
+                let path = String(arg.dropFirst("--test-mandala=".count))
+                if let png = NSBitmapImageRep(cgImage: shot).representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                    NSLog("[DPE] mandala: wrote \(path)")
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    private func runCursorSwarmSelfTest() {
+        var spec: ContentSpec?
+        if let url = AppDelegate.bundledTimelineURL(),
+           let timeline = try? TimelineLoader.load(from: url) {
+            for ev in timeline.events {
+                if case .openWindow(let p) = ev.action, p.content.kind == "cursors" {
+                    spec = p.content; break
+                }
+            }
+        }
+        guard let spec else {
+            NSLog("[DPE] cursors: no cursor swarm in the timeline; nothing to test")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+        let size = NSSize(width: 1100, height: 700)
+        let host = NSWindow(contentRect: NSRect(x: 60, y: 60, width: size.width, height: size.height),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        host.backgroundColor = NSColor(white: 0.06, alpha: 1)
+        let root = NSView(frame: NSRect(origin: .zero, size: size))
+        root.wantsLayer = true
+        let cs = CursorSwarmView(size: size, seed: spec.seed ?? 3,
+                                 count: Int((spec.intensity ?? 1.0) * 90))
+        root.addSubview(cs)
+        host.contentView = root
+        host.orderFrontRegardless()
+        let sizes = cs.sizesForTesting
+        NSLog("%@", String(format: "[DPE] cursors: %d pointers, %.0f-%.0fpt",
+                           cs.countForTesting, sizes.min() ?? 0, sizes.max() ?? 0))
+
+        // Walk the pointer across the window, then let the swarm run at it.
+        let where1 = CGPoint(x: host.frame.minX + 120, y: host.frame.minY + 120)
+        let where2 = CGPoint(x: host.frame.maxX - 140, y: host.frame.maxY - 160)
+        func warp(_ p: CGPoint) {
+            // Screen coordinates for CGWarpMouseCursorPosition are top-left origin.
+            let h = NSScreen.screens.first?.frame.height ?? 0
+            CGWarpMouseCursorPosition(CGPoint(x: p.x, y: h - p.y))
+        }
+        warp(where1)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { warp(where2) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.4) {
+            let headings = cs.headingsForTesting
+            // If they are chasing, most of them are pointing the same way at once.
+            let mean = atan2(headings.map(sin).reduce(0, +) / Double(headings.count),
+                             headings.map(cos).reduce(0, +) / Double(headings.count))
+            let agreeing = headings.filter { abs(atan2(sin($0 - mean), cos($0 - mean))) < 1.0 }.count
+            NSLog("[DPE] cursors: spread \(cs.spreadForTesting)pt, "
+                + "\(agreeing)/\(headings.count) pointing within 1 rad of the pack")
+            NSLog("[DPE] cursors: LIVE = \(agreeing > headings.count / 2)  (expect true)")
+            if let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                  CGWindowID(host.windowNumber),
+                                                  [.boundsIgnoreFraming, .bestResolution]),
+               let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-cursors=") }) {
+                let path = String(arg.dropFirst("--test-cursors=".count))
+                if let png = NSBitmapImageRep(cgImage: shot).representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                    NSLog("[DPE] cursors: wrote \(path)")
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    private func runShaderSelfTest() {
+        var specs: [ContentSpec] = []
+        if let url = AppDelegate.bundledTimelineURL(),
+           let timeline = try? TimelineLoader.load(from: url) {
+            for ev in timeline.events {
+                if case .openWindow(let p) = ev.action, p.content.kind == "shader",
+                   !specs.contains(where: { $0.path == p.content.path }) {
+                    specs.append(p.content)
+                }
+            }
+        }
+        guard let spec = specs.first else {
+            NSLog("[DPE] shader: no shader windows in the timeline; nothing to test")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+        NSLog("[DPE] shader: \(specs.count) shader window(s); testing \(spec.path ?? "?")")
+
+        let size = NSSize(width: 640, height: 420)
+        let host = NSWindow(contentRect: NSRect(x: 80, y: 80, width: size.width, height: size.height),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        host.backgroundColor = .black
+        host.contentView = makeEffectContentView(spec, size: size)
+        host.orderFrontRegardless()
+
+        // Three seconds: the page, the GL context, the shader compile and a few hundred
+        // frames — a raymarcher whose first frames are legitimately dark has moved on.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            guard let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                     CGWindowID(host.windowNumber),
+                                                     [.boundsIgnoreFraming, .bestResolution]) else {
+                NSLog("[DPE] shader: capture failed (Screen Recording?); LIVE = unknown")
+                NSApp.terminate(nil); return
+            }
+            let rep = NSBitmapImageRep(cgImage: shot)
+            var lit = 0, total = 0
+            var hues = Set<Int>()
+            for y in stride(from: 0, to: rep.pixelsHigh, by: 4) {
+                for x in stride(from: 0, to: rep.pixelsWide, by: 4) {
+                    guard let c = rep.colorAt(x: x, y: y) else { continue }
+                    total += 1
+                    if c.brightnessComponent > 0.08 {
+                        lit += 1
+                        hues.insert(Int(c.hueComponent * 24))
+                    }
+                }
+            }
+            let percent = total > 0 ? 100.0 * Double(lit) / Double(total) : 0
+            NSLog("%@", String(format: "[DPE] shader: %.1f%% of the canvas is lit, %d distinct hues",
+                               percent, hues.count))
+            NSLog("[DPE] shader: LIVE = \(percent > 2)  (expect true)")
+            if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-shader=") }) {
+                let path = String(arg.dropFirst("--test-shader=".count))
+                if let png = rep.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                    NSLog("[DPE] shader: wrote \(path)")
+                }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
     private func runHydraSelfTest() {
         guard HydraWeb.isAvailable else {
             NSLog("[DPE] hydra: NOT AVAILABLE — hydra-synth.js / hydra.html are not in this build")

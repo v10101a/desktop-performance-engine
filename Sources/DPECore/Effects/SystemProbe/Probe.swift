@@ -6,8 +6,9 @@ import SwiftUI
 /// resampled live stats on a 1 s `Timer`. Both are gone — `SystemProbeController` calls
 /// `revealOne()` and `resample()` from the show clock instead, so the report types out
 /// in tempo, freezes when the transport stops, and lands the same line on the same beat
-/// every take. The gathering is untouched: sections are still built off the main thread
-/// and spliced into the queue as they land.
+/// every take. Sections are still built off the main thread, but on a serial queue of
+/// their own, so they splice into the report in the order `start()` asks for them
+/// rather than in whatever order they finish.
 @MainActor
 final class Probe: ObservableObject {
     @Published private(set) var lines: [TermLine] = []
@@ -21,22 +22,19 @@ final class Probe: ObservableObject {
     private let sampler = Sampler()
     private let locationProbe = LocationProbe()
 
-    private let banner = [
-        "  ██████╗ ██████╗  ██████╗ ██████╗ ███████╗",
-        "  ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██╔════╝",
-        "  ██████╔╝██████╔╝██║   ██║██████╔╝█████╗  ",
-        "  ██╔═══╝ ██╔══██╗██║   ██║██╔══██╗██╔══╝  ",
-        "  ██║     ██║  ██║╚██████╔╝██████╔╝███████╗",
-        "  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝"
-    ]
+    /// Sections are built off the main thread, but the report has to READ in the order
+    /// `start()` asks for them. On the global CONCURRENT queue they landed in whichever
+    /// order they happened to finish, so a slow builder shuffled the report — the
+    /// identity block, which the piece opens the disclosure on, could arrive behind the
+    /// hardware one. One serial queue instead: still off main, still never blocking the
+    /// pump, but the appends happen in call order. Reordering the report now means
+    /// reordering the `gather` lines in `start()` and nothing else.
+    private let sections = DispatchQueue(label: "dpe.probe.sections", qos: .userInitiated)
 
     /// The full report — or, with `focus`, just the named sections, highlighted.
     func start(focus: [String]? = nil) {
         live = sampler.sample()
 
-        for b in banner { queue.append(TermLine(text: b, kind: .banner)) }
-        queue.append(TermLine(text: "  self-directed disclosure report · everything this machine knows about you", kind: .dim, pause: 4))
-        queue.append(TermLine(text: "  all readings are local — nothing leaves this computer", kind: .ok, pause: 10))
         queue.append(TermLine(text: "", kind: .plain))
 
         if let focus {
@@ -103,9 +101,12 @@ final class Probe: ObservableObject {
     private var focusProbes: [LocationProbe] = []
 
     /// Collect a section off the main thread, then splice it into the reveal queue.
-    private func gather(highlight: Bool = false, _ build: @escaping () -> [TermLine]) {
+    /// Not private so the ordering guarantee above can be tested directly with a slow
+    /// builder and a fast one — the only way to tell a serial queue from a concurrent
+    /// one, since the real sections all finish in about the same time.
+    func gather(highlight: Bool = false, _ build: @escaping () -> [TermLine]) {
         pendingAsync += 1
-        DispatchQueue.global(qos: .userInitiated).async {
+        sections.async {
             let lines = build()
             Task { @MainActor in
                 self.enqueue(highlight ? highlighted(lines) : lines)

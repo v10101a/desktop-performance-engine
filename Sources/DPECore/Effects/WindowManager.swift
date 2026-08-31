@@ -45,14 +45,20 @@ final class WindowManager {
     }
     var moves: [String: Move] = [:]
 
-    /// A text editor writing itself out. `shown` is cached so the (relatively costly)
-    /// text relayout only happens when the visible character count actually changes,
-    /// not on every one of the pump's ~72 ticks a second.
+    /// A window writing itself out. `shown` is cached so the (relatively costly) text
+    /// relayout only happens when the visible character count actually changes, not on
+    /// every one of the pump's ~72 ticks a second.
     struct Typer {
-        let view: TextEditorView
+        let sink: TypedTextSink
         let text: [Character]
+        /// The character counts the copy pauses at, in order: every character when it
+        /// types by the character, the end of each line when it types by the line. The
+        /// credits' own scheme — see `CreditsController.advanceTyping`.
+        let stops: [Int]
+        let byLine: Bool
         let start: Double
-        let charsPerSecond: Double
+        /// Stops per second: characters or whole lines, per `byLine`.
+        let unitsPerSecond: Double
         let endTime: Double?
         var shown: Int
         var caretOn: Bool

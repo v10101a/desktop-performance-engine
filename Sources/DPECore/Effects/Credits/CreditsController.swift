@@ -484,15 +484,11 @@ final class CreditsController {
     }
 
     /// The `code` content view is built by `applyContent`, which owns the terminal
-    /// styling; the label it makes is fished back out here rather than rebuilt, so the
-    /// typed text keeps exactly the chrome every other terminal in the piece wears.
+    /// styling; the label it makes is fished back out rather than rebuilt, so the typed
+    /// text keeps exactly the chrome every other terminal in the piece wears. Shared
+    /// with `typeText`'s terminal mode — see `firstTextField` in `EffectWindow.swift`.
     static func firstTextField(in view: NSView?) -> NSTextField? {
-        guard let view else { return nil }
-        if let tf = view as? NSTextField { return tf }
-        for sub in view.subviews {
-            if let tf = firstTextField(in: sub) { return tf }
-        }
-        return nil
+        DPECore.firstTextField(in: view)
     }
 
     func stop(id: String) {

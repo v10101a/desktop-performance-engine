@@ -98,7 +98,7 @@ enum StillRenderer {
         let editor = TextEditorView(size: NSSize(width: 700, height: 440),
                                     title: "resignation.txt — Edited", fontSize: 14)
         editor.frame = NSRect(x: 40, y: 20, width: 700, height: 440)
-        editor.render("""
+        editor.showTyped("""
                       Dear Dean Atwill and Marcela
 
                       I'm writing to formally confirm the change I've discussed with \
@@ -440,9 +440,41 @@ enum StillRenderer {
                 size: BaseEffectWindow.contentSize(forFrame: NSRect(origin: .zero, size: size),
                                                    native: native),
                 title: "resignation.txt — Edited", fontSize: 13)
-            editor.render("Dear Dean Atwill and Marcela\n\nI'm writing to formally confirm", caret: true)
+            editor.showTyped("Dear Dean Atwill and Marcela\n\nI'm writing to formally confirm", caret: true)
             let win = HostedEffectWindow(contentRect: NSRect(origin: .zero, size: size),
                                          view: editor, title: "resignation.txt — Edited")
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            if let frameView = win.contentView?.superview,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                let image = NSImage(size: frameView.bounds.size)
+                image.addRepresentation(rep)
+                shots.append(image)
+            }
+            win.orderOut(nil)
+            win.close()
+        }
+        // The welcome card (cue 3): the same typewriter writing into Terminal's own
+        // window instead, by the line, with the credits' block cursor. Copy, size and
+        // face come from the SHIPPED timeline rather than from a sample here — the
+        // whole question this shot answers is whether the authored frame holds the
+        // authored copy without wrapping, which a stand-in cannot tell you.
+        if let url = Bundle.module.url(forResource: "timeline", withExtension: "json"),
+           let tl = try? TimelineLoader.load(from: url),
+           let p = tl.events.compactMap({ ev -> TypeTextParams? in
+               guard case .typeText(let p) = ev.action, p.chrome == "terminal" else { return nil }
+               return p
+           }).first, p.frame.count == 4 {
+            let welcomeSize = NSSize(width: p.frame[2], height: p.frame[3])
+            let win = EffectWindow(contentRect: NSRect(origin: .zero, size: welcomeSize),
+                                   content: ContentSpec(kind: "code", text: "", chrome: "terminal"))
+            if let label = firstTextField(in: win.contentView) {
+                label.font = .monospacedSystemFont(ofSize: CGFloat(p.fontSize ?? 11), weight: .regular)
+                TerminalTextSink(label: label).showTyped(p.text, caret: true)
+            }
             win.level = .normal
             win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
             win.orderBack(nil)

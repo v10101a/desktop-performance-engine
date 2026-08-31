@@ -10,8 +10,10 @@ import SwiftUI
 ///   `linesPerBeat` drives `Probe.revealOne()` from the pump, using the same fractional
 ///   credit accumulator as the photo wall, so the report types in tempo.
 /// - **The window doesn't take focus and can't be closed by hand.** The standalone app
-///   put up a titled, key window; here it is chrome-consistent with the rest of the show
-///   and closes on `closeWindow` by `id`.
+///   put up a titled, KEY window. This one is titled too — real macOS chrome, named for
+///   the command that produced it — but it is a non-activating panel that refuses to
+///   become key and ignores the mouse, so its traffic lights are scenery. It closes on
+///   `closeWindow` by `id`.
 ///
 /// **Permissions.** The report's `identity` section reads the Contacts "me" card and
 /// asks Location Services for a fix — that is the *point* of the piece ("everything this
@@ -63,7 +65,8 @@ final class SystemProbeController {
         let probe = MainActor.assumeIsolated { Probe() }
         let frame = self.frame(for: p)
 
-        let window = SystemProbeController.makeReportWindow(frame: frame)
+        let window = SystemProbeController.makeReportWindow(
+            frame: frame, title: p.title ?? SystemProbeController.defaultTitle)
         window.contentView = NSHostingView(
             rootView: TerminalView().environmentObject(probe))
         window.orderFront(nil)
@@ -124,15 +127,26 @@ final class SystemProbeController {
         report = r
     }
 
+    /// The command the report is the output of — what its title bar says.
+    static let defaultTitle = "./scan_identity"
+
     /// The report's window, split out so the ownership invariant is testable without
     /// constructing a `Probe` — which would fire the Contacts and Location prompts.
-    static func makeReportWindow(frame: NSRect) -> NSWindow {
-        let window = NSWindow(contentRect: frame,
-                              styleMask: [.borderless], backing: .buffered, defer: false)
-        // See TorusWindow: this controller holds the window and closes it on teardown,
-        // and AppKit's default would over-release it. EffectWindow and PhotoWindow both
-        // set this for the same reason.
-        window.isReleasedWhenClosed = false
+    ///
+    /// It wears **real macOS chrome**, through the same `BaseEffectWindow` every other
+    /// big window in the show uses: one definition of the style mask, one place that
+    /// converts the authored OUTER frame to a content rect, and `canBecomeKey` already
+    /// refused there — a titled plain `NSWindow` would take focus on a click, which is
+    /// the one thing this window must never do. The title bar is also what makes the
+    /// report read as a program's output rather than as a black rectangle of text.
+    ///
+    /// Two of the base's defaults are deliberately overridden: the report sits at
+    /// `.normal`, below the effect windows that play over it (cue 5's hydra sketches
+    /// are staged beside it), and its body is black rather than the system's window
+    /// background, because the terminal is phosphor-on-black.
+    static func makeReportWindow(frame: NSRect, title: String = defaultTitle) -> NSWindow {
+        let window = BaseEffectWindow(contentRect: frame, native: true)
+        window.title = title
         window.isOpaque = true
         window.backgroundColor = .black
         window.hasShadow = true
@@ -140,7 +154,7 @@ final class SystemProbeController {
         window.level = .normal
         window.collectionBehavior = [.fullScreenAuxiliary, .stationary]
         // Scenery, like every other effect window: the show owns the keyboard and a
-        // stray click must not disturb the report.
+        // stray click must not disturb the report — the traffic lights included.
         window.ignoresMouseEvents = true
         return window
     }

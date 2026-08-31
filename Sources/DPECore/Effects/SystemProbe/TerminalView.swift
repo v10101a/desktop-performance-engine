@@ -38,43 +38,12 @@ struct TerminalView: View {
             Phosphor.ground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                titleBar
                 stream
                 statusBar
             }
         }
         .frame(minWidth: 780, minHeight: 520)
         .onReceive(cursorTimer) { _ in cursorOn.toggle() }
-    }
-
-    // MARK: title
-
-    private var titleBar: some View {
-        HStack(spacing: 8) {
-            Spacer().frame(width: 68)          // room for the traffic lights
-            Text("system_probe")
-                .font(termFont(11, bold: true))
-                .foregroundStyle(Phosphor.base)
-            Text("— local disclosure terminal")
-                .font(termFont(11))
-                .foregroundStyle(Phosphor.dim)
-            Spacer()
-            Button {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(probe.plainText, forType: .string)
-                copied = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { copied = false }
-            } label: {
-                Text(copied ? "[ copied ]" : "[ copy report ]")
-                    .font(termFont(11))
-                    .foregroundStyle(copied ? Phosphor.ok : Phosphor.dim)
-            }
-            .buttonStyle(.plain)
-            .padding(.trailing, 14)
-        }
-        .frame(height: 30)
-        .background(Color.black.opacity(0.45))
-        .overlay(Rectangle().frame(height: 1).foregroundStyle(Phosphor.dim.opacity(0.4)), alignment: .bottom)
     }
 
     // MARK: stream
@@ -116,7 +85,7 @@ struct TerminalView: View {
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text(line.text)
-                    .font(termFont(line.kind == .banner ? 12 : 12, bold: line.kind == .banner || line.kind == .section))
+                    .font(termFont(12, bold: line.kind == .section))
                     .foregroundStyle(color(line.kind))
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -133,7 +102,6 @@ struct TerminalView: View {
 
     private func color(_ kind: LineKind) -> Color {
         switch kind {
-        case .banner:  return Phosphor.base
         case .section: return Phosphor.section
         case .dim:     return Phosphor.dim
         case .ok:      return Phosphor.ok

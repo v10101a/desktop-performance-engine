@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum LineKind {
-    case banner, section, key, plain, dim, ok, warn, alert, prompt, rule
+    case section, key, plain, dim, ok, warn, alert, prompt, rule
 }
 
 struct TermLine: Identifiable {

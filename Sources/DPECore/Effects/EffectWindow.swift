@@ -25,6 +25,40 @@ private func loadImageAsync(_ path: String, into imageView: NSImageView) {
     }
 }
 
+/// Tear an image once, off the main thread, and hand the result to a view.
+///
+/// The same displacement / chroma-split / block-corruption pass the desktop glitches
+/// with (`GlitchImage.swift`), pointed at a window instead of the wallpaper. Cached by
+/// path AND settings, because the tear is a pure function of (image, intensity, seed):
+/// two windows asking for the same one decode and glitch once between them, and the
+/// same window tears identically every take.
+///
+/// 512 on the long edge. These are window-sized — the wallpaper's own pass runs at 1280
+/// for a whole screen — and the tear is coarse by design, so there is nothing to gain
+/// from more pixels and a full traversal per extra one to lose.
+private func loadGlitchImageAsync(_ path: String, intensity: Double, seed: UInt64,
+                                  into imageView: NSImageView) {
+    let key = "\(path)|glitch|\(intensity)|\(seed)" as NSString
+    if let cached = dpeImageCache.object(forKey: key) {
+        imageView.image = cached
+        return
+    }
+    dpeImageQueue.async { [weak imageView] in
+        guard let source = try? WallpaperImage.load(at: URL(fileURLWithPath: path)),
+              let bitmap = try? Bitmap.render(source, maxEdge: 512),
+              let torn = try? glitch(bitmap, settings: GlitchSettings(intensity: intensity,
+                                                                      seed: seed)),
+              let cg = try? torn.makeImage()
+        else {
+            NSLog("[DPE] glitch content: could not tear \(path)")
+            return
+        }
+        let image = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
+        dpeImageCache.setObject(image, forKey: key)
+        DispatchQueue.main.async { imageView?.image = image }
+    }
+}
+
 /// Decode a downsampled thumbnail directly (never fully decodes the source bitmap).
 private func decodeThumbnail(_ path: String, maxPixel: Int) -> NSImage? {
     guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
@@ -419,6 +453,76 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         iv.autoresizingMask = [.width, .height]
         view.addSubview(iv)
         if let path = content.path { loadImageAsync(path, into: iv) }
+    case "mandala":
+        // Transparent, like the swarm and the fireworks. `intensity` is the population
+        // per ring; `cols` doubles as the ring count (a small integer either way).
+        let mv = MandalaView(size: body.size, seed: content.seed ?? 5,
+                             rings: content.cols ?? 5, intensity: content.intensity ?? 1.0)
+        mv.autoresizingMask = [.width, .height]
+        view.addSubview(mv)
+    case "cursors":
+        // Transparent, like the fireworks: no background, so the swarm is over whatever
+        // the show has on screen. `intensity` is the population.
+        let cs = CursorSwarmView(size: body.size, seed: content.seed ?? 3,
+                                 count: Int((content.intensity ?? 1.0) * 90))
+        cs.autoresizingMask = [.width, .height]
+        view.addSubview(cs)
+    case "fileworks":
+        // A transparent overlay: no background is set, so whatever the show already has
+        // on screen shows through and the icons appear to be thrown over it.
+        let fw = FileworksView(size: body.size, seed: content.seed ?? 7,
+                               hz: content.hz ?? 1.6, intensity: content.intensity ?? 1.0)
+        fw.autoresizingMask = [.width, .height]
+        view.addSubview(fw)
+    case "uichaos":
+        // Real controls and the system's own icons, heaped up. `intensity` is how
+        // densely (default 1.0); `seed` fixes the pile.
+        let uv = UIChaosView(size: body.size, seed: content.seed ?? 1,
+                             density: content.intensity ?? 1.0)
+        uv.autoresizingMask = [.width, .height]
+        view.addSubview(uv)
+    case "shader":
+        // A GLSL fragment shader, live. `path` is the .frag; the scalar uniforms the
+        // artist's shaders take (`drop`, `u_vol`, `midi`) are authored per event.
+        view.layer?.backgroundColor = NSColor.black.cgColor
+        let sv = ShaderCanvasView(frame: body)
+        sv.autoresizingMask = [.width, .height]
+        view.addSubview(sv)
+        if let path = content.path {
+            sv.load(shaderAt: path)
+            for (name, value) in [("drop", content.drop), ("u_vol", content.vol),
+                                  ("midi", content.midi)] {
+                if let value { sv.setUniform(name, value) }
+            }
+        }
+    case "automaton":
+        let av = AutomatonView(size: body.size,
+                               rule: content.rule ?? 30,
+                               seed: content.seed ?? 0,
+                               fontSize: CGFloat(content.fontSize ?? 9),
+                               hz: content.hz ?? 12)
+        av.autoresizingMask = [.width, .height]
+        view.addSubview(av)
+    case "glitch":
+        // A still, torn once when the window opens and then left alone. Deliberately
+        // NOT animated: cue 15 ramps to ~26 windows on screen, and a per-frame
+        // re-tear in each of them is precisely the window-server load the wallpaper
+        // glitch had to be dialled back from (2.5 Hz → 1.5) to stop the machine
+        // stuttering. One tear, seeded, costs nothing after it has been drawn.
+        view.layer?.backgroundColor = (NSColor(hex: "#0B0E16") ?? .black).cgColor
+        view.layer?.cornerRadius = 6
+        let gv = NSImageView(frame: body)
+        // Axes-independent, so the tear runs edge to edge: a letterboxed glitch reads
+        // as a picture of a glitch rather than as the window itself being broken.
+        gv.imageScaling = .scaleAxesIndependently
+        gv.autoresizingMask = [.width, .height]
+        view.addSubview(gv)
+        if let path = content.path {
+            loadGlitchImageAsync(resolveResourcePath(path),
+                                 intensity: content.intensity ?? 0.6,
+                                 seed: UInt64(max(0, content.seed ?? 0)),
+                                 into: gv)
+        }
     case "ascii":
         view.layer?.backgroundColor = (NSColor(hex: "#060A14") ?? .black).cgColor
         view.layer?.cornerRadius = 6
@@ -712,6 +816,13 @@ final class EffectWindow: BaseEffectWindow {
         case "web":      return content.url ?? "Safari"
         case "image":    return "Preview"
         case "ascii":    return "art.txt"
+        case "glitch":   return "recovered.jpg"
+        case "automaton": return "automaton"
+        case "shader":   return "shader.frag"
+        case "uichaos":  return "Finder"
+        case "fileworks": return "Desktop"
+        case "cursors":  return "pointer"
+        case "mandala":  return "wait"
         default:         return "Untitled"
         }
     }
@@ -736,6 +847,164 @@ final class MicroWindow: BaseEffectWindow {
     }
 }
 
+/// An elementary cellular automaton, printing itself out.
+///
+/// Terminal's own colours — black monospace on white — because these windows sit in the
+/// fill (cue 15) beside real terminals, and a green-on-black one would read as a
+/// different machine rather than as one more thing this one is doing.
+///
+/// **The grid comes from the VIEW, not from the timeline.** Columns and rows are however
+/// many cells fit at the authored point size, so the field reaches all four edges of
+/// whatever window it lands in. Authoring a grid and hoping it matched the window is what
+/// left a dead strip down the right side of the first version of these.
+///
+/// **It scrolls.** One generation per tick at `hz`, the oldest row falling off the top,
+/// the way a terminal prints — so the rule is being *run*, not shown. The buffer starts
+/// full (the first screenful is generated in `init`) so a window opens mid-computation
+/// rather than empty, and so the still renderer, which has no run loop to drive the
+/// timer, still catches a real field.
+///
+/// Deterministic: row n is a pure function of `rule` and `seed`, so a given window shows
+/// the same automaton every take.
+final class AutomatonView: NSView {
+    private let textLayer = CATextLayer()
+    private let font: NSFont
+    private let rule: UInt8
+    private let ink = NSColor.black
+    /// Live cells are a full block and dead ones a light dither, so the off cells still
+    /// read as a grid: the point is a pixel field, not a scatter of marks.
+    private static let live = "\u{2588}", dead = "\u{2591}"
+
+    private var cells: [UInt8] = []
+    private var lines: [String] = []
+    private var cols = 0, rows = 0
+    private var timer: Timer?
+
+    init(size: NSSize, rule: Int, seed: Int, fontSize: CGFloat, hz: Double) {
+        self.font = .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        self.rule = UInt8(truncatingIfNeeded: rule)
+        super.init(frame: NSRect(origin: .zero, size: size))
+        wantsLayer = true
+        layer?.backgroundColor = TerminalStyle.background.cgColor
+        layer?.masksToBounds = true
+
+        // No padding: the field is the window. A monospace advance is measured rather
+        // than assumed at 0.6 em — the ratio differs between faces and a wrong guess
+        // shows up as a missing or clipped last column.
+        let cellW = max(1, ("M" as NSString).size(withAttributes: [.font: font]).width)
+        cols = max(8, Int(size.width / cellW))
+        rows = max(4, Int(size.height / fontSize))
+
+        textLayer.frame = CGRect(origin: .zero, size: size)
+        textLayer.isWrapped = false
+        textLayer.alignmentMode = .left
+        textLayer.truncationMode = .none
+        textLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        layer?.addSublayer(textLayer)
+
+        // Row 0. A single live cell gives the classic light cone; a seeded random row is
+        // what left-moving rules (110) need to show their structure instead of a
+        // lopsided corner.
+        cells = [UInt8](repeating: 0, count: cols)
+        if seed == 0 {
+            cells[cols / 2] = 1
+        } else {
+            var rng = SplitMix64(seed: UInt64(bitPattern: Int64(seed)))
+            for x in 0..<cols { cells[x] = UInt8(rng.next() & 1) }
+        }
+        for _ in 0..<rows { step() }
+        render()
+
+        let interval = 1.0 / max(0.5, min(30, hz))
+        let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            self?.step()
+            self?.render()
+        }
+        // .common so it keeps running while a menu is open or a window is dragged.
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    deinit { timer?.invalidate() }
+
+    /// Stop the moment the view leaves the screen: `closeWindow` drops the window, and a
+    /// timer still ticking against a detached view is a leak the show would accumulate
+    /// once per automaton per run.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { timer?.invalidate(); timer = nil }
+    }
+
+    /// One generation. Wolfram's numbering: bit n of the rule is the next state of the
+    /// neighbourhood whose (left, centre, right) reads as the binary number n.
+    private func step() {
+        lines.append(String(cells.map { $0 == 1 ? Character(AutomatonView.live)
+                                                : Character(AutomatonView.dead) }))
+        if lines.count > rows { lines.removeFirst(lines.count - rows) }
+        var next = [UInt8](repeating: 0, count: cols)
+        for x in 0..<cols {
+            let l = x > 0 ? cells[x - 1] : 0
+            let r = x < cols - 1 ? cells[x + 1] : 0
+            next[x] = (rule >> (l << 2 | cells[x] << 1 | r)) & 1
+        }
+        cells = next
+    }
+
+    /// The grid the view chose for itself, and what it has computed so far. Test seam:
+    /// "the field reaches every edge" is the whole requirement here, and the only way to
+    /// check it is to ask the view what grid it picked for a given size.
+    var gridForTesting: (cols: Int, rows: Int) { (cols, rows) }
+    var linesForTesting: [String] { lines }
+
+    private func render() {
+        let para = NSMutableParagraphStyle()
+        para.minimumLineHeight = font.pointSize
+        para.maximumLineHeight = font.pointSize
+        para.lineSpacing = 0
+        let s = NSAttributedString(string: lines.joined(separator: "\n"), attributes: [
+            .font: font, .foregroundColor: ink, .paragraphStyle: para])
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)   // no implicit fade on every generation
+        textLayer.string = s
+        CATransaction.commit()
+    }
+}
+
+/// A surface a typewriter writes into.
+///
+/// Two of them, and the difference is the whole point: the `typeText` document below,
+/// and a real Terminal window — the same surface the end card's credits type into, so a
+/// terminal that writes itself out anywhere in the piece reads as the same machine.
+protocol TypedTextSink: AnyObject {
+    /// `visible` already carries the newline the caret sits after when the copy types
+    /// by the line; the sink only decides what the caret looks like.
+    func showTyped(_ visible: String, caret: Bool)
+}
+
+/// Terminal's own label, written into by the typewriter. `█` is a Terminal block
+/// cursor, not a document's thin bar — the caret the credits have always used.
+final class TerminalTextSink: TypedTextSink {
+    private let label: NSTextField
+    init(label: NSTextField) { self.label = label }
+    func showTyped(_ visible: String, caret: Bool) {
+        label.stringValue = visible + (caret ? "\u{2588}" : "")
+    }
+}
+
+/// The label `applyContent` made for a `code` window, fished back out rather than
+/// rebuilt, so typed text keeps exactly the chrome every other terminal in the piece
+/// wears.
+func firstTextField(in view: NSView?) -> NSTextField? {
+    guard let view else { return nil }
+    if let tf = view as? NSTextField { return tf }
+    for sub in view.subviews {
+        if let tf = firstTextField(in: sub) { return tf }
+    }
+    return nil
+}
+
 /// A plain document mid-composition: white page, dark text, blinking caret. The
 /// deliberate opposite of everything else on screen — nothing neon, nothing flashing,
 /// just someone writing.
@@ -743,7 +1012,7 @@ final class MicroWindow: BaseEffectWindow {
 /// The text lives in a CATextLayer rather than an NSTextField: the typewriter rewrites
 /// it ~30 times a second and the layer lays out on the render server, where an
 /// NSTextField would re-run cell layout on the main thread every keystroke.
-final class TextEditorView: NSView {
+final class TextEditorView: NSView, TypedTextSink {
     private let textLayer = CATextLayer()
     private let font: NSFont
     private let ink = NSColor(white: 0.09, alpha: 1)
@@ -771,7 +1040,7 @@ final class TextEditorView: NSView {
 
     /// CATextLayer anchors its string at the TOP of its frame, which is what a
     /// document does — the text grows downward as it is typed.
-    func render(_ visible: String, caret: Bool) {
+    func showTyped(_ visible: String, caret: Bool) {
         let para = NSMutableParagraphStyle()
         para.lineSpacing = font.pointSize * 0.30
         let s = NSMutableAttributedString(string: visible, attributes: [

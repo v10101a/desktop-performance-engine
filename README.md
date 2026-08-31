@@ -308,7 +308,7 @@ far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` fr
 bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner. Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
 stats readouts), `image` (`path` to any image; decoded off-thread + cached),
-`ascii` (see below), `livecode` (a running Strudel-style REPL — see below), `map`
+`ascii` (see below), `glitch` (see below), `automaton` (see below), `shader` (see below), `uichaos` (see below), `fileworks` (see below), `cursors` (see below), `mandala` (see below), `livecode` (a running Strudel-style REPL — see below), `map`
 (a real Apple Maps flythrough — see below).
 Animations: `springIn`, `fadeIn`, `none`. Any content can add fake window `chrome`
 (`"browser" | "terminal" | "mac" | "mixed"`, plus a `title` shown in the bar/URL pill) —
@@ -325,6 +325,227 @@ its source pixel color. `hex` is the text color (default matrix-green `#8CF2A6`)
 conversion runs off the main thread and is cached, like the `image` kind. Works with
 `chrome`/`title` too. See `examples/timeline_ascii.json`; preview with
 `DPE_ASCII_DEMO=1 swift run GiveIt2Me_DJ_Dave_malware --snapshot=ascii.png`.
+
+### `mandala` content
+
+Concentric rings of the macOS spinner, evenly spaced around the screen's centre, each
+ring turning at its own rate and **against** its neighbours, shrinking toward the outside.
+`cols` is the ring count, `intensity` scales the population per ring, `seed` fixes it.
+
+The balls are the **system's own**, not a drawing of one. macOS keeps its cursors as
+vector PDFs under `HIServices.framework/.../Resources/cursors/`, and `busybutclickable`
+is 15 frames of the spinner stacked vertically with the frame delay in its `info.plist`.
+Being vector, it redraws cleanly at any size the mandala asks for. Two things have to be
+done to it: that cursor is the arrow *and* the ball (it is what macOS shows when an app
+is busy but still answering), and the arrow's tail hangs into the ball's bounding box —
+so each frame is cropped to the ball and **clipped to its circle**, because no rectangular
+crop separates them. If the file is not where we expect — that path is a system
+implementation detail and has moved between releases — it falls back to a drawn pinwheel,
+since a mandala of an approximation beats a mandala of nothing.
+
+```jsonc
+{ "kind": "mandala", "seed": 3863, "cols": 5, "intensity": 1.0,
+  "chrome": "none", "title": "wait" }
+```
+
+Transparent full-screen, like `cursors` and `fileworks`. Ball counts rise with the radius
+so the *spacing* stays even — a fixed count per ring leaves the outside sparse and the
+middle jammed, which reads as a mistake rather than a pattern.
+
+> **Every ball starts on a different frame, and that is a photosensitivity measure.**
+> Each steps at the cursor's real 30 fps, which is what every Mac shows anyway — but
+> eighty of them stepping *in unison* would be one synchronised full-screen change at
+> that rate, straight through the 15–20 Hz band the piece stays out of. Staggered, the
+> screen changes somewhere constantly and nowhere all at once. `dpe-tests` pins the
+> share of balls sharing a frame.
+
+`--test-mandala=out.png` samples every ball's position, waits, and samples again — a
+still of one frame cannot show whether anything turns.
+
+Its frames are held as **CGImage**, and a layer's `contents` is only written when the
+frame it shows actually changes. Both matter: assigning an `NSImage` makes Core Animation
+derive a CGImage on *every* assignment, and with 84 layers restepped each frame that
+alone took the main thread from 60 Hz to 8. Nothing looked slow about the mandala — the
+display pump is coalesced, so what it looked like was the whole show running badly.
+`--bench-views` is what found it.
+
+### `cursors` content
+
+A swarm of Mac pointers chasing the viewer's own pointer. Every particle is an arrow
+cursor at its own size, steering toward the mouse and rotating to face the way it is
+moving. `intensity` scales the population (1.0 = 90), `seed` fixes it.
+
+```jsonc
+{ "kind": "cursors", "seed": 3136, "intensity": 1.0,
+  "chrome": "none", "title": "pointer" }
+```
+
+Pair it with `[0, 0, 0, 0]` and `chrome: "none"` — like the fireworks it paints no
+background, so it chases across whatever is on screen. The target is
+`NSEvent.mouseLocation`, so it follows the pointer whether the **viewer** is moving it or
+the show is (`cursorPath` drives it elsewhere in the piece).
+
+Speed and acceleration are tied to size — small ones quick and twitchy, big ones heavy
+and late — which is what makes it a swarm with weight rather than a cloud of identical
+dots. A pointer keeps its last heading while it is barely moving: `atan2` on a near-zero
+velocity is noise, and a stalled cursor spinning on the spot gives the whole thing away.
+
+The arrow is drawn in its **own** orientation, tip up-and-left like the real one, so the
+rotation subtracts `artAngle` — the bisector of the two edges meeting at the tip, derived
+rather than guessed. It pivots about its **tip**, because a cursor does; about its centre
+it swings like a compass needle. `--test-cursors=out.png` warps the real pointer across
+the window and reports how many are pointing the same way.
+
+### `fileworks` content
+
+Fireworks made of the desktop. Shells rise from the bottom, hang, and burst radially, and
+every spark is a **macOS file icon with a filename under it**, the way one sits on a real
+desktop. The icons are the system's own (`NSWorkspace.icon(for:)` on real UTTypes), so
+they are whatever this Mac draws for a PDF or a folder.
+
+```jsonc
+{ "kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
+  "chrome": "none", "title": "Desktop" }
+```
+
+`hz` is shells launched per second, `intensity` scales the burst size, `seed` fixes the
+show. Pair it with a `[0, 0, 0, 0]` frame and `chrome: "none"`: the view paints **no
+background**, so it is a transparent overlay on whatever the show already has on screen.
+
+One CALayer per spark, one cached NSImage per distinct icon+name card — rendering text
+per spark per frame does not hold 60fps at this count. The simulation runs a fixed
+timestep accumulated against wall time, so it depends on elapsed time and not on how
+often the timer fired.
+
+Its whole content is motion, so a still of the first frame is an empty sky.
+**`--test-fileworks=out.png`** runs it for real and reports the sparks in flight, the
+spread in points and the burst count — which is how the physics got tuned: gravity at a
+realistic 900 pt/s² dropped every spark off the bottom of a 700pt field inside a second,
+and the numbers said so when eyeballing had not.
+
+### `uichaos` content
+
+A window packed to bursting with macOS interface: the system's own icons plus real
+AppKit controls — push buttons, checkboxes, sliders, progress bars, segmented controls,
+labels — placed at random over the whole area with **no collision test**, so they pile up
+and occlude each other and run off the edges. A tidy grid of controls reads as a
+preferences pane; a heap of them reads as a machine coming apart.
+
+```jsonc
+{ "kind": "uichaos", "seed": 907, "intensity": 1.15,
+  "chrome": "mixed", "title": "Finder" }
+```
+
+`intensity` is the packing density (default 1.0, scaled to the window's area so a big
+window is no sparser than a small one); `seed` fixes the pile, so a given window packs
+identically every take.
+
+These are **real, live controls**, which is the point and also the hazard: an NSButton
+inside a scenery window would take the click and press itself instead of the window being
+dragged. The view refuses hits outright, like the hydra canvas. `dpe-tests` pins that.
+
+### `shader` content
+
+A GLSL fragment shader at `path`, running live. `shader.html` is a plain WebGL1 host —
+the artist's shaders are GLSL ES 1.00 (`texture2D`, `gl_FragColor`), so there is nothing
+to translate. Swift reads the `.frag` and injects it as a string; a `file://` page cannot
+`fetch()` a sibling.
+
+```jsonc
+{ "kind": "shader", "path": "assets/shaders/graphic.frag", "drop": 0.0,
+  "chrome": "mixed", "title": "graphic.frag" }
+```
+
+`u_time` and `u_resolution` are driven by the page. `drop`, `vol` and `midi` are the
+artist's own scalar uniforms and are authored per event — in their rig those came from
+audio and MIDI; here they are numbers the cut sets. Any `sampler2D` the shader declares
+is bound to a 1x1 black texture, so a shader that samples a feedback or capture buffer
+compiles and runs rather than reading undefined memory (it will not *look* right unless
+its use of them is inert, which is why cue 17 uses the one shader whose feedback line the
+artist had already commented out).
+
+The shipped `graphic.frag` is **recoloured**: as written its palette was a three-frequency
+cosine sweeping the entire hue circle (mostly landing on green), and its opaque material
+was neutral grey. Both now mix out of the show's own three colours, named at the top of
+the file, so cue 17 belongs to the same piece as the desktop it comes up on.
+
+Its output gamma is a named `GAMMA` constant used by both the opaque path and the blurred
+scene inside the glass -- it was `pow(C, 1.9)` written out twice, and at 1.9 it crushed
+the midtones so hard the whole image collapsed to one flat deep blue with the other two
+palette colours never showing. It is 1.0 now, with an ambient floor on the diffuse term
+so the unlit side of the geometry is not void.
+
+> **Keep shader sources pure ASCII, comments included.** GLSL ES 1.00 restricts the
+> source character set and ANGLE enforces it in the lexer: one em dash in a comment fails
+> the compile, `getShaderInfoLog` returns **empty**, and the window is simply black with
+> nothing logged. `dpe-tests` checks every shipped `.frag` for this, because there is no
+> other symptom.
+
+### Measuring what the views cost
+
+`swift run GiveIt2Me_DJ_Dave_malware --bench-views` stands each continuously-running view
+up on its own for three seconds and reports how many times a 60 Hz probe timer actually
+fired. It is a **main-thread** measurement, which is the one that matters: `DisplayPump`
+is vsync-driven and *coalesced*, so it silently drops ticks whenever main is busy. A view
+that hogs the main thread therefore never looks slow itself — it makes the show slow, and
+the only visible symptom is "the framerate dropped" with nothing to point at.
+
+```
+bench baseline    59.8 probe-Hz of 60
+bench fileworks   59.7   bench cursors  59.7   bench mandala  59.7
+bench automaton   59.8   bench uichaos  59.7   bench all      59.7
+```
+
+Run it after adding anything that ticks. The mandala once read 8.3 here.
+
+`--test-shader=out.png` puts the show's own shader on a real GL canvas, waits for it to
+compile and draw, and reports how much of the frame is lit — "it built" proves nothing
+when a failed compile and a black shader look identical.
+
+### `automaton` content
+
+A Wolfram elementary cellular automaton, running and scrolling in the window —
+Terminal's own black-on-white, because these sit in the fill (cue 15) beside real
+terminals. `rule` is Wolfram's numbering (0…255, default 30), `hz` the generations per
+second (default 12), `fontSize` the cell size (default 9).
+
+```jsonc
+{ "kind": "automaton", "rule": 110, "seed": 110, "hz": 10, "fontSize": 9,
+  "chrome": "mixed", "title": "rule_110" }
+```
+
+`seed: 0` starts from a single live cell — the classic light cone. Any other value seeds
+a random first row, which is what left-moving rules (110) need to show their gliders
+instead of a lopsided corner. Row *n* is a pure function of `rule` and `seed`, so a given
+window shows the same automaton every take.
+
+**The grid comes from the view, not the timeline.** `AutomatonView` measures the
+monospace advance and takes however many whole cells fit its bounds, so the field reaches
+all four edges of whatever window the fill hands it. It also opens with a full buffer —
+the first screenful is generated in `init` — so a window arrives mid-computation rather
+than empty, and the still renderer, which has no run loop to drive the scroll, still
+catches a real field.
+
+### `glitch` content
+
+The desktop's own tear, pointed at a window instead of the wallpaper: `path` is put
+through the same displacement / chroma-split / block-corruption pass `deskWallpaper`'s
+`glitch` mode uses (`GlitchImage.swift`). `intensity` (0…1, default 0.6) scales the whole
+effect and `seed` fixes the tear — it is a pure function of the two, so the same window
+breaks the same way every take.
+
+```jsonc
+{ "kind": "glitch", "path": "assets/pixelface.jpg", "intensity": 0.45, "seed": 4100,
+  "chrome": "mixed", "title": "recovered.jpg" }
+```
+
+**It is a still.** The image is torn once, off the main thread, when the window opens,
+then left alone — and it is cached by path *and* settings, so several windows asking for
+the same tear pay for it once. That is deliberate: the fill (cue 15) ramps to 26 windows
+on screen, and re-tearing each of them per frame is precisely the window-server load the
+wallpaper glitch had to be dialled back from (2.5 Hz → 1.5) to stop the machine
+stuttering. The source is rendered at 512px on the long edge — the tear is coarse by
+design, and the wallpaper's own pass only runs at 1280 for a whole screen.
 
 Event types implemented: `openWindow`, `closeWindow`, `moveWindow`, `fakeDialog`,
 `screenFlash`, `cursorPath`, `rearrangeIcons`, `jiggle`, `sprite`, `cursorTrail`,
@@ -372,19 +593,19 @@ seconds, for reading.
 |---|---|---|
 | 0:00 | **THE BLUE** | the intro gate, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
 | 0:06 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
-| 0:08 | **WELCOME** | a centred `ascii` terminal — *placeholder* for the glitchy ASCII piece |
+| 0:08 | **WELCOME** | a Terminal window types itself out, a line a beat with a block cursor — the same surface the credits use at the other end of the piece. It names what the show is about to borrow, and signs off on `$ ./giveit2me --play` |
 | 0:15 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
 | 0:20 | **HYDRA** | somebody using a computer: a sketch opens small, the cursor takes it by the title bar and hauls it down, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does it start rendering. Two more arrive already running |
-| 0:28 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later it is `pixelface.jpg` |
-| 0:39.5 | **THE TRAVELLER** | one window runs up and down the screen and leaves a trail of windows stamped along its path |
+| 0:28 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later the face is sitting in the middle of it — a wallpaper the generator bakes, the face 20% of the height on its own field colour, not the artwork stretched over the whole desktop |
+| 0:30 | **THE TRAVELLER** | one window runs up and down the screen dragging a **delay line** of 20 identical copies, each 1% of the screen further left and one frame further behind — link *k* is where the leader was *k* frames ago, so the tail is most of a leg behind the head and the chain snakes. The assembly straddles the screen's centre, and it keeps travelling for the whole 13.7 s it is up |
 | 0:30 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
-| 0:38 | **VIDEO** | the middle fills with the slot a single video will take — *placeholder* |
+| 0:38 | **THE FIREWORKS** | the desktop goes up in the air: a transparent full-screen overlay of shells rising and bursting, every spark a **macOS file icon with a filename** — `Resume FINAL v3.pdf`, `do not delete`, `passwords.txt`. The lyric spiral keeps going underneath |
 | 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the wallpaper is swapped for a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each swap issued ~300 ms early so it is seen on the word). macOS sustains about three swaps a second (see `deskWallpaper` — a hard ceiling, not a tuning knob), so a word it cannot fit is skipped, not queued. Over the top, the cursor hauls a stamped trail of windows across the screen |
 | 1:00 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
 | 1:15 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
-| 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle |
+| 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle. Five of the flat cards come up broken: three **torn** — the piece's own images through the desktop's glitch pass — and two **Wolfram elementary automata** actually running, black on white, scrolling a generation at a time. The fill decays as it thickens |
 | 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |
-| 1:30 | **TBD** | a *placeholder* holding the slot for a graphic |
+| 1:30 | **THE GRAPHIC** | the screen is empty and black, and the artist's **GLSL raymarcher** comes up in the middle of it, running live in a WebGL canvas |
 | 1:37 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1**; the shutter lands exactly on the photo wall |
 | 1:43 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
 | 1:49 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz — one window re-opened, never shown and hidden (see the generator for why) |
@@ -392,11 +613,11 @@ seconds, for reading.
 | 1:56 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by lyric windows |
 | 1:58 | **VIDEO** | all of it stays and the video slot lands on top |
 | 1:59 | **THE VOID** | torus and ring cut out from under it, leaving the slot alone on a full black window |
-| 2:06 | **TBD** | everything cuts; a *placeholder* holds the slot |
-| 2:08 | **TBD + SPINNER** | more TBD content, and the mouse spinner — **not built**, see Gaps in docs/CUES.md |
+| 2:06 | **THE POINTERS** | everything cuts, and a swarm of Mac cursors of every size comes after the viewer's real pointer — each one turning to face the way it is moving, the small ones darting ahead of the big ones |
+| 2:08 | **THE MANDALA** | five counter-rotating rings of macOS beach balls fill the screen, each one spinning on its own axis — the machine hung everywhere at once |
 | 2:13 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
-| 2:27 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture |
-| 2:38 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen |
+| 2:27 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture — the tear at 1.5 Hz, the lyric flashing at 2.8 |
+| 2:38 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen. A quarter of the flat cards come up packed with real macOS interface — icons, buttons, sliders, checkboxes, piled on top of each other |
 | 2:40 | **THE LAST WORDS** | the noise stops and the desktop is the lyric again — *past the last note of the track* |
 | 2:44 | **THE END CARD** | the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
@@ -410,8 +631,8 @@ the end card is built to hold past the last note — so the piece now finishes a
 4.8 s after the audio rather than on it.
 
 **Four slots are marked TBD** by the author and hold labelled placeholder windows, so the
-timing is real and the content can be dropped in without re-cutting anything. Two more
-placeholders stand in for the video window and the ASCII piece. `tools/lint_show.py`
+timing is real and the content can be dropped in without re-cutting anything. One more
+placeholder stands in for the video window. `tools/lint_show.py`
 checks the generated document for dangling ids, windows left on screen at the end card,
 and missing asset files:
 
@@ -656,9 +877,9 @@ google.com is blocked from mainland China, where Apple's `map` flyover still wor
 
 ### `typeText`
 
-A text editor that opens and **writes itself out in tempo**. `charsPerBeat` (default 16)
-sets the rate — a rate, not a duration, so rewriting the copy doesn't retime the scene.
-The window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
+A window that opens and **writes itself out in tempo**. `charsPerBeat` (default 16) sets
+the rate — a rate, not a duration, so rewriting the copy doesn't retime the scene. The
+window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
 
 ```jsonc
 { "beat": 128, "type": "typeText", "params": {
@@ -666,10 +887,31 @@ The window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
     "charsPerBeat": 16, "fontSize": 14, "title": "resignation.txt — Edited" } }
 ```
 
-The text lives in a **CATextLayer**, not an NSTextField: the typewriter rewrites it ~30
-times a second, and the layer lays out on the render server where a text field would
-re-run cell layout on the main thread every keystroke. The visible count is cached, so a
-tick that reveals no new character does no work at all.
+`chrome` picks the surface it writes into:
+
+| chrome | |
+|---|---|
+| `mac` (default) | a white document in real macOS chrome, system face, thin `▌` caret |
+| `terminal` | Terminal.app's own window — monospaced, block `█` cursor. Literally the surface the end card's credits type into, built through `applyContent` like every other terminal in the piece |
+
+`linesPerBeat` types whole **lines** instead of characters, the credits' cadence: the
+caret then waits at the start of the next line, the way a prompt does after a command
+has printed. Set it and `charsPerBeat` is ignored. The welcome card (cue 3) is both:
+
+```jsonc
+{ "beat": 18, "type": "typeText", "params": {
+    "id": "welcome", "frame": [438, 255, 564, 390], "text": "$ ./giveit2me --install\n…",
+    "chrome": "terminal", "linesPerBeat": 1, "fontSize": 20, "interactive": true } }
+```
+
+A terminal's label **wraps**, and a wrapped line reads as a bug in a window pretending to
+be Terminal, so the generator sizes the frame from the longest line and `dpe-tests`
+re-measures it against the real font.
+
+The document's text lives in a **CATextLayer**, not an NSTextField: the typewriter
+rewrites it ~30 times a second, and the layer lays out on the render server where a text
+field would re-run cell layout on the main thread every keystroke. The visible count is
+cached, so a tick that reveals no new character does no work at all.
 
 ### `map`
 
@@ -798,9 +1040,16 @@ displays, network, battery, a location fix. Ported from the standalone systempro
 
 ```jsonc
 { "beat": 224, "type": "systemProbe", "params": {
-    "id": "probe", "linesPerBeat": 24, "frame": [576, 144, 806, 630] } }
+    "id": "probe", "linesPerBeat": 24, "frame": [576, 144, 806, 630],
+    "title": "./scan_identity" } }
 { "beat": 360, "type": "closeWindow", "params": { "id": "probe" } }
 ```
+
+The report wears **real macOS chrome** — same `BaseEffectWindow` path as every other big
+window in the show — titled with `title` (default `./scan_identity`), the command it is
+the output of. `frame` is therefore the OUTER frame, title bar included. The traffic
+lights are scenery: it is a non-activating panel that refuses to become key and ignores
+the mouse, so nothing about it can be clicked, dragged or closed by hand.
 
 `linesPerBeat` (default 24) is a rate, not a duration — as with `typeText.charsPerBeat`,
 editing the report doesn't retime the scene. The standalone app ran the reveal on a
@@ -1043,6 +1292,15 @@ into one event:
   second). `intensity` 0…1, `seed` for a reproducible tear.
 - **`recursive`** — the desktop set to a screenshot of the desktop, deepening each pass.
   Needs Screen Recording.
+- **`slides`** — a list of `images`, one per tick (or on an `at` schedule; see above).
+
+A `slides` run stretches each image over the whole desktop, so anything that should sit
+*within* the screen rather than fill it is baked that way in advance. Cue 7's face is a
+2560x1600 wallpaper written by the generator (`build_face_desktop`) -- a blue field with
+the face 20% of the height in the middle -- rather than the artwork plus a placement
+instruction. The engine briefly had a `fit: "center"` that composed exactly that at run
+time; a picture the generator already made has one less thing to go wrong when the show
+is playing, and the composed version did go wrong.
 
 **Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
 reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.

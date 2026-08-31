@@ -301,6 +301,190 @@ enum SystemProbeTests {
             t.expect(!wellFormed.isEmpty,
                      "at least one well-formed MAC was read (\(wellFormed.count) of \(macs.count) candidate lines)")
 
+            // REGRESSION: sections were gathered on the global CONCURRENT queue and
+            // appended as each one finished, so the report read in COMPLETION order,
+            // not the order `start()` asks for — identity, which the disclosure opens
+            // on, could land behind hardware. The real sections all take about the same
+            // time, so the race only shows with an unequal pair: a slow builder asked
+            // for FIRST must still be read first. No section builder is called here, so
+            // nothing touches Contacts or Location Services.
+            let probe = MainActor.assumeIsolated { Probe() }
+            MainActor.assumeIsolated {
+                probe.gather { Thread.sleep(forTimeInterval: 0.2); return [TermLine(text: "FIRST")] }
+                probe.gather { [TermLine(text: "SECOND")] }
+            }
+            let deadline = Date().addingTimeInterval(5)
+            var draining = true
+            while draining && Date() < deadline {
+                for _ in 0..<64 where draining {
+                    draining = MainActor.assumeIsolated { probe.revealOne() }
+                }
+                if draining { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
+            }
+            let texts = MainActor.assumeIsolated { probe.lines.map(\.text) }
+            let first = texts.firstIndex(of: "FIRST")
+            let second = texts.firstIndex(of: "SECOND")
+            t.expect(!draining, "the gathered sections drained")
+            t.expect(first != nil && second != nil, "both gathered sections were read")
+            if let first, let second {
+                t.expect(first < second,
+                         "sections read in the order asked for, not the order they finished "
+                         + "(first at \(first), second at \(second))")
+            }
+
+            // The automaton sizes its OWN grid to the view, which is the whole reason
+            // it computes in the engine rather than shipping generated art: the field
+            // has to reach every edge of whatever window the fill happens to give it.
+            // The first version of these authored a grid and left a dead strip down the
+            // right of any window whose aspect didn't match.
+            for box in [NSSize(width: 326, height: 233), NSSize(width: 318, height: 194)] {
+                let av = MainActor.assumeIsolated {
+                    AutomatonView(size: box, rule: 30, seed: 0, fontSize: 9, hz: 12)
+                }
+                let (cols, rows) = av.gridForTesting
+                let font = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
+                let cellW = ("M" as NSString).size(withAttributes: [.font: font]).width
+                // Within one cell of filling: the grid is whole cells, so the remainder
+                // is the only slack allowed.
+                t.expect(box.width - CGFloat(cols) * cellW < cellW,
+                         "automaton fills \(Int(box.width))pt across (\(cols) cols)")
+                t.expect(box.height - CGFloat(rows) * 9 < 9,
+                         "automaton fills \(Int(box.height))pt down (\(rows) rows)")
+                // Buffer starts full, so a window opens mid-computation, and the still
+                // renderer (no run loop, so no ticks) still catches a real field.
+                t.equal(av.linesForTesting.count, rows, "automaton opens with a full field")
+                t.expect(av.linesForTesting.allSatisfy { $0.count == cols },
+                         "every automaton row is the full width")
+            }
+            // Rule 30 from a single live cell can only spread one cell per side per
+            // generation. If the neighbourhood indexing were wrong the pattern would
+            // still look plausible — but it would leak outside its own light cone.
+            let cone = MainActor.assumeIsolated {
+                AutomatonView(size: NSSize(width: 400, height: 200), rule: 30, seed: 0,
+                              fontSize: 9, hz: 12)
+            }
+            let (ccols, _) = cone.gridForTesting
+            let leaks = cone.linesForTesting.enumerated().filter { (row, line) in
+                let live = line.enumerated().filter { $0.element == "\u{2588}" }.map(\.offset)
+                return live.contains { abs($0 - ccols / 2) > row }
+            }
+            t.expect(leaks.isEmpty, "rule 30 stays inside its light cone")
+
+            // The packed-UI windows are built from REAL AppKit controls, which is the
+            // point and also the hazard: a live NSButton inside a scenery window would
+            // take the click and press itself instead of the window being dragged. The
+            // view refuses hits for exactly that reason.
+            let chaos = MainActor.assumeIsolated {
+                UIChaosView(size: NSSize(width: 360, height: 240), seed: 900, density: 1.15)
+            }
+            t.expect(chaos.subviews.count > 12,
+                     "packed UI window is actually packed (\(chaos.subviews.count) elements)")
+            t.expect(MainActor.assumeIsolated { chaos.hitTest(NSPoint(x: 20, y: 20)) } == nil,
+                     "packed UI window swallows no clicks")
+            // Seeded: the same window packs the same way every take, like everything else.
+            let again = MainActor.assumeIsolated {
+                UIChaosView(size: NSSize(width: 360, height: 240), seed: 900, density: 1.15)
+            }
+            t.equal(again.subviews.count, chaos.subviews.count, "packed UI window is seeded")
+            t.expect(zip(chaos.subviews, again.subviews).allSatisfy { $0.frame == $1.frame },
+                     "packed UI window lays out identically for the same seed")
+
+            // The fireworks. The MOTION is checked by `--test-fileworks`, which runs it
+            // for real -- a particle system's first frame is an empty sky, so a unit
+            // test of it would assert nothing. What is worth pinning here is the part
+            // that is not time-dependent: the cards exist, they are actually drawn, and
+            // the view stays scenery.
+            let fw = MainActor.assumeIsolated {
+                FileworksView(size: NSSize(width: 600, height: 400), seed: 1046,
+                              hz: 1.0, intensity: 1.0)
+            }
+            t.expect(fw.cardCountForTesting > 8,
+                     "the fireworks build an icon set (\(fw.cardCountForTesting) cards)")
+            t.expect(MainActor.assumeIsolated { fw.hitTest(NSPoint(x: 10, y: 10)) } == nil,
+                     "the fireworks swallow no clicks")
+            // A card is an icon AND a filename: an empty or blank image would fly around
+            // convincingly and show nothing.
+            // Built and measured inside one hop: NSImage is not Sendable, so carrying it
+            // back across the isolation boundary is a warning today and an error under
+            // Swift 6.
+            let (cardW, inked) = MainActor.assumeIsolated { () -> (CGFloat, Int) in
+                let card = FileworksView.card(type: .pdf, name: "Resume FINAL v3.pdf")
+                // Through cgImage, not `representations.first`: a lockFocus-drawn NSImage
+                // is backed by a snapshot rep, not an NSBitmapImageRep, so the cast fails
+                // and the sampler reads an empty image that was never empty.
+                var box = NSRect(origin: .zero, size: card.size)
+                guard let cg = card.cgImage(forProposedRect: &box, context: nil, hints: nil)
+                else { return (card.size.width, 0) }
+                let rep = NSBitmapImageRep(cgImage: cg)
+                var n = 0
+                for y in stride(from: 0, to: rep.pixelsHigh, by: 2) {
+                    for x in stride(from: 0, to: rep.pixelsWide, by: 2) {
+                        if let c = rep.colorAt(x: x, y: y), c.alphaComponent > 0.2 { n += 1 }
+                    }
+                }
+                return (card.size.width, n)
+            }
+            t.expect(cardW > 40, "a card has a size")
+            do {
+                t.expect(inked > 40, "a card actually draws something (\(inked) inked samples)")
+            }
+
+            // The cursor swarm. The CHASE is checked by `--test-cursors`, which warps the
+            // real pointer across the window and looks at where they went; what is
+            // pinned here is the geometry, which is the part that was wrong twice.
+            let cs = MainActor.assumeIsolated {
+                CursorSwarmView(size: NSSize(width: 800, height: 500), seed: 3136, count: 60)
+            }
+            t.equal(cs.countForTesting, 60, "the swarm is populated")
+            let csizes = cs.sizesForTesting
+            t.expect((csizes.max() ?? 0) / max(1, csizes.min() ?? 1) > 3,
+                     "the pointers are a wide range of sizes "
+                     + "(\(Int(csizes.min() ?? 0))-\(Int(csizes.max() ?? 0))pt)")
+            t.expect(MainActor.assumeIsolated { cs.hitTest(NSPoint(x: 5, y: 5)) } == nil,
+                     "the swarm swallows no clicks")
+            // The arrow is drawn in its OWN orientation, so the rotation has to subtract
+            // where the art points. Up and to the LEFT for this outline — a straightened
+            // arrow would make this pi/2 and stop looking like a cursor.
+            let art = CursorSwarmView.artAngle
+            t.expect(art > 1.7 && art < 2.4,
+                     "the pointer art faces up-left (\(String(format: "%.2f", art)) rad)")
+            // It pivots about its point, not its middle: near the top-left of the box.
+            let anchor = CursorSwarmView.tipAnchor
+            t.expect(anchor.x < 0.35 && anchor.y > 0.85,
+                     "the pointer pivots about its tip (\(anchor.x), \(anchor.y))")
+
+            // The mandala. Its TURNING is checked by `--test-mandala`; here it is the
+            // arrangement and the one safety number.
+            let mv = MainActor.assumeIsolated {
+                MandalaView(size: NSSize(width: 900, height: 700), seed: 3863,
+                            rings: 5, intensity: 1.0)
+            }
+            t.expect(mv.countForTesting > 40, "the mandala is populated (\(mv.countForTesting))")
+            // Rings, not a scatter: a handful of distinct radii, each with many balls on it.
+            let radii = Set(mv.radiiForTesting.map { Int($0.rounded()) })
+            t.equal(radii.count, 5, "the mandala is rings, not a scatter")
+            // Neighbouring rings turn opposite ways — that is what makes it a mandala
+            // rather than a wheel.
+            let speeds = mv.ringSpeedsForTesting
+            t.expect(zip(speeds, speeds.dropFirst()).allSatisfy { $0 * $1 < 0 },
+                     "the mandala's rings counter-rotate")
+            // It is the SYSTEM's beach ball, sliced out of the cursor file, not a
+            // drawing of one -- 15 frames, or 1 if the file has moved and it fell back.
+            t.equal(mv.frameCountForTesting, MandalaView.frameTotal,
+                    "the mandala uses the real cursor's 15 frames")
+            t.expect(FileManager.default.fileExists(atPath: MandalaView.systemCursorPath),
+                     "the system beach ball is where we think it is")
+            // Photosensitivity: each ball steps at the cursor's own 30 fps, which is
+            // what every Mac shows anyway -- but eighty stepping IN UNISON would be one
+            // synchronised full-screen change at that rate, through the 15-20 Hz band.
+            // Staggered phases are what prevent that.
+            let sync = mv.phaseSyncForTesting
+            t.expect(sync < 0.25,
+                     "the beach balls do not step in unison "
+                     + "(\(Int(sync * 100))% share a frame)")
+            t.expect(MainActor.assumeIsolated { mv.hitTest(NSPoint(x: 5, y: 5)) } == nil,
+                     "the mandala swallows no clicks")
+
             t.equal(bytes(Int64(1_500_000)), "1.5 MB", "byte formatting")
             t.equal(pct(0.4237), "42.4%", "percent formatting")
             t.equal(bar(0.5, width: 4), "██░░", "meter bar")

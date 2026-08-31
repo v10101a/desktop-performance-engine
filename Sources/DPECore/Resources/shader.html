@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>shader</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+<canvas id="c"></canvas>
+<script>
+// A plain fragment-shader host, the same shape as hydra.html: the engine loads this
+// page and then hands it a shader through window.__dpeShader(). Nothing is fetched —
+// file:// URLs and fetch() do not mix, so the source arrives as a JS string.
+//
+// WebGL 1, deliberately. The artist's shaders are GLSL ES 1.00 (texture2D,
+// gl_FragColor); a WebGL2 context would accept them but there is nothing to gain and a
+// version mismatch to get wrong.
+(function () {
+  var canvas = document.getElementById('c');
+  var gl = canvas.getContext('webgl', { antialias: false, alpha: false,
+                                        preserveDrawingBuffer: false });
+  var program = null, frame = null, start = 0, ticks = 0;
+  var uniforms = {};
+  // The scalars the engine can drive. Named to match the artist's uniform block.
+  var vals = { u_vol: 0, drop: 0, midi: 0 };
+
+  // Two triangles covering the clip volume. The vertex shader is ours; only the
+  // fragment shader comes from outside.
+  var VERT = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      // getShaderInfoLog can come back null, which as a bare Error reads "null" and
+      // says nothing. Name the stage and keep whatever the driver did give.
+      var log = gl.getShaderInfoLog(s);
+      gl.deleteShader(s);
+      // An EMPTY log here almost always means a character outside ASCII somewhere in
+      // the source, comments included: GLSL ES 1.00 restricts the character set and
+      // ANGLE rejects it at the lexer without a word. Say so, rather than shrugging.
+      throw new Error((type === gl.VERTEX_SHADER ? 'vertex' : 'fragment')
+                      + ' compile failed: '
+                      + (log || '(no log - check the source is pure ASCII)'));
+    }
+    return s;
+  }
+
+  // A sampler left unbound reads as undefined. These shaders declare u_prevFrame and
+  // u_window and sample them even where the result is discarded, so both get a real
+  // 1x1 black texture rather than whatever happened to be in unit 0.
+  function blackTexture() {
+    var t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                  new Uint8Array([0, 0, 0, 255]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+
+  function resize() {
+    // Cap the backing store: these are raymarchers, and cue 17's window is a few
+    // hundred points wide. Rendering them at full Retina resolution costs several times
+    // the fragments for a difference nobody sees at that size.
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
+  }
+
+  function step() {
+    frame = requestAnimationFrame(step);
+    if (!program) return;
+    resize();
+    ticks++;
+    gl.useProgram(program);
+    if (uniforms.u_time) gl.uniform1f(uniforms.u_time, (performance.now() - start) / 1000);
+    if (uniforms.u_resolution) gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height);
+    if (uniforms.u_vol) gl.uniform1f(uniforms.u_vol, vals.u_vol);
+    if (uniforms.drop) gl.uniform1f(uniforms.drop, vals.drop);
+    if (uniforms.midi) gl.uniform1f(uniforms.midi, vals.midi);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  window.__dpeShader = function (src) {
+    try {
+      if (!gl) throw new Error('no WebGL context');
+      var p = gl.createProgram();
+      gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(p, compile(gl.FRAGMENT_SHADER, src));
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+        throw new Error('link failed: ' + (gl.getProgramInfoLog(p) || '(no log)'));
+      }
+      program = p;
+      gl.useProgram(p);
+
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER,
+                    new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+      var loc = gl.getAttribLocation(p, 'p');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+      ['u_time', 'u_resolution', 'u_vol', 'drop', 'midi'].forEach(function (n) {
+        uniforms[n] = gl.getUniformLocation(p, n);
+      });
+      ['u_prevFrame', 'u_window'].forEach(function (n, i) {
+        var u = gl.getUniformLocation(p, n);
+        if (!u) return;
+        gl.activeTexture(gl.TEXTURE0 + i);
+        gl.bindTexture(gl.TEXTURE_2D, blackTexture());
+        gl.uniform1i(u, i);
+      });
+
+      start = performance.now();
+      if (!frame) frame = requestAnimationFrame(step);
+      return 'ok';
+    } catch (e) {
+      // Handed back to Swift, which logs it: a shader that fails to compile otherwise
+      // shows as a black window and looks exactly like one that renders black.
+      return 'error: ' + e.message;
+    }
+  };
+
+  // Drive the artist's scalar uniforms from the show.
+  window.__dpeShaderSet = function (name, value) { vals[name] = value; return ticks; };
+  window.__dpeShaderTicks = function () { return ticks; };
+}());
+</script>

@@ -17,7 +17,10 @@ let package = Package(
                 // than processed: the library must stay byte-identical to the release
                 // it claims to be, and the page loads it by name from the same folder.
                 .copy("Resources/hydra-synth.js"),
-                .copy("Resources/hydra.html")
+                .copy("Resources/hydra.html"),
+                // The GLSL host page. The shaders themselves live in assets/shaders,
+                // like every other authored `path` in the timeline.
+                .copy("Resources/shader.html")
             ]
         ),
         .executableTarget(

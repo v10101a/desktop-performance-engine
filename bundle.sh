@@ -52,6 +52,11 @@ cp Sources/DPECore/Resources/timeline.json "$APP/Contents/Resources/"
 cp Sources/DPECore/Resources/hydra-synth.js "$APP/Contents/Resources/"
 cp Sources/DPECore/Resources/hydra.html     "$APP/Contents/Resources/"
 
+# The GLSL host and the shader it runs (cue 17). Flat, for the same reason as the
+# above: ShaderCanvasView resolves both through resolveResourcePath, which looks in
+# Contents/Resources, and the page is loaded by file URL so it needs a real path.
+cp Sources/DPECore/Resources/shader.html   "$APP/Contents/Resources/"
+
 # The SwiftPM resource bundle too, as a second home for anything else it carries.
 # Copy every bundle SwiftPM produced rather than one hardcoded name: the bundle is named
 # for the TARGET that declares the resources, so the split renamed it to
@@ -70,6 +75,12 @@ fi
 # anywhere, not just from inside the repo tree. The resolver checks Contents/Resources.
 # Only compressed formats — embedding raw .wav would re-bloat the bundle.
 # The lyric face (EffectWindow's LyricFont registers it from this path at run time).
+# The GLSL shaders, by the path the timeline names them with.
+if [ -d assets/shaders ]; then
+  mkdir -p "$APP/Contents/Resources/assets"
+  cp -R assets/shaders "$APP/Contents/Resources/assets/"
+fi
+
 if [ -d assets/fonts/hack ]; then
   mkdir -p "$APP/Contents/Resources/assets/fonts"
   cp -R assets/fonts/hack "$APP/Contents/Resources/assets/fonts/"
@@ -82,7 +93,7 @@ done
 # Image assets the timeline names by path (the end card's tiled backdrop). Same reason
 # as the audio: the resolver checks Contents/Resources, and without this the .app falls
 # back to a plain black card while the repo build looks correct.
-for img in assets/credits_tile.png assets/pixelface.jpg; do
+for img in assets/credits_tile.png assets/pixelface.jpg assets/pixelface_desktop.jpg; do
   [ -e "$img" ] && cp "$img" "$APP/Contents/Resources/"
 done
 
