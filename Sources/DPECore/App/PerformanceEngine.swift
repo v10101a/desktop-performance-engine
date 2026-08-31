@@ -118,6 +118,13 @@ final class PerformanceEngine {
         swarm.enabled = tl.meta.allowDesktopFiles ?? false
         wallpaper.baseDir = timelineDir
         wallpaper.enabled = tl.meta.allowWallpaper ?? false
+        // The authored canvas: every frame and cursor point maps from this space onto
+        // the real screen, so a different-sized display gets the same composition.
+        if let a = tl.meta.authoredSize, a.count == 2, a[0] > 0, a[1] > 0 {
+            ScreenGeometry.authoredCanvas = CGSize(width: a[0], height: a[1])
+        } else {
+            ScreenGeometry.authoredCanvas = nil
+        }
         audioDuration = PerformanceEngine.probeAudioDuration(resolveAudioURL(tl.meta.audioFile))
         startPosition = 0
         // Build sprite/trail window pools now, while nothing is playing — the
@@ -148,7 +155,6 @@ final class PerformanceEngine {
     /// Badge every live window with its timeline id and open time. An authoring
     /// overlay for telling a stack of near-identical windows apart; not in the piece.
     func setInspecting(_ on: Bool) { windows.setInspecting(on) }
-    var isInspecting: Bool { windows.inspecting }
     /// Read-back of the inspect overlay + freeze state, for `--test-pause`.
     var inspectSummary: [String] { windows.inspectSummary }
     /// Live-sketch frame counts, for `--test-pause`.
@@ -324,7 +330,10 @@ final class PerformanceEngine {
         }
         restore.restore()
         if iconsArmed { icons.restore() }
-        if wallpaperArmed { wallpaper.restore() }
+        if wallpaperArmed {
+            wallpaper.restore()
+            wallpaper.restoreAllSpaces()   // the other Spaces' desktops — final stop only
+        }
         if scheduler.logFiring { NSLog("[DPE] \(scheduler.driftSummary)") }
         NSLog("[DPE] stopAndRestore — windows remaining: \(windows.count)")
         if wasPlaying { onFinished?() }

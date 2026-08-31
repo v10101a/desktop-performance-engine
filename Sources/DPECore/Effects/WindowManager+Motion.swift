@@ -1,11 +1,7 @@
 import AppKit
 
-// Split out of WindowManager.swift, which had grown to 753 lines covering seven
-// unrelated subsystems. Extensions can't hold stored properties, so the state these
-// operate on still lives in the core type — this is an organisational split, not a
-// decoupling. Genuinely extracting these into their own executors is the right end
-// state, but it should wait until the animation paths have test coverage; there is
-// none today, and they are the hardest thing here to verify by eye.
+// Organisational split out of WindowManager.swift: extensions can't hold stored
+// properties, so the state these operate on still lives in the core type.
 
 extension WindowManager {
     // MARK: - Jiggle / Move (pump-synced timed effects; mutually exclusive per window)

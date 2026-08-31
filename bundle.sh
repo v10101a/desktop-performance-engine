@@ -71,21 +71,21 @@ if [ "$FOUND_RESBUNDLE" -eq 0 ]; then
   echo "note: no SwiftPM resource bundle in $BINDIR (the flat copies above are what the app reads)" >&2
 fi
 
-# Embed the compressed backing track(s) so the .app is self-contained and plays
-# anywhere, not just from inside the repo tree. The resolver checks Contents/Resources.
-# Only compressed formats — embedding raw .wav would re-bloat the bundle.
-# The lyric face (EffectWindow's LyricFont registers it from this path at run time).
 # The GLSL shaders, by the path the timeline names them with.
 if [ -d assets/shaders ]; then
   mkdir -p "$APP/Contents/Resources/assets"
   cp -R assets/shaders "$APP/Contents/Resources/assets/"
 fi
 
+# The lyric face (EffectWindow's LyricFont registers it from this path at run time).
 if [ -d assets/fonts/hack ]; then
   mkdir -p "$APP/Contents/Resources/assets/fonts"
   cp -R assets/fonts/hack "$APP/Contents/Resources/assets/fonts/"
 fi
 
+# Embed the compressed backing track(s) so the .app is self-contained and plays
+# anywhere, not just from inside the repo tree. The resolver checks Contents/Resources.
+# Only compressed formats — embedding raw .wav would re-bloat the bundle.
 for audio in assets/*.mp3 assets/*.m4a; do
   [ -e "$audio" ] && cp "$audio" "$APP/Contents/Resources/"
 done

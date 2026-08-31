@@ -16,8 +16,7 @@ import CoreServices
 /// raised by *doing the thing* — macOS decides to prompt when the read or the Apple event
 /// happens. So those steps do the thing here, early and for nothing: a directory listing
 /// that is thrown away, an Apple event that asks Finder for no data. Slightly grubby, and
-/// the only way to move those dialogs off the middle of the show, where they used to land
-/// at ~60 s and ~133 s.
+/// the only way to move those dialogs off the middle of the show.
 enum Permissions {
     /// One thing the gate will ask macOS for.
     ///
@@ -171,13 +170,10 @@ enum Permissions {
             &target, typeWildCard, typeWildCard, true) == noErr
     }
 
-    /// Run the steps in order, but never let one of them hold the show forever.
-    ///
-    /// The camera prompt had NO timeout: if the viewer never answers it — or never sees
-    /// it, which is the same thing from here — the show simply never starts, with nothing
-    /// on screen to say why. Location already had a 45 s escape; this gives every step
-    /// one, which matters most for the folder and Automation prompts, since those block a
-    /// background thread until they are answered.
+    /// Run the steps in order, but never let one of them hold the show forever: an
+    /// unanswered (or unseen) prompt must not leave the show never starting with
+    /// nothing on screen to say why. Every step gets a timeout — the folder and
+    /// Automation prompts block a background thread until answered.
     private static func run(_ steps: [(@escaping () -> Void) -> Void], then done: @escaping () -> Void) {
         guard let first = steps.first else { done(); return }
         var moved = false

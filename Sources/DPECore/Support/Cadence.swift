@@ -15,8 +15,7 @@ enum Beats {
 /// Fractional-rate pacing for effects that do a discrete thing at a per-beat rate —
 /// place a photo, reveal a line, step a pattern.
 ///
-/// Three behaviours that were previously copy-pasted into each controller, with the
-/// constants drifting apart, now live here once:
+/// Three behaviours, in one place:
 ///
 /// 1. **The remainder carries.** Rates are fractional and the work is integral, so the
 ///    leftover credit persists across ticks. Without it a rate below one-per-tick would
@@ -57,13 +56,10 @@ struct Cadence {
         credit += dt * (bpm / 60.0) * ratePerBeat
         let n = min(Int(credit), burstCap)
         if n > 0 { credit -= Double(n) }
-        // Discard when the *cap* bit, not when the leftover happens to be large.
-        //
-        // The original per-controller copies tested `credit > burstCap` here, which
-        // almost never held right after capping — so the refused work stayed owed and
-        // the effect ran flat out for several ticks paying off one hitch, the exact
-        // behaviour the cap exists to prevent. Keying off `n == burstCap` drops the
-        // unpayable debt while leaving the ordinary sub-tick remainder to carry.
+        // Discard when the *cap* bit, not when the leftover happens to be large:
+        // keying off `n == burstCap` drops the unpayable debt while leaving the
+        // ordinary sub-tick remainder to carry. (Testing `credit > burstCap` instead
+        // leaves the refused work owed, and the effect runs flat out paying off one hitch.)
         if n == burstCap { credit = 0 }
         return n
     }

@@ -43,7 +43,7 @@ final class MandalaView: NSView {
     /// Drawn once at this size and only ever scaled down — the biggest ball here is
     /// ~110pt and an upscaled small bitmap of a pinwheel is mush.
     private static let master: CGFloat = 256
-    /// Segments in the wheel — also the divisor in the flicker sum above.
+    /// Segments in the drawn fallback wheel.
     static let segments = 12
 
     init(size: NSSize, seed: Int, rings: Int, intensity: Double) {

@@ -43,12 +43,9 @@ final class OutroController {
     func prewarmGlitch(screen: NSScreen) {
         let displayID = WallpaperImage.displayID(of: screen)
         let size = screen.frame.size
-        // Only the display ID crosses into the task — NSScreen isn't Sendable — and the
-        // hop back is `DispatchQueue.main.async` with a weak `self`, matching
-        // `WallpaperController.applyRecursive`. (Both carry the same Swift 6 "capture of
-        // non-Sendable self" warning; this is the house pattern, not a new exception.)
-        // The glitch pass runs in the task, off the main thread: six frames at 1600px is
-        // far too much to do on the main thread while the alert is up.
+        // Only the display ID crosses into the task — NSScreen isn't Sendable. The
+        // glitch pass runs in the task, off the main thread: rendering the frames is
+        // far too much to do on main while the alert is up.
         Task.detached(priority: .userInitiated) { [weak self] in
             var source: CGImage?
             if let id = displayID { source = try? await WallpaperImage.captureDisplay(id) }
@@ -60,23 +57,9 @@ final class OutroController {
         }
     }
 
-    /// The dump frames.
-    ///
-    /// Not the `GlitchImage` engine the wallpaper uses — that one is analogue in
-    /// character (sine warps, chroma bleed, scanlines), which reads as a broken CRT.
-    /// This wants the opposite: a memory dump. Chunky whole pixels, one bit per channel,
-    /// and corruption that moves in aligned blocks rather than smooth waves.
-    ///
-    /// Three passes, in order:
-    ///
-    /// 1. **Pixelate.** The capture is drawn into a grid `dumpColumns` wide with
-    ///    interpolation off, so every cell is one flat colour.
-    /// 2. **Hard contrast.** Each channel is thresholded to 0 or 255 — an eight-colour
-    ///    palette, no gradients anywhere.
-    /// 3. **Corrupt.** Whole rows slip sideways by a whole number of cells, runs are
-    ///    overwritten with a repeating 4-cell pattern lifted from elsewhere in the
-    ///    buffer, and other runs are flattened to black or white. Everything lands on
-    ///    the cell grid, which is what makes it read as memory rather than as noise.
+    /// The dump frames. Not the wallpaper's `GlitchImage` engine (analogue, broken-CRT)
+    /// — this wants a memory dump: pixelate to flat cells, threshold each channel to
+    /// 0/255, then corrupt in whole-cell-aligned blocks so it reads as memory, not noise.
     private static func renderGlitchFrames(from source: CGImage?, size: NSSize) -> [CGImage] {
         let cols = dumpColumns
         let rows = max(2, Int((Double(cols) * size.height / max(size.width, 1)).rounded()))

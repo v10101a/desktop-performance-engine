@@ -396,24 +396,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         return nil
     }
 
-    /// Build a real map window off-screen and watch its camera for a couple of
-    /// seconds. Proves the flight is running independently of the pump.
-    /// Does real hydra render?
-    ///
-    /// The failure this exists to catch is a quiet one: a page that fails to load, or a
-    /// library that never defines itself, leaves a perfectly black rectangle — and so
-    /// does a sketch that simply hasn't started yet. Both look like "the window opened
-    /// fine". So this puts the show's own first sketch on a live canvas, captures the
-    /// window through the window server (the only way to get a web view's pixels; an
-    /// off-screen `cacheDisplay` returns an empty rectangle) and counts what lit up.
-    /// Does the shipped shader actually render? Builds the show's own `shader` windows
-    /// through `makeEffectContentView`, gives the page and the GL context time to
-    /// compile and draw, then measures the frame. `ShaderCanvasView` logs the compile
-    /// error separately — between the two, a black window is never ambiguous.
     /// Does the desktop actually go up in the air? Runs the real view on a real window
-    /// for a few seconds and reports how many sparks are in flight — an empty sky means
-    /// the shells never launched or never burst, and neither is visible in a still of
-    /// the first frame.
+    /// for a few seconds and reports how many sparks are in flight.
     private func runFileworksSelfTest() {
         var spec: ContentSpec?
         if let url = AppDelegate.bundledTimelineURL(),
@@ -468,18 +452,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Do the pointers actually chase, and do they face where they are going?
-    ///
-    /// The pointer is WARPED across the window during the run — otherwise the swarm
-    /// converges on wherever the mouse happens to be resting and the headings are
-    /// whatever they were at spawn, which would pass a static check while proving none
-    /// of the behaviour.
-    /// Does the mandala actually turn, and do the rings turn against each other?
     /// Stand each heavy view up on its own and measure what the main thread has left.
-    ///
-    /// The probe is a 60 Hz timer counting its own firings: with main free it lands
-    /// close to 60/s, and every tick it misses is a tick the display pump would also
-    /// have missed. That is the number that shows up as "the app got slower".
+    /// The probe is a 60 Hz timer counting its own firings: every tick it misses is a
+    /// tick the display pump would also have missed.
     private func runViewBenchmark() {
         let size = NSSize(width: 1440, height: 900)
         func make(_ name: String) -> NSView? {
@@ -818,14 +793,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// What nine live sketches cost. WebKit runs pages out of process, so the memory
-    /// and the process count are somewhere `ps` can see them and this app cannot — the
-    /// canvases share one configuration and one file origin precisely so that WebKit is
-    /// free to keep them together, and this is the check on whether it did.
-    /// Every WebContent process on the machine, with its memory and CPU. On its own
-    /// this number is meaningless — WebKit keeps a cache of idle content processes and
-    /// every other app on the machine has its own — so it is only ever read as a delta
-    /// against a baseline taken before the canvases existed.
+    /// Every WebContent process on the machine, with its memory and CPU. Meaningless
+    /// on its own — WebKit keeps a cache of idle content processes and every other app
+    /// has its own — so only ever read as a delta against a baseline.
     static func webContentUsage() -> (count: Int, kb: Double, cpu: Double) {
         let task = Process()
         task.launchPath = "/bin/ps"
@@ -894,12 +864,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Headless checks for the sprite/trail math: frame parsing, pool assignment
     /// (deterministic + stable), and stamp pen-up gating.
-
-
-
-
-
-
     private func runSpriteSelfTest() {
         let frames = [["X.X", ".X.", "..."], [".X.", "X.X", "..X"]]
         let offsets = WindowManager.spriteFrameOffsets(frames, strideX: 10, strideY: 10)

@@ -377,9 +377,11 @@ enum TimelineTests {
                     t.equal(p.content.chrome ?? "", "none", "the fireworks wear no chrome")
                     t.expect(p.content.seed != nil, "the fireworks are seeded")
                 }
+                // Once: cue 10's burst, closed with the spiral at cue 12 — a live
+                // full-screen particle layer over the word swaps dragged chorus 1B.
                 t.expect(fireworks == 1, "the show carries the fireworks once (cue 10)")
 
-                // The cursor swarm (cue 25) is a transparent full-screen overlay, same
+                // The cursor swarm (cue 24) is a transparent full-screen overlay, same
                 // as the fireworks: it chases the pointer across the whole screen, and
                 // any chrome would paint a ground over what it is chasing across.
                 var swarms = 0
@@ -391,7 +393,7 @@ enum TimelineTests {
                     t.equal(p.content.chrome ?? "", "none", "the cursor swarm wears no chrome")
                     t.expect(p.content.seed != nil, "the cursor swarm is seeded")
                 }
-                t.expect(swarms == 1, "the show carries the cursor swarm once (cue 25)")
+                t.expect(swarms == 1, "the show carries the cursor swarm once (cue 24)")
 
                 // The mandala (cue 26): the third transparent full-screen overlay, and
                 // the same rule applies -- chrome would paint a ground over the piece.

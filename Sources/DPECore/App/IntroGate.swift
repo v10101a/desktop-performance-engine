@@ -563,8 +563,6 @@ final class IntroGateController {
         index = i
         let card = IntroGate.script[i]
 
-        // A popup card stops being a takeover: the window shrinks to a small panel
-        // centered on the desktop, and everything else comes back into view.
         let screen = (NSScreen.main ?? NSScreen.screens[0]).frame
         // `.popup` and `.macAlert` stop being takeovers: the window shrinks to a panel
         // on the desktop and everything else comes back into view.
@@ -656,17 +654,13 @@ final class IntroGateController {
     }
 }
 
-/// The warning and the question in real macOS chrome.
-///
-/// Built from `makeDialogContentView` — the very same builder the show's fake dialogs
-/// use — so the first window the viewer sees is indistinguishable from the forty-one
-/// that follow it. The buttons that builder makes are inert scenery, so they are found
-/// by title afterwards and given the gate's actions.
+/// The warning and the question in real macOS chrome, built from
+/// `makeDialogContentView` so it matches the show's fake dialogs; its inert buttons are
+/// found by title and given the gate's actions.
 ///
 /// **The view owns the action objects.** `NSControl.target` is a WEAK reference: an
 /// action object held anywhere less durable is deallocated, `target` quietly becomes
-/// nil, and the button does nothing at all when clicked. (`GateButton` sidesteps this by
-/// being its own target; this builder's buttons cannot.)
+/// nil, and the button does nothing at all when clicked.
 final class GateAlertView: NSView {
     private var actions: [GateButtonAction] = []
 
@@ -745,11 +739,9 @@ final class RestartCardView: NSView {
     static let risePortion = 0.42
     static let pausePortion = 0.16
 
-    /// The logo's height, as a fraction of the screen. macOS draws its own restart logo
-    /// a good deal smaller than this used to be (0.17); at 0.1275 the card reads as the
-    /// real screen rather than as a poster of it. The FACE inherits the same number —
-    /// the swap only works as the logo *becoming* the face if the two are one size, so
-    /// they must not drift apart.
+    /// The logo's height, as a fraction of the screen. The FACE inherits the same
+    /// number — the swap only reads as the logo *becoming* the face if the two are one
+    /// size, so they must not drift apart.
     static let logoHeight: CGFloat = 0.1275
 
     init(size: NSSize, duration: Double) {
@@ -896,12 +888,9 @@ final class RestartCardView: NSView {
         return min(1, hangFraction + (1 - hangFraction) * ease(rest))
     }
 
-    /// Black to blue, logo to face — on one frame, with no interpolation anywhere.
-    ///
-    /// A cut, deliberately: the interruption should look like the screen was switched,
-    /// not like a transition someone designed. `CATransaction` actions are disabled
-    /// because a layer's `backgroundColor` animates implicitly otherwise, which is where
-    /// the quarter-second cross-dissolve came from even with no explicit animation.
+    /// Black to blue, logo to face — a deliberate one-frame cut. `CATransaction`
+    /// actions are disabled because a layer's `backgroundColor` otherwise animates
+    /// implicitly, a quarter-second cross-dissolve with no explicit animation anywhere.
     private func turn() {
         guard !turned else { return }
         turned = true

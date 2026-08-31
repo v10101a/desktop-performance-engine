@@ -1,33 +1,27 @@
 """The show, cut to docs/CUES.md.
 
-`docs/CUES.md` is the source document — one row per cue, authored by ear against the
-recording. `CUES` below mirrors it, and everything in this file hangs off those numbers.
-**Edit the two together, in both directions** — see CLAUDE.md.
+`docs/CUES.md` is the source document — one row per cue. `CUES` below mirrors it, and
+everything in this file hangs off those numbers. **Edit the two together, in both
+directions** — see CLAUDE.md.
 
     python3 tools/generate_show.py
     W=1440 H=900 COLS=22 python3 tools/generate_show.py
 
 Writes examples/timeline_show.json and Sources/DPECore/Resources/timeline.json.
 
-The recut's seconds were read off a video whose clock starts ~9 s (≈ 270 frames, the
-boot-up sequence) BEFORE the music — shifted back by RECUT_SHIFT they land on the
-phrase starts, which unshifted they missed by a beat or a bar. `WAS` keeps the original
-numbers so the printout shows each cue against where the recut actually fired it.
+The recut's seconds were read off a video whose clock starts ~9 s before the music;
+shifted back by RECUT_SHIFT they land on the phrase starts. `WAS` keeps the original
+numbers so the printout shows each cue against where the recut fired it.
 
-The track is twelve 8-bar PHRASES (INTRO A/B, CHORUS 1A/1B, BRIDGE A/B, BREAKDOWN,
-INSTRUMENTAL A/B, CHORUS 2A/2B, BREAK), each one verified in the audio; `PHRASES` is
-the bar each starts on. Every cue is a position INSIDE a phrase — `(phrase, bars in,
-beats in)` — so `(phrase, 0, 0)` is that phrase's downbeat, the changeover, and moving a
-phrase moves its cues with it without touching the next one. The engine runs in beats;
-the cue sheet is in FRAMES at 30 fps because that is what the app's transport shows.
-This script prints every cue's phrase position and frame, and those frames must match
-docs/CUES.md.
+The track is twelve 8-bar PHRASES, each verified in the audio; `PHRASES` is the bar
+each starts on. Every cue is a position INSIDE a phrase — `(phrase, bars in, beats
+in)` — so moving a phrase moves its cues without touching the next one. The engine
+runs in beats; the cue sheet is in FRAMES at 30 fps because that is what the app's
+transport shows. This script prints every cue's frame; those must match docs/CUES.md.
 
-The lyric is timed by `tools/lyrics.py`: `CUES` is the sung words, tuned by ear, in
-beats from the lyric's own zero ("what I want", the pickup, which sits CHORUS_LEAD
-before the phrase's downbeat); `phrase_cues()` derives the phrase timings from it. The
-spiral (cue 9) and the desktop words (cue 12) both read that list at CHORUS 1B's
-position, so tuning a word moves both.
+The lyric is timed by `tools/lyrics.py` (the sung words, in beats from the lyric's own
+zero, which sits CHORUS_LEAD before the phrase's downbeat); the spiral (cue 9) and the
+desktop words (cue 12) both read that list, so tuning a word moves both.
 
 Seeded, so the show is identical take to take.
 """
@@ -44,9 +38,8 @@ H = int(os.environ.get("H", "900"))
 # windows at the widest frame — under the ~70 where the pool starts to lag.
 HORSE_COLS = int(os.environ.get("COLS", "22"))
 HORSE_SPAN = float(os.environ.get("SPAN", "0.96"))
-# How the flyover renders: "flyover" is Apple's 3-D mode with no labels at all,
-# "hybrid" is the same imagery WITH roads and place names, "standard" is the plain
-# vector map. All three are real Apple Maps — it's the same MKMapView either way.
+# "flyover" is Apple's 3-D mode with no labels, "hybrid" the same imagery WITH labels,
+# "standard" the plain vector map — the same MKMapView either way.
 MAP_STYLE = os.environ.get("MAP_STYLE", "hybrid")
 AUDIO = "assets/03 - Give it 2 me.mp3"
 
@@ -55,9 +48,8 @@ BLUE = "#0078D7"
 WHITE = "#F2F4FE"
 BLACK = "#000000"
 
-# The signature blue: rgb(2, 10, 245). The desktop and the restart card both take it, so
-# the ground under the opening is one colour. It is PALETTE[1] — the blue the horse and
-# the strobe are built from — NOT the lighter #0078D7 the lyric cards use.
+# The signature blue: PALETTE[1], the blue the horse and the strobe are built from —
+# NOT the lighter #0078D7 the lyric cards use.
 DJ_BLUE = "#020AF5"
 
 # --- the tempo map, straight from the analysis ---
@@ -69,22 +61,22 @@ BEAT = 60.0 / BPM
 KICKS = analysis["kicks"]
 DURATION = analysis["duration"]        # 169.85 — the last two cues are past this
 
+# One desktop swap takes ~300 ms to land (WallpaperController, measured) — anything
+# that must be SEEN on a beat is applied this early.
+DESK_LATENCY = 0.30
+
 def secs(beat):
     """Absolute seconds for a timeline beat (matches the loader's beat→time math)."""
     return OFFSET + beat * BEAT
 
-# docs/CUES.md is written in frames, and so is everything this script prints. 30 fps is
-# not a property of the engine — it runs off the audio clock in seconds and quantises
-# nothing — it is the rate the app's own transport counts in (`MainWindowController.fps`),
+# docs/CUES.md and this script's printout are in frames. 30 fps is not an engine
+# property — it is the rate the app's transport counts in (`MainWindowController.fps`),
 # so a frame number here is the number on the scrubber. Change one, change the other.
 FPS = 30
 
 def frame_at(t):
-    """The frame the transport shows at second `t`.
-
-    NOT `frame`: `lyric_card` and `placeholder` both take a `frame` argument, and a
-    module-level function by that name is invisible inside them.
-    """
+    """The frame the transport shows at second `t`. NOT named `frame`: `lyric_card`
+    and `placeholder` take a `frame` argument that would shadow it."""
     return int(t * FPS)
 
 # =============================================================================
@@ -118,8 +110,8 @@ def phrase_beat(name):
 # =============================================================================
 CUES = {
     "blue":       ("introA",        0, 0),   #  1  intro gate + the desktop goes DJ blue
-    "restore":    ("introA",        3, 2),   #  2  blue goes, the viewer's own wallpaper is back
-    "welcome":    ("introA",        4, 2),   #  3  the ASCII welcome window
+    "restore":    ("introA",        2, 0),   #  2  blue goes, the viewer's own wallpaper is back (beat 8)
+    "welcome":    ("introA",        2, 2),   #  3  the welcome terminal (beat 10)
     "probe":      ("introB",        0, 0),   #  4  the system probe
     "hydra":      ("introB",        3, 0),   #  5  sketches dragged onto the screen
     "blue2":      ("introB",        7, 1),   #  6  blue again — the bar before the drop
@@ -144,10 +136,10 @@ CUES = {
     "tbd_136":    ("instrumentalB", 3, 3),   # 25  everything cuts; TBD
     "spinner":    ("instrumentalB", 4, 3),   # 26  TBD + the mouse spinner
     "spam":       ("chorus2A",     -1, 0),   # 27  the vocal pickup bar (72): a ton of crazy UI windows
-    "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the wallpaper glitches, lyrics glitch with it
-    "allglitch":  ("chorus2B",      4, 2),   # 29  windows + the whole screen glitching
-    "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6; a beat early so the ~300 ms swap is SEEN on the stop
-    "ending":     ("break",         2, 0),   # 31  the end card
+    "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the eruption + the strobe, straight in
+    "allglitch":  ("chorus2B",      4, 0),   # 29  PULLED — was the lyric desktop under the strobe; the slot keeps its number
+    "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6 and closes on the silence
+    "ending":     ("break",         0, -1),  # 31  the stop IS the end card — no lyric section after the music
 }
 # The recut's authored seconds, and the clock they were read on: a video with ~9 s of
 # boot-up before the music. `WAS - RECUT_SHIFT` is where each cue sits in the track.
@@ -166,10 +158,9 @@ for name, (p, bars, beats) in CUES.items():
     assert -4 <= bars * 4 + beats < 32 or p == "break", f"{name}: {bars} bars {beats} beats is outside {p}"
 
 # --- the lyric's clock ---
-# lyrics.CUES counts beats from the lyric's own zero: "what I want", the pickup, which
-# is sung one bar before the chorus's downbeat. CHORUS_LEAD is that lead, in seconds —
-# the artist tuned CUES against chorus 1A with the cards starting 1 s before bar 17, so
-# the same list read at chorus 1B's position sits 1 s before bar 25.
+# lyrics.CUES counts beats from the lyric's own zero: "what I want", the pickup, sung
+# one bar before the chorus's downbeat. CHORUS_LEAD is that lead in seconds — the
+# artist tuned CUES with the cards starting 1 s before bar 17.
 CHORUS_LEAD = 1.0
 def lyric_zero(phrase):
     return phrase_beat(phrase) - CHORUS_LEAD / BEAT
@@ -211,12 +202,8 @@ def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none", an
 
 def placeholder(wid, beat, label, frame, hex=BLACK, fg=WHITE, anchor="center",
                 title=None, animate="springIn"):
-    """A labelled stand-in for content that isn't made yet.
-
-    Deliberately legible rather than pretty: these are slots in the cut, and a slot
-    that looks finished is a slot nobody fills. Every one of them says what it is
-    waiting for — see the Gaps section of docs/CUES.md.
-    """
+    """A labelled stand-in for content that isn't made yet. Deliberately legible: a
+    slot that looks finished is a slot nobody fills — see Gaps in docs/CUES.md."""
     params = {"id": wid, "frame": frame,
               "content": {"kind": "text", "text": label, "hex": hex, "fg": fg,
                           "fontSize": 26, "chrome": "mac",
@@ -227,45 +214,32 @@ def placeholder(wid, beat, label, frame, hex=BLACK, fg=WHITE, anchor="center",
     add(beat, "openWindow", params)
 
 VIDEO_LABEL = "[ video goes here ]\n\nplaceholder — single video, centre screen"
-# Cues 23 and 24 still hold this slot open; cue 10 no longer does (it is the
-# fireworks now), so the size lives here rather than in whichever cue is first.
+# Cues 23 and 24 still hold this slot open (cue 10 is the fireworks now), so the size
+# lives here rather than in whichever cue is first.
 VIDEO_W, VIDEO_H = round(W * 0.34), round(H * 0.32)
 
 # =============================================================================
-# Cue 1 (0:00) — THE BLUE. The intro gate has already run: it is what armed the
-# transport, so it sits before beat 0 rather than on it, and the only thing this cue
-# puts on the timeline is the desktop taking the signature blue.
-#
-# The event carries a duration, and that duration IS cue 2: when a deskWallpaper
-# expires, WallpaperController puts the viewer's own picture back. Real wallpaper, so
-# `meta.allowWallpaper` gates it; the snapshot is taken here, before the first swap,
-# and restored on stop, panic and quit as well.
+# Cue 1 (0:00) — THE BLUE. The desktop takes the signature blue; the duration IS cue 2:
+# when the deskWallpaper expires, WallpaperController puts the viewer's own picture
+# back. Gated on `meta.allowWallpaper`; the snapshot is taken before the first swap and
+# restored on stop, panic and quit as well.
 # =============================================================================
-# First, clear the stage: every other app is hidden (not minimised, not a new Space —
-# `unhide` puts each window back exactly where it was) so the desktop is actually in
-# view when it goes blue. A viewer with a dozen windows open used to miss the whole
-# opening. They come back, as they were, on stop/panic.
+# Clear the stage: other apps are hidden, not minimised — `unhide` puts each window
+# back exactly where it was, on stop/panic too.
 add(0, "hideOtherApps", {"id": "apps"})
 add(0, "deskWallpaper", {"id": "desk", "mode": "solid", "hex": DJ_BLUE,
                          "durationSeconds": round(secs(B["restore"]) - secs(0), 3)})
 
 # =============================================================================
-# Cue 2 (0:16) — the blue goes and the viewer's own desktop is underneath it.
-#
-# The restore above is a hard swap — setDesktopImageURL has no fade and takes ~300 ms —
-# so a short white wash covers the change. Without it the cut reads as a dropped frame
-# rather than as the piece letting go of the machine for a moment.
+# Cue 2 (beat 8) — the blue goes and the viewer's own desktop is underneath it.
+# setDesktopImageURL has no fade and takes ~300 ms, so a white wash covers the swap.
 # =============================================================================
 add(B["restore"], "screenFlash", {"color": WHITE, "durationBeats": 0.5})
 
 # =============================================================================
-# Cue 3 (0:08) — the welcome. A Terminal window that types itself out, one line a beat,
-# with a block cursor — the SAME surface and the same cadence as the credits on the end
-# card, so the piece opens and closes on the machine talking in the same voice.
-#
-# It says what the show is going to do before it does any of it. The gate has already
-# taken the yes; this is the receipt. `⌃⌥⌘Esc` is the last line the viewer reads before
-# anything starts moving, which is the only place it can usefully go.
+# Cue 3 (beat 10) — the welcome. A Terminal window that types itself out, one line a
+# beat — the same surface and cadence as the end card's credits. `⌃⌥⌘Esc` stays the
+# last line the viewer reads before anything starts moving.
 # =============================================================================
 WELCOME_LINES = [
     "$ ./giveit2me --install",
@@ -290,11 +264,9 @@ WELCOME_HOLD = 2                              # beats the finished card sits bef
 assert len(WELCOME_LINES) / WELCOME_LPB + WELCOME_HOLD <= B["probe"] - B["welcome"], (
     f"welcome copy: {len(WELCOME_LINES)} lines at {WELCOME_LPB}/beat does not finish "
     f"{WELCOME_HOLD} beats before the probe ({B['probe'] - B['welcome']:g} beats of room)")
-# Sized to the copy the way the credits terminal is (CreditsController.rollSize): the
-# longest line plus air across, the line count plus the caret's own spare line down.
-# SF Mono advances 0.6 em and lines set at ~1.25 em. A line that does not fit WRAPS —
-# the label is a wrapping one — which reads as a bug in a window that is pretending to
-# be Terminal, so the width is measured, not guessed.
+# Sized to the copy (cf. CreditsController.rollSize). SF Mono advances 0.6 em, lines
+# set at ~1.25 em. A line that does not fit WRAPS, which reads as a bug in a window
+# pretending to be Terminal — so the width is measured, not guessed.
 def mono_cols(line):
     """Columns a line occupies in SF Mono: one per ASCII glyph, two for the symbols
     (— ⌃⌥⌘) this copy uses, which are drawn at roughly double width."""
@@ -310,10 +282,8 @@ add(B["welcome"], "typeText", {
 
 # =============================================================================
 # Cue 4 (0:25) — the welcome window goes and the probe opens, typing out what the
-# machine knows about whoever is sitting at it.
-#
-# Slow enough to read: it has from here to the end of the hydra act, and the report is
-# long, so the rate is set from the gap rather than picked.
+# machine knows about whoever is sitting at it. The report is long, so the rate is set
+# from the gap to the end of the hydra act rather than picked.
 # =============================================================================
 add(B["probe"], "closeWindow", {"id": "welcome"})
 # The frame is the OUTER one, title bar included — the report wears real macOS chrome
@@ -323,12 +293,10 @@ add(B["probe"], "systemProbe", {"id": "probe", "linesPerBeat": 6, "frame": PROBE
                                 "title": "./scan_identity"})
 
 # =============================================================================
-# Cue 5 (0:30) — somebody using a computer: a hydra sketch is dragged onto the screen,
-# pulled bigger by its corner, and run. Then two more arrive on the downbeats.
-#
-# The window and the pointer travel together on every leg, which is what makes it read
-# as a drag rather than as a window moving itself. It plays to the LEFT of the probe's
-# terminal, which owns the middle of the screen until 0:38.
+# Cue 5 (0:30) — a hydra sketch is dragged onto the screen, pulled bigger by its
+# corner, and run; two more arrive on the downbeats. The window and the pointer travel
+# together on every leg — that is what makes it read as a drag. It plays to the LEFT
+# of the probe's terminal, which owns the middle of the screen until 0:38.
 # =============================================================================
 PATCHES = [
     ("osc(10, 0.1, 300)\n  .color(0.2, 0.9, 1)\n  .diff(\n    osc(10, 0.1, 1)\n    .color(0.9, 0.1, 1)\n    .rotate(()=>time*0.4)\n    .kaleid()\n  )\n  .scrollY(()=>-time * 0.5)\n  .colorama()\n  .luma()\n  .color(0.7, 0.2, 2)\n  .repeat(4)\n  .modulate(o0, 0.1)\n  .scale(2)\n  .out()", "hydra.ojack.xyz"),
@@ -347,69 +315,73 @@ def hydra_window(wid, beat, frame, patch, running, animate="none", interactive=T
         "animate": {"kind": animate},
         "interactive": interactive, "respawn": interactive})
 
-hy = B["hydra"]
-DRAG_ID = "hy0"
-hydra_ids = [DRAG_ID]
+# PULLED from the cut for now (2026-09-01) — kept behind HYDRA_ACT for when it returns.
+# The hand-built hydra sketch itself lives on in the show: it moved to the breakdown,
+# where it is set up over the raymarcher (cue 17).
+HYDRA_ACT = False
+hydra_ids = []
+if HYDRA_ACT:
+    hy = B["hydra"]
+    DRAG_ID = "hy0"
+    hydra_ids = [DRAG_ID]
 
-# 1. it appears, small, code written but NOT running
-d_small = (round(W * 0.04), round(H * 0.18), 320, 200)
-hydra_window(DRAG_ID, hy, d_small, PATCHES[1], running=False, animate="springIn")
+    # 1. it appears, small, code written but NOT running
+    d_small = (round(W * 0.04), round(H * 0.18), 320, 200)
+    hydra_window(DRAG_ID, hy, d_small, PATCHES[1], running=False, animate="springIn")
 
-# 2. the cursor takes it by the title bar and hauls it down the screen
-d_grab = (d_small[0] + d_small[2] * 0.5, d_small[1] + 12)
-add(hy + 1, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(W * 0.02), round(H * 0.08)],
-                               [round(d_grab[0]), round(d_grab[1])]]})
-d_lift = (round(W * 0.05), round(H * 0.48), d_small[2], d_small[3])
-add(hy + 2.4, "moveWindow", {"id": DRAG_ID, "frame": [d_lift[0], d_lift[1]],
-    "durationBeats": 1.6, "easing": "easeInOut"})
-add(hy + 2.4, "cursorPath", {"path": "linear", "durationBeats": 1.6, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(d_grab[0]), round(d_grab[1])],
-                               [round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)]]})
+    # 2. the cursor takes it by the title bar and hauls it down the screen
+    d_grab = (d_small[0] + d_small[2] * 0.5, d_small[1] + 12)
+    add(hy + 1, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+        "mode": "warp", "points": [[round(W * 0.02), round(H * 0.08)],
+                                   [round(d_grab[0]), round(d_grab[1])]]})
+    d_lift = (round(W * 0.05), round(H * 0.48), d_small[2], d_small[3])
+    add(hy + 2.4, "moveWindow", {"id": DRAG_ID, "frame": [d_lift[0], d_lift[1]],
+        "durationBeats": 1.6, "easing": "easeInOut"})
+    add(hy + 2.4, "cursorPath", {"path": "linear", "durationBeats": 1.6, "easing": "easeInOut",
+        "mode": "warp", "points": [[round(d_grab[0]), round(d_grab[1])],
+                                   [round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)]]})
 
-# 3. resize by the LOWER-RIGHT CORNER: the top-left stays put and the window grows down
-# and to the right, so the code never moves off its corner.
-d_corner = (d_lift[0] + d_lift[2], d_lift[1] + d_lift[3])
-d_big = (d_lift[0], d_lift[1], round(W * 0.28), round(H * 0.32))
-d_new_corner = (d_big[0] + d_big[2], d_big[1] + d_big[3])
-add(hy + 4.2, "cursorPath", {"path": "linear", "durationBeats": 1.0, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)],
-                               [round(d_corner[0]), round(d_corner[1])]]})
-add(hy + 5.4, "moveWindow", {"id": DRAG_ID,
-    "frame": [d_big[0], d_big[1], d_big[2], d_big[3]],
-    "durationBeats": 1.8, "easing": "easeOut"})
-add(hy + 5.4, "cursorPath", {"path": "linear", "durationBeats": 1.8, "easing": "easeOut",
-    "mode": "warp", "points": [[round(d_corner[0]), round(d_corner[1])],
-                               [round(d_new_corner[0]), round(d_new_corner[1])]]})
-# Re-open at the final size once the drag settles: the layout stretched during the
-# resize gets rebuilt cleanly at the new dimensions. Still not running.
-hydra_window(DRAG_ID, hy + 7.4, d_big, PATCHES[1], running=False)
+    # 3. resize by the LOWER-RIGHT CORNER: the top-left stays put and the window grows down
+    # and to the right, so the code never moves off its corner.
+    d_corner = (d_lift[0] + d_lift[2], d_lift[1] + d_lift[3])
+    d_big = (d_lift[0], d_lift[1], round(W * 0.28), round(H * 0.32))
+    d_new_corner = (d_big[0] + d_big[2], d_big[1] + d_big[3])
+    add(hy + 4.2, "cursorPath", {"path": "linear", "durationBeats": 1.0, "easing": "easeInOut",
+        "mode": "warp", "points": [[round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)],
+                                   [round(d_corner[0]), round(d_corner[1])]]})
+    add(hy + 5.4, "moveWindow", {"id": DRAG_ID,
+        "frame": [d_big[0], d_big[1], d_big[2], d_big[3]],
+        "durationBeats": 1.8, "easing": "easeOut"})
+    add(hy + 5.4, "cursorPath", {"path": "linear", "durationBeats": 1.8, "easing": "easeOut",
+        "mode": "warp", "points": [[round(d_corner[0]), round(d_corner[1])],
+                                   [round(d_new_corner[0]), round(d_new_corner[1])]]})
+    # Re-open at the final size once the drag settles: the layout stretched during the
+    # resize gets rebuilt cleanly at the new dimensions. Still not running.
+    hydra_window(DRAG_ID, hy + 7.4, d_big, PATCHES[1], running=False)
 
-# 4. up to hydra's run button, top-right — and the sketch starts.
-d_play = (d_big[0] + d_big[2] - 26, d_big[1] + 34)
-add(hy + 7.6, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
-    "mode": "warp", "points": [[round(d_new_corner[0]), round(d_new_corner[1])],
-                               [round(d_play[0]), round(d_play[1])]]})
-HYDRA_RUN = hy + 9.0
-hydra_window(DRAG_ID, HYDRA_RUN, d_big, PATCHES[1], running=True)
-add(HYDRA_RUN, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
+    # 4. up to hydra's run button, top-right — and the sketch starts.
+    d_play = (d_big[0] + d_big[2] - 26, d_big[1] + 34)
+    add(hy + 7.6, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+        "mode": "warp", "points": [[round(d_new_corner[0]), round(d_new_corner[1])],
+                                   [round(d_play[0]), round(d_play[1])]]})
+    HYDRA_RUN = hy + 9.0
+    hydra_window(DRAG_ID, HYDRA_RUN, d_big, PATCHES[1], running=True)
+    add(HYDRA_RUN, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
 
-# …and two more, already running, on the downbeats after it — the machine getting the
-# hang of it. Right-hand side, clear of both the probe and the dragged window.
-for i, (dx, dy, s) in enumerate([(0.62, 0.10, 0.30), (0.70, 0.52, 0.26)], start=1):
-    wid = f"hy{i}"
-    hydra_ids.append(wid)
-    beat = HYDRA_RUN + 2 + 2 * (i - 1)
-    hydra_window(wid, beat, (round(W * dx), round(H * dy),
-                             round(W * s), round(H * s * 1.05)),
-                 PATCHES[(i + 1) % len(PATCHES)], running=True, animate="springIn")
+    # …and two more, already running, on the downbeats — right-hand side, clear of
+    # both the probe and the dragged window.
+    for i, (dx, dy, s) in enumerate([(0.62, 0.10, 0.30), (0.70, 0.52, 0.26)], start=1):
+        wid = f"hy{i}"
+        hydra_ids.append(wid)
+        beat = HYDRA_RUN + 2 + 2 * (i - 1)
+        hydra_window(wid, beat, (round(W * dx), round(H * dy),
+                                 round(W * s), round(H * s * 1.05)),
+                     PATCHES[(i + 1) % len(PATCHES)], running=True, animate="springIn")
 
 # =============================================================================
 # Cue 6 (0:38) — the desktop goes blue again, and the screen is cleared for it.
-#
-# No duration on this one: it is replaced a beat later by cue 7 rather than expiring.
-# An expiry here would restore the viewer's picture for the two frames before the face
-# lands, which is a flicker of the wrong image at the worst moment.
+# No duration: cue 7 replaces it a beat later. An expiry would restore the viewer's
+# picture for the two frames before the face lands — a flicker of the wrong image.
 # =============================================================================
 for wid in hydra_ids + ["probe"]:
     add(B["blue2"] - 0.2, "closeWindow", {"id": wid})
@@ -418,21 +390,13 @@ add(B["blue2"], "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 
 # =============================================================================
 # Cue 7 (0:39) — and then the desktop is the face.
-#
-# `slides` with one image rather than a `wallpaper` event, so it goes through the same
-# controller as everything else and is restored the same way. hz is deliberately far
-# below one — the list never advances, so every tick past the first is a ~300 ms window
-# server round-trip for an identical picture.
+# `slides` with one image, so it goes through the same controller and is restored the
+# same way. hz far below one: the list never advances, so every tick past the first is
+# a ~300 ms window-server round-trip for an identical picture.
 # =============================================================================
-# The face is a WALLPAPER, built here rather than composed at run time: a blue field
-# with the face small in the middle, written to assets/ and handed to the desktop like
-# any other picture. The engine used to compose this on the fly from `pixelface.jpg`
-# plus a `fit: center` on the event; that had one more thing to go wrong at show time
-# than a plain image does, and it did.
-#
-# The ground is the artwork's OWN field colour, sampled from the file, so there is no
-# visible edge where the face sits on it and it reads as floating on the blue desktop.
-# (It is a shade off the DJ blue of cue 6, which nobody sees.)
+# The face is a prebuilt WALLPAPER written to assets/: a blue field with the face small
+# in the middle. The ground is the artwork's OWN field colour, sampled from the file
+# (a shade off cue 6's DJ blue), so the face has no visible edge on it.
 FACE_GROUND = "#001FFD"
 FACE_DESKTOP = "assets/pixelface_desktop.jpg"
 FACE_SHARE = 0.20                  # the face's height, as a fraction of the wallpaper's
@@ -458,28 +422,24 @@ def build_face_desktop():
     return w, h
 
 FACE_W, FACE_H = build_face_desktop()
-add(B["face"], "deskWallpaper", {"id": "face", "mode": "slides", "hz": 0.1,
-                                 "images": [FACE_DESKTOP]})
+# Applied 2×DESK_LATENCY early so the swap has FINISHED before the drop: fired on the
+# beat it landed late, and fired 300 ms early it was still mid-swap while the drop's 21
+# window opens hit — the WindowServer paid for both at once and the whole entrance
+# stuttered. Landing ~0.3 s early on an already-blue field reads as anticipation.
+# (the cue is authored at the phrase line; the event leads it to cover the swap).
+add_t(secs(B["face"]) - 2 * DESK_LATENCY, "deskWallpaper",
+      {"id": "face", "mode": "slides", "hz": 0.1, "images": [FACE_DESKTOP]})
 
 # =============================================================================
 # Cue 8 (0:30.28) — one window travels up and down the screen, dragging a trail.
 #
-# The trail is a DELAY LINE, not a set of stamps. `TRAIL_LINKS` identical copies of the
-# traveller walk the identical path, each one 1% of the screen further left and each one
-# frame further behind, so link k sits where the leader was k frames ago. The chain is
-# the window's own past, smeared out to the left.
-#
-# It is authored as delayed copies of the SAME path rather than read off the leader's
-# position at run time, and that is the load-bearing decision: the show scrubs. A
-# follower that remembers where the leader was last frame has no answer when the
+# The trail is a DELAY LINE: TRAIL_LINKS identical copies walk the identical path, each
+# 1% of the screen further left and one frame further behind — delayed copies of the
+# SAME path, NOT followers, because the show scrubs: a follower has no answer when the
 # playhead jumps, while a delayed copy of an eased path is a pure function of show time
-# and lands identically every take. `beginMove` reads each window's CURRENT frame as the
-# base of the next move, so a link still mid-leg when its next leg fires carries on from
-# wherever it actually is — the chain never snaps.
-#
-# The cost is that TRAIL_LINKS + 1 windows move together, each with real chrome and a
-# shadow. Nothing else is moving here (the spiral only springs in), but TRAIL_LINKS is
-# the dial if this section ever stutters. They are closed together at cue 12.
+# and lands identically every take. `beginMove` reads each window's CURRENT frame as
+# the base of its next move, so the chain never snaps. TRAIL_LINKS is the dial if this
+# section ever stutters. Closed together at cue 12.
 # =============================================================================
 tv = B["traveller"]
 TRAVEL_W, TRAVEL_H = round(W * 0.20), round(H * 0.22)
@@ -490,16 +450,13 @@ TRAIL_LINKS = 20
 TRAIL_DX = W * 0.01                          # each link 1% of the screen to the left
 TRAIL_LAG = 1.0 / (FPS * BEAT)               # …and one frame at 30 fps behind, in beats
 
-# The chain hangs to the LEFT of the leader, so a leader on the screen's centre line puts
-# the whole assembly left of it. Centring the ASSEMBLY means putting the leader right of
-# centre by half the chain's span — then leader and trail straddle the middle.
+# The chain hangs to the LEFT of the leader; centring the ASSEMBLY puts the leader
+# right of centre by half the chain's span.
 CHAIN_SPAN = TRAIL_LINKS * TRAIL_DX
 tx = round((W - TRAVEL_W + CHAIN_SPAN) / 2)
 
-# It travels for as long as it is on screen. It used to stop after two bars and then sit
-# there dead for the eleven seconds until cue 12 took it away, which read as the show
-# forgetting about it. The end is pinned off cue 12 rather than to a fixed number of
-# bars, and the margin is asserted below once the close time is actually known.
+# It travels for as long as it is on screen: the end is pinned off cue 12 rather than
+# a fixed bar count, and the margin is asserted below once the close time is known.
 TRAVEL_END = B["words"] - 3
 legs, b, leg = [], tv, 0
 while b + LEG <= TRAVEL_END:
@@ -511,17 +468,12 @@ TRAVELLER_CONTENT = {"kind": "code", "text": lyrics.code(0), "chrome": "terminal
                      "title": "give_it_2_me.js"}
 
 # Windows stack in the order they are PRESENTED and the event format carries no z-order,
-# so the opens are staggered — deepest link first, leader last — by a hundredth of a
-# frame each. Three reasons it is a stagger and not 21 events on the same beat:
-#   1. the loader sorts by fire time and Swift's `sorted(by:)` is not guaranteed stable,
-#      and a shuffled stack here inverts the whole effect — you would see the OLDEST
-#      copy in front and the leader buried;
-#   2. every open has to land before its window's first `moveWindow`, which `beginMove`
-#      drops outright if the id isn't open yet — hence the whole cluster sits just
-#      BEFORE `tv` rather than just after;
-#   3. 21 × one thousandth of a beat is 10 ms. The cue still reads as landing on the beat.
-# The step is one unit of `add`'s own 3-decimal beat rounding — anything finer rounds
-# adjacent opens back onto the same beat and puts the ties straight back.
+# so the opens are staggered — deepest link first, leader last. Not 21 events on one
+# beat: Swift's `sorted(by:)` is not guaranteed stable and a tie would bury the leader;
+# each open must land before its window's first `moveWindow` (`beginMove` drops moves
+# for unopened ids), hence the cluster sits just BEFORE `tv`; and 21 × 0.001 beats is
+# 10 ms, still on the beat. The step is one unit of `add`'s 3-decimal rounding —
+# anything finer rounds adjacent opens back onto the same beat.
 OPEN_STEP = 0.001
 trail_ids = [f"tr{k}" for k in range(1, TRAIL_LINKS + 1)]
 for k in reversed(range(1, TRAIL_LINKS + 1)):
@@ -548,24 +500,19 @@ for i, to_y in enumerate(legs):
 TRAIL_LAST_MOVE = tv + (len(legs) - 1) * LEG + TRAIL_LINKS * TRAIL_LAG
 
 # =============================================================================
-# Cue 9 (0:43) — the spiral of lyrics. One card per lyric cue, winding out from the
-# middle, each a little further round and a little further out.
-#
-# Authored from the screen's CENTRE (`anchor: center`), like everything else that rings
-# the middle: top-left frames put the spiral's origin at (W/2, H/2) of the AUTHORED
-# size, which on a bigger display is up and to the left of where the eye expects it.
-#
-# The innermost radius clears the middle, because cue 10 parks the video placeholder
-# there four seconds later.
+# Cue 9 (0:43) — the spiral of lyrics, one card per lyric cue, winding out from the
+# middle. Authored from the screen's CENTRE (`anchor: center`) — top-left frames would
+# put the origin off-centre on a bigger display. The innermost radius clears the
+# middle, because cue 10 parks the video placeholder there.
 # =============================================================================
 sp = B["spiral"]
 zero_1A = lyric_zero("chorus1A")
-# Chorus 1A's whole lyric, each card landing ON its sung phrase (lyrics.py, read at
-# chorus 1A's position). The first line is the pickup, sung a bar before the drop; it
-# and anything else already sung when the cue fires land on the cue, so the spiral opens
-# with the drop and reads from the first line. The desktop takes the lyric again at
-# chorus 1B (cue 12).
-spiral_phrases = [(when, text) for when, text, _ in phrases]
+# Chorus 1A's whole lyric, each card landing ON its sung phrase — INCLUDING the pickup
+# ("what I want"), which lands on its sung line a second before the drop. Clamping it
+# to the cue used to double-land cards 0 and 1 on the drop's busiest instant (21
+# traveller windows + the face swap), which smeared the spiral's opening. ALL CAPS —
+# the sung line as a shout (every `lyric` card is already Hack-Bold).
+spiral_phrases = [(when, text.upper()) for when, text, _ in phrases]
 n_sp = len(spiral_phrases)
 CARD_W, CARD_H = round(W * 0.24), round(H * 0.16)
 r0, r1 = min(W, H) * 0.16, min(W, H) * 0.46
@@ -576,27 +523,16 @@ for i, (when, text) in enumerate(spiral_phrases):
     r = r0 + (r1 - r0) * u
     wid = f"sp{i}"
     spiral_ids.append(wid)
-    lyric_card(wid, max(sp, lyric_beat(zero_1A, when)), text, i,
+    lyric_card(wid, lyric_beat(zero_1A, when), text, i,
                frame=[round(r * math.cos(ang) * 1.35), round(r * math.sin(ang)),
                       CARD_W, CARD_H],
                chrome="mac", animate="springIn", anchor="center")
 
 # =============================================================================
-# Cue 10 (0:38) — the desktop throws itself into the air.
-#
-# A TRANSPARENT FULL-SCREEN window over everything already on screen: shells rise from
-# the bottom, hang, and burst radially, and every spark is a macOS desktop file icon
-# with a filename under it (`fileworks`). The spiral of lyrics is still winding out
-# underneath and stays visible through it, which is the whole reason the window has no
-# ground of its own.
-#
-# `[0, 0, 0, 0]` is the fullscreen sentinel — w/h of 0 stretch to the far edge of
-# whatever display it lands on. No `anchor`, because it is not a card in the middle any
-# more; it is the whole screen.
-#
-# It is up from here to cue 13, about 22 s, so the launch rate matters more than the
-# burst size: about one shell a second leaves each burst legible as a ring before
-# the next goes off. Faster overlaps them into a blizzard of icons.
+# Cue 10 (0:38) — the desktop throws itself into the air: `fileworks`, shells bursting
+# into desktop file icons, on a TRANSPARENT full-screen window with no ground of its
+# own so the spiral stays visible through it. Up from here to cue 13 — about one shell
+# a second keeps each burst legible; cue 12 closes it with the spiral.
 add(B["video1"], "openWindow", {
     "id": "video", "frame": fullscreen(),
     "content": {"kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
@@ -609,15 +545,10 @@ add(B["video1"], "openWindow", {
 # =============================================================================
 
 # =============================================================================
-# Cue 12 (0:54) — the lyric on the desktop itself, and a trail of windows dragged
-# across it by the mouse.
-#
-# The wallpaper is swapped for a card carrying one word at a time. 10 Hz is what the
-# cut asks for; the window server tops out near 3 Hz and the controller drops whole
-# ticks rather than queueing them, so the words play slower than authored but never
-# skip and never outlive the event.
-#
-# The spiral and the traveller's trail go here — the desktop is the picture now.
+# Cue 12 (0:54) — the lyric on the desktop itself: the spiral, the traveller and the
+# fireworks all go, one word per wallpaper card. The window server tops
+# out near 3 Hz and the controller drops whole ticks rather than queueing them, so the
+# words play slower than authored but never skip and never outlive the event.
 # =============================================================================
 wd = B["words"]                     # chorus 1B; the run starts on the pickup, one bar before
 zero_1B = lyric_zero("chorus1B")
@@ -641,9 +572,8 @@ def cue_cards(text):
             return [(text, whole)]
     return [(w, card_path(word_key(w))) for w in words]
 
-# The schedule: the whole lyric (lyrics.CUES, 32 beats) at chorus 1B's position. Each word is applied DESK_LATENCY before it is sung — the swap takes
-# ~300 ms to show (WallpaperController) — so the picture changes ON the word. The
-# window server sustains ~3 Hz; a word it cannot fit is skipped, not queued.
+# The schedule: the whole lyric (lyrics.CUES, 32 beats) at chorus 1B's position, each
+# word applied DESK_LATENCY early so the ~300 ms swap lands ON the word as it is sung.
 lyric_end = zero_1B + 32
 word_times = [lyric_beat(zero_1B, when) for when, _ in lyrics.CUES] + [lyric_end]
 word_slides, words_missing, words_interpolated = [], [], []
@@ -660,7 +590,6 @@ for k, (when, text) in enumerate(lyrics.CUES):
         word_slides.append((secs(b0 + (b1 - b0) * j / len(cards)), img))
 if not word_slides:
     sys.exit("CHORUS 1B: no desktop word has a card")
-DESK_LATENCY = 0.30
 words_first = word_slides[0][0]
 words_event_at = words_first - DESK_LATENCY
 words_event_beat = (words_event_at - OFFSET) / BEAT
@@ -670,7 +599,10 @@ words_event_beat = (words_event_at - OFFSET) / BEAT
 assert TRAIL_LAST_MOVE + LEG <= words_event_beat - 0.2, (
     f"traveller: last trail leg ends at beat {TRAIL_LAST_MOVE + LEG:.2f}, after the "
     f"close at {words_event_beat - 0.2:.2f}")
-for wid in spiral_ids + trail_ids + ["traveller"]:
+# The fireworks go too (no embers): a transparent full-screen window with live
+# particles keeps the compositor repainting the whole screen every frame, and under
+# the ~300 ms wallpaper swaps it dragged the words — and everything after them.
+for wid in spiral_ids + trail_ids + ["traveller", "video"]:
     add(words_event_beat - 0.2, "closeWindow", {"id": wid})
 add_t(words_event_at, "deskWallpaper", {
     "id": "words", "mode": "slides",
@@ -678,70 +610,44 @@ add_t(words_event_at, "deskWallpaper", {
     "at": [round(t - words_first, 3) for t, _ in word_slides],
     "durationSeconds": round(secs(B["torus1"]) - words_event_at, 3)})
 
-# The old word list, still the deck the glitch (cue 28) and the last words (cue 30) draw from.
-LYRIC_WORDS = ["I", "TOLD", "YOU", "THAT", "I", "NEED", "YOUR", "LOVE",
-               "SO", "GIVE", "IT", "2", "ME",
-               "RUNNIN", "UP", "MY", "CURRENTS",
-               "I", "CANT", "GET", "ENOUGH", "SO", "GIVE", "IT", "2", "ME"]
-WORD_SLIDES = [f"assets/lyrics_desktops/{w}.jpg" for w in LYRIC_WORDS]
-
-# The cursor hauls a stamped trail across the screen. `stamp` drops a breadcrumb window
-# every `spacing` px of travel and leaves it there, so what the pointer draws stays
-# drawn — the trail IS the windows, not a fading tail.
-add(wd, "cursorTrail", {"id": "drag", "mode": "stamp", "spacing": 92,
-                        "count": 40, "size": [round(W * 0.09), round(H * 0.08)],
-                        "chrome": "mixed", "colors": PALETTE,
-                        "durationBeats": B["torus1"] - wd - 2})
-# One path, not a leg per cue: the spline needs at least three points to curve at all,
-# and a hand hauling something across a desk does not travel in straight segments.
-DRAG_LEGS = [(0.08, 0.78), (0.28, 0.22), (0.52, 0.80), (0.74, 0.26), (0.94, 0.66),
-             (0.62, 0.44), (0.20, 0.52), (0.86, 0.16)]
-add(wd, "cursorPath", {
-    "path": "catmullRom", "durationBeats": B["torus1"] - wd - 2, "easing": "easeInOut",
-    "mode": "warp",
-    "points": [[round(x * W), round(y * H)] for x, y in DRAG_LEGS]})
-
 # =============================================================================
-# Cue 13 (1:09) — the magic torus. It introduces itself in typed text, and then it
-# actually asks.
-#
-# Two windows, in that order, because the greeting ends on "ask me anything" and that
-# has to be a real invitation: the `oracle` is the only window in the piece allowed to
-# take the keyboard, and it is what puts a text field in front of the viewer. Without
-# it the torus makes an offer the show cannot honour.
-#
-# They flank the torus rather than sitting on it — greeting bottom-right, question
-# bottom-left, same baseline. `oracle` has no `anchor`, and its own default is centred
-# on screen, which is exactly where the torus is.
+# Cue 13 (1:09) — the magic torus introduces itself in typed text, then actually asks:
+# the `oracle` is the only window in the piece allowed to take the keyboard — without
+# it the torus makes an offer the show cannot honour. They flank the torus, greeting
+# bottom-right, question bottom-left.
 # =============================================================================
 t1 = B["torus1"]
-add(t1 - 0.3, "closeWindow", {"id": "video"})
-add(t1 - 0.3, "closeWindow", {"id": "drag"})
 add(t1, "screenFlash", {"color": WHITE, "durationBeats": 0.5})
+TORUS_SIZE = round(min(W, H) * 0.58)
 add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
-                       "size": round(min(W, H) * 0.58)})
+                       "size": TORUS_SIZE})
 GREETING = ("Greetings, I am the magic torus. I rotate infinitely around an axis in "
             "the 3D plane, thus I am all knowing... ask me anything")
 GREETING_CPB = 11
+# The greeting sits fully to the RIGHT of the torus window, taking what is left of the
+# screen past its edge.
+GREET_X = round((W + TORUS_SIZE) / 2 + W * 0.02)
 add(t1 + 1, "typeText", {"id": "greeting",
-    "frame": [round(W * 0.60), round(H * 0.62), round(W * 0.36), round(H * 0.26)],
+    "frame": [GREET_X, round(H * 0.62), W - GREET_X - round(W * 0.02), round(H * 0.26)],
     "text": GREETING, "charsPerBeat": GREETING_CPB, "fontSize": 15,
     "title": "torus.txt — Edited", "interactive": True})
 
-# The question comes up a beat after the greeting has finished typing — derived from the
-# copy, so rewriting the greeting moves the invitation with it rather than leaving the
-# field to appear over a half-typed sentence.
+# A beat after the greeting has finished typing — derived from the copy, so rewriting
+# the greeting moves the invitation with it.
 ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB + 1
-# Long enough to type an answer into, and still answered and read before the map cuts in
-# at cue 14. A viewer who won't play cannot stall the show: it answers itself.
-ORACLE_BEATS = 10
+# Answered and read before the map cuts in at cue 14. A viewer who won't play cannot
+# stall the show: it answers itself.
+ORACLE_BEATS = 14
 add(ORACLE_AT, "oracle", {"id": "oracle",
     "frame": [round(W * 0.04), round(H * 0.62), 460, 186],
     "title": "hey, i'm the magic torus", "body": "ask me a question",
     "placeholder": "will you give it 2 me?", "answerBeats": ORACLE_BEATS})
 
-# The desktop goes back to blue when the words expire, under the torus.
-add(t1 + 0.1, "deskWallpaper", {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
+# The desktop goes back to blue under the torus. This REPLACES the words event before
+# it expires — an expiry restores the viewer's own picture for a ~300 ms flicker — and
+# leads the cue by DESK_LATENCY so the blue lands with the flash, not a swap after it.
+add_t(secs(t1) - DESK_LATENCY, "deskWallpaper",
+      {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
 
 # =============================================================================
 # Cue 14 (1:24) — Apple Maps, falling out of orbit onto the viewer's own location.
@@ -750,9 +656,8 @@ mp = B["map"]
 for wid in ("torus", "greeting", "oracle"):
     add(mp - 0.3, "closeWindow", {"id": wid})
 add(mp, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
-# Where the map goes when Location Services gives us nothing (denied, switched off, or
-# still pending): downtown Los Angeles. `here=True` overrides these whenever there IS a
-# fix, so this is the fallback, not the destination.
+# The fallback when Location Services gives nothing: downtown Los Angeles. `here=True`
+# overrides these whenever there IS a fix.
 FALL = dict(lat=34.0522, lon=-118.2437)
 DESCENT = dict(FALL, here=True, altitude=2_600_000, toAltitude=260,
                pitch=0, toPitch=62, heading=0, toHeading=30,
@@ -763,40 +668,27 @@ add(mp, "openWindow", {"id": "map0",
     "animate": {"kind": "springIn"}, "interactive": True, "respawn": True})
 
 # =============================================================================
-# Cue 15 (1:27) — windows start opening and slowly fill the screen.
-#
-# "Slowly" is the whole point, so the rate ramps: it starts at roughly one window a bar
-# and ends at four a beat. Placed on a coarse lattice that walks outward from the middle,
-# so the screen fills from the centre rather than at random.
+# Cue 15 (1:27) — windows start opening and slowly fill the screen. The rate ramps
+# from roughly one a bar to four a beat, walking outward from the centre.
 # =============================================================================
 fl = B["fill"]
 fill_rng = random.Random(19)
 fill_ids = []
 codes = lyrics.CODE
 
-# A few of the flat blue cards are not flat: they carry the piece's own tear — the same
-# displacement / chroma-split / block-corruption pass the desktop glitches with at cue
-# 28, run once over one of the show's own images and left there. Three of them, spread
-# across the ramp so the fill decays as it thickens rather than announcing itself at the
-# top.
-#
-# WHICH cards is a fixed set rather than a roll, and the colour draw below still happens
-# for every blue card even when its hex goes unused. `fill_rng` seeds the whole act's
-# layout, so a draw added or skipped here would reshuffle the position and size of every
-# window after it — and put docs/CUES.md out of date with the cut for no reason.
+# Three of the flat blue cards carry the piece's own tear — the cue 28 glitch pass run
+# once over one of the show's own images — spread across the ramp. WHICH cards is a
+# fixed set, not a roll, and the colour draw below still happens for every blue card
+# even when its hex goes unused: `fill_rng` seeds the whole act's layout, so a draw
+# added or skipped here would reshuffle every window after it.
 GLITCH_BLUES = {1, 4, 8}
 GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
                   "assets/credits_tile.png"]
 
-# ...and two more RUN a Wolfram elementary cellular automaton — the rule stepping and
-# scrolling in the window, one generation a tick, in Terminal's own black-on-white. The
-# automaton is computed by the engine (`AutomatonView`), not baked in here: it has to
-# keep going for as long as the window is up, and it sizes its own grid to the window so
-# the field reaches every edge, which authored art could only ever approximate.
-#
-# `seed: 0` means a single live cell — the classic light cone. Rule 110 is left-moving
-# and looks lopsided from one cell, so it takes a seeded random first row, which is
-# where its gliders come from.
+# ...and two more RUN a Wolfram elementary cellular automaton, computed by the engine
+# (`AutomatonView`): it has to keep going for as long as the window is up, and it sizes
+# its own grid to the window. `seed: 0` is a single live cell — the classic light cone.
+# Rule 110 looks lopsided from one cell, so it takes a seeded random first row.
 CA_CARDS = {
     2: dict(rule=30,  seed=0,   hz=14, title="rule_30"),
     6: dict(rule=110, seed=110, hz=10, title="rule_110"),
@@ -844,40 +736,37 @@ while b < B["black"] - 0.5:
                         "title": "haunt.sh"},
             "animate": {"kind": "none"}, "interactive": True})
     else:
-        title, body, icon = lyrics.alert(i)
-        add(b, "fakeDialog", {"id": wid, "title": title, "body": body,
-            "buttons": lyrics.buttons(i), "icon": icon,
-            "frame": [x, y, 460, 190]})
+        # No lyric popups in the fill (cut 2026-09-01): these slots are terminals now,
+        # so the fill keeps its density without alert dialogs quoting the lyric. No
+        # fill_rng draws added or removed — the layout of every other window holds.
+        add(b, "openWindow", {"id": wid, "frame": [x, y, max(w, 300), h],
+            "content": {"kind": "code", "text": lyrics.code(i), "chrome": "terminal",
+                        "title": "haunt.sh"},
+            "animate": {"kind": "none"}, "interactive": True})
     # 4 beats apart at the start, 0.25 at the end.
     b += 4 * (1 - u) ** 2 + 0.25
     i += 1
 
 # =============================================================================
-# Cue 16 (1:37) — the desktop goes black and the windows close one by one.
-#
-# Another hard swap dressed as a fade (see cue 2). The closes are staggered across two
-# bars in the order the windows arrived, so the screen empties the way it filled.
+# Cue 16 (1:37) — the desktop goes black and the windows close one by one: a hard swap
+# dressed as a fade (see cue 2), the closes staggered in the order the windows arrived.
 # =============================================================================
 bk = B["black"]
 add(bk, "deskWallpaper", {"id": "dark", "mode": "solid", "hex": BLACK})
 add(bk, "screenFlash", {"color": BLACK, "durationBeats": 0.6})
 add(bk + 0.2, "closeWindow", {"id": "map0"})
-close_span = (B["tbd_099"] - bk) - 0.4
+# The closes cross the section line by a little: the raymarcher opens while the last
+# stragglers are still leaving, instead of after a beat of emptied-screen dead air.
+close_span = (B["tbd_099"] - bk) + 1.5
 for i, wid in enumerate(fill_ids):
     add(bk + 0.2 + close_span * i / max(1, len(fill_ids) - 1), "closeWindow", {"id": wid})
 
 # =============================================================================
-# Cue 17 (1:30) — the cool graphic: the artist's GLSL raymarcher, running live.
-#
-# The desktop went black on cue 16 and the windows closed one by one, so this arrives on
-# an empty screen and is the only thing on it until Photo Booth at cue 18. Centred and
-# large for that reason — it is the shot, not a detail in one.
-#
-# The shader is the second of the three in the artist's code.txt (`assets/shaders/graphic.frag`),
-# chosen because its feedback line is commented out in their own source, so it needs only
-# `u_time` and `u_resolution` — no ping-pong buffer, no window-capture texture. `drop`
-# is one of its scalar uniforms and it doubles the shader's internal time (`u_time * mix(
-# 1., 4., drop)`); the breakdown is the calm before the beat comes back, so it runs at 0.
+# Cue 17 (1:30) — the artist's GLSL raymarcher, alone on the emptied screen until
+# Photo Booth. The shader (`assets/shaders/graphic.frag`, second of the three in the
+# artist's code.txt) has its feedback line commented out in their own source, so it
+# needs only `u_time` and `u_resolution`. `drop` scales its internal time
+# (`u_time * mix(1., 4., drop)`); the breakdown runs it at 0.
 # =============================================================================
 SHADER_W, SHADER_H = round(W * 0.52), round(H * 0.52)
 add(B["tbd_099"], "openWindow", {
@@ -887,17 +776,69 @@ add(B["tbd_099"], "openWindow", {
                 "chrome": "mixed", "title": "graphic.frag"},
     "animate": {"kind": "springIn"}, "interactive": True})
 
+# Somebody is still using the computer: over the raymarcher, one hydra sketch is set
+# up BY HAND, taking its time — the cursor walks over first, the sketch spawns under
+# it, gets hauled up by the title bar, pulled bigger by its corner, and run. It lives
+# LOW on the LEFT: final frame (0.05W, 0.50H, 0.18W, 0.38H), whose right edge (331px
+# at 1440) stops short of both the raymarcher and the booth frame (both start x≈346)
+# so nothing overlaps the countdown. The patch is hy1's sketch from the pulled intro
+# act (PATCHES[2]). It stays up (running) through the booth, cut with everything at
+# cue 21.
+hb = B["tbd_099"] + 1.5
+h_spawn = (round(W * 0.05), round(H * 0.72), 240, 150)
+h_grab = (h_spawn[0] + h_spawn[2] * 0.5, h_spawn[1] + 12)   # its title bar — the cursor is already there
+# 1. the cursor walks to where the window is about to appear…
+add(hb, "cursorPath", {"path": "linear", "durationBeats": 2.5, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(W * 0.34), round(H * 0.92)],
+                               [round(h_grab[0]), round(h_grab[1])]]})
+# 2. …and the sketch spawns under it, code written but not running
+hydra_window("hyb", hb + 3, h_spawn, PATCHES[2], running=False, animate="springIn")
+# 3. hauled UP the screen by the title bar
+h_up = (round(W * 0.05), round(H * 0.50), h_spawn[2], h_spawn[3])
+add(hb + 4, "moveWindow", {"id": "hyb", "frame": [h_up[0], h_up[1]],
+    "durationBeats": 2.5, "easing": "easeInOut"})
+add(hb + 4, "cursorPath", {"path": "linear", "durationBeats": 2.5, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(h_grab[0]), round(h_grab[1])],
+                               [round(h_up[0] + h_spawn[2] * 0.5), round(h_up[1] + 12)]]})
+# 4. pulled bigger by the LOWER-RIGHT corner (top-left stays put, code stays on its corner)
+h_corner = (h_up[0] + h_spawn[2], h_up[1] + h_spawn[3])
+h_big = (h_up[0], h_up[1], round(W * 0.18), round(H * 0.38))
+h_new_corner = (h_big[0] + h_big[2], h_big[1] + h_big[3])
+add(hb + 7, "cursorPath", {"path": "linear", "durationBeats": 1.0, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(h_up[0] + h_spawn[2] * 0.5), round(h_up[1] + 12)],
+                               [round(h_corner[0]), round(h_corner[1])]]})
+add(hb + 8.2, "moveWindow", {"id": "hyb", "frame": list(h_big),
+    "durationBeats": 2.0, "easing": "easeOut"})
+add(hb + 8.2, "cursorPath", {"path": "linear", "durationBeats": 2.0, "easing": "easeOut",
+    "mode": "warp", "points": [[round(h_corner[0]), round(h_corner[1])],
+                               [round(h_new_corner[0]), round(h_new_corner[1])]]})
+# Re-open clean at the final size once the drag settles. Still not running.
+hydra_window("hyb", hb + 10.4, h_big, PATCHES[2], running=False)
+# 5. up to the run button — and it starts, just as Photo Booth arrives centre-screen.
+h_play = (h_big[0] + h_big[2] - 26, h_big[1] + 34)
+add(hb + 10.5, "cursorPath", {"path": "linear", "durationBeats": 1.0, "easing": "easeInOut",
+    "mode": "warp", "points": [[round(h_new_corner[0]), round(h_new_corner[1])],
+                               [round(h_play[0]), round(h_play[1])]]})
+HYB_RUN = hb + 12
+hydra_window("hyb", HYB_RUN, h_big, PATCHES[2], running=True)
+add(HYB_RUN, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
+
 # =============================================================================
 # Cue 18 (1:47) — Photo Booth opens on the viewer, counts 3 · 2 · 1, and takes the
 # picture. The shutter lands exactly where the photo wall starts.
 # =============================================================================
 bo = B["booth"]
-add(bo - 0.3, "closeWindow", {"id": "tbd1"})
+# The window opens a BAR early and the camera runs before any numeral shows: the
+# countdown is anchored to the shutter (PhotoBoothController counts numberAt back
+# from durationBeats), so opening earlier only buys the camera its warm-up — the 3
+# still lands on the cue, a bar apart from 2 and 1, and the shutter on cue 19.
+BOOTH_WARMUP = 4
+add(bo - BOOTH_WARMUP - 0.3, "closeWindow", {"id": "tbd1"})
 BOOTH_W = round(min(W * 0.52, 760))
 BOOTH_H = round(BOOTH_W * 0.78)
-add(bo, "photoBooth", {"id": "booth",
+add(bo - BOOTH_WARMUP, "photoBooth", {"id": "booth",
     "frame": [round((W - BOOTH_W) / 2), round((H - BOOTH_H) * 0.45), BOOTH_W, BOOTH_H],
-    "durationBeats": B["wall"] - bo, "count": 3, "stepBeats": 4})
+    "durationBeats": B["wall"] - (bo - BOOTH_WARMUP), "count": 3, "stepBeats": 4})
 
 # =============================================================================
 # Cue 19 (1:54) — the shutter, and then the viewer's own photos bury the screen.
@@ -908,27 +849,22 @@ add(wl + 0.25, "photoWall", {"id": "wall", "fillPerBeat": 12, "churnPerBeat": 2.
                              "windows": 40, "minFrac": 0.10, "maxFrac": 0.42})
 
 # =============================================================================
-# Cue 20 (1:58) — the spam carries on and the face strobes over the top of it.
-#
-# 6 Hz, well clear of the 15–20 Hz photosensitivity band the rest of the piece stays out
-# of. A window rather than a wallpaper swap: the desktop is buried under the wall by now,
-# so a wallpaper change would not be visible at all.
-#
-# ONE window, re-opened under the same id and alternating face/blue — never shown and
-# hidden. Showing or hiding a FULLSCREEN window per flash is the exact thing that cost
-# this show 195 ms of A/V drift once before: it makes the window server re-composite the
-# whole screen over every window underneath, and there are forty photo windows under this
-# one. Re-opening an id swaps the content view on the window that is already there, which
-# costs nothing like as much (`WindowManager.open`, the `existing` branch — it needs the
-# chrome to stay equally native, hence `chrome: "none"` on both frames).
+# Cue 20 (1:58) — the face strobes over the wall, in a WINDOW centre-screen, not over
+# the whole picture. Same 6 Hz as ever — well clear of the 15–20 Hz photosensitivity
+# band. ONE window re-opened under the same id, never shown/hidden (show/hide once
+# cost this show 195 ms of A/V drift; re-opening swaps the content view in place —
+# `WindowManager.open`, the `existing` branch — hence `chrome: "none"` on both frames).
 # =============================================================================
 fs = B["facestrobe"]
 face_hz, face_until = 6.0, B["horse"] - 0.3
+FLASH_W = round(W * 0.36)
+FLASH_H = round(FLASH_W * 320 / 425)            # pixelface.jpg's own aspect
 FACE_FRAME = {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"}
 BLUE_FRAME = {"kind": "color", "hex": DJ_BLUE, "chrome": "none"}
 k, b = 0, fs
 while b < face_until:
-    add(b, "openWindow", {"id": "faceflash", "frame": fullscreen(),
+    add(b, "openWindow", {"id": "faceflash", "anchor": "center",
+        "frame": [0, 0, FLASH_W, FLASH_H],
         "content": FACE_FRAME if k % 2 == 0 else BLUE_FRAME,
         "animate": {"kind": "none"}})
     b += 0.5 / face_hz / BEAT          # one swap per half-cycle: face, blue, face, …
@@ -937,14 +873,16 @@ add(face_until, "closeWindow", {"id": "faceflash"})
 
 # =============================================================================
 # Cue 21 (2:00) — everything cuts out to the bare desktop, and the horse gets out.
-#
-# It has run in the show since the first cut; here it is the thing that has been in the
-# machine all along, wall to wall, and gone again in five seconds.
 # =============================================================================
 hs = B["horse"]
 add(hs - 0.2, "closeWindow", {"id": "wall"})
 add(hs - 0.2, "closeWindow", {"id": "booth"})
-add(hs, "deskWallpaper", {"id": "desk4", "mode": "solid", "hex": DJ_BLUE})
+add(hs - 0.2, "closeWindow", {"id": "hyb"})
+# Blue from here all the way to the end card (nothing repaints the desktop after
+# this), expiring two beats after the card is up — the restore's ~300 ms round-trip
+# happens invisibly under the opaque card, and the desktop is back before quit.
+add(hs, "deskWallpaper", {"id": "desk4", "mode": "solid", "hex": DJ_BLUE,
+                          "durationSeconds": round(secs(B["ending"]) + 2 * BEAT - secs(hs), 3)})
 frames, gc, gr, max_lit = build_frames(cols=HORSE_COLS)
 HORSE_BEATS = B["torus2"] - hs
 horse, horse_exit, horse_end = horse_event(
@@ -954,25 +892,27 @@ events.append(horse)
 
 # =============================================================================
 # Cue 22 (2:05) — the horse is cut mid-stride and the glass torus takes the middle,
-# ringed by a circle of lyric windows — the clock.
+# ringed by EIGHT pixelfaces, one flashing in on each beat — the cue-20 strobe's
+# rhythm slowed to the beat. They stay up until cue 24 cuts the whole clock.
 # =============================================================================
 t2 = B["torus2"]
 add(t2, "closeWindow", {"id": "horse"})
 add(t2, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 add(t2, "glassTorus", {"id": "torus", "material": "crystal", "speed": 1.2,
                        "size": round(min(W, H) * 0.56)})
-CLOCK_W, CLOCK_H = round(W * 0.16), round(H * 0.12)
+FACE_RING = 8
+RING_W = round(W * 0.15)
+RING_H = round(RING_W * 320 / 425)              # pixelface.jpg's own aspect
 rx, ry = W * 0.36, H * 0.40
 clock_ids = []
-clock_span = (B["video2"] - t2) - 0.5
-for i, text in enumerate(phrase_texts):
-    ang = -math.pi / 2 + 2 * math.pi * i / n_cue            # 12 o'clock, clockwise
+for i in range(FACE_RING):
+    ang = -math.pi / 2 + 2 * math.pi * i / FACE_RING        # 12 o'clock, clockwise
     wid = f"ck{i}"
     clock_ids.append(wid)
-    lyric_card(wid, t2 + 0.3 + clock_span * i / n_cue, text, i,
-               frame=[round(rx * math.cos(ang)), round(ry * math.sin(ang)),
-                      CLOCK_W, CLOCK_H],
-               chrome="mac", animate="springIn", anchor="center")
+    add(t2 + i, "openWindow", {"id": wid, "anchor": "center",
+        "frame": [round(rx * math.cos(ang)), round(ry * math.sin(ang)), RING_W, RING_H],
+        "content": {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"},
+        "animate": {"kind": "none"}})
 
 # =============================================================================
 # Cue 23 (2:08) — all of it stays, and the video slot lands on top.
@@ -982,47 +922,33 @@ placeholder("video", B["video2"], VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
 
 # =============================================================================
 # Cue 24 (2:09) — the torus and the ring cut out from under it, leaving the slot alone
-# on a full black window. Re-opened after the black so it is above it.
+# on the blue desktop (no black backdrop any more — cut 2026-09-01), and the pointer
+# swarm rises WITH it: transparent, over everything, so it has the whole section to
+# build before it is alone with the pointer.
 # =============================================================================
 v3 = B["video3"]
 for wid in clock_ids + ["torus"]:
     add(v3, "closeWindow", {"id": wid})
-add(v3, "openWindow", {"id": "void", "frame": fullscreen(),
-    "content": {"kind": "color", "hex": BLACK, "chrome": "none"},
-    "animate": {"kind": "none"}})
-placeholder("video", v3 + 0.1, VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
-            title="untitled.mov", animate="none")
-
-# =============================================================================
-# Cue 25 (2:06) — everything cuts, and the pointers come for the pointer.
-# =============================================================================
-add(B["tbd_136"], "closeWindow", {"id": "void"})
-add(B["tbd_136"], "closeWindow", {"id": "video"})
-# Everything has just cut, so this lands on a bare screen: a full-screen transparent
-# swarm of Mac pointers chasing the viewer's REAL cursor, every one a different size,
-# each turning to face the way it is going. It reads as the one thing on screen the
-# viewer still controls being noticed.
-#
-# It chases `NSEvent.mouseLocation`, so it follows the pointer whether the viewer is
-# moving it or the show is — `cursorPath` drives the pointer elsewhere in the piece.
-add(B["tbd_136"], "openWindow", {
+# A full-screen transparent swarm of Mac pointers chasing `NSEvent.mouseLocation`, so
+# it follows the pointer whether the viewer is moving it or the show is (`cursorPath`
+# drives the pointer elsewhere in the piece).
+add(v3 + 0.2, "openWindow", {
     "id": "tbd2", "frame": fullscreen(),
     "content": {"kind": "cursors", "seed": 3136, "intensity": 1.0,
                 "chrome": "none", "title": "pointer"},
     "animate": {"kind": "none"}})
 
 # =============================================================================
-# Cue 26 (2:08) — the mouse spinner, taken the other way.
-#
-# The sheet asks for "the mouse spinner" and there is still nothing in the app that sets
-# the pointer, so a spinner ON the cursor remains unbuilt. This is the other reading: not
-# one beach ball on the pointer but a MANDALA of them — concentric rings of the wait
-# cursor over the whole screen, each ring turning against its neighbour, every ball
-# spinning on its own axis. The machine hung everywhere at once rather than in one place.
-#
-# It follows the cursor swarm of cue 25 directly, which is why it is the same shape of
-# thing: a transparent full-screen overlay of drawn system UI. That one chases, this one
-# is fixed and turns.
+# Cue 25 (2:06) — the video cuts and the swarm, up since cue 24, is alone with the
+# viewer's pointer.
+# =============================================================================
+add(B["tbd_136"], "closeWindow", {"id": "video"})
+
+# =============================================================================
+# Cue 26 (2:08) — the mouse spinner, taken the other way: nothing in the app sets the
+# pointer, so instead of one beach ball ON the cursor, a MANDALA of them — concentric
+# rings of the wait cursor over the whole screen. Cue 25's swarm chases; this one is
+# fixed and turns.
 # =============================================================================
 add(B["spinner"] - 0.2, "closeWindow", {"id": "tbd2"})
 add(B["spinner"], "openWindow", {
@@ -1043,15 +969,11 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0):
     """~8 events/sec out of (cx, cy) — the explosion, not a ramp.
 
     `ui_chaos` is the fraction of the flat colour cards that come up packed with real
-    macOS interface instead — icons, buttons, sliders, checkboxes, heaped over each other
-    and running off the edges (`uichaos`, drawn by the engine).
-
-    It is set on BOTH eruptions even though cue 29 is what asked for it, and the reason
-    is the window pool. Both erupt into the same fourteen ids, and cue 29 is only ~2.3 s
-    long: on its own it fires about five colour cards, so a quarter of those is ONE
-    window. Most of what is on screen at f 4746 was put there by cue 27 and is still up.
-    A quarter of the empty windows *visible in that moment* therefore means a quarter of
-    everything that fills the pool — which is this, on both.
+    macOS interface instead (`uichaos`, drawn by the engine). It is set on BOTH
+    eruptions even though cue 29 is what asked for it: both erupt into the same
+    fourteen ids, cue 29 alone is only ~2.3 s (about one packed window), and most of
+    what is visible then was put up by cue 27 — so "a quarter of the visible empty
+    windows" means a quarter on both.
     """
     b = b0
     while b < b1:
@@ -1081,7 +1003,7 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0):
             if packed:
                 chaos["ui"] += 1
         elif roll < 0.58:
-            text = phrase_texts[chaos["l"] % n_cue]
+            text = phrase_texts[chaos["l"] % n_cue].upper()   # ALL CAPS, like the spiral
             lyric_card(f"w{chaos['w'] % 14}", b, text, chaos["l"],
                        frame=[round(x), round(y), max(w, 260), h], chrome="mac")
             chaos["w"] += 1; chaos["l"] += 1
@@ -1117,60 +1039,19 @@ for i, kt in enumerate(kicks_between(sm, B["glitch"])):
     n_kick += 1
 
 # =============================================================================
-# Cue 28 (2:38) — the wallpaper glitches over and over, and the lyric desktop glitches
-# with it: the two alternate, so the tear keeps landing on a different picture.
-#
-# `glitch` re-corrupts the SNAPSHOT every pass, not the current wallpaper, so it never
-# compounds into noise — but every pass is a bitmap render AND a ~300 ms desktop swap,
-# and the swap is WindowServer time that every window on screen pays for. At 2.5 Hz
-# glitch + 6 Hz words this section had the desktop changing ~5×/s for ten seconds and
-# the whole machine stuttered through it; ~1.5–2 swaps/s reads the same and leaves the
-# server room to move windows.
-#
-# The LYRIC side of that alternation now runs 40% faster than it read there — asked for
-# directly. Two things are worth knowing about the number. `LYRIC_FLASH` is applied to
-# every rate-driven lyric desktop so the two sites cannot drift; cue 12 is deliberately
-# NOT one of them, because it is scheduled to the sung words (`at`) rather than run at a
-# rate, and speeding it up would pull the desktop off the vocal. And the swap has a hard
-# ~3 Hz ceiling that is not ours (see `WallpaperController.updateDesk`) — a rate above it
-# is a request, not a result.
+# Cue 28 (2:28) — the pickup bar of chorus 2B: the eruption again, with the original
+# strobe spliced in verbatim over the top, STRAIGHT IN — no four-bar wait. The strobe
+# is authored in absolute seconds, which survive the splice with a plain offset;
+# everything past the stop is dropped, and the stop closes what it left. The desktop
+# stays blue underneath: the old glitch ⇄ lyric alternation is out of the cut — every
+# glitch pass was a bitmap render AND a ~300 ms desktop swap every window on screen
+# pays for, and the section was extremely laggy live.
 # =============================================================================
-LYRIC_FLASH = 1.40
-gl = B["glitch"]
-seg, b, gi = 1.6 / BEAT, B["glitch"], 0        # ~1.6 s a segment
-n_glitch = 0
-while b < B["allglitch"]:
-    if gi % 2 == 0:
-        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "glitch", "hz": 1.5,
-                                 "intensity": 0.55 + 0.08 * (gi % 3), "seed": 1000 + gi,
-                                 "durationSeconds": round(seg * BEAT, 3)})
-    else:
-        add(b, "deskWallpaper", {"id": f"gl{gi}", "mode": "slides",
-                                 "hz": round(2 * LYRIC_FLASH, 2),
-                                 "images": WORD_SLIDES,
-                                 "durationSeconds": round(seg * BEAT, 3)})
-    n_glitch += 1
-    b += seg
-    gi += 1
-
-# =============================================================================
-# Cue 29 (2:47) — a ton of windows again, and this time the whole screen goes with
-# them: the original strobe, spliced in verbatim over the top.
-#
-# The strobe is authored in absolute seconds, which survive the splice with a plain
-# offset. Everything past the ending is dropped, and the ending closes what it left.
-# =============================================================================
-ag = B["allglitch"]
-erupt(ag, B["lastwords"], W / 2, H / 2, rate=0.18, ui_chaos=0.25)
-# Under the strobe the desktop is mostly covered; 1 Hz is plenty, and the strobe's own
-# ~43 events/s is what the server should be spending itself on.
-add(ag, "deskWallpaper", {"id": "glall", "mode": "glitch", "hz": 1, "intensity": 0.85,
-                          "seed": 77,
-                          "durationSeconds": round((B["lastwords"] - ag) * BEAT, 3)})
-
+gl2 = B["glitch"]
+erupt(gl2, B["lastwords"], W / 2, H / 2, rate=0.18, ui_chaos=0.25)
 with open(os.path.join(ROOT, "examples", "timeline_strobe.json")) as f:
     strobe = json.load(f)
-strobe_at = secs(ag)
+strobe_at = secs(gl2)
 strobe_cut = secs(B["lastwords"]) - 0.05
 strobe_ids, n_strobe = set(), 0
 for ev in strobe["events"]:
@@ -1182,25 +1063,27 @@ for ev in strobe["events"]:
         strobe_ids.add(ev["params"]["id"])
 
 # =============================================================================
-# Cue 30 (2:51) — the noise stops and the desktop is the lyric again. Past the last
-# note of the track: from here the piece is playing over silence.
+# Cue 29 — PULLED (2026-09-01): the lyric desktop under the strobe is out. The strobe
+# starves the swap queue, so each word card stuck for whole seconds, and a lingering
+# word right before the end card read as a weird wallpaper flash. The desktop stays
+# blue from the horse straight into the card; the slot keeps its number.
+# =============================================================================
+ag = B["allglitch"]
+
+# =============================================================================
+# Cue 30 (2:41) — the stop. The noise closes on the silence and nothing else moves:
+# the desktop has been plain blue since the horse, so no swap is in flight — or even
+# possible — when the end card fires.
 # =============================================================================
 lw = B["lastwords"]
 add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
 for wid in sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
     add(lw + 0.05, "closeWindow", {"id": wid})
-# This one was already asking for 4 Hz against a ~3 Hz ceiling, so the extra 40% is
-# nominal: the engine drops the ticks it cannot serve and the desktop still changes as
-# fast as the WallpaperAgent will go. Raised anyway, so the two lyric desktops stay in
-# step if the ceiling ever moves.
-add(lw, "deskWallpaper", {"id": "lastwords", "mode": "slides",
-                          "hz": round(4 * LYRIC_FLASH, 2),
-                          "images": WORD_SLIDES,
-                          "durationSeconds": round((B["ending"] - lw) * BEAT, 3)})
 
 # =============================================================================
-# Cue 31 (2:54) — the ending. The photo the booth took, the machine's vitals and the
-# credits typing themselves out, held until the card has been read.
+# Cue 31 (2:41) — the ending, ON the stop: the break IS the end card. The photo the
+# booth took, the machine's vitals and the credits typing themselves out, held while
+# the track's silent tail runs out underneath.
 # =============================================================================
 en = B["ending"]
 add(en, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
@@ -1217,11 +1100,8 @@ CREDITS = [
     "",
     "Bye",
 ]
-# Typed by the LINE, one per beat — the probe's cadence, not a typist's. The card has to
-# finish AND then sit there before the machine gives up, so the hold is derived from how
-# long the copy takes rather than picked: the old show ended on the last bar of music and
-# had to be sized against the track, but this card comes up 4.2 s AFTER the track ends,
-# so all it has to clear is its own typing.
+# Typed by the LINE, one per beat — the probe's cadence. The card comes up ON the
+# stop, so the hold only has to clear its own typing before the outro plays.
 CREDITS_LPS = round(1 / BEAT, 3)
 CARD_AT = secs(en)
 TYPED_AT = CARD_AT + len(CREDITS) / CREDITS_LPS
@@ -1235,17 +1115,17 @@ add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
 # --- markers for the scrubber: the analyser's sections plus every cue ---
 LABELS = {
     "blue": "blue desktop", "restore": "desktop back", "welcome": "welcome (typed)",
-    "probe": "system probe", "hydra": "hydra dragged in", "blue2": "blue again",
+    "probe": "system probe", "hydra": "hydra (pulled)", "blue2": "blue again",
     "face": "pixelface desktop", "traveller": "traveller + trail",
     "spiral": "lyric spiral", "video1": "video slot", "tbd_048": "TBD",
-    "words": "lyrics desktop + drag", "torus1": "magic torus + greeting",
+    "words": "lyrics desktop", "torus1": "magic torus + greeting",
     "map": "maps: here", "fill": "windows fill", "black": "to black",
-    "tbd_099": "glsl graphic", "booth": "photo booth", "wall": "photo wall",
+    "tbd_099": "glsl + hydra", "booth": "photo booth", "wall": "photo wall",
     "facestrobe": "pixelface strobe", "horse": "the horse",
-    "torus2": "torus + lyric clock", "video2": "video on top", "video3": "black + video",
-    "tbd_136": "TBD", "spinner": "TBD + spinner", "spam": "UI spam",
-    "glitch": "wallpaper glitch", "allglitch": "everything glitches",
-    "lastwords": "lyrics desktop", "ending": "the end card",
+    "torus2": "torus + face ring", "video2": "video on top", "video3": "video + swarm",
+    "tbd_136": "swarm alone", "spinner": "beach-ball mandala", "spam": "UI spam",
+    "glitch": "spam + strobe", "allglitch": "words (pulled)",
+    "lastwords": "the stop", "ending": "the end card",
 }
 KINDS = {"blue": "start", "words": "drop", "torus1": "drop", "horse": "drop",
          "spam": "drop", "allglitch": "drop", "ending": "break", "black": "break"}
@@ -1260,18 +1140,20 @@ def when(e):
 events.sort(key=when)
 
 doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
+                # The canvas every frame and cursor point in this file is authored in.
+                # ScreenGeometry maps it onto the real screen, so a different-sized
+                # display gets the same composition, centred and scaled.
+                "authoredSize": [W, H],
                 "analyzedBpm": BPM, "markers": markers,
-                # The desktop is painted in cue 1, so this is on by default — with it
-                # false every deskWallpaper is skipped and logged and the desktop simply
-                # never changes. WallpaperController snapshots the viewer's own picture
-                # before the first swap and restores it on stop, panic and quit.
+                # On by default — the desktop is painted in cue 1; false skips and logs
+                # every deskWallpaper. WallpaperController snapshots the viewer's own
+                # picture before the first swap and restores it on stop, panic and quit.
                 # ALLOW_WALLPAPER=0 opts back out.
                 "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") != "0",
                 "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
 for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
-            # DPECore, not the executable target: the library was split out of the
-            # executable so the tests could import it, and the resources went with it.
+            # DPECore: the library target the tests import; the resources live with it.
             os.path.join(ROOT, "Sources", "DPECore", "Resources", "timeline.json")):
     with open(out, "w") as f:
         json.dump(doc, f, indent=1)
@@ -1279,9 +1161,8 @@ for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
 
 print(f"\n{len(events)} events @ {BPM} BPM, offset {OFFSET}s, track {DURATION:.1f}s "
       f"({frame_at(DURATION)} frames)")
-# Reported in FRAMES, because that is the unit docs/CUES.md is written in and the unit
-# the app's own transport counts in — a number printed here should be findable on the
-# scrubber without converting anything.
+# Reported in FRAMES — the unit docs/CUES.md is written in and the app's transport
+# counts in, so a number printed here is findable on the scrubber.
 print(f"  {'cue':<11} {'phrase':<14} {'in':>6} {'fires on':>10} {'beat':>5}  {'vs recut−9s':>11}")
 for i, (name, (p, bars, beats)) in enumerate(CUES.items(), start=1):
     g = secs(B[name])
@@ -1294,7 +1175,10 @@ print(f"  face     {FACE_DESKTOP} {FACE_W}x{FACE_H} on 2560x1600 ({FACE_SHARE:.0
 print(f"  welcome  {len(WELCOME_LINES)} lines @{WELCOME_LPB:g}/beat in a {WELCOME_W}x{WELCOME_H} terminal, "
       f"last line lands f {frame_at(secs(B['welcome'] + len(WELCOME_LINES) / WELCOME_LPB))}, "
       f"closed f {frame_at(secs(B['probe']))}")
-print(f"  hydra    {len(hydra_ids)} sketches, dragged one runs at {secs(HYDRA_RUN):.2f}s")
+if HYDRA_ACT:
+    print(f"  hydra    {len(hydra_ids)} sketches, dragged one runs at {secs(HYDRA_RUN):.2f}s")
+else:
+    print("  hydra    pulled from the cut (HYDRA_ACT = False)")
 print(f"  trail    {len(trail_ids)} delayed copies over {len(legs)} legs, "
       f"{TRAIL_DX:.0f}px and {TRAIL_LAG:.3f} beats apart "
       f"(tail {TRAIL_LINKS * TRAIL_LAG * BEAT:.2f}s behind the leader, leg {LEG * BEAT:.2f}s)")
@@ -1314,17 +1198,22 @@ print(f"  fill     {len(fill_ids)} windows, 4 beats apart → 0.25")
 print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
 print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
       f"exits beat {horse_exit:.0f}")
-print(f"  clock    {len(clock_ids)} windows round the torus")
+print(f"  hydra2   breakdown sketch over the raymarcher: cursor walks f {frame_at(secs(hb))}, "
+      f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
+print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "
+      f"count starts f {frame_at(secs(bo))}, shutter f {frame_at(secs(B['wall']))}")
+print(f"  ring     {len(clock_ids)} pixelfaces round the torus, one a beat, "
+      f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
 print(f"  spam     {chaos['w']} windows, {chaos['d']} alerts, {n_kick} kick flashes, "
-      f"{chaos['ui']} packed with macOS UI (cue 29 only)")
-print(f"  glitch   {n_glitch} wallpaper segments, then {n_strobe} of "
-      f"{len(strobe['events'])} strobe events")
+      f"{chaos['ui']} packed with macOS UI (both eruptions)")
+print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events over "
+      f"{secs(B['lastwords']) - secs(B['glitch']):.1f}s from the 2B pickup; the desktop "
+      f"stays blue to the card")
 print(f"  outro    copy lands {TYPED_AT:.2f}s, holds {OUTRO_DELAY:.1f}s → quit at "
       f"{TYPED_AT + OUTRO_DELAY:.2f}s ({TYPED_AT + OUTRO_DELAY - DURATION:+.2f}s vs track end)")
 print()
-print("  lyric phrases (tools/lyrics.py PHRASES, timed off CUES) — spiral cards at chorus 1A, the clock:")
-print("   #    spiral      clock    text")
+print("  lyric phrases (tools/lyrics.py PHRASES, timed off CUES) — spiral cards at chorus 1A:")
+print("   #    spiral    text")
 for i, (when, text, _) in enumerate(phrases):
-    ta = f"{secs(max(sp, lyric_beat(zero_1A, when))):6.2f}s"
-    tb = secs(t2 + 0.3 + clock_span * i / n_cue)
-    print(f"  {i:>2}   {ta:>8}   {tb:7.2f}s   {text}")
+    ta = f"{secs(lyric_beat(zero_1A, when)):6.2f}s"
+    print(f"  {i:>2}   {ta:>8}   {text}")

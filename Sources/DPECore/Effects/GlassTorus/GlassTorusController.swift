@@ -2,21 +2,13 @@ import AppKit
 import MetalKit
 
 /// A tumbling glass or mirror-metal torus in a borderless, fully transparent window,
-/// refracting the viewer's desktop picture — the standalone `GlassTorus` app, driven by
-/// the show clock.
+/// refracting the viewer's desktop picture, driven by the show clock.
 ///
-/// **What changed in the port.**
-///
-/// - **The draw loop is the show's.** MTKView is put in `isPaused` mode and drawn from
-///   `update(now:)`, with `elapsed` written from the timeline position. The tumble
-///   therefore scrubs with the playhead, freezes when the transport stops, and is
-///   identical take to take. The standalone app accumulated wall-clock deltas.
-/// - **The reflection is a picture, not a capture.** See `ScreenEnvironment` — the live
-///   ScreenCaptureKit stream is gone, and with it the Screen Recording permission. What
-///   the glass shows is the desktop picture the machine had before the show swapped it.
-/// - **Metal is built lazily.** The device, pipeline and environment are only created
-///   when a `glassTorus` event actually fires, so a show that never uses one does not
-///   pay for the pipeline.
+/// - MTKView is `isPaused` and drawn from `update(now:)` with `elapsed` written from
+///   the timeline position: the tumble scrubs with the playhead, freezes when the
+///   transport stops, and is identical take to take.
+/// - The reflection is a picture, not a capture — see `ScreenEnvironment`.
+/// - Metal is built lazily, so a show that never opens a torus does not pay for it.
 ///
 /// **Reversibility.** One window, no cursor warp, no icon moves. `closeAll()` closes it,
 /// which is what the panic hotkey reaches.

@@ -3,13 +3,8 @@ import ImageIO
 import ScreenCaptureKit
 import UniformTypeIdentifiers
 
-/// Image plumbing for the `deskWallpaper` modes.
-///
-/// The three standalone wallpaper apps (BlackWallpaper, GlitchWallpaper,
-/// RecursiveWallpaper) were separate SwiftPM targets, so each carried its own copy of
-/// `supportDirectory()`, `writeImage()`, `fillOptions` and a `*Error` type. Merged into
-/// one module those collide, so the shared plumbing is deduplicated here and the
-/// per-mode pixel work stays in `GlitchImage.swift`.
+/// Image plumbing shared by the `deskWallpaper` modes; the per-mode pixel work stays
+/// in `GlitchImage.swift`.
 ///
 /// macOS stores the *path* of a wallpaper, not a copy of the image, so every frame this
 /// writes has to stay on disk while it is displayed. They live in a `DPE` folder under

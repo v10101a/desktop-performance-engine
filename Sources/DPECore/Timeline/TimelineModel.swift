@@ -37,6 +37,11 @@ struct Meta: Decodable {
     /// a show that touches the filesystem should be an explicit choice, so set this
     /// true to allow it.
     let allowDesktopFiles: Bool?
+    /// `[width, height]` of the canvas the show's frames, cursor points and sizes were
+    /// authored in. When present, ScreenGeometry maps that canvas onto each real
+    /// screen, so a bigger display gets the same composition scaled up — not the
+    /// authored pixels huddled in its top-left corner. Absent: raw points, 1:1.
+    let authoredSize: [Double]?
 }
 
 // MARK: - Event parameter payloads
@@ -47,11 +52,8 @@ struct Meta: Decodable {
 struct MapSpec: Decodable {
     let lat: Double
     let lon: Double
-    /// Fly over the viewer's OWN location: `lat`/`lon` (and `toLat`/`toLon`) are
-    /// replaced by the most recent Location Services fix — the one the system probe
-    /// obtained, or the one the intro gate warmed up. If no fix has arrived (denied,
-    /// switched off, or still pending) the authored coordinates are the fallback.
-    /// Nothing is looked up over the network: the fix comes from CoreLocation only.
+    /// Fly over the viewer's OWN location: the most recent CoreLocation fix replaces
+    /// the authored coordinates, which remain the fallback when no fix has arrived.
     var here: Bool? = nil
     let toLat: Double?
     let toLon: Double?
@@ -526,28 +528,27 @@ enum EventAction {
     case closeWindow(CloseWindowParams)
     case moveWindow(MoveWindowParams)
     case screenFlash(ScreenFlashParams)
-    case cursorPath(CursorPathParams)         // Phase 2
-    case rearrangeIcons(RearrangeIconsParams) // Phase 3
-    case jiggle(JiggleParams)                 // Phase 4
-    case wallpaper(WallpaperParams)           // Phase 4
-    case sprite(SpriteParams)                 // Phase 5
-    case cursorTrail(CursorTrailParams)       // Phase 5
-    case typeText(TypeTextParams)             // Phase 6
-    case photoWall(PhotoWallParams)           // ported from the standalone photowall app
-    case glassTorus(GlassTorusParams)         // ported from the standalone GlassTorus app
-    case deskWallpaper(DeskWallpaperParams)   // ported from the BlackWallpaper tools
-    case systemProbe(SystemProbeParams)       // ported from the standalone systemprobe app
-    case fileSwarm(FileSwarmParams)           // ported from the standalone FileSwarm app
-    case reboot(RebootParams)                 // the fake boot screen
-    case oracle(OracleParams)                 // the magic torus asks for a question
-    case photoBooth(PhotoBoothParams)         // the viewer's camera, 3·2·1, shutter
-    case credits(CreditsParams)               // the end card, held past the track
-    case hideOtherApps(HideOtherAppsParams)   // clear the stage: every other app hidden
+    case cursorPath(CursorPathParams)
+    case rearrangeIcons(RearrangeIconsParams)
+    case jiggle(JiggleParams)
+    case wallpaper(WallpaperParams)
+    case sprite(SpriteParams)
+    case cursorTrail(CursorTrailParams)
+    case typeText(TypeTextParams)
+    case photoWall(PhotoWallParams)
+    case glassTorus(GlassTorusParams)
+    case deskWallpaper(DeskWallpaperParams)
+    case systemProbe(SystemProbeParams)
+    case fileSwarm(FileSwarmParams)
+    case reboot(RebootParams)
+    case oracle(OracleParams)
+    case photoBooth(PhotoBoothParams)
+    case credits(CreditsParams)
+    case hideOtherApps(HideOtherAppsParams)
 }
 
 extension EventAction {
-    /// The `"type"` string this case is authored as. One canonical mapping — `--validate`
-    /// used to carry a second, hand-written copy of it.
+    /// The `"type"` string this case is authored as.
     var typeName: String {
         switch self {
         case .openWindow: return "openWindow"
@@ -587,10 +588,8 @@ struct TimelineEvent: Decodable {
         case beat, t, type, params
     }
 
-    /// `"type"` string → payload decoder. A table rather than a `switch` so the type
-    /// strings live in one place next to `EventAction.typeName`, and so a new event that
-    /// is added to one and not the other is caught by `eventCatalogIsConsistent()`
-    /// rather than by a document failing to load at showtime.
+    /// `"type"` string → payload decoder. A table rather than a `switch` so a new event
+    /// added to one place and not the other is caught by `catalogIsConsistent()`.
     private static let decoders: [String: (KeyedDecodingContainer<CodingKeys>) throws -> EventAction] = [
         "openWindow": { .openWindow(try $0.decode(OpenWindowParams.self, forKey: .params)) },
         "fakeDialog": { .fakeDialog(try $0.decode(FakeDialogParams.self, forKey: .params)) },

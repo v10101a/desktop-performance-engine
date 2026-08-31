@@ -123,8 +123,6 @@ func loadAsciiImageAsync(path: String, cols: Int, invert: Bool, colorized: Bool,
     }
 }
 
-/// Resolve a resource path (absolute, cwd-relative, or found under an `assets/` folder
-/// beside the app/executable) — same strategy as the audio resolver.
 /// A resource that ships INSIDE the build — a page, a library, the timeline — resolved
 /// the way the app actually finds things: the flat `Contents/Resources` of a real .app
 /// first, then whichever SwiftPM resource bundle is present, then `Bundle.module` for

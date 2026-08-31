@@ -157,6 +157,13 @@ enum ScreenGeometryTests {
             }
             let sf = screen.frame
 
+            // These pins are for the RAW (1:1) convention. An engine test earlier in
+            // the run may have loaded the show and left its authored canvas set, so
+            // clear it here and pin the scaled path explicitly at the end.
+            let hadCanvas = ScreenGeometry.authoredCanvas
+            ScreenGeometry.authoredCanvas = nil
+            defer { ScreenGeometry.authoredCanvas = hadCanvas }
+
             // Timeline frames are top-left origin; AppKit's are bottom-left. This flip
             // used to be written out three times.
             let r = ScreenGeometry.rect(from: [10, 20, 100, 50], on: screen)
@@ -203,6 +210,23 @@ enum ScreenGeometryTests {
             let short = ScreenGeometry.rectOrCentred([10, 20], size: NSSize(width: 200, height: 100),
                                                      on: screen)
             t.near(short.midX, sf.midX, 0.001, "a short frame array falls back to centred")
+
+            // The authored canvas: with `meta.authoredSize` set, frames scale from
+            // that space onto the real screen — a half-width canvas doubles x and w,
+            // the fullscreen sentinel still fills, and a centred authored square stays
+            // square (uniform min-scale) rather than stretching with the screen.
+            ScreenGeometry.authoredCanvas = CGSize(width: sf.width / 2, height: sf.height / 2)
+            let scaled = ScreenGeometry.rect(from: [10, 20, 100, 50], on: screen)
+            t.near(scaled.minX, sf.minX + 20, 0.001, "authored x scales onto the screen")
+            t.near(scaled.width, 200, 0.001, "authored width scales onto the screen")
+            t.near(scaled.maxY, sf.maxY - 40, 0.001, "authored y scales onto the screen")
+            let fullScaled = ScreenGeometry.rect(from: [0, 0, 0, 0], on: screen)
+            t.near(fullScaled.width, sf.width, 0.001, "the fullscreen sentinel still fills a scaled canvas")
+            let sq = ScreenGeometry.rectOrCentred(nil, size: NSSize(width: 100, height: 100),
+                                                  on: screen)
+            t.near(sq.width, sq.height, 0.001, "an authored square stays square (uniform size scale)")
+            t.near(sq.midX, sf.midX, 0.001, "…and stays centred")
+            ScreenGeometry.authoredCanvas = nil
         }
     }
 }

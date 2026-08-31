@@ -33,8 +33,6 @@ final class Scheduler {
         cursor = events.firstIndex { $0.fireTime >= time } ?? events.count
     }
 
-    var isFinished: Bool { cursor >= events.count }
-
     func tick(now: Double, ctx: EventContext) {
         while cursor < events.count, events[cursor].fireTime <= now {
             let ev = events[cursor]

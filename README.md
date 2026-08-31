@@ -305,7 +305,14 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 `frame` is `[x, y, w, h]` in points, **top-left origin**, relative to the target
 `screen` (index into `NSScreen.screens`, default 0). **Negative `x`/`y` anchor to the
 far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` from the
-bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner. Content kinds: `color` (`hex`),
+bottom — e.g. `[36, -36, 176, 64]` is the lower-left corner.
+
+**`meta.authoredSize` (`[width, height]`) declares the canvas the document's numbers
+were written in** — the show sets `[1440, 900]`. When present, every frame, cursor
+point and authored size is scaled from that canvas onto the real screen
+(`ScreenGeometry`), so a bigger or smaller display gets the **same composition,
+centred and scaled**, instead of the authored pixels huddled in its top-left corner
+with a dead strip down the right. Without it, frames are raw points, 1:1. Content kinds: `color` (`hex`),
 `text` (big centered `text`), `code` (monospaced terminal block — also used for system-
 stats readouts), `image` (`path` to any image; decoded off-thread + cached),
 `ascii` (see below), `glitch` (see below), `automaton` (see below), `shader` (see below), `uichaos` (see below), `fileworks` (see below), `cursors` (see below), `mandala` (see below), `livecode` (a running Strudel-style REPL — see below), `map`
@@ -592,34 +599,31 @@ seconds, for reading.
 | time | cue | |
 |---|---|---|
 | 0:00 | **THE BLUE** | the intro gate; every other app is hidden (`hideOtherApps`) so the desktop is in view, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
-| 0:06 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
-| 0:08 | **WELCOME** | a Terminal window types itself out, a line a beat with a block cursor — the same surface the credits use at the other end of the piece. It names what the show is about to borrow, and signs off on `$ ./giveit2me --play` |
+| 0:04 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
+| 0:05 | **WELCOME** | a Terminal window types itself out, a line a beat with a block cursor — the same surface the credits use at the other end of the piece. It names what the show is about to borrow, and signs off on `$ ./giveit2me --play` |
 | 0:15 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
-| 0:20 | **HYDRA** | somebody using a computer: a sketch opens small, the cursor takes it by the title bar and hauls it down, grabs the **lower-right corner** and pulls it bigger, then clicks run — and only *then* does it start rendering. Two more arrive already running |
 | 0:28 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later the face is sitting in the middle of it — a wallpaper the generator bakes, the face 20% of the height on its own field colour, not the artwork stretched over the whole desktop |
 | 0:30 | **THE TRAVELLER** | one window runs up and down the screen dragging a **delay line** of 20 identical copies, each 1% of the screen further left and one frame further behind — link *k* is where the leader was *k* frames ago, so the tail is most of a leg behind the head and the chain snakes. The assembly straddles the screen's centre, and it keeps travelling for the whole 13.7 s it is up |
-| 0:30 | **THE SPIRAL** | the lyric, card by card, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
-| 0:38 | **THE FIREWORKS** | the desktop goes up in the air: a transparent full-screen overlay of shells rising and bursting, every spark a **macOS file icon with a filename** — `Resume FINAL v3.pdf`, `do not delete`, `passwords.txt`. The lyric spiral keeps going underneath |
-| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the wallpaper is swapped for a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each swap issued ~300 ms early so it is seen on the word). macOS sustains about three swaps a second (see `deskWallpaper` — a hard ceiling, not a tuning knob), so a word it cannot fit is skipped, not queued. Over the top, the cursor hauls a stamped trail of windows across the screen |
+| 0:30 | **THE SPIRAL** | the lyric, card by card, ALL CAPS in Hack Bold, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
+| 0:38 | **THE FIREWORKS** | the desktop goes up in the air: a transparent full-screen overlay of shells rising and bursting, every spark a **macOS file icon with a filename** — `Resume FINAL v3.pdf`, `do not delete`, `passwords.txt`. The lyric spiral keeps going underneath; it closes with the spiral when the words take the desktop |
+| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the wallpaper is swapped for a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each swap issued ~300 ms early so it is seen on the word). macOS sustains about three swaps a second (see `deskWallpaper` — a hard ceiling, not a tuning knob), so a word it cannot fit is skipped, not queued. Nothing else competes with the desktop — everything else has closed |
 | 1:00 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
 | 1:15 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
 | 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle. Five of the flat cards come up broken: three **torn** — the piece's own images through the desktop's glitch pass — and two **Wolfram elementary automata** actually running, black on white, scrolling a generation at a time. The fill decays as it thickens |
-| 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived |
-| 1:30 | **THE GRAPHIC** | the screen is empty and black, and the artist's **GLSL raymarcher** comes up in the middle of it, running live in a WebGL canvas |
-| 1:37 | **BOOTH** | Photo Booth opens on the viewer's camera; **3 · 2 · 1**; the shutter lands exactly on the photo wall |
+| 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived — the last few still leaving as the raymarcher opens |
+| 1:30 | **THE GRAPHIC** | the screen is empty and black, and the artist's **GLSL raymarcher** comes up in the middle of it, running live in a WebGL canvas. Over it, unhurried, a **hydra sketch is set up by hand**: the cursor walks over, the sketch spawns under it, is hauled up, pulled bigger by its corner, and run — low on the left, clear of the booth |
+| 1:37 | **BOOTH** | Photo Booth opens on the viewer's camera a bar before the count, so the picture is live first; then **3 · 2 · 1**; the shutter lands exactly on the photo wall |
 | 1:43 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
-| 1:49 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz — one window re-opened, never shown and hidden (see the generator for why) |
+| 1:49 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz, in a centred window rather than over the whole screen — one window re-opened, never shown and hidden (see the generator for why) |
 | 1:51 | **THE HORSE** | everything cuts to the bare desktop and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops across it |
-| 1:56 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by lyric windows |
+| 1:56 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by **eight pixelfaces, one flashing in on each beat** |
 | 1:58 | **VIDEO** | all of it stays and the video slot lands on top |
-| 1:59 | **THE VOID** | torus and ring cut out from under it, leaving the slot alone on a full black window |
-| 2:06 | **THE POINTERS** | everything cuts, and a swarm of Mac cursors of every size comes after the viewer's real pointer — each one turning to face the way it is moving, the small ones darting ahead of the big ones |
+| 1:59 | **THE SWARM RISES** | torus and ring cut out from under it, leaving the slot alone on the blue desktop — and a transparent swarm of Mac cursors starts building over it while the video plays |
+| 2:06 | **THE POINTERS** | the video cuts and the swarm — building since 1:59 — is alone with the viewer's real pointer, every size of cursor after it, each one turning to face the way it is moving, the small ones darting ahead of the big ones |
 | 2:08 | **THE MANDALA** | five counter-rotating rings of macOS beach balls fill the screen, each one spinning on its own axis — the machine hung everywhere at once |
 | 2:13 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
-| 2:27 | **THE GLITCH** | the wallpaper glitches over and over, alternating with the lyric desktop so the tear keeps landing on a different picture — the tear at 1.5 Hz, the lyric flashing at 2.8 |
-| 2:38 | **ALL OF IT** | the spam again, faster, and the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen. A quarter of the flat cards come up packed with real macOS interface — icons, buttons, sliders, checkboxes, piled on top of each other |
-| 2:40 | **THE LAST WORDS** | the noise stops and the desktop is the lyric again — *past the last note of the track* |
-| 2:44 | **THE END CARD** | the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
+| 2:28 | **ALL OF IT** | the spam again from the chorus 2B pickup, the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen — straight in, no wait. A quarter of the flat cards come up packed with real macOS interface — icons, buttons, sliders, checkboxes, piled on top of each other |
+| 2:41 | **THE END CARD** | the music stops and the card is right there — the desktop has been plain blue since the horse: the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
 
 The cue times were authored **in seconds, by ear**, so they do not land on bar lines. The
 generator puts each one on the **nearest beat** (`at()`), which moves it by at most
@@ -1304,6 +1308,14 @@ is playing, and the composed version did go wrong.
 
 **Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
 reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.
+
+**Every Space comes back.** `setDesktopImageURL` reaches only the *active* Space of each
+screen — a viewer with more desktops used to keep the show's blue on all the others. So
+the snapshot also copies the WallpaperAgent's own store (`~/Library/Application
+Support/com.apple.wallpaper/Store/Index.plist`, where per-Space wallpapers actually
+live), and the final stop writes it back and bounces the agent so every Space reloads
+its original picture. Final stop only — a bounce mid-show or on seek would flicker the
+desktop — and skipped entirely when the store never changed.
 
 `hz` is an apply rate, not a beat division, and it has a hard ceiling that isn't ours.
 `setDesktopImageURL` measures at **~270–330 ms per call per screen** on macOS 26, and the

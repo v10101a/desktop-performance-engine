@@ -145,10 +145,9 @@ final class CreditsController {
         }
         roll.present(animate: "fadeIn")
         wins.append(roll)
-        // The dialog's "bye" button used to be the one affordance that ended the show.
-        // The terminal has no buttons, so the window itself takes the click — but only
-        // once the copy has finished typing, so a stray click can't cut the card short.
-        // (Stop and the panic hotkey end it regardless, as before.)
+        // The window itself takes the click that ends the show — but only once the copy
+        // has finished typing, so a stray click can't cut the card short. (Stop and the
+        // panic hotkey end it regardless.)
         roll.ignoresMouseEvents = false
         roll.onUserClose = { [weak self] in self?.byePressed() }
         let click = NSClickGestureRecognizer(target: self, action: #selector(cardClicked))
@@ -272,17 +271,9 @@ final class CreditsController {
 
     @objc private func byePressed() { onDismiss?() }
 
-    /// Write the photo out, at the viewer's explicit request.
-    ///
-    /// This is the ONLY thing in the piece that puts the photo on disk, and it happens
-    /// only because someone pressed the button. The show still writes nothing on its own
-    /// and still discards the image on stop — what changes is that the viewer now has a
-    /// way to keep it other than screenshotting the card.
-    ///
-    /// An `NSSavePanel` would be the obvious choice and is the wrong one here: the end
-    /// card's windows sit at `.screenSaver` level, so the panel opens *behind* them with
-    /// no way to reach it. This writes straight to `~/Pictures` and reports back on the
-    /// button instead.
+    /// The ONLY thing in the piece that puts the photo on disk, and only because the
+    /// viewer pressed the button. Writes straight to `~/Pictures` rather than via
+    /// `NSSavePanel`, which would open *behind* the card's `.screenSaver`-level windows.
     @objc private func savePressed() {
         guard let image = PhotoBoothStore.shared.image else {
             reportSave("no photo to save"); return
@@ -483,10 +474,8 @@ final class CreditsController {
         onDismiss?()
     }
 
-    /// The `code` content view is built by `applyContent`, which owns the terminal
-    /// styling; the label it makes is fished back out rather than rebuilt, so the typed
-    /// text keeps exactly the chrome every other terminal in the piece wears. Shared
-    /// with `typeText`'s terminal mode — see `firstTextField` in `EffectWindow.swift`.
+    /// The label `applyContent` made for a `code` window, fished back out rather than
+    /// rebuilt, so the typed text keeps the chrome every other terminal wears.
     static func firstTextField(in view: NSView?) -> NSTextField? {
         DPECore.firstTextField(in: view)
     }
@@ -513,17 +502,10 @@ final class CreditsController {
     /// `startTyping` — so there is nothing to do here.
     func update(now: Double) {}
 
-    /// The credits run on their own wall-clock timer rather than the show clock.
-    ///
-    /// The card is authored at the last beat of the track, so `PerformanceEngine.step`
-    /// reaches its end-of-piece branch on the very next tick: with `hold` set it calls
-    /// `pause()` and returns, and `pause()` stops the pump. Nothing calls `update(now:)`
-    /// again. Typing off show time therefore froze the copy a character or two in and
-    /// left it there for the whole hold — the card's entire reason to exist is that the
-    /// viewer gets to read it.
-    ///
-    /// A timer of its own is immune to all of that: the copy finishes whether the
-    /// transport is playing, paused, holding at the end, or scrubbed.
+    /// The credits run on their own wall-clock timer rather than the show clock: the
+    /// card fires at the last beat, the engine's end-of-piece branch pauses the pump,
+    /// and nothing calls `update(now:)` again during the hold. A timer of its own
+    /// finishes the copy whether the transport is playing, paused, holding or scrubbed.
     private func startTyping() {
         typeTimer?.invalidate()
         guard credits?.roll != nil, credits?.text.isEmpty == false else { return }
@@ -536,12 +518,9 @@ final class CreditsController {
         advanceTyping()
     }
 
-    /// Stops by elapsed time — characters, or whole lines when the copy types by the
-    /// line — caret blinking at 2 Hz, redraw only when one of them changes. By the line
-    /// the caret waits at the start of the NEXT line, the way a prompt does after a
-    /// command has printed; by the character it trails the last letter. The caret is
-    /// dropped once the copy is done — the card is finished, and that is also the point
-    /// it starts accepting a click.
+    /// Stops by elapsed time — characters, or whole lines — caret blinking at 2 Hz,
+    /// redraw only when one of them changes. The caret is dropped once the copy is
+    /// done, which is also the point the card starts accepting a click.
     private func advanceTyping() {
         guard var c = credits, let label = c.roll else { typeTimer?.invalidate(); return }
         let elapsed = CACurrentMediaTime() - c.start
@@ -631,11 +610,8 @@ final class CreditsController {
         return root
     }
 
-    /// The caption's face: Apple Garamond — the typeface of every Apple print ad and
-    /// manual from 1984 to the iMac — when it is installed (it never shipped with the
-    /// system; the show's machine has it), then Hoefler Text, the Garamond-ish serif
-    /// macOS does ship, then Georgia. Never a handwriting face: the card is a print
-    /// somebody kept, not a scrapbook.
+    /// The caption's face: Apple Garamond when installed (it never shipped with the
+    /// system), then Hoefler Text, then Georgia. Never a handwriting face.
     static func captionFont(size: CGFloat) -> NSFont {
         for name in ["AppleGaramond", "AppleGaramondLight", "HoeflerText-Regular", "Georgia"] {
             if let f = NSFont(name: name, size: size) { return f }

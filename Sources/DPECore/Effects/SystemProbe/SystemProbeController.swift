@@ -1,25 +1,16 @@
 import AppKit
 import SwiftUI
 
-/// The `system_probe` disclosure report, typing itself out in a window — the standalone
-/// systemprobe app, driven by the show clock.
+/// The `system_probe` disclosure report, typing itself out in a window, driven by the
+/// show clock.
 ///
-/// **What changed in the port.**
+/// - The reveal is beat-paced: `linesPerBeat` drives `Probe.revealOne()` from the pump.
+/// - The window wears real macOS chrome but is a non-activating panel that refuses key
+///   and ignores the mouse; it closes on `closeWindow` by `id`.
 ///
-/// - **The reveal is beat-paced.** The standalone app ran a 0.012 s `Timer`; here
-///   `linesPerBeat` drives `Probe.revealOne()` from the pump, using the same fractional
-///   credit accumulator as the photo wall, so the report types in tempo.
-/// - **The window doesn't take focus and can't be closed by hand.** The standalone app
-///   put up a titled, KEY window. This one is titled too — real macOS chrome, named for
-///   the command that produced it — but it is a non-activating panel that refuses to
-///   become key and ignores the mouse, so its traffic lights are scenery. It closes on
-///   `closeWindow` by `id`.
-///
-/// **Permissions.** The report's `identity` section reads the Contacts "me" card and
-/// asks Location Services for a fix — that is the *point* of the piece ("everything this
-/// machine knows about you"), but it means two TCC prompts the rest of the show doesn't
-/// trigger. Both degrade: refused, those lines read `<unavailable>` and the report runs
-/// on. `assets`-only shows never construct a `Probe` at all, so nothing is asked for.
+/// **Permissions.** The `identity` section reads the Contacts "me" card and asks
+/// Location Services for a fix — the only two TCC prompts this show triggers; refused,
+/// those lines read `<unavailable>` and the report runs on.
 ///
 /// **Reversibility.** One window; nothing on disk, nothing in system state.
 ///
@@ -132,18 +123,9 @@ final class SystemProbeController {
 
     /// The report's window, split out so the ownership invariant is testable without
     /// constructing a `Probe` — which would fire the Contacts and Location prompts.
-    ///
-    /// It wears **real macOS chrome**, through the same `BaseEffectWindow` every other
-    /// big window in the show uses: one definition of the style mask, one place that
-    /// converts the authored OUTER frame to a content rect, and `canBecomeKey` already
-    /// refused there — a titled plain `NSWindow` would take focus on a click, which is
-    /// the one thing this window must never do. The title bar is also what makes the
-    /// report read as a program's output rather than as a black rectangle of text.
-    ///
-    /// Two of the base's defaults are deliberately overridden: the report sits at
-    /// `.normal`, below the effect windows that play over it (cue 5's hydra sketches
-    /// are staged beside it), and its body is black rather than the system's window
-    /// background, because the terminal is phosphor-on-black.
+    /// Built on `BaseEffectWindow` (real chrome, key refused — a titled plain NSWindow
+    /// would take focus on a click). Two defaults deliberately overridden: `.normal`
+    /// level, below the effect windows that play over it, and a black body.
     static func makeReportWindow(frame: NSRect, title: String = defaultTitle) -> NSWindow {
         let window = BaseEffectWindow(contentRect: frame, native: true)
         window.title = title

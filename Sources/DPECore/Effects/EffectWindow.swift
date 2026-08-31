@@ -26,16 +26,8 @@ private func loadImageAsync(_ path: String, into imageView: NSImageView) {
 }
 
 /// Tear an image once, off the main thread, and hand the result to a view.
-///
-/// The same displacement / chroma-split / block-corruption pass the desktop glitches
-/// with (`GlitchImage.swift`), pointed at a window instead of the wallpaper. Cached by
-/// path AND settings, because the tear is a pure function of (image, intensity, seed):
-/// two windows asking for the same one decode and glitch once between them, and the
-/// same window tears identically every take.
-///
-/// 512 on the long edge. These are window-sized — the wallpaper's own pass runs at 1280
-/// for a whole screen — and the tear is coarse by design, so there is nothing to gain
-/// from more pixels and a full traversal per extra one to lose.
+/// Cached by path AND settings — the tear is a pure function of (image, intensity,
+/// seed) — and rendered at 512 on the long edge: these are window-sized, not wallpaper.
 private func loadGlitchImageAsync(_ path: String, intensity: Double, seed: UInt64,
                                   into imageView: NSImageView) {
     let key = "\(path)|glitch|\(intensity)|\(seed)" as NSString
@@ -93,21 +85,9 @@ enum TerminalStyle {
 
 // MARK: - Chrome
 
-/// Smallest window that gets REAL macOS chrome.
-///
-/// A native title bar is a fixed ~28pt tall and its traffic lights have a fixed size,
-/// so below roughly this it stops being a title bar and becomes the whole window. The
-/// drawn chrome below scales to any size — which is the only reason it still exists:
-/// sprite pixels and cursor-trail breadcrumbs are 7-30pt and cannot carry a real one.
-///
-/// AppKit honours whatever outer frame it is given — it enforces no minimum — and the
-/// title bar is a fixed 28pt, so the content is simply what is left: a 79x57 window
-/// gets a 29pt body, a 46x34 one gets 6pt. The floor here is therefore only about
-/// degeneracy, not taste: below it the content area would be nothing at all.
-///
-/// Everything above it wears real chrome, down to sprite pixels and cursor-trail
-/// breadcrumbs. The glass torus is the one deliberate exception — it is a shape
-/// floating in a transparent window, not an app window.
+/// Smallest window that gets REAL macOS chrome. The title bar is a fixed ~28pt and
+/// AppKit enforces no minimum frame, so below this the content area would be nothing
+/// at all. Smaller windows render bare; the glass torus is the deliberate exception.
 let nativeChromeMinSize = NSSize(width: 44, height: 34)
 
 /// Whether an authored window of this size and chrome should be a real titled window.
@@ -121,12 +101,6 @@ func usesNativeChrome(_ chrome: String?, size: NSSize) -> Bool {
 func fitsNativeChrome(_ size: NSSize) -> Bool {
     size.width >= nativeChromeMinSize.width && size.height >= nativeChromeMinSize.height
 }
-
-/// NOTE: the drawn "fake chrome" that used to live here — a scaled title bar with
-/// traffic-light dots and a URL pill — is gone entirely. Windows large enough for a
-/// real macOS title bar get one (see `usesNativeChrome`); everything smaller, down to
-/// sprite pixels and cursor-trail breadcrumbs, now renders bare rather than wearing a
-/// miniature imitation.
 
 /// Content view for a pooled micro-window (sprite pixel / trail breadcrumb).
 func makeMicroContentView(size: NSSize, bodyColor: NSColor) -> NSView {
@@ -145,9 +119,6 @@ func makeMicroContentView(size: NSSize, bodyColor: NSColor) -> NSView {
 /// Tempo of the running show, so generative content can lock its animation periods
 /// to the beat. Set by `WindowManager.bpm` when a timeline loads.
 var dpeShowBPM: Double = 120
-
-private let liveCodeInk    = NSColor(hex: "#9BE0FF") ?? .cyan
-private let liveCodeGutter = NSColor(hex: "#3E6E88") ?? .gray
 
 /// A hydra sketch. The patch's own output fills the window — `Hydra` reads the chain
 /// and builds the layer stack it describes — with the source over the top in the
@@ -169,14 +140,10 @@ func makeLiveCodeContentView(_ content: ContentSpec, size: NSSize) -> NSView {
     root.layer?.masksToBounds = true
     root.layer?.cornerRadius = 6
 
-    // No `barH` inset any more: these windows wear a REAL macOS title bar, so the
-    // sketch fills the content rect instead of leaving a gap for a drawn one.
     let body = NSRect(origin: .zero, size: size)
     if running {
-        // Real hydra when the library shipped and nothing turned it off, the Core
-        // Animation impression when it didn't. Only the picture changes: the code, the
-        // prompt and the toolbar are drawn the same way either way, because they are
-        // what makes it read as somebody's editor rather than a video.
+        // Real hydra when the library shipped, the Core Animation impression when it
+        // didn't; the code, prompt and toolbar are drawn the same way either way.
         if let canvas = HydraWeb.take() {
             canvas.frame = body
             canvas.autoresizingMask = [.width, .height]
@@ -218,9 +185,7 @@ func makeLiveCodeContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         return code
     }
 
-    // Shrink to fit. A long patch in a small window runs off the bottom and gets cut
-    // by the window's own corner mask — and a sketch you can only read half of reads
-    // as a bug, not as a style. The type gives way; the source stays whole.
+    // Shrink to fit: the type gives way; the source stays whole.
     var fontSize = min(max(size.height * 0.045, 6.5), 13)
     var pad = max(6, fontSize * 0.8)
     let label = NSTextField(labelWithAttributedString: codeText(fontSize))
@@ -504,11 +469,9 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         av.autoresizingMask = [.width, .height]
         view.addSubview(av)
     case "glitch":
-        // A still, torn once when the window opens and then left alone. Deliberately
-        // NOT animated: cue 15 ramps to ~26 windows on screen, and a per-frame
-        // re-tear in each of them is precisely the window-server load the wallpaper
-        // glitch had to be dialled back from (2.5 Hz → 1.5) to stop the machine
-        // stuttering. One tear, seeded, costs nothing after it has been drawn.
+        // Torn once when the window opens, deliberately NOT animated: cue 15 ramps to
+        // ~26 windows, and a per-frame re-tear in each is the window-server load the
+        // wallpaper glitch had to be dialled back from (2.5 Hz → 1.5).
         view.layer?.backgroundColor = (NSColor(hex: "#0B0E16") ?? .black).cgColor
         view.layer?.cornerRadius = 6
         let gv = NSImageView(frame: body)
@@ -561,14 +524,9 @@ enum DialogIcon: String {
     /// 64pt is the size AppKit lays an alert icon out at.
     static let side: CGFloat = 64
 
-    /// Always returns a FLATTENED bitmap at `side` points.
-    ///
-    /// The system images are resolution-independent and backed by reps that do not draw
-    /// when an `NSImageView` holding them is rendered into an offscreen
-    /// `cacheDisplay` context — they came out as empty boxes in `--snapshot-chrome`
-    /// while the composited `critical` icon, which is already a bitmap, rendered fine.
-    /// Rasterising here makes every variant behave the same, on screen and in snapshots,
-    /// and pins the size AppKit lays an alert icon out at.
+    /// Always returns a FLATTENED bitmap at `side` points: the system images' reps do
+    /// not draw into an offscreen `cacheDisplay` context (verified — empty boxes in
+    /// `--snapshot-chrome`), so every variant is rasterised here.
     func image() -> NSImage? {
         guard self != .none else { return nil }
         let side = DialogIcon.side
@@ -609,12 +567,8 @@ func makeDialogContentView(title: String, message: String, buttons: [String],
     root.layer?.borderWidth = 1
     root.layer?.borderColor = NSColor.separatorColor.cgColor
 
-    // macOS alert typography: the message is bold at the standard system size, the
-    // informative text is regular at the small system size. Those two constants are
-    // what AppKit itself uses, so they follow the system rather than guessing 15/12.
-    // The illustration sits at the left with the text column beside it — the layout a
-    // real alert uses at this aspect. Dropped on a panel too small to carry it, so a
-    // dense show of little dialogs doesn't turn into all icon and no words.
+    // macOS alert typography and layout; the icon is dropped on a panel too small to
+    // carry it, so a dense show of little dialogs doesn't turn into all icon, no words.
     let side = DialogIcon.side
     var textX: CGFloat = 20
     if size.width >= 300, size.height >= 130, let image = icon.image() {
@@ -721,9 +675,8 @@ class BaseEffectWindow: NSPanel, NSWindowDelegate {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
-    /// The real traffic-light close button routes to the same hook the drawn one used,
-    /// so `respawn` still works — the window comes back rather than staying shut. We
-    /// refuse the close and let the controller decide what happens.
+    /// Refuse the close and let the controller decide — `respawn` needs the window to
+    /// come back rather than staying shut.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         guard let onUserClose else { return false }
         onUserClose()
@@ -738,12 +691,9 @@ class BaseEffectWindow: NSPanel, NSWindowDelegate {
     /// away mid-show.
     func makeInteractive(size: NSSize) {
         ignoresMouseEvents = false
-        // A native window already drags by its real title bar and closes with its real
-        // close button, so it needs neither the body-drag nor the hit-tested close zone.
+        // A native window already drags by its title bar and closes by its real button;
+        // a bare one can only be shoved around by its body.
         guard !isNativeChrome else { return }
-        // A sub-title-bar-sized window has no chrome at all now, so there is nothing to
-        // hit-test a close on — it can be shoved around, and `respawn` reaches it only
-        // through a real close button, which means only on windows big enough to have one.
         isMovableByWindowBackground = true
     }
 
@@ -783,19 +733,9 @@ final class EffectWindow: BaseEffectWindow {
         if interactive { makeInteractive(size: contentRect.size) }
     }
 
-    /// Install (or swap in) this window's content.
-    ///
-    /// **This is the only place content is rendered**, because two things have to happen
-    /// together and one of them is easy to forget on the reuse path:
-    ///
-    /// 1. A window wearing a real title bar must not also paint a drawn one — it would
-    ///    sit inside the frame, under the genuine article, as a second fake bar.
-    /// 2. The content view is sized to the CONTENT rect, not the outer frame, or it
-    ///    renders a title bar's worth too tall and the bottom is clipped.
-    ///
-    /// `WindowManager` re-opens the same id constantly (the show cycles a pool of them),
-    /// and that path used to re-render the authored spec verbatim — which did exactly
-    /// the wrong thing on both counts for every window after its first open.
+    /// Install (or swap in) this window's content. The only place content is rendered:
+    /// a native-chrome window must not also paint a drawn bar, and the content view is
+    /// sized to the CONTENT rect, not the outer frame — the reuse path included.
     func applyContent(_ content: ContentSpec, frame: NSRect) {
         setFrame(frame, display: false)
         var spec = content
@@ -847,25 +787,11 @@ final class MicroWindow: BaseEffectWindow {
     }
 }
 
-/// An elementary cellular automaton, printing itself out.
-///
-/// Terminal's own colours — black monospace on white — because these windows sit in the
-/// fill (cue 15) beside real terminals, and a green-on-black one would read as a
-/// different machine rather than as one more thing this one is doing.
-///
-/// **The grid comes from the VIEW, not from the timeline.** Columns and rows are however
-/// many cells fit at the authored point size, so the field reaches all four edges of
-/// whatever window it lands in. Authoring a grid and hoping it matched the window is what
-/// left a dead strip down the right side of the first version of these.
-///
-/// **It scrolls.** One generation per tick at `hz`, the oldest row falling off the top,
-/// the way a terminal prints — so the rule is being *run*, not shown. The buffer starts
-/// full (the first screenful is generated in `init`) so a window opens mid-computation
-/// rather than empty, and so the still renderer, which has no run loop to drive the
-/// timer, still catches a real field.
-///
-/// Deterministic: row n is a pure function of `rule` and `seed`, so a given window shows
-/// the same automaton every take.
+/// An elementary cellular automaton, printing itself out in Terminal's own colours.
+/// The grid comes from the VIEW, not the timeline, so the field reaches every edge.
+/// It scrolls one generation per tick at `hz`; the buffer starts full so a window opens
+/// mid-computation and the still renderer (no run loop) still catches a real field.
+/// Deterministic: row n is a pure function of `rule` and `seed`.
 final class AutomatonView: NSView {
     private let textLayer = CATextLayer()
     private let font: NSFont
@@ -902,9 +828,7 @@ final class AutomatonView: NSView {
         textLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
         layer?.addSublayer(textLayer)
 
-        // Row 0. A single live cell gives the classic light cone; a seeded random row is
-        // what left-moving rules (110) need to show their structure instead of a
-        // lopsided corner.
+        // Row 0: seed 0 is the classic single live cell; otherwise a seeded random row.
         cells = [UInt8](repeating: 0, count: cols)
         if seed == 0 {
             cells[cols / 2] = 1
@@ -929,9 +853,8 @@ final class AutomatonView: NSView {
 
     deinit { timer?.invalidate() }
 
-    /// Stop the moment the view leaves the screen: `closeWindow` drops the window, and a
-    /// timer still ticking against a detached view is a leak the show would accumulate
-    /// once per automaton per run.
+    /// Stop when the view leaves the screen — a timer ticking against a detached view
+    /// is a leak the show would accumulate once per automaton per run.
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil { timer?.invalidate(); timer = nil }
@@ -952,9 +875,7 @@ final class AutomatonView: NSView {
         cells = next
     }
 
-    /// The grid the view chose for itself, and what it has computed so far. Test seam:
-    /// "the field reaches every edge" is the whole requirement here, and the only way to
-    /// check it is to ask the view what grid it picked for a given size.
+    /// Test seam: the grid the view chose for itself, and what it has computed so far.
     var gridForTesting: (cols: Int, rows: Int) { (cols, rows) }
     var linesForTesting: [String] { lines }
 
@@ -1005,13 +926,10 @@ func firstTextField(in view: NSView?) -> NSTextField? {
     return nil
 }
 
-/// A plain document mid-composition: white page, dark text, blinking caret. The
-/// deliberate opposite of everything else on screen — nothing neon, nothing flashing,
-/// just someone writing.
-///
+/// A plain document mid-composition: white page, dark text, blinking caret.
 /// The text lives in a CATextLayer rather than an NSTextField: the typewriter rewrites
-/// it ~30 times a second and the layer lays out on the render server, where an
-/// NSTextField would re-run cell layout on the main thread every keystroke.
+/// it ~30 times a second, and an NSTextField would re-run cell layout on the main
+/// thread every keystroke.
 final class TextEditorView: NSView, TypedTextSink {
     private let textLayer = CATextLayer()
     private let font: NSFont
@@ -1109,10 +1027,8 @@ final class FlashWindow: BaseEffectWindow {
     }
 
     /// Hard on/off via LAYER OPACITY on a persistently ordered-in window — no window
-    /// show/hide (which forces the server to recomposite the ~25 revealed windows
-    /// every flash) and no fade (which re-blends the whole screen each frame). Idle at
-    /// opacity 0; a flash is a GPU opacity toggle. This was the single biggest win for
-    /// keeping the pump fed during a dense strobe.
+    /// show/hide (recomposites every revealed window per flash) and no fade (re-blends
+    /// the whole screen each frame). Idle at opacity 0; a flash is a GPU opacity toggle.
     func flash(color: NSColor, duration: Double) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)

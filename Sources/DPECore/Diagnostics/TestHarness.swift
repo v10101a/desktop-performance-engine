@@ -1,20 +1,12 @@
 import Foundation
 
-/// A minimal assertion harness.
-///
-/// **Why not XCTest.** This project builds with the Command Line Tools toolchain, which
+/// A minimal assertion harness. Not XCTest because the Command Line Tools toolchain
 /// ships neither XCTest nor swift-testing — `swift test` cannot work without a full
-/// Xcode install. That constraint is presumably why the app grew its `--test-*` NSLog
-/// modes in the first place. Those print expectations next to results and leave a human
-/// to compare them, so a regression prints `3/6` beside `(expect 6/6)` and still exits
-/// 0; nothing fails.
-///
-/// This is the smallest thing that fixes that: named checks, real failures, a non-zero
-/// exit code, and output a CI job can gate on. Run it with `swift run dpe-tests`.
+/// Xcode install. Named checks, real failures, a non-zero exit code: `swift run dpe-tests`.
 ///
 /// The tests live inside DPECore rather than a separate target because without a test
-/// target there is no `@testable import`, and the alternative — making every tested type
-/// public — would be a far larger change to the library's surface for no benefit.
+/// target there is no `@testable import`, and making every tested type public would be
+/// a far larger change to the library's surface.
 public final class TestHarness {
     private var passed = 0
     private var failures: [String] = []

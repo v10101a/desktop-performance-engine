@@ -1,23 +1,22 @@
 import AppKit
 
-// Split out of WindowManager.swift, which had grown to 753 lines covering seven
-// unrelated subsystems. Extensions can't hold stored properties, so the state these
-// operate on still lives in the core type — this is an organisational split, not a
-// decoupling. Genuinely extracting these into their own executors is the right end
-// state, but it should wait until the animation paths have test coverage; there is
-// none today, and they are the hardest thing here to verify by eye.
+// Organisational split out of WindowManager.swift: extensions can't hold stored
+// properties, so the state these operate on still lives in the core type.
 
 extension WindowManager {
     // MARK: - Sprite (window zoetrope)
 
     func beginSprite(_ p: SpriteParams, at now: Double, bpm: Double) {
         close(id: p.id)
-        let cellW = p.cell ?? 30
-        let cellH = cellW * (p.cellAspect ?? 0.72)
+        // Cells, strides and every authored point map through the canvas scale, so
+        // the horse spans the same fraction of any screen.
+        let (sx, sy) = ScreenGeometry.scale(for: screen(p.screen))
+        let cellW = (p.cell ?? 30) * sx
+        let cellH = (p.cell ?? 30) * (p.cellAspect ?? 0.72) * sy
         let gap = p.gap ?? 4
         let frameOffsets = WindowManager.spriteFrameOffsets(p.frames,
-                                                           strideX: cellW + gap,
-                                                           strideY: cellH + gap)
+                                                           strideX: cellW + gap * sx,
+                                                           strideY: cellH + gap * sy)
         let maxLit = frameOffsets.map(\.count).max() ?? 0
         guard maxLit > 0 else {
             NSLog("[DPE] sprite \"\(p.id)\": no lit cells")
@@ -32,17 +31,17 @@ extension WindowManager {
         let duration = p.durationSeconds ?? p.durationBeats.map { $0 * 60.0 / bpm }
         let vel = p.velocity ?? [0, 0]
         var target: CGPoint?
-        if let t = p.target, t.count >= 2 { target = CGPoint(x: t[0], y: t[1]) }
+        if let t = p.target, t.count >= 2 { target = CGPoint(x: t[0] * sx, y: t[1] * sy) }
         let travel = p.travelSeconds ?? ((p.travelBeats ?? 4) * 60.0 / bpm)
         var exit: CGPoint?
-        if let e = p.exit, e.count >= 2 { exit = CGPoint(x: e[0], y: e[1]) }
+        if let e = p.exit, e.count >= 2 { exit = CGPoint(x: e[0] * sx, y: e[1] * sy) }
         let exitDur = p.exitSeconds ?? ((p.exitBeats ?? 4) * 60.0 / bpm)
         sprites[p.id] = Sprite(frameOffsets: frameOffsets, pool: pool, cellHeight: cellH,
                                screenFrame: scr.frame,
-                               origin: CGPoint(x: p.origin.count > 0 ? p.origin[0] : 0,
-                                               y: p.origin.count > 1 ? p.origin[1] : 0),
-                               velocity: CGVector(dx: vel.count > 0 ? vel[0] : 0,
-                                                  dy: vel.count > 1 ? vel[1] : 0),
+                               origin: CGPoint(x: p.origin.count > 0 ? p.origin[0] * sx : 0,
+                                               y: p.origin.count > 1 ? p.origin[1] * sy : 0),
+                               velocity: CGVector(dx: vel.count > 0 ? vel[0] * sx : 0,
+                                                  dy: vel.count > 1 ? vel[1] * sy : 0),
                                target: target,
                                travelDuration: max(0.01, travel),
                                travelEasing: easingCurve(p.travelEasing ?? "easeOut"),

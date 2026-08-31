@@ -89,13 +89,10 @@ enum Hydra {
     }
 
     /// Every `name(args)` call in source order, flattened depth-first: an op, then
-    /// whatever was written inside its parentheses. That order is what the builder
-    /// wants — `diff` arrives before the source it blends against.
-    ///
-    /// Hand-written rather than a regex because the interesting ops are exactly the
-    /// ones a regex cannot see. `[^()]*` between parens cannot match `diff(osc(…))` or
-    /// `rotate(()=>time*0.4)`, so both used to be dropped on the floor — silently, and
-    /// they are usually the ops carrying all the motion.
+    /// whatever was written inside its parentheses — `diff` arrives before the source
+    /// it blends against. Hand-written rather than a regex: `[^()]*` between parens
+    /// cannot match `diff(osc(…))` or `rotate(()=>time*0.4)`, and those are usually
+    /// the ops carrying all the motion.
     static func parse(_ source: String) -> [Op] {
         let chars = Array(source)
         var ops: [Op] = []
@@ -343,11 +340,8 @@ enum Hydra {
             }
         }
         // Sublayers draw in array order, so a blend has to END above the chain it is
-        // blended against: `A.diff(B)` is the difference of B over A. The branch was
-        // added the moment it was written, but the main chain keeps growing wrappers
-        // after that — `.scrollY().repeat().scale()` each append a fresh one — and
-        // every wrapper landed on top of the branch, burying it. Lifting the branches
-        // last puts them back over the chain they belong to.
+        // blended against — the main chain keeps growing wrappers after a branch is
+        // added, burying it. Lifting the branches last puts them back on top.
         for layer in blended {
             layer.removeFromSuperlayer()
             root.addSublayer(layer)
@@ -434,16 +428,10 @@ enum Hydra {
         layer.add(a, forKey: "scroll")
     }
 
-    /// How long one full cycle of a motion should take.
-    ///
-    /// The two kinds of argument mean genuinely different things and this is the one
-    /// place that difference is decided. A `()=>time*k` is a literal claim about
-    /// seconds — 0.4 radians a second, half a screen a second — so it is honoured as
-    /// written. A bare number is not a rate at all in hydra, it is a static offset;
-    /// reading it as one would leave most of the show's sketches sitting perfectly
-    /// still, so a constant animates at a period keyed to the show's BPM instead.
-    /// That liberty is deliberate, and it is why eight of the nine windows stay on the
-    /// grid while the hand-written one says exactly what it means.
+    /// How long one full cycle of a motion should take. A `()=>time*k` is a literal
+    /// claim about seconds and is honoured as written; a bare number is not a rate in
+    /// hydra at all, so a constant animates at a period keyed to the show's BPM
+    /// instead — a deliberate liberty.
     private static func cycleSeconds(rate: Double, isDynamic: Bool,
                                      unitsPerCycle: Double, beatsPerCycle: Double,
                                      beat: Double) -> Double {
@@ -458,11 +446,7 @@ enum Hydra {
         switch op.name {
         case "rotate":
             // `rotate(0.2, 0.1)` is a fixed angle plus a spin; `rotate(()=>time*0.4)`
-            // is nothing but spin. Reading the second form's rate as a static angle
-            // would leave the layer sitting still at a slight tilt.
-            //
-            // The rate is also in radians per second, so 0.4 is a turn every 15.7s —
-            // sedate, and nothing like the beat-locked period a bare constant gets.
+            // is nothing but spin, its rate in radians per second.
             let angle = op.isDynamic(0) ? 0 : op.arg(0, 0)
             let speed = op.isDynamic(0) ? op.arg(0, 0) : op.arg(1, 0)
             layer.transform = CATransform3DRotate(layer.transform, CGFloat(angle), 0, 0, 1)
@@ -520,12 +504,10 @@ enum Hydra {
                 layer.add(cycle, forKey: "hue")
             }
         case "luma":
-            // hydra keys the dark end out — under the threshold goes transparent, and
-            // what survives is scaled by how far over it got. Posterizing instead (the
-            // old alias) kept every dark pixel and banded it, which is close to the
-            // opposite. Four filters: luminance into alpha, a ramp across the
-            // threshold, a clamp, then premultiply so the surviving colour dims the way
-            // hydra's `vec4(c0.rgb*a, a)` does. A linear ramp where hydra smoothsteps.
+            // hydra keys the dark end out — under the threshold goes transparent, what
+            // survives scaled by how far over it got. Four filters: luminance into
+            // alpha, a ramp across the threshold, a clamp, then premultiply. A linear
+            // ramp where hydra smoothsteps.
             let threshold = op.arg(0, 0.5), tolerance = op.arg(1, 0.1)
             let low = threshold - tolerance
             let ramp = max(0.0001, 2 * tolerance)
@@ -591,11 +573,9 @@ enum Hydra {
             r.instanceTransform = CATransform3DMakeRotation(slice, 0, 0, 1)
             return r
         case "scrollX", "scrollY":
-            // Scrolling, not sliding. Animating `position` on a single layer walked the
-            // sketch out of its own window and left black behind it — a patch whose
-            // motion IS the scroll went blank a few seconds in. Three instances
-            // stepping against the travel means whatever leaves one edge has already
-            // arrived at the other, so the loop never shows a seam.
+            // Scrolling, not sliding: animating `position` on a single layer walks the
+            // sketch out of its own window. Three instances stepping against the travel
+            // mean whatever leaves one edge has already arrived at the other.
             let vertical = op.name == "scrollY"
             let step = vertical ? layer.bounds.height : layer.bounds.width
             let amount = op.arg(0, 0.1)
@@ -615,11 +595,8 @@ enum Hydra {
             return r
         case "repeat", "repeatX", "repeatY":
             // hydra tiles UV space: `repeat(4)` is a grid, every tile the whole frame.
-            // A replicator steps in ONE direction, so asking a single one for both
-            // axes marched the tiles diagonally across the window and left most of it
-            // empty — four strips climbing to the corner instead of a wall of copies.
-            // A row, then that row stacked, gives the grid the code asks for. Counts
-            // default to hydra's own 3, so `repeat(4)` is 4 across and 3 down.
+            // A replicator steps in ONE direction, so it takes a row, then that row
+            // stacked, to make the grid. Counts default to hydra's own 3.
             let nx = op.name == "repeatY" ? 1 : max(1, min(12, Int(op.arg(0, 3))))
             let ny: Int
             switch op.name {

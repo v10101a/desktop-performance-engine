@@ -409,12 +409,9 @@ enum StillRenderer {
         let pad: CGFloat = 24
         var shots: [NSImage] = []
 
-        // NOTE: the traffic lights draw in the INACTIVE style here, and in the show.
+        // NOTE: the traffic lights draw in the INACTIVE style here, and in the show —
         // AppKit colours them only for a key/main window, and these windows deliberately
-        // never become key — spawning one must not interrupt whatever is being typed.
-        // That is genuinely how a background macOS window looks; it is not a defect of
-        // this snapshot. Activating the app and calling makeKey() were both tried and
-        // changed nothing, because the window still is not key.
+        // never become key. Not a defect of this snapshot (verified: makeKey() changes nothing).
 
         for (spec, _) in specs {
             let win = EffectWindow(contentRect: NSRect(origin: .zero, size: size), content: spec)

@@ -1,15 +1,9 @@
 import AppKit
 
 /// Fills every screen with randomly sized, randomly placed photo windows, then keeps
-/// laying new photos over the wall — the standalone `photowall` app, driven by the
-/// show clock instead of its own timers.
-///
-/// **What changed in the port.** The standalone app ran two `NSTimer`s (a fast fill
-/// rate, then a slower churn rate) and swapped between them. Here there is no timer:
-/// `update(now:)` runs on the display pump like every other effect, and placement is
-/// paced by a *beat credit* accumulator, so the wall fills in tempo and re-times
-/// itself if the document BPM changes. Everything downstream of "place one window"
-/// — `Planner`, `ScreenCoverage`, `PhotoIndex` — is the original code unchanged.
+/// laying new photos over the wall, driven by the show clock. No timers: `update(now:)`
+/// runs on the display pump and placement is paced by a *beat credit* accumulator, so
+/// the wall fills in tempo.
 ///
 /// **Reversibility.** The wall is a pile of windows and nothing else: no cursor warp,
 /// no icon moves, no wallpaper. `closeAll()` takes the desktop back exactly, which is

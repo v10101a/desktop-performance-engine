@@ -32,7 +32,11 @@ final class CursorController {
     private var sampleCounter = 0
 
     func begin(_ p: CursorPathParams, at now: Double, bpm: Double) {
-        let pts = p.points.compactMap { $0.count >= 2 ? CGPoint(x: $0[0], y: $0[1]) : nil }
+        // Authored points map through the same canvas scale as window frames.
+        let (sx, sy) = ScreenGeometry.scale(for: ScreenGeometry.screen(nil))
+        let pts = p.points.compactMap {
+            $0.count >= 2 ? CGPoint(x: $0[0] * sx, y: $0[1] * sy) : nil
+        }
         guard !pts.isEmpty else { return }
         let duration = p.durationSeconds ?? ((p.durationBeats ?? 1) * 60.0 / bpm)
         let catmull = (p.path ?? "linear") == "catmullRom" && pts.count >= 3

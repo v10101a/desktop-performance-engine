@@ -13,6 +13,14 @@ final class WallpaperController {
     private var original: [(screen: NSScreen, url: URL)] = []
     private var generatedColors: [String: URL] = [:]
 
+    /// The WallpaperAgent's own store, copied before the first swap. Per-SPACE
+    /// wallpapers live only there: `setDesktopImageURL` reaches the active Space of
+    /// each screen, so a viewer with more desktops keeps the show's blue on every
+    /// other one unless the whole store comes back too (see `restoreAllSpaces`).
+    private var storeSnapshot: URL?
+    private static let agentStore = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/com.apple.wallpaper/Store/Index.plist")
+
     var hasSnapshot: Bool { !original.isEmpty }
 
     /// The desktop picture as it was before the show touched it — what the glass torus
@@ -37,7 +45,17 @@ final class WallpaperController {
             guard let url = NSWorkspace.shared.desktopImageURL(for: screen) else { return nil }
             return (screen, url)
         }
-        NSLog("[DPE] wallpaper snapshot: \(original.count) screen(s)")
+        storeSnapshot = nil
+        if FileManager.default.fileExists(atPath: Self.agentStore.path) {
+            let copy = FileManager.default.temporaryDirectory
+                .appendingPathComponent("dpe-wallpaper-store-\(ProcessInfo.processInfo.processIdentifier).plist")
+            try? FileManager.default.removeItem(at: copy)
+            if (try? FileManager.default.copyItem(at: Self.agentStore, to: copy)) != nil {
+                storeSnapshot = copy
+            }
+        }
+        NSLog("[DPE] wallpaper snapshot: \(original.count) screen(s)"
+            + (storeSnapshot != nil ? " + the agent store (all Spaces)" : ""))
     }
 
     /// Put the original wallpaper back, and make sure it is the *last* thing the
@@ -61,6 +79,30 @@ final class WallpaperController {
             }
         }
         NSLog("[DPE] wallpaper restored (\(shots.count) screen(s))")
+    }
+
+    /// Put the agent's whole store back and bounce WallpaperAgent, so every OTHER
+    /// Space gets its picture back too — `restore()` only reaches the active one.
+    /// FINAL teardown only (stop/panic/quit): a bounce mid-show or on seek would
+    /// flicker the desktop for nothing. Skipped when the store never changed.
+    /// `sync` on `swapQueue` for the same single-writer/must-finish reasons as
+    /// `restore()`.
+    func restoreAllSpaces() {
+        guard let snap = storeSnapshot else { return }
+        if let a = try? Data(contentsOf: snap), let b = try? Data(contentsOf: Self.agentStore),
+           a == b {
+            NSLog("[DPE] wallpaper store unchanged — no agent bounce needed")
+            return
+        }
+        swapQueue.sync {
+            try? FileManager.default.removeItem(at: Self.agentStore)
+            try? FileManager.default.copyItem(at: snap, to: Self.agentStore)
+            let kill = Process()
+            kill.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+            kill.arguments = ["WallpaperAgent"]
+            try? kill.run()
+        }
+        NSLog("[DPE] wallpaper store restored for every Space (WallpaperAgent bounced)")
     }
 
     // MARK: - Apply
