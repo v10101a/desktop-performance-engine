@@ -282,6 +282,13 @@
  "events": [
   {
    "beat": 0,
+   "type": "hideOtherApps",
+   "params": {
+    "id": "apps"
+   }
+  },
+  {
+   "beat": 0,
    "type": "deskWallpaper",
    "params": {
     "id": "desk",

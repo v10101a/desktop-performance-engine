@@ -62,7 +62,7 @@ and the kicks stop for 53–55; bar 56 is the pickup back in.
 
 | # | phrase | fires on | what happens | how |
 |---|---|---|---|---|
-| 1 | INTRO A + 0.0 | f 11 · beat 0 | The intro sequence **as it is** — the stalled restart card, the face, the photosensitivity alert, DO YOU WANT THE MALWARE?. Every permission the show needs is raised here. The desktop is already DJ blue. | `IntroGate` (untouched) + `deskWallpaper` solid `#020AF5` |
+| 1 | INTRO A + 0.0 | f 11 · beat 0 | The intro sequence **as it is** — the stalled restart card, the face, the photosensitivity alert, DO YOU WANT THE MALWARE?. Every permission the show needs is raised here. Every other app is hidden so the desktop is in view, and it is already DJ blue. | `IntroGate` (untouched) + `hideOtherApps` + `deskWallpaper` solid `#020AF5` |
 | 2 | INTRO A + 3.2 | f 207 · beat 14 | At bar 4 the blue desktop goes and the viewer's **own** wallpaper is back. | the Act-1 `deskWallpaper` expires; `WallpaperController` restores the snapshot |
 | 3 | INTRO A + 4.2 | f 263 · beat 18 | A centred **Terminal window types itself out**, one line a beat with a block cursor — the same surface and cadence as the credits on the end card. It says what the show is about to do to the machine, and ends on `⌃⌥⌘Esc` and `$ ./giveit2me --play`. 12 lines, the last landing f 432 — half a bar of air before cue 4 takes it. | `typeText` · `chrome: terminal` |
 | 4 | INTRO B + 0.0 | f 460 · beat 32 | The welcome window closes; the **system probe** opens in real macOS chrome, titled `./scan_identity`, and starts typing. | `closeWindow` + `systemProbe` |

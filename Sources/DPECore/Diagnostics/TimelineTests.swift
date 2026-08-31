@@ -19,11 +19,23 @@ enum TimelineTests {
 
             t.equal(TimelineEvent.registeredTypeNames,
                     ["closeWindow", "credits", "cursorPath", "cursorTrail", "deskWallpaper",
-                     "fakeDialog", "fileSwarm", "glassTorus", "jiggle", "moveWindow",
+                     "fakeDialog", "fileSwarm", "glassTorus", "hideOtherApps", "jiggle", "moveWindow",
                      "openWindow", "oracle", "photoBooth", "photoWall", "rearrangeIcons",
                      "reboot", "screenFlash", "sprite", "systemProbe", "typeText",
                      "wallpaper"],
                     "registered event types")
+
+            // The stage-clearing event takes no required params at all.
+            if let ev = decode(#"{"beat":0,"type":"hideOtherApps","params":{}}"#),
+               case .hideOtherApps(let p) = ev.action {
+                t.equal(p.id ?? "", "", "hideOtherApps id defaults to nil")
+                t.equal(p.except ?? [], [], "hideOtherApps except defaults to nil")
+            } else { t.expect(false, "bare hideOtherApps failed to decode") }
+            if let ev = decode(#"{"beat":0,"type":"hideOtherApps","params":{"id":"apps","except":["com.apple.finder"]}}"#),
+               case .hideOtherApps(let p) = ev.action {
+                t.equal(p.id ?? "", "apps", "hideOtherApps id")
+                t.equal(p.except ?? [], ["com.apple.finder"], "hideOtherApps except")
+            } else { t.expect(false, "hideOtherApps failed to decode") }
 
             // --- the restructured show's new acts ---
 

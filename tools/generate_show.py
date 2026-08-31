@@ -241,6 +241,11 @@ VIDEO_W, VIDEO_H = round(W * 0.34), round(H * 0.32)
 # `meta.allowWallpaper` gates it; the snapshot is taken here, before the first swap,
 # and restored on stop, panic and quit as well.
 # =============================================================================
+# First, clear the stage: every other app is hidden (not minimised, not a new Space —
+# `unhide` puts each window back exactly where it was) so the desktop is actually in
+# view when it goes blue. A viewer with a dozen windows open used to miss the whole
+# opening. They come back, as they were, on stop/panic.
+add(0, "hideOtherApps", {"id": "apps"})
 add(0, "deskWallpaper", {"id": "desk", "mode": "solid", "hex": DJ_BLUE,
                          "durationSeconds": round(secs(B["restore"]) - secs(0), 3)})
 

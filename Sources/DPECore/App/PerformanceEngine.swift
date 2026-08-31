@@ -19,6 +19,7 @@ final class PerformanceEngine {
     private let oracle = OracleController()
     private let booth = PhotoBoothController()
     private let credits = CreditsController()
+    private let otherApps = OtherAppsController()
     private let context: EventContext
     private let restore: RestoreManager
     private let panic = PanicController()
@@ -26,7 +27,9 @@ final class PerformanceEngine {
     /// Every executor, once. The tick, `seek` and `stopAndRestore` all iterate this
     /// rather than naming each one — see the `Executor` protocol for why.
     private var executors: [Executor] {
-        [windows, cursor, photos, torus, probe, wallpaper, swarm, reboot, oracle, booth, credits]
+        // `otherApps` last: the show's own windows are gone before the viewer's return.
+        [windows, cursor, photos, torus, probe, wallpaper, swarm, reboot, oracle, booth, credits,
+         otherApps]
     }
 
     /// True once the track has ended under a held end card: the show is paused there,
@@ -68,7 +71,7 @@ final class PerformanceEngine {
         context = EventContext(windows: windows, cursor: cursor, icons: icons,
                                wallpaper: wallpaper, photos: photos, torus: torus,
                                probe: probe, swarm: swarm, reboot: reboot, oracle: oracle,
-                               booth: booth, credits: credits)
+                               booth: booth, credits: credits, otherApps: otherApps)
         restore = RestoreManager(windows: windows)
         credits.onDismiss = { [weak self] in
             self?.stopAndRestore()

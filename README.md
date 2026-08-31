@@ -591,7 +591,7 @@ seconds, for reading.
 
 | time | cue | |
 |---|---|---|
-| 0:00 | **THE BLUE** | the intro gate, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
+| 0:00 | **THE BLUE** | the intro gate; every other app is hidden (`hideOtherApps`) so the desktop is in view, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
 | 0:06 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
 | 0:08 | **WELCOME** | a Terminal window types itself out, a line a beat with a block cursor — the same surface the credits use at the other end of the piece. It names what the show is about to borrow, and signs off on `$ ./giveit2me --play` |
 | 0:15 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
@@ -1407,6 +1407,24 @@ macOS prompts with.
 Verify the ported math headlessly with `--test-photowall`: it asserts the fill
 terminates with exact coverage, that 2,000 churn placements retire ~1,980 windows
 without ever exposing a bare cell, and that the beat pacing yields the expected rate.
+
+### `hideOtherApps`
+
+Clears the stage. Every other running app is hidden so the desktop — the wallpaper the
+show paints — is actually in view; a viewer with a dozen windows open used to miss the
+opening entirely.
+
+```jsonc
+{ "beat": 0, "type": "hideOtherApps", "params": { "id": "apps" } }
+{ "beat": 0, "type": "hideOtherApps", "params": { "except": ["com.apple.finder"] } }
+```
+
+Hide, not minimise and not a new Space: `NSRunningApplication.hide()` needs no
+permission and `unhide()` puts every window back exactly where it was — same Space,
+same stacking — with no per-window animation. Only apps that were visible when the
+event fired are recorded, so anything the viewer had hidden themselves stays hidden.
+They all come back on stop, panic, seek, or `closeWindow` with the event's `id`
+(default `"otherApps"`). `except` is a list of bundle identifiers to leave alone.
 
 ### `wallpaper` (disabled by default)
 

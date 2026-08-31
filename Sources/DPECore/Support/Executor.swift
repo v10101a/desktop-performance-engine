@@ -33,6 +33,7 @@ extension OracleController: Executor {}
 extension PhotoBoothController: Executor {}
 extension CreditsController: Executor {}
 extension FileSwarmController: Executor {}
+extension OtherAppsController: Executor {}
 
 /// `WallpaperController` predates the protocol and owns the plain `wallpaper` event as
 /// well as `deskWallpaper`, so its tick and teardown are named for the latter.

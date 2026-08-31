@@ -15,6 +15,7 @@ final class EventContext {
     let oracle: OracleController
     let booth: PhotoBoothController
     let credits: CreditsController
+    let otherApps: OtherAppsController
 
     /// Document BPM, so beat-based durations resolve to seconds.
     var bpm: Double = 120
@@ -24,7 +25,8 @@ final class EventContext {
          photos: PhotoWallController, torus: GlassTorusController,
          probe: SystemProbeController, swarm: FileSwarmController,
          reboot: RebootController, oracle: OracleController,
-         booth: PhotoBoothController, credits: CreditsController) {
+         booth: PhotoBoothController, credits: CreditsController,
+         otherApps: OtherAppsController) {
         self.windows = windows
         self.cursor = cursor
         self.icons = icons
@@ -37,6 +39,7 @@ final class EventContext {
         self.oracle = oracle
         self.booth = booth
         self.credits = credits
+        self.otherApps = otherApps
     }
 
     /// Always invoked on the main thread (the pump hops to main before ticking).
@@ -58,6 +61,7 @@ final class EventContext {
             oracle.stop(id: p.id)
             booth.stop(id: p.id)
             credits.stop(id: p.id)
+            otherApps.stop(id: p.id)
         case .moveWindow(let p):
             windows.beginMove(p, at: now, bpm: bpm)
         case .screenFlash(let p):
@@ -94,6 +98,8 @@ final class EventContext {
             booth.begin(p, at: now, bpm: bpm)
         case .credits(let p):
             credits.begin(p, at: now, bpm: bpm)
+        case .hideOtherApps(let p):
+            otherApps.begin(p)
         }
     }
 }

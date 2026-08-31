@@ -511,6 +511,15 @@ struct FileSwarmParams: Decodable {
 
 // MARK: - Event
 
+/// `hideOtherApps`: hide every other running app so the desktop is in view. Undone on
+/// stop/panic/seek, or by `closeWindow` with the same `id`.
+struct HideOtherAppsParams: Decodable {
+    /// Default `"otherApps"`.
+    var id: String? = nil
+    /// Bundle identifiers to leave alone (e.g. `"com.apple.finder"`).
+    var except: [String]? = nil
+}
+
 enum EventAction {
     case openWindow(OpenWindowParams)
     case fakeDialog(FakeDialogParams)
@@ -533,6 +542,7 @@ enum EventAction {
     case oracle(OracleParams)                 // the magic torus asks for a question
     case photoBooth(PhotoBoothParams)         // the viewer's camera, 3·2·1, shutter
     case credits(CreditsParams)               // the end card, held past the track
+    case hideOtherApps(HideOtherAppsParams)   // clear the stage: every other app hidden
 }
 
 extension EventAction {
@@ -561,6 +571,7 @@ extension EventAction {
         case .oracle: return "oracle"
         case .photoBooth: return "photoBooth"
         case .credits: return "credits"
+        case .hideOtherApps: return "hideOtherApps"
         }
     }
 }
@@ -602,6 +613,7 @@ struct TimelineEvent: Decodable {
         "oracle": { .oracle(try $0.decode(OracleParams.self, forKey: .params)) },
         "photoBooth": { .photoBooth(try $0.decode(PhotoBoothParams.self, forKey: .params)) },
         "credits": { .credits(try $0.decode(CreditsParams.self, forKey: .params)) },
+        "hideOtherApps": { .hideOtherApps(try $0.decode(HideOtherAppsParams.self, forKey: .params)) },
     ]
 
     /// Every `"type"` string the decoder accepts. Ordered, for stable test output.
