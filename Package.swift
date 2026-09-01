@@ -20,7 +20,12 @@ let package = Package(
                 .copy("Resources/hydra.html"),
                 // The GLSL host page. The shaders themselves live in assets/shaders,
                 // like every other authored `path` in the timeline.
-                .copy("Resources/shader.html")
+                .copy("Resources/shader.html"),
+                // DooM's host page. The engine binary it loads is NOT here and not a
+                // declared resource: it is fetched (tools/fetch_doom.sh) into assets/,
+                // because SwiftPM fails the build outright over a declared resource that
+                // is missing, and this one is missing until someone asks for it.
+                .copy("Resources/doom.html")
             ]
         ),
         .executableTarget(

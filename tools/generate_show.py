@@ -1098,6 +1098,23 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0):
 sm = B["spam"]
 add(sm - 0.2, "closeWindow", {"id": "tbd3"})
 add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
+
+# One of the small windows in the eruption is running DooM. Not a picture of it: the
+# 1997 linuxdoom sources built to wasm32, playing its own attract-mode demo in a 320x200
+# window (`tools/fetch_doom.sh` installs the engine; without it the window says so).
+#
+# It opens on the FIRST eruption rather than the second, and that is a timing decision:
+# DooM holds its title screen for about five seconds before the demo starts, so a window
+# opened at cue 28 would be a title card for half its life. From here it has the whole of
+# chorus 2A to boot and get into the demo, and it is still going at the stop.
+#
+# Its own id, deliberately NOT one of the `w0…w13` pool: the eruption recycles those
+# every few beats, and a re-opened id rebuilds the content view — which would restart
+# the game, and a DooM that reboots every four beats is a title screen forever.
+add(sm, "openWindow", {
+    "id": "doom0", "frame": [round(W * 0.06), round(H * 0.60), 320, 200],
+    "content": {"kind": "doom", "chrome": "mixed", "title": "doom.wasm"},
+    "animate": {"kind": "springIn"}})
 erupt(sm, B["glitch"], W / 2, H / 2, ui_chaos=0.25)
 
 # The ground flashes on every kick underneath it.
@@ -1132,6 +1149,25 @@ for ev in strobe["events"]:
     if "id" in ev["params"]:
         strobe_ids.add(ev["params"]["id"])
 
+# ...and under all of it, a SHOAL. 54 Mac pointers laid out on a 2½-turn spiral from the
+# centre and then flocked — separation, alignment, cohesion over a vortex that keeps the
+# whole body turning (`CursorSwarmView.Mode.school`). Nothing here reads the viewer's own
+# pointer: cues 24–25 were the swarm that wanted it, and this is the same particles with
+# the mouse taken away, which is why it goes in under the noise rather than beside it.
+#
+# It runs at the FLOATING level, so it stays over everything: the show's z-order is
+# otherwise just the order things opened in, and the eruption raises a window every
+# fifth of a beat from here to the stop — at the normal level the shoal is buried by
+# the second bar and only glimpsed between the cards. Floating also puts it over the
+# `screenFlash` overlays, which are normal windows, so the strobe no longer whites the
+# fish out. It stays click-through either way (`hitTest` returns nil), so the eruption's
+# interactive cards underneath are still the viewer's.
+add(gl2, "openWindow", {
+    "id": "school", "frame": fullscreen(), "level": "floating",
+    "content": {"kind": "cursors", "mode": "school", "seed": 4438, "intensity": 0.6,
+                "chrome": "none", "title": "school"},
+    "animate": {"kind": "none"}})
+
 # =============================================================================
 # Cue 29 — PULLED (2026-09-01): the lyric desktop under the strobe is out. The strobe
 # starves the swap queue, so each word card stuck for whole seconds, and a lingering
@@ -1147,7 +1183,8 @@ ag = B["allglitch"]
 # =============================================================================
 lw = B["lastwords"]
 add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
-for wid in sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
+for wid in (sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]
+            + ["school", "doom0"]):
     add(lw + 0.05, "closeWindow", {"id": wid})
 
 # =============================================================================
@@ -1288,6 +1325,11 @@ print(f"  ring     {len(clock_ids)} pixelfaces round the torus, one a beat, "
       f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
 print(f"  spam     {chaos['w']} windows, {chaos['d']} alerts, {n_kick} kick flashes, "
       f"{chaos['ui']} packed with macOS UI (both eruptions)")
+print(f"  doom     320x200 window running wasm DooM, f {frame_at(secs(sm))} → "
+      f"f {frame_at(secs(B['lastwords'] + 0.05))} "
+      f"({(secs(B['lastwords']) - secs(sm)):.0f}s; ~5s of that is its title screen)")
+print(f"  school   54 pointers on a {2.5:g}-turn spiral, flocking behind the eruption "
+      f"f {frame_at(secs(gl2))} → f {frame_at(secs(B['lastwords'] + 0.05))}")
 print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events over "
       f"{secs(B['lastwords']) - secs(B['glitch']):.1f}s from the 2B pickup; the desktop "
       f"stays blue to the card")

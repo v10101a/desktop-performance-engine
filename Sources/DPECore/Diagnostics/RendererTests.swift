@@ -478,6 +478,44 @@ enum SystemProbeTests {
             t.expect(anchor.x < 0.35 && anchor.y > 0.85,
                      "the pointer pivots about its tip (\(anchor.x), \(anchor.y))")
 
+            // The SHOAL (cue 28). Four things have to hold, and each of them is a way
+            // the flock is known to fail: it has to arrive on a spiral, it has to stay
+            // on the screen, it has to keep moving, and it must not pile up on one
+            // point — cohesion without separation collapses a flock into a dot.
+            let w = 800.0, h = 500.0
+            let sch = MainActor.assumeIsolated {
+                CursorSwarmView(size: NSSize(width: w, height: h), seed: 4438,
+                                count: 54, mode: .school)
+            }
+            func radii(_ v: CursorSwarmView) -> [Double] {
+                v.positionsForTesting.map { hypot($0.0 - w / 2, $0.1 - h / 2) }
+            }
+            let spawnR = radii(sch)
+            // Laid out along the arm, so radius climbs with index: the last is far out,
+            // the first is at the middle, and the walk out is monotonic.
+            let climbs = zip(spawnR, spawnR.dropFirst()).allSatisfy { $0 <= $1 + 0.001 }
+            t.expect(climbs, "the shoal is spawned along a spiral arm, centre outward")
+            t.expect((spawnR.max() ?? 0) > 0.35 * h && (spawnR.min() ?? 99) < 1,
+                     "the arm reaches from the centre to \(Int(spawnR.max() ?? 0))pt out")
+
+            MainActor.assumeIsolated { sch.stepForTesting(600) }   // ten seconds of it
+            let pos = sch.positionsForTesting
+            let out = pos.filter { $0.0 < -40 || $0.0 > w + 40 || $0.1 < -40 || $0.1 > h + 40 }
+            t.equal(out.count, 0, "ten seconds later the shoal is still on the screen")
+            let cruise = sch.speedsForTesting
+            t.expect((cruise.min() ?? 0) > 40, "every pointer is still swimming "
+                     + "(slowest \(Int(cruise.min() ?? 0))pt/s)")
+            t.expect((cruise.max() ?? 0) < 400, "and none of them has run away "
+                     + "(fastest \(Int(cruise.max() ?? 0))pt/s)")
+            var closest = Double.infinity
+            for i in pos.indices {
+                for j in pos.indices where j > i {
+                    closest = min(closest, hypot(pos[i].0 - pos[j].0, pos[i].1 - pos[j].1))
+                }
+            }
+            t.expect(closest > 3, "the shoal has not collapsed onto one point "
+                     + "(closest pair \(Int(closest))pt)")
+
             // The mandala. Its TURNING is checked by `--test-mandala`; here it is the
             // arrangement and the one safety number.
             let mv = MainActor.assumeIsolated {

@@ -420,6 +420,7 @@ final class WindowManager {
         // through and build a fresh window.
         if let existing = windows[p.id] as? EffectWindow,
            existing.isNativeChrome == usesNativeChrome(p.content.chrome, size: frame.size) {
+            existing.level = WindowManager.level(p.level)
             existing.applyContent(p.content, frame: frame)
             arm(existing, p, size: frame.size)
             existing.present(animate: "none")
@@ -428,10 +429,24 @@ final class WindowManager {
         }
         close(id: p.id)
         let win = EffectWindow(contentRect: frame, content: p.content)
+        win.level = WindowManager.level(p.level)
         arm(win, p, size: frame.size)
         windows[p.id] = win
         win.present(animate: p.animate?.kind ?? "fadeIn")
         if inspecting { applyBadge(to: win, id: p.id) }
+    }
+
+    /// The window levels a timeline can ask for. `.normal` is the show: everything
+    /// stacks in the order it opened. `.floating` sits above all of that — including
+    /// the `screenFlash` overlays, which are themselves normal windows — so a layer
+    /// marked floating stays visible through everything opened after it. `front` is the
+    /// shielding level, above even the menu bar.
+    static func level(_ name: String?) -> NSWindow.Level {
+        switch name {
+        case "floating": return .floating
+        case "front":    return NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
+        default:         return .normal
+        }
     }
 
     /// Snap a window out of a dissolve: bump the token so the fade's completion is a

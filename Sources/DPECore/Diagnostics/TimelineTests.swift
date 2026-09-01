@@ -305,6 +305,32 @@ enum TimelineTests {
                 // Same as the torn cards: the automata came with the pulled fill, so
                 // the count is 0 until `FILL_ACT` goes back on.
 
+                // DooM. One window, one id, and NOT one of the eruption's recycled
+                // `w0…w13`: re-opening an id rebuilds the content view, which restarts
+                // the game — a DooM that reboots every few beats never leaves its title
+                // screen. So what is pinned here is that nothing else ever opens on this
+                // id, which is the failure that would be invisible in the timeline.
+                var doomIds: [String] = []
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action, p.content.kind == "doom" else { continue }
+                    doomIds.append(p.id)
+                    t.expect(p.frame.count == 4 && p.frame[2] > 0 && p.frame[2] <= 480,
+                             "the DooM window is one of the small ones (\(Int(p.frame[2]))pt wide)")
+                }
+                t.equal(doomIds.count, 1, "the show runs DooM in exactly one window")
+                if let id = doomIds.first {
+                    let opens = tl.events.filter {
+                        if case .openWindow(let p) = $0.action { return p.id == id }
+                        return false
+                    }
+                    t.equal(opens.count, 1, "…and opens \(id) once, so the game is never restarted")
+                    let closes = tl.events.filter {
+                        if case .closeWindow(let p) = $0.action { return p.id == id }
+                        return false
+                    }
+                    t.expect(closes.count >= 1, "…and closes it — nothing outlives the stop")
+                }
+
                 // The shader windows name a .frag by path and it has to be there — a
                 // missing one is a black window, same as a broken one. And it has to be
                 // pure ASCII: GLSL ES 1.00 restricts the character set and ANGLE
@@ -384,19 +410,32 @@ enum TimelineTests {
                 // full-screen particle layer over the word swaps dragged chorus 1B.
                 t.expect(fireworks == 1, "the show carries the fireworks once (cue 10)")
 
-                // The cursor swarm (cue 24) is a transparent full-screen overlay, same
-                // as the fireworks: it chases the pointer across the whole screen, and
-                // any chrome would paint a ground over what it is chasing across.
-                var swarms = 0
+                // Both cursor swarms — the one that chases the pointer (cue 24) and the
+                // shoal that ignores it (cue 28) — are transparent full-screen overlays,
+                // same as the fireworks: they work across the whole screen, and any
+                // chrome would paint a ground over what they move through. An unknown
+                // `mode` string would silently fall back to chasing, which on cue 28
+                // would be 54 pointers converging on the viewer's mouse instead of a
+                // shoal, so the spelling is checked rather than assumed.
+                var modes: [String] = []
                 for ev in tl.events {
                     guard case .openWindow(let p) = ev.action,
                           p.content.kind == "cursors" else { continue }
-                    swarms += 1
+                    modes.append(p.content.mode ?? "chase")
+                    // The shoal has to outrank the eruption it swims through: the show's
+                    // z-order is the order things opened in, and cue 28 opens a window
+                    // every fifth of a beat after it. Without the level it is buried.
+                    if p.content.mode == "school" {
+                        t.equal(p.level ?? "normal", "floating", "the shoal floats above the show")
+                    }
                     t.equal(p.frame, [0, 0, 0, 0], "the cursor swarm fills the screen")
                     t.equal(p.content.chrome ?? "", "none", "the cursor swarm wears no chrome")
                     t.expect(p.content.seed != nil, "the cursor swarm is seeded")
+                    t.expect(["chase", "school"].contains(p.content.mode ?? "chase"),
+                             "cursor swarm mode \(p.content.mode ?? "chase") is a real one")
                 }
-                t.expect(swarms == 1, "the show carries the cursor swarm once (cue 24)")
+                t.equal(modes.sorted(), ["chase", "school"],
+                        "the show carries one pointer-chasing swarm (cue 24) and one shoal (cue 28)")
 
                 // The mandala (cue 26): the third transparent full-screen overlay, and
                 // the same rule applies -- chrome would paint a ground over the piece.

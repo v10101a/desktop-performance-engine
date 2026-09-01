@@ -57,6 +57,16 @@ cp Sources/DPECore/Resources/hydra.html     "$APP/Contents/Resources/"
 # Contents/Resources, and the page is loaded by file URL so it needs a real path.
 cp Sources/DPECore/Resources/shader.html   "$APP/Contents/Resources/"
 
+# DooM's host page, and the engine it loads IF it has been fetched (tools/fetch_doom.sh).
+# Missing, the window says so on its own — the app still builds and still runs.
+cp Sources/DPECore/Resources/doom.html     "$APP/Contents/Resources/"
+if [ -f assets/doom.wasm ]; then
+  mkdir -p "$APP/Contents/Resources/assets"
+  cp assets/doom.wasm "$APP/Contents/Resources/assets/"
+else
+  echo "note: assets/doom.wasm not fetched — cue 27's DooM window will say so (tools/fetch_doom.sh)" >&2
+fi
+
 # The SwiftPM resource bundle too, as a second home for anything else it carries.
 # Copy every bundle SwiftPM produced rather than one hardcoded name: the bundle is named
 # for the TARGET that declares the resources, so the split renamed it to

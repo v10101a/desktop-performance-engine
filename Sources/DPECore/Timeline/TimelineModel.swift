@@ -80,7 +80,7 @@ struct MapSpec: Decodable {
 /// defaults — dev-tool and preview code that builds these by hand then doesn't need
 /// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "glitch" | "automaton" | "shader" | "uichaos" | "fileworks" | "cursors" | "mandala" | "livecode" | "map"
+    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "glitch" | "automaton" | "shader" | "uichaos" | "fileworks" | "cursors" | "mandala" | "livecode" | "map" | "doom"
     var hex: String? = nil
     var text: String? = nil
     var path: String? = nil
@@ -120,6 +120,10 @@ struct ContentSpec: Decodable {
     // "glitch" kind: `path` torn once by the wallpaper's own glitch pass.
     var intensity: Double? = nil   // 0…1, scales every part of the tear (default 0.6)
     var seed: Int? = nil           // the tear is a pure function of this — same every take
+    /// "cursors" kind: how the swarm moves. "chase" (default) hunts the viewer's own
+    /// pointer; "school" ignores it entirely, laying the cursors out on a spiral and
+    /// flocking them like fish.
+    var mode: String? = nil
 }
 
 struct AnimateSpec: Decodable {
@@ -142,6 +146,11 @@ struct OpenWindowParams: Decodable {
     /// Closing it doesn't get rid of it. The window comes back a beat later, which is
     /// only interesting on the ones that matter.
     var respawn: Bool? = nil
+    /// Window level, same vocabulary as `glassTorus` and `photoWall`: "normal"
+    /// (default), "floating", "front". The show's z-order is otherwise just the order
+    /// things opened in — anything opened later lands on top — so this is how a layer
+    /// that has to STAY on top says so, rather than being buried by the next event.
+    var level: String? = nil
 }
 
 struct FakeDialogParams: Decodable {

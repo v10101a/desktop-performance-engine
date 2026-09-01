@@ -52,6 +52,10 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.
+- `tools/fetch_doom.sh` installs the wasm DooM cue 27 runs (`assets/doom.wasm`,
+  gitignored — GPL engine, shareware IWAD baked in; read the script header before
+  shipping a build with it). Without it that window comes up saying so, and everything
+  else works. `--test-doom` proves it is drawing.
 - The show must stay **reversible**: no event may leave the machine changed after stop,
   panic or quit. `fileSwarm` is the only thing that touches disk and is gated off
   (`meta.allowDesktopFiles`); wallpaper swaps are gated on `meta.allowWallpaper` and

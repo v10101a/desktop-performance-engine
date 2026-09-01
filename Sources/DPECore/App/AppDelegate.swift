@@ -191,6 +191,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Does it actually run DooM? A window that opens on a black canvas and one that
+        // opens on the title screen are the same window from Swift, so this asks the
+        // page how much of its canvas is lit after it has had a few seconds to boot.
+        if CommandLine.arguments.contains("--test-doom") {
+            runDoomSelfTest()
+            return
+        }
+
         if CommandLine.arguments.contains("--test-sprites") {
             runSpriteSelfTest()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
@@ -461,6 +469,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             switch name {
             case "fileworks": return FileworksView(size: size, seed: 1046, hz: 1.0, intensity: 1.0)
             case "cursors":   return CursorSwarmView(size: size, seed: 3136, count: 90)
+            // Cue 28's shoal, at the population the show runs it at. Worth its own round:
+            // the flocking is O(n²) per step and it lands in the busiest bar of the piece.
+            case "school":    return CursorSwarmView(size: size, seed: 4438, count: 54,
+                                                     mode: .school)
             case "mandala":   return MandalaView(size: size, seed: 3863, rings: 5, intensity: 1.0)
             case "automaton": return AutomatonView(size: NSSize(width: 330, height: 240),
                                                    rule: 30, seed: 0, fontSize: 9, hz: 14)
@@ -469,7 +481,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             default:          return nil
             }
         }
-        let names = ["baseline", "fileworks", "cursors", "mandala", "automaton", "uichaos", "all"]
+        let names = ["baseline", "fileworks", "cursors", "school", "mandala", "automaton",
+                     "uichaos", "all"]
         var index = 0
         // ONE window for the whole run, its content swapped each round. Closing a window
         // between rounds ends the app: it is the only one open, and AppKit terminates on
@@ -562,6 +575,29 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func runDoomSelfTest() {
+        let size = NSSize(width: 640, height: 400)
+        // ON screen, unlike the map's self-test: WebKit throttles requestAnimationFrame
+        // to nothing in a window nobody can see, and the game loop IS a rAF loop — run
+        // off-screen it reports a black canvas whether the engine works or not.
+        let host = NSWindow(contentRect: NSRect(x: 80, y: 80, width: size.width, height: size.height),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        let doom = DoomView(frame: NSRect(origin: .zero, size: size))
+        host.contentView = doom
+        host.orderFrontRegardless()
+        NSLog("[DPE] doom: engine installed = \(DoomView.isInstalled) "
+              + "(tools/fetch_doom.sh if not)")
+        // Long enough to fetch 6.5 MB off disk, instantiate it, run main() and get some
+        // frames up — the title screen alone is a couple of seconds in.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            doom.report { line in
+                NSLog("[DPE] doom: %@", line)
+                NSLog("[DPE] doom: a lit count near zero means it booted onto a black screen")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
+            }
+        }
+    }
+
     private func runCursorSwarmSelfTest() {
         var spec: ContentSpec?
         if let url = AppDelegate.bundledTimelineURL(),
@@ -584,13 +620,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let root = NSView(frame: NSRect(origin: .zero, size: size))
         root.wantsLayer = true
         let cs = CursorSwarmView(size: size, seed: spec.seed ?? 3,
-                                 count: Int((spec.intensity ?? 1.0) * 90))
+                                 count: Int((spec.intensity ?? 1.0) * 90),
+                                 mode: CursorSwarmView.Mode(spec.mode))
         root.addSubview(cs)
         host.contentView = root
         host.orderFrontRegardless()
         let sizes = cs.sizesForTesting
-        NSLog("%@", String(format: "[DPE] cursors: %d pointers, %.0f-%.0fpt",
-                           cs.countForTesting, sizes.min() ?? 0, sizes.max() ?? 0))
+        NSLog("%@", String(format: "[DPE] cursors: %d pointers, %.0f-%.0fpt, mode %@",
+                           cs.countForTesting, sizes.min() ?? 0, sizes.max() ?? 0,
+                           spec.mode ?? "chase"))
 
         // Walk the pointer across the window, then let the swarm run at it.
         let where1 = CGPoint(x: host.frame.minX + 120, y: host.frame.minY + 120)

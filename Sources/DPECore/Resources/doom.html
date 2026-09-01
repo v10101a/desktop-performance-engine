@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>doom</title>
+<!--
+  The show's host page for the wasm DooM (tools/fetch_doom.sh installs the engine).
+
+  The module is a freestanding wasm32 build of linuxdoom-1.10: no emscripten runtime, no
+  filesystem, no sound — it exports main(), doom_loop_step() and add_browser_event(), and
+  imports a clock, three log sinks and one draw callback over a shared memory. All this
+  page does is hold that memory, blit the frame, and run the loop.
+
+  Nothing here reads the keyboard. The window is scenery — click-through like the shader
+  and hydra ones — so DooM plays its own attract-mode demo, which is the thing worth
+  watching in a 320x200 window in the middle of an eruption anyway.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  /* 640x400 of DooM in whatever the window is, nearest-neighbour: it is a 1997 game
+     and a smoothed one looks like a screenshot of a video of it. */
+  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  #missing {
+    display: none; box-sizing: border-box; height: 100%; padding: 14px;
+    color: #68BDF8; background: #000; font: 11px ui-monospace, Menlo, monospace;
+    line-height: 1.5; white-space: pre-wrap;
+  }
+</style>
+<canvas id="screen" width="640" height="400"></canvas>
+<div id="missing">doom.wasm is not installed.
+
+  tools/fetch_doom.sh
+  ./bundle.sh
+
+(gitignored on purpose — GPL engine,
+ shareware IWAD baked in.)</div>
+<script>
+'use strict';
+// 108 pages = ~7 MB, the figure the module is built against.
+const memory = new WebAssembly.Memory({ initial: 108 });
+const canvas = document.getElementById('screen');
+const ctx = canvas.getContext('2d');
+const W = 640, H = 400;
+
+function str(off, len) {
+  return new TextDecoder('utf8').decode(new Uint8Array(memory.buffer, off, len));
+}
+// The engine's stdout/stderr go to the JS console, not onto the screen: this is a
+// window in a show, not a terminal. They are worth keeping — a WAD it cannot read
+// announces itself there and nowhere else.
+const log = (tag) => (off, len) => {
+  const s = str(off, len).trimEnd();
+  if (s) console.log('[doom]' + tag, s);
+};
+
+function drawScreen(ptr) {
+  const frame = new Uint8ClampedArray(memory.buffer, ptr, W * H * 4);
+  ctx.putImageData(new ImageData(frame, W, H), 0, 0);
+}
+
+function fail(why) {
+  window.__doomError = String(why);
+  console.log('[doom] not running:', why);
+  canvas.style.display = 'none';
+  document.getElementById('missing').style.display = 'block';
+}
+
+const imports = {
+  js: {
+    js_console_log: log(''),
+    js_stdout: log(' out'),
+    js_stderr: log(' err'),
+    js_milliseconds_since_start: () => performance.now(),
+    js_draw_screen: drawScreen,
+  },
+  env: { memory },
+};
+
+// Page and engine are served over the same custom scheme by DoomView, so this is a
+// same-origin fetch — a file:// page cannot fetch its own sibling.
+WebAssembly.instantiateStreaming(fetch('doom.wasm'), imports).then((obj) => {
+  obj.instance.exports.main();
+  const step = () => {
+    obj.instance.exports.doom_loop_step();
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}).catch((e) => fail(e && e.message ? e.message : e));
+</script>

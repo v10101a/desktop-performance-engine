@@ -459,11 +459,18 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
                              rings: content.cols ?? 5, intensity: content.intensity ?? 1.0)
         mv.autoresizingMask = [.width, .height]
         view.addSubview(mv)
+    case "doom":
+        // It runs DooM. The engine is fetched, not committed (tools/fetch_doom.sh); the
+        // page says so in the window if it is missing.
+        let dv = DoomView(frame: NSRect(origin: .zero, size: body.size))
+        dv.autoresizingMask = [.width, .height]
+        view.addSubview(dv)
     case "cursors":
         // Transparent, like the fireworks: no background, so the swarm is over whatever
-        // the show has on screen. `intensity` is the population.
+        // the show has on screen. `intensity` is the population, `mode` the behaviour.
         let cs = CursorSwarmView(size: body.size, seed: content.seed ?? 3,
-                                 count: Int((content.intensity ?? 1.0) * 90))
+                                 count: Int((content.intensity ?? 1.0) * 90),
+                                 mode: CursorSwarmView.Mode(content.mode))
         cs.autoresizingMask = [.width, .height]
         view.addSubview(cs)
     case "fileworks":

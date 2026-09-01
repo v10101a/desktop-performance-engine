@@ -43,3 +43,7 @@ __pycache__/
 *.xcodeproj
 *.xcworkspace
 xcuserdata/
+
+# The wasm DooM engine (tools/fetch_doom.sh) — fetched, not committed: it is a GPL
+# build with the shareware IWAD baked in. See the script header.
+assets/doom.wasm

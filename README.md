@@ -302,6 +302,16 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 }
 ```
 
+**`openWindow` takes a `level`.** The show's z-order is otherwise simply the order
+things opened in — whatever opened last is on top — which is fine until a layer has to
+*stay* visible over everything that follows it. `"level": "floating"` puts it above every
+normal window, including the `screenFlash` overlays (those are normal windows too, so a
+floating layer is not washed out by a flash); `"front"` is the shielding level, above
+even the menu bar; omit it for `"normal"`. Same vocabulary as `glassTorus` and
+`photoWall`. Cue 28's shoal is the one thing in the piece that uses it: it swims through
+an eruption that opens a window every fifth of a beat, and at the normal level it is
+buried by the second bar.
+
 **`closeWindow` cuts by default and dissolves on request.** `{"id": "w1",
 "fadeSeconds": 0.25}` runs that window's alpha down over a quarter-second instead of
 ordering it out on the frame — which is how cue 16's tile wipe comes off the screen.
@@ -387,9 +397,10 @@ display pump is coalesced, so what it looked like was the whole show running bad
 
 ### `cursors` content
 
-A swarm of Mac pointers chasing the viewer's own pointer. Every particle is an arrow
-cursor at its own size, steering toward the mouse and rotating to face the way it is
-moving. `intensity` scales the population (1.0 = 90), `seed` fixes it.
+A swarm of Mac pointers, in one of two `mode`s: **`chase`** (the default) hunts the
+viewer's own pointer, **`school`** ignores it and flocks. Every particle is an arrow
+cursor at its own size, rotating to face the way it is moving. `intensity` scales the
+population (1.0 = 90), `seed` fixes it.
 
 ```jsonc
 { "kind": "cursors", "seed": 3136, "intensity": 1.0,
@@ -411,6 +422,87 @@ rotation subtracts `artAngle` — the bisector of the two edges meeting at the t
 rather than guessed. It pivots about its **tip**, because a cursor does; about its centre
 it swings like a compass needle. `--test-cursors=out.png` warps the real pointer across
 the window and reports how many are pointing the same way.
+
+**`mode: "school"`** is the same particles with the mouse taken away — cue 28's shoal:
+
+```jsonc
+{ "kind": "cursors", "mode": "school", "seed": 4438, "intensity": 0.6,
+  "chrome": "none", "title": "school" }
+```
+
+It is opened `"level": "floating"` — see the timeline format above. Without that the
+eruption it swims through buries it within a bar, since z-order is otherwise just the
+order things opened in. It stays click-through regardless (`hitTest` returns nil and the
+window ignores mouse events), so the interactive cards underneath are still the viewer's.
+
+They are laid out along a 2½-turn Archimedean arm from the centre, moving *along* it, so
+the spiral is up and already turning on the frame the window opens. Then they flock:
+Reynolds' separation, alignment and cohesion — each written as *desired velocity minus
+current*, so the weights don't need retuning per screen size — over a **vortex**, a
+tangential drive around the centre with a fraction of the radial mixed in. The vortex is
+the part that matters: without it the three rules relax a spiral into a blob drifting at
+one heading within a couple of seconds. Separation is weighted well above the other two
+(fish don't touch), the edges turn the shoal back rather than wrapping it, and speed is
+held in a **band** rather than under a ceiling, because a school cruises. The size spread
+narrows to 15–46pt — the chase swarm's 11–92 reads as depth when everything is flying at
+one target and as noise when they are flocking. Population is `intensity`, same as chase,
+and the flocking is O(n²) per step: at the show's 54 it costs nothing measurable
+(`--bench-views` puts it level with the chase swarm, 59.7 of 60 probe-Hz), but it is not
+a knob to turn to 1.0 in the middle of the eruption without measuring again.
+
+### `doom` content
+
+It runs DooM. Not a recording of it — id Software's 1997 `linuxdoom-1.10` sources, built
+to a freestanding wasm32 module, playing in a 320×200 window in the middle of the
+eruption (cue 27).
+
+```jsonc
+{ "kind": "doom", "chrome": "mixed", "title": "doom.wasm" }
+```
+
+No parameters: the engine knows where it lives and the window is scenery. **The binary is
+not in this repo** — `tools/fetch_doom.sh` installs it to `assets/doom.wasm`, which is
+gitignored. Two reasons, and both matter before you hand the piece to anyone:
+
+- The engine is **GPL-2.0** (Ilya Diekmann's wasm port of id's released sources —
+  <https://github.com/diekmann/wasm-fizzbuzz>). Shipping a `.app` with it inside means
+  offering the corresponding source.
+- That build has an **IWAD baked in — id's shareware episode**. Running it is what the
+  shareware is for; redistributing it inside a signed `.dmg` is a call for you to make,
+  which is why a build script does not make it quietly. `ship.sh` will include
+  `assets/doom.wasm` if it is there, so delete it first if you would rather it were not.
+
+Without the engine the window comes up carrying the two commands that install it, rather
+than sitting black — "not fetched" and "broken" should not look the same on stage.
+
+**How it is hosted.** `doom.html` (ours, committed, a build resource like `shader.html`)
+holds the module's memory, blits its framebuffer to a canvas and pumps
+`doom_loop_step()` on a rAF. The module imports a clock, three log sinks and one draw
+callback, and exports `main()`, `doom_loop_step()` and `add_browser_event()` — that is
+the whole surface. It has **no sound**, which is what a piece with its own soundtrack
+wants, and nothing on this page reads the keyboard: the window is click-through like
+every other live canvas here, so DooM plays its own attract-mode demo.
+
+Two things that will bite anyone changing this:
+
+- **Page and engine are served over a custom `dpedoom:` scheme**, not `file://`. The page
+  has to `fetch()` a 6.5 MB sibling to instantiate it, and a `file://` page cannot fetch
+  its own directory without the private `allowFileAccessFromFileURLs` switch. A
+  `WKURLSchemeHandler` is the supported way, and it serves exactly those two files.
+- **The handler returns an `HTTPURLResponse` with a real `Content-Type` header.** A plain
+  `URLResponse` with `mimeType` set is not enough:
+  `WebAssembly.instantiateStreaming` reads the header and rejects everything else with
+  *"Unexpected response MIME type"*, which reaches the stage as a blank window.
+
+```bash
+swift run GiveIt2Me_DJ_Dave_malware --test-doom   # proves it is drawing, not just loading
+```
+
+`--test-doom` stands the window up **on screen** and asks the page how much of its canvas
+is lit after six seconds (a healthy run is most of it; ours reports ~1863 of 2640 sampled
+pixels). On screen matters: WebKit throttles `requestAnimationFrame` to nothing in a
+window nobody can see, and the game loop is a rAF loop, so off-screen it reports black
+whether the engine works or not.
 
 ### `fileworks` content
 

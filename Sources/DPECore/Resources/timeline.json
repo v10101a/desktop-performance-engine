@@ -8438,6 +8438,27 @@
    "beat": 284,
    "type": "openWindow",
    "params": {
+    "id": "doom0",
+    "frame": [
+     86,
+     540,
+     320,
+     200
+    ],
+    "content": {
+     "kind": "doom",
+     "chrome": "mixed",
+     "title": "doom.wasm"
+    },
+    "animate": {
+     "kind": "springIn"
+    }
+   }
+  },
+  {
+   "beat": 284,
+   "type": "openWindow",
+   "params": {
     "id": "w0",
     "frame": [
      778,
@@ -11498,6 +11519,31 @@
      "fg": "#0078D7",
      "chrome": "mac",
      "title": "give it 2 me \u2014 lyrics"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 316,
+   "type": "openWindow",
+   "params": {
+    "id": "school",
+    "frame": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "level": "floating",
+    "content": {
+     "kind": "cursors",
+     "mode": "school",
+     "seed": 4438,
+     "intensity": 0.6,
+     "chrome": "none",
+     "title": "school"
     },
     "animate": {
      "kind": "none"
@@ -23638,6 +23684,20 @@
    "type": "closeWindow",
    "params": {
     "id": "d3"
+   }
+  },
+  {
+   "beat": 343.05,
+   "type": "closeWindow",
+   "params": {
+    "id": "school"
+   }
+  },
+  {
+   "beat": 343.05,
+   "type": "closeWindow",
+   "params": {
+    "id": "doom0"
    }
   }
  ]
