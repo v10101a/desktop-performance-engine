@@ -258,6 +258,31 @@ enum WindowOwnershipTests {
                 w.close()
             }
             t.expect(true, "closing a held window did not over-release")
+
+            // A DISSOLVING window is still the manager's to sweep. `closeWindow` with
+            // `fadeSeconds` runs the alpha down instead of cutting, and the show's hard
+            // rule is that nothing survives a stop, a quit or the panic key — so a fade
+            // in flight must not be the one thing left on the viewer's screen.
+            let wm = WindowManager()
+            let card = OpenWindowParams(id: "fade0",
+                                        content: ContentSpec(kind: "color", hex: "#020AF5"),
+                                        frame: [0, 0, 80, 60])
+            wm.openWindow(card, at: 0)
+            wm.close(id: "fade0", fadeSeconds: 4)          // still running below
+            t.expect(wm.windows["fade0"] != nil, "a dissolving window is still held")
+            wm.closeAll()
+            t.equal(wm.windows.count, 0, "closeAll sweeps a dissolve in flight")
+
+            // The mirror of it: an id re-opened mid-dissolve must not be ordered out
+            // when the fade it interrupted finally lands.
+            wm.openWindow(card, at: 0)
+            wm.close(id: "fade0", fadeSeconds: 0.05)
+            wm.openWindow(card, at: 1)
+            RunLoop.current.run(until: Date().addingTimeInterval(0.35))
+            t.expect(wm.windows["fade0"] != nil, "a window re-opened mid-dissolve survives its old fade")
+            t.near(Double(wm.windows["fade0"]?.alphaValue ?? 0), 1.0, 0.001,
+                   "…and is opaque again, not left part-way through the fade")
+            wm.closeAll()
         }
     }
 }

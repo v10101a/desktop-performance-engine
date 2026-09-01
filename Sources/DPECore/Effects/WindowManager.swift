@@ -12,6 +12,10 @@ final class WindowManager {
     /// Timeline position each live window opened at, for the inspect badges.
     /// Same keys as `windows`.
     private var openedAt: [String: Double] = [:]
+    /// One counter per id, bumped by every open and close. A dissolve's completion
+    /// carries the value it started with and does nothing if it no longer matches —
+    /// otherwise a window re-opened mid-fade would be ordered out by the old fade.
+    private var fadeToken: [String: Int] = [:]
 
     /// Set from the loaded timeline so beat-based durations resolve to seconds.
     /// Also published to `dpeShowBPM` so generative content (the livecode visuals)
@@ -400,6 +404,7 @@ final class WindowManager {
     func openWindow(_ p: OpenWindowParams, at now: Double) {
         let scr = screen(p.screen)
         openedAt[p.id] = now
+        cancelFade(p.id)
         let frame = rect(from: p.frame, on: scr, anchor: p.anchor)
         jiggles[p.id] = nil
         moves[p.id] = nil
@@ -427,6 +432,18 @@ final class WindowManager {
         windows[p.id] = win
         win.present(animate: p.animate?.kind ?? "fadeIn")
         if inspecting { applyBadge(to: win, id: p.id) }
+    }
+
+    /// Snap a window out of a dissolve: bump the token so the fade's completion is a
+    /// no-op, and put the alpha back with a zero-length animation, which replaces the
+    /// one still running rather than being overwritten by it.
+    private func cancelFade(_ id: String) {
+        fadeToken[id] = (fadeToken[id] ?? 0) &+ 1
+        guard let win = windows[id], win.alphaValue < 1 else { return }
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0
+            win.animator().alphaValue = 1
+        }
     }
 
     /// Hand a window to the viewer if the event asked for it: draggable, and closable
@@ -545,11 +562,17 @@ final class WindowManager {
 
     private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: Double) -> CGFloat { a + (b - a) * CGFloat(t) }
 
-    func close(id: String) {
+    /// `fadeSeconds` dissolves the window instead of cutting it. The window keeps its
+    /// place in `windows` for the length of the fade, so `closeAll` — stop, quit, the
+    /// panic key — still sweeps it instantly: a dissolve in flight can never be the
+    /// thing that leaves something on the viewer's screen.
+    func close(id: String, fadeSeconds: Double = 0) {
         jiggles[id] = nil
         moves[id] = nil
         typers[id] = nil
         openedAt[id] = nil
+        let token = (fadeToken[id] ?? 0) &+ 1     // orphans any fade already running
+        fadeToken[id] = token
         if let s = sprites.removeValue(forKey: id) {
             for w in s.pool { w.orderOut(nil) }
         }
@@ -558,11 +581,24 @@ final class WindowManager {
             for w in t.pool { w.orderOut(nil) }
         }
         guard let win = windows[id] else { return }
-        win.orderOut(nil)
-        windows[id] = nil
+        guard fadeSeconds > 0 else {
+            win.orderOut(nil)
+            windows[id] = nil
+            return
+        }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = fadeSeconds
+            win.animator().alphaValue = 0
+        }, completionHandler: { [weak self, weak win] in
+            guard let self = self, let win = win, self.fadeToken[id] == token else { return }
+            win.orderOut(nil)
+            win.alphaValue = 1                   // a reused id gets a clean window back
+            if self.windows[id] === win { self.windows[id] = nil }
+        })
     }
 
     func closeAll() {
+        fadeToken.removeAll()       // every dissolve in flight is now orphaned
         jiggles.removeAll()
         moves.removeAll()
         typers.removeAll()

@@ -285,7 +285,9 @@ enum TimelineTests {
                              "torn card \(p.id) intensity \(intensity) is in 0…1")
                     t.expect(p.content.seed != nil, "torn card \(p.id) is seeded")
                 }
-                t.expect(tornCards >= 1, "the fill carries torn cards (cue 15)")
+                // Cue 15 is pulled (`FILL_ACT = False` in the generator), and it was
+                // the only act that opened torn cards — so `tornCards` is 0 in the
+                // current cut. The checks above are what stands guard when it returns.
 
                 // The automata cards in the fill run in the engine — the timeline
                 // carries only the rule, so the numbers it carries have to be ones a
@@ -300,7 +302,8 @@ enum TimelineTests {
                     t.expect(rule >= 0 && rule <= 255, "\(p.id) rule \(rule) is an 8-bit rule")
                     t.expect((p.content.hz ?? 0) > 0, "\(p.id) scrolls")
                 }
-                t.expect(automata >= 1, "the fill carries automata cards (cue 15)")
+                // Same as the torn cards: the automata came with the pulled fill, so
+                // the count is 0 until `FILL_ACT` goes back on.
 
                 // The shader windows name a .frag by path and it has to be there — a
                 // missing one is a black window, same as a broken one. And it has to be

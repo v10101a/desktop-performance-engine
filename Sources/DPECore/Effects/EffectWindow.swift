@@ -242,6 +242,23 @@ func makeLiveCodeContentView(_ content: ContentSpec, size: NSSize) -> NSView {
 
 // MARK: - Apple Maps flythrough
 
+/// 0…1 eased in and out — the curve the map's FALL is drawn on.
+private func easeInOut(_ u: Double) -> Double {
+    u < 0.5 ? 2 * u * u : 1 - pow(-2 * u + 2, 2) / 2
+}
+
+/// 0…1 eased in over the first `ramp` of the leg and then CONSTANT — the curve the
+/// map's orbit is drawn on. An orbit that eased out would be sitting still by the time
+/// the cut came, which is the opposite of the point: the camera has to still be going
+/// round the location when the window is taken off the screen. Normalised so the leg
+/// still travels exactly `orbitDegrees`.
+private func easeInThenSteady(_ u: Double, ramp k: Double = 1.0 / 6.0) -> Double {
+    guard u > 0 else { return 0 }
+    let raw = u < k ? u * u / (2 * k) : u - k / 2
+    return raw / (1 - k / 2)
+}
+
+
 /// A real MKMapView flying its camera between two poses — Apple's own 3-D flyover
 /// tiles, inside one of our windows.
 ///
@@ -288,23 +305,40 @@ final class MapFlyView: NSView {
                                heading: spec.heading ?? 0)
         map.camera = from
 
+        // Two legs of one shot. The FALL — centre, altitude and pitch — lands in
+        // `zoomSeconds`; the rest of `seconds` is the ORBIT, `orbitDegrees` of heading
+        // turned around the point it landed on. `zoomSeconds` defaults to the whole
+        // shot and `orbitDegrees` to none, so a spec written before these existed flies
+        // exactly as it did: one eased move filling the duration.
         let duration = max(0.5, spec.seconds ?? 14)
-        let toAlt = spec.toAltitude ?? (spec.altitude ?? 900)
-        let toPitch = CGFloat(spec.toPitch ?? (spec.pitch ?? 60))
-        let toHeading = spec.toHeading ?? ((spec.heading ?? 0) + 90)
+        let fall = min(duration, max(0.1, spec.zoomSeconds ?? duration))
+        let orbit = spec.orbitDegrees ?? 0
+        let fromAlt = spec.altitude ?? 900
+        let fromPitch = CGFloat(spec.pitch ?? 60)
+        let fromHeading = spec.heading ?? 0
+        let toAlt = spec.toAltitude ?? fromAlt
+        let toPitch = CGFloat(spec.toPitch ?? fromPitch)
+        let toHeading = spec.toHeading ?? (fromHeading + 90)
         let started = Date()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] t in
             guard let self = self else { t.invalidate(); return }
-            let u = min(1.0, Date().timeIntervalSince(started) / duration)
-            let e = u < 0.5 ? 2 * u * u : 1 - pow(-2 * u + 2, 2) / 2      // easeInOut
+            let now = Date().timeIntervalSince(started)
+            let e = easeInOut(min(1.0, now / fall))
+            // The orbit picks the turn up out of the standstill the fall settles into
+            // — no kink at the handover — and then holds that rate for the rest of the
+            // shot: it is still circling when the cut takes it.
+            let spin = duration > fall
+                ? easeInThenSteady(min(1.0, max(0, now - fall) / (duration - fall)))
+                : 0
+            let heading = fromHeading + (toHeading - fromHeading) * e + orbit * spin
             let cam = MKMapCamera(
                 lookingAtCenter: CLLocationCoordinate2D(latitude: lat + (toLat - lat) * e,
                                                         longitude: lon + (toLon - lon) * e),
-                fromDistance: (spec.altitude ?? 900) + (toAlt - (spec.altitude ?? 900)) * e,
-                pitch: CGFloat(spec.pitch ?? 60) + (toPitch - CGFloat(spec.pitch ?? 60)) * CGFloat(e),
-                heading: (spec.heading ?? 0) + (toHeading - (spec.heading ?? 0)) * e)
+                fromDistance: fromAlt + (toAlt - fromAlt) * e,
+                pitch: fromPitch + (toPitch - fromPitch) * CGFloat(e),
+                heading: heading.truncatingRemainder(dividingBy: 360))
             self.map.camera = cam
-            if u >= 1 { t.invalidate() }
+            if now >= duration { t.invalidate() }
         }
     }
 

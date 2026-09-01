@@ -51,7 +51,7 @@ final class EventContext {
         case .fakeDialog(let p):
             windows.openDialog(p)
         case .closeWindow(let p):
-            windows.close(id: p.id)
+            windows.close(id: p.id, fadeSeconds: p.fadeSeconds ?? 0)
             photos.stop(id: p.id)
             torus.stop(id: p.id)
             wallpaper.stopDesk(id: p.id)

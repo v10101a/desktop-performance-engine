@@ -302,6 +302,15 @@ or an explicit `t` in seconds. Windows carry an `id` so later events can close t
 }
 ```
 
+**`closeWindow` cuts by default and dissolves on request.** `{"id": "w1",
+"fadeSeconds": 0.25}` runs that window's alpha down over a quarter-second instead of
+ordering it out on the frame — which is how cue 16's tile wipe comes off the screen.
+The window keeps its place in the manager for the length of the fade, so a stop, a quit
+or the panic key still sweeps it instantly: a dissolve in flight can never be the thing
+that outlives the show on someone's screen, and re-opening the id mid-fade cancels it
+rather than being ordered out when the old fade lands. Both are asserted in
+`WindowOwnership`.
+
 `frame` is `[x, y, w, h]` in points, **top-left origin**, relative to the target
 `screen` (index into `NSScreen.screens`, default 0). **Negative `x`/`y` anchor to the
 far edge** (resolution-independent): `x < 0` measures from the right, `y < 0` from the
@@ -512,8 +521,9 @@ when a failed compile and a black shader look identical.
 ### `automaton` content
 
 A Wolfram elementary cellular automaton, running and scrolling in the window —
-Terminal's own black-on-white, because these sit in the fill (cue 15) beside real
-terminals. `rule` is Wolfram's numbering (0…255, default 30), `hz` the generations per
+Terminal's own black-on-white, because these sat in the fill (cue 15) beside real
+terminals. That act is pulled, so nothing in the current cut opens one — the kind is
+live and waits on `FILL_ACT`. `rule` is Wolfram's numbering (0…255, default 30), `hz` the generations per
 second (default 12), `fontSize` the cell size (default 9).
 
 ```jsonc
@@ -528,7 +538,7 @@ window shows the same automaton every take.
 
 **The grid comes from the view, not the timeline.** `AutomatonView` measures the
 monospace advance and takes however many whole cells fit its bounds, so the field reaches
-all four edges of whatever window the fill hands it. It also opens with a full buffer —
+all four edges of whatever window it is given. It also opens with a full buffer —
 the first screenful is generated in `init` — so a window arrives mid-computation rather
 than empty, and the still renderer, which has no run loop to drive the scroll, still
 catches a real field.
@@ -548,7 +558,7 @@ breaks the same way every take.
 
 **It is a still.** The image is torn once, off the main thread, when the window opens,
 then left alone — and it is cached by path *and* settings, so several windows asking for
-the same tear pay for it once. That is deliberate: the fill (cue 15) ramps to 26 windows
+the same tear pay for it once. That is deliberate: the fill (cue 15, pulled) ramped to 26 windows
 on screen, and re-tearing each of them per frame is precisely the window-server load the
 wallpaper glitch had to be dialled back from (2.5 Hz → 1.5) to stop the machine
 stuttering. The source is rendered at 512px on the long edge — the tear is coarse by
@@ -943,11 +953,35 @@ tile servers Maps.app uses. `style` picks how it renders:
 Regenerate the show's flights with `MAP_STYLE=hybrid python3 tools/generate_show.py` to
 compare. Anything omitted from the `to*` pose holds.
 
+**The shot is two legs: a fall, then an orbit.** `seconds` is the whole shot.
+`zoomSeconds` is how much of it the *fall* gets — the centre, altitude and pitch move —
+and `orbitDegrees` is how far the heading then travels around the point it landed on, on
+top of the descent's own `heading` → `toHeading` sweep:
+
+```jsonc
+"map": { "lat": 34.0522, "lon": -118.2437, "here": true,
+         "altitude": 2600000, "toAltitude": 260, "pitch": 0, "toPitch": 62,
+         "heading": 0, "toHeading": 30,
+         "seconds": 14.1, "zoomSeconds": 3, "orbitDegrees": 180 }
+```
+
+That is the show's own flight (cue 14): 2,600 km down to 260 m in **three seconds**, then
+180° round the fix over the eleven that follow — about 16°/s. The two legs are eased
+differently on purpose. The fall is `easeInOut`, so it settles. The orbit is
+`easeInThenSteady` — eased in over its first sixth, picking the turn up out of the
+landing with no kink at the handover, and then **held at rate to the end**: an orbit that
+eased out would be sitting still by the time the window was taken away, and the point is
+that the camera is still going round the viewer's own roof when cue 16 buries it. Omit
+both fields and the spec behaves as it always did — one eased move filling `seconds` —
+which is why nothing else in the piece had to change.
+
 **`here: true`** replaces the authored coordinates (and `toLat`/`toLon`) with the
 viewer's own location — the most recent Location Services fix, from the probe or from
 the gate's warm-up. No fix (refused, off, still pending) and the authored coordinates
 are the fallback, so the show flies somewhere either way. The show's verse 2 falls from
-2,600 km up onto wherever the machine is, in a window titled `maps://{ip}`.
+2,600 km up onto wherever the machine is and then circles it, in a window titled
+`maps://{ip}` — alone on the screen for the whole phrase (cue 15 is pulled), until cue
+16's tiles cover it over mid-orbit.
 
 Three things worth knowing before performing with it:
 

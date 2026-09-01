@@ -144,7 +144,7 @@
    {
     "t": 77.9,
     "bar": 42,
-    "label": "windows fill",
+    "label": "fill (pulled)",
     "kind": "section"
    },
    {
@@ -6133,7 +6133,9 @@
       "toPitch": 62,
       "heading": 0,
       "toHeading": 30,
-      "seconds": 12.1,
+      "seconds": 14.1,
+      "zoomSeconds": 3.0,
+      "orbitDegrees": 180,
       "style": "hybrid"
      }
     },
@@ -6142,616 +6144,6 @@
     },
     "interactive": true,
     "respawn": true
-   }
-  },
-  {
-   "beat": 166,
-   "type": "openWindow",
-   "params": {
-    "id": "fw0",
-    "frame": [
-     717,
-     337,
-     300,
-     226
-    ],
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 170.25,
-   "type": "openWindow",
-   "params": {
-    "id": "fw1",
-    "frame": [
-     394,
-     470,
-     300,
-     181
-    ],
-    "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 173.104,
-   "type": "openWindow",
-   "params": {
-    "id": "fw2",
-    "frame": [
-     633,
-     167,
-     233,
-     143
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 175.188,
-   "type": "openWindow",
-   "params": {
-    "id": "fw3",
-    "frame": [
-     835,
-     544,
-     300,
-     205
-    ],
-    "content": {
-     "kind": "code",
-     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 176.794,
-   "type": "openWindow",
-   "params": {
-    "id": "fw4",
-    "frame": [
-     131,
-     279,
-     310,
-     247
-    ],
-    "content": {
-     "kind": "glitch",
-     "path": "assets/pixelface.jpg",
-     "intensity": 0.45,
-     "seed": 4100,
-     "chrome": "mixed",
-     "title": "recovered.jpg"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 178.082,
-   "type": "openWindow",
-   "params": {
-    "id": "fw5",
-    "frame": [
-     959,
-     160,
-     326,
-     261
-    ],
-    "content": {
-     "kind": "automaton",
-     "rule": 30,
-     "seed": 0,
-     "hz": 14,
-     "fontSize": 9,
-     "chrome": "mixed",
-     "title": "rule_30"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 179.145,
-   "type": "openWindow",
-   "params": {
-    "id": "fw6",
-    "frame": [
-     464,
-     661,
-     300,
-     188
-    ],
-    "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 180.043,
-   "type": "openWindow",
-   "params": {
-    "id": "fw7",
-    "frame": [
-     349,
-     80,
-     300,
-     153
-    ],
-    "content": {
-     "kind": "code",
-     "text": "function giveItUp() {\n  return all.i.got;   // i\u2019m giving that\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 180.816,
-   "type": "openWindow",
-   "params": {
-    "id": "fw8",
-    "frame": [
-     1084,
-     465,
-     307,
-     207
-    ],
-    "content": {
-     "kind": "code",
-     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 181.493,
-   "type": "openWindow",
-   "params": {
-    "id": "fw9",
-    "frame": [
-     76,
-     492,
-     300,
-     188
-    ],
-    "content": {
-     "kind": "code",
-     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 182.093,
-   "type": "openWindow",
-   "params": {
-    "id": "fw10",
-    "frame": [
-     812,
-     8,
-     313,
-     253
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 182.631,
-   "type": "openWindow",
-   "params": {
-    "id": "fw11",
-    "frame": [
-     743,
-     680,
-     314,
-     212
-    ],
-    "content": {
-     "kind": "glitch",
-     "path": "assets/muybridge_horse.gif",
-     "intensity": 0.63,
-     "seed": 4117,
-     "chrome": "mixed",
-     "title": "recovered.jpg"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 183.119,
-   "type": "openWindow",
-   "params": {
-    "id": "fw12",
-    "frame": [
-     86,
-     181,
-     204,
-     153
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 183.566,
-   "type": "openWindow",
-   "params": {
-    "id": "fw13",
-    "frame": [
-     1101,
-     246,
-     331,
-     239
-    ],
-    "content": {
-     "kind": "code",
-     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 183.979,
-   "type": "openWindow",
-   "params": {
-    "id": "fw14",
-    "frame": [
-     194,
-     665,
-     318,
-     222
-    ],
-    "content": {
-     "kind": "automaton",
-     "rule": 110,
-     "seed": 110,
-     "hz": 10,
-     "fontSize": 9,
-     "chrome": "mixed",
-     "title": "rule_110"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 184.362,
-   "type": "openWindow",
-   "params": {
-    "id": "fw15",
-    "frame": [
-     473,
-     8,
-     328,
-     210
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 184.722,
-   "type": "openWindow",
-   "params": {
-    "id": "fw16",
-    "frame": [
-     1094,
-     619,
-     300,
-     192
-    ],
-    "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 185.061,
-   "type": "openWindow",
-   "params": {
-    "id": "fw17",
-    "frame": [
-     8,
-     351,
-     335,
-     233
-    ],
-    "content": {
-     "kind": "glitch",
-     "path": "assets/credits_tile.png",
-     "intensity": 0.81,
-     "seed": 4134,
-     "chrome": "mixed",
-     "title": "recovered.jpg"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 185.382,
-   "type": "openWindow",
-   "params": {
-    "id": "fw18",
-    "frame": [
-     1048,
-     47,
-     304,
-     210
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 185.689,
-   "type": "openWindow",
-   "params": {
-    "id": "fw19",
-    "frame": [
-     589,
-     762,
-     300,
-     130
-    ],
-    "content": {
-     "kind": "code",
-     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 185.983,
-   "type": "openWindow",
-   "params": {
-    "id": "fw20",
-    "frame": [
-     149,
-     29,
-     300,
-     176
-    ],
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 186.266,
-   "type": "openWindow",
-   "params": {
-    "id": "fw21",
-    "frame": [
-     1173,
-     403,
-     259,
-     210
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 186.541,
-   "type": "openWindow",
-   "params": {
-    "id": "fw22",
-    "frame": [
-     39,
-     642,
-     199,
-     121
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 186.809,
-   "type": "openWindow",
-   "params": {
-    "id": "fw23",
-    "frame": [
-     718,
-     8,
-     319,
-     201
-    ],
-    "content": {
-     "kind": "code",
-     "text": "i.told(you, {\n  that: \"i need your love\",\n  so: giveItToMe,\n});",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 187.071,
-   "type": "openWindow",
-   "params": {
-    "id": "fw24",
-    "frame": [
-     907,
-     625,
-     345,
-     267
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 187.328,
-   "type": "openWindow",
-   "params": {
-    "id": "fw25",
-    "frame": [
-     8,
-     248,
-     300,
-     127
-    ],
-    "content": {
-     "kind": "code",
-     "text": "const want = \"what I want\";\nwhile (need(love)) {\n  giveItToMe();\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
    }
   },
   {
@@ -6772,136 +6164,910 @@
    }
   },
   {
-   "beat": 188.2,
+   "beat": 188.0,
+   "type": "openWindow",
+   "params": {
+    "id": "tx0",
+    "frame": [
+     230,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.071,
+   "type": "openWindow",
+   "params": {
+    "id": "tx1",
+    "frame": [
+     710,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.143,
+   "type": "openWindow",
+   "params": {
+    "id": "tx2",
+    "frame": [
+     470,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.214,
+   "type": "openWindow",
+   "params": {
+    "id": "tx3",
+    "frame": [
+     0,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.286,
+   "type": "openWindow",
+   "params": {
+    "id": "tx4",
+    "frame": [
+     950,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.357,
+   "type": "openWindow",
+   "params": {
+    "id": "tx5",
+    "frame": [
+     710,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.428,
+   "type": "openWindow",
+   "params": {
+    "id": "tx6",
+    "frame": [
+     1180,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.5,
+   "type": "openWindow",
+   "params": {
+    "id": "tx7",
+    "frame": [
+     710,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.571,
+   "type": "openWindow",
+   "params": {
+    "id": "tx8",
+    "frame": [
+     950,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.643,
+   "type": "openWindow",
+   "params": {
+    "id": "tx9",
+    "frame": [
+     230,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.714,
+   "type": "openWindow",
+   "params": {
+    "id": "tx10",
+    "frame": [
+     0,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.785,
+   "type": "openWindow",
+   "params": {
+    "id": "tx11",
+    "frame": [
+     1180,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.857,
+   "type": "openWindow",
+   "params": {
+    "id": "tx12",
+    "frame": [
+     950,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.928,
+   "type": "openWindow",
+   "params": {
+    "id": "tx13",
+    "frame": [
+     470,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 188.999,
+   "type": "openWindow",
+   "params": {
+    "id": "tx14",
+    "frame": [
+     1180,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.071,
+   "type": "openWindow",
+   "params": {
+    "id": "tx15",
+    "frame": [
+     470,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.142,
+   "type": "openWindow",
+   "params": {
+    "id": "tx16",
+    "frame": [
+     1180,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.214,
+   "type": "openWindow",
+   "params": {
+    "id": "tx17",
+    "frame": [
+     230,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.285,
+   "type": "openWindow",
+   "params": {
+    "id": "tx18",
+    "frame": [
+     0,
+     0,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.356,
+   "type": "openWindow",
+   "params": {
+    "id": "tx19",
+    "frame": [
+     470,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.428,
+   "type": "openWindow",
+   "params": {
+    "id": "tx20",
+    "frame": [
+     1180,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.499,
+   "type": "openWindow",
+   "params": {
+    "id": "tx21",
+    "frame": [
+     230,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.571,
+   "type": "openWindow",
+   "params": {
+    "id": "tx22",
+    "frame": [
+     0,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.642,
+   "type": "openWindow",
+   "params": {
+    "id": "tx23",
+    "frame": [
+     710,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.713,
+   "type": "openWindow",
+   "params": {
+    "id": "tx24",
+    "frame": [
+     950,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.785,
+   "type": "openWindow",
+   "params": {
+    "id": "tx25",
+    "frame": [
+     950,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#020AF5",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.856,
+   "type": "openWindow",
+   "params": {
+    "id": "tx26",
+    "frame": [
+     470,
+     350,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.928,
+   "type": "openWindow",
+   "params": {
+    "id": "tx27",
+    "frame": [
+     0,
+     170,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 189.999,
+   "type": "openWindow",
+   "params": {
+    "id": "tx28",
+    "frame": [
+     710,
+     700,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 190.07,
+   "type": "openWindow",
+   "params": {
+    "id": "tx29",
+    "frame": [
+     230,
+     530,
+     260,
+     200
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#F2F4FE",
+     "chrome": "mixed",
+     "title": "look://again"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 190.2,
    "type": "closeWindow",
    "params": {
     "id": "map0"
    }
   },
   {
-   "beat": 188.2,
+   "beat": 190.922,
    "type": "closeWindow",
    "params": {
-    "id": "fw0"
+    "id": "tx16",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 188.42,
+   "beat": 190.922,
    "type": "closeWindow",
    "params": {
-    "id": "fw1"
+    "id": "tx0",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 188.64,
+   "beat": 190.922,
    "type": "closeWindow",
    "params": {
-    "id": "fw2"
+    "id": "tx20",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 188.86,
+   "beat": 190.993,
    "type": "closeWindow",
    "params": {
-    "id": "fw3"
+    "id": "tx6",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 189.08,
+   "beat": 190.993,
    "type": "closeWindow",
    "params": {
-    "id": "fw4"
+    "id": "tx4",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 189.3,
+   "beat": 190.993,
    "type": "closeWindow",
    "params": {
-    "id": "fw5"
+    "id": "tx27",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 189.52,
+   "beat": 191.065,
    "type": "closeWindow",
    "params": {
-    "id": "fw6"
+    "id": "tx18",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 189.74,
+   "beat": 191.065,
    "type": "closeWindow",
    "params": {
-    "id": "fw7"
+    "id": "tx11",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 189.96,
+   "beat": 191.065,
    "type": "closeWindow",
    "params": {
-    "id": "fw8"
+    "id": "tx9",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 190.18,
+   "beat": 191.136,
    "type": "closeWindow",
    "params": {
-    "id": "fw9"
+    "id": "tx5",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 190.4,
+   "beat": 191.136,
    "type": "closeWindow",
    "params": {
-    "id": "fw10"
+    "id": "tx19",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 190.62,
+   "beat": 191.136,
    "type": "closeWindow",
    "params": {
-    "id": "fw11"
+    "id": "tx26",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 190.84,
+   "beat": 191.208,
    "type": "closeWindow",
    "params": {
-    "id": "fw12"
+    "id": "tx14",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 191.06,
+   "beat": 191.208,
    "type": "closeWindow",
    "params": {
-    "id": "fw13"
+    "id": "tx23",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 191.28,
+   "beat": 191.208,
    "type": "closeWindow",
    "params": {
-    "id": "fw14"
+    "id": "tx2",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 191.5,
+   "beat": 191.279,
    "type": "closeWindow",
    "params": {
-    "id": "fw15"
+    "id": "tx13",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 191.72,
+   "beat": 191.279,
    "type": "closeWindow",
    "params": {
-    "id": "fw16"
+    "id": "tx22",
+    "fadeSeconds": 0.25
    }
   },
   {
-   "beat": 191.94,
+   "beat": 191.279,
    "type": "closeWindow",
    "params": {
-    "id": "fw17"
+    "id": "tx25",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.35,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx7",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.35,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx8",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.35,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx10",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.422,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx17",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.422,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx12",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.422,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx15",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.493,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx28",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.493,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx29",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.493,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx3",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.565,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx21",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.565,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx24",
+    "fadeSeconds": 0.25
+   }
+  },
+  {
+   "beat": 191.565,
+   "type": "closeWindow",
+   "params": {
+    "id": "tx1",
+    "fadeSeconds": 0.25
    }
   },
   {
@@ -6930,55 +7096,6 @@
    }
   },
   {
-   "beat": 192.16,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw18"
-   }
-  },
-  {
-   "beat": 192.38,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw19"
-   }
-  },
-  {
-   "beat": 192.6,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw20"
-   }
-  },
-  {
-   "beat": 192.82,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw21"
-   }
-  },
-  {
-   "beat": 193.04,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw22"
-   }
-  },
-  {
-   "beat": 193.26,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw23"
-   }
-  },
-  {
-   "beat": 193.48,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw24"
-   }
-  },
-  {
    "beat": 193.5,
    "type": "cursorPath",
    "params": {
@@ -6996,13 +7113,6 @@
       660
      ]
     ]
-   }
-  },
-  {
-   "beat": 193.7,
-   "type": "closeWindow",
-   "params": {
-    "id": "fw25"
    }
   },
   {

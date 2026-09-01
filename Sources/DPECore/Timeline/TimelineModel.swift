@@ -63,8 +63,17 @@ struct MapSpec: Decodable {
     let toPitch: Double?
     let heading: Double?      // compass degrees, default 0
     let toHeading: Double?
-    let seconds: Double?      // fly duration, default 14
+    let seconds: Double?      // the whole shot, default 14
     let style: String?        // "flyover" (default) | "satellite" | "hybrid" | "standard"
+    /// The shot is two legs. `zoomSeconds` is how long the FALL takes — the
+    /// altitude/pitch/centre move — and it defaults to `seconds`, which is what every
+    /// timeline did before this field existed: one move filling the whole shot.
+    /// Setting it shorter lands the camera early and leaves the rest of `seconds` for…
+    var zoomSeconds: Double? = nil
+    /// …the orbit: degrees of heading travelled around the point it landed on, on top
+    /// of the descent's own `heading` → `toHeading` sweep. Default 0 — no orbit, so an
+    /// old timeline flies exactly as it did.
+    var orbitDegrees: Double? = nil
 }
 
 /// Optional fields carry `= nil` so the synthesized memberwise initializer has
@@ -155,6 +164,10 @@ struct FakeDialogParams: Decodable {
 
 struct CloseWindowParams: Decodable {
     let id: String
+    /// Dissolve instead of cut: run the window's alpha down over this many seconds.
+    /// Default (nil/0) is the hard cut every close did before this existed. A fade in
+    /// flight is still swept instantly by stop, quit and panic — see `close(id:)`.
+    var fadeSeconds: Double? = nil
 }
 
 struct MoveWindowParams: Decodable {

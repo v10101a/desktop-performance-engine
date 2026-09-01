@@ -650,7 +650,10 @@ add_t(secs(t1) - DESK_LATENCY, "deskWallpaper",
       {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
 
 # =============================================================================
-# Cue 14 (1:24) — Apple Maps, falling out of orbit onto the viewer's own location.
+# Cue 14 (1:24) — Apple Maps, falling out of orbit onto the viewer's own location, and
+# the only thing on the screen for the whole of bridge B: nothing else opens over it
+# until cue 16 closes it (cue 15's fill is pulled — see below). The descent is derived
+# from that: it runs the full phrase and lands a second before the black.
 # =============================================================================
 mp = B["map"]
 for wid in ("torus", "greeting", "oracle"):
@@ -659,107 +662,174 @@ add(mp, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
 # The fallback when Location Services gives nothing: downtown Los Angeles. `here=True`
 # overrides these whenever there IS a fix.
 FALL = dict(lat=34.0522, lon=-118.2437)
+# The shot runs for exactly as long as the window is on the screen — up to the frame
+# cue 16's tiles bury it — and it is flown in two legs. The FALL is 3 s: 2,600 km down
+# to 260 m in under a quarter of the shot, so the plummet is over almost before it
+# registers. Everything after it ORBITS, and the orbit is eased in and then held at
+# rate (`easeInThenSteady`), never eased out: the camera is still going round the
+# viewer's own roof at the moment it is covered up.
+MAP_CLOSE = 190.2                       # set by the wipe below; the map dies covered
+MAP_SECONDS = round((MAP_CLOSE - mp) * BEAT, 1)
+MAP_FALL = 3.0
+MAP_ORBIT = 180
 DESCENT = dict(FALL, here=True, altitude=2_600_000, toAltitude=260,
                pitch=0, toPitch=62, heading=0, toHeading=30,
-               seconds=round((B["black"] - mp) * BEAT - 1.0, 1), style=MAP_STYLE)
+               seconds=MAP_SECONDS, zoomSeconds=MAP_FALL, orbitDegrees=MAP_ORBIT,
+               style=MAP_STYLE)
 add(mp, "openWindow", {"id": "map0",
     "frame": [round(W * 0.10), round(H * 0.07), round(W * 0.80), round(H * 0.78)],
     "content": {"kind": "map", "chrome": "browser", "title": "maps://{ip}", "map": DESCENT},
     "animate": {"kind": "springIn"}, "interactive": True, "respawn": True})
 
 # =============================================================================
-# Cue 15 (1:27) — windows start opening and slowly fill the screen. The rate ramps
-# from roughly one a bar to four a beat, walking outward from the centre.
+# Cue 15 — PULLED (2026-08-31): the windows that filled the screen are out of the cut.
+# Every one of them opened ON TOP of the map, which is 80% × 78% of the screen, so the
+# descent from orbit played out under a thickening pile of them. Bridge B is the map's
+# alone now — cue 14 lands it and nothing else opens until cue 16 takes it away. The
+# act is kept behind FILL_ACT for when it returns: the ramp from roughly one window a
+# bar to four a beat, walking outward from the centre. The slot keeps its number.
 # =============================================================================
-fl = B["fill"]
-fill_rng = random.Random(19)
-fill_ids = []
+# Drawn on by the eruption's terminals too (cue 27), so it stays outside the gate.
 codes = lyrics.CODE
+FILL_ACT = False
+fill_ids = []
+if FILL_ACT:
+    fl = B["fill"]
+    fill_rng = random.Random(19)
 
-# Three of the flat blue cards carry the piece's own tear — the cue 28 glitch pass run
-# once over one of the show's own images — spread across the ramp. WHICH cards is a
-# fixed set, not a roll, and the colour draw below still happens for every blue card
-# even when its hex goes unused: `fill_rng` seeds the whole act's layout, so a draw
-# added or skipped here would reshuffle every window after it.
-GLITCH_BLUES = {1, 4, 8}
-GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
-                  "assets/credits_tile.png"]
+    # Three of the flat blue cards carry the piece's own tear — the cue 28 glitch pass run
+    # once over one of the show's own images — spread across the ramp. WHICH cards is a
+    # fixed set, not a roll, and the colour draw below still happens for every blue card
+    # even when its hex goes unused: `fill_rng` seeds the whole act's layout, so a draw
+    # added or skipped here would reshuffle every window after it.
+    GLITCH_BLUES = {1, 4, 8}
+    GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
+                      "assets/credits_tile.png"]
 
-# ...and two more RUN a Wolfram elementary cellular automaton, computed by the engine
-# (`AutomatonView`): it has to keep going for as long as the window is up, and it sizes
-# its own grid to the window. `seed: 0` is a single live cell — the classic light cone.
-# Rule 110 looks lopsided from one cell, so it takes a seeded random first row.
-CA_CARDS = {
-    2: dict(rule=30,  seed=0,   hz=14, title="rule_30"),
-    6: dict(rule=110, seed=110, hz=10, title="rule_110"),
-}
+    # ...and two more RUN a Wolfram elementary cellular automaton, computed by the engine
+    # (`AutomatonView`): it has to keep going for as long as the window is up, and it sizes
+    # its own grid to the window. `seed: 0` is a single live cell — the classic light cone.
+    # Rule 110 looks lopsided from one cell, so it takes a seeded random first row.
+    CA_CARDS = {
+        2: dict(rule=30,  seed=0,   hz=14, title="rule_30"),
+        6: dict(rule=110, seed=110, hz=10, title="rule_110"),
+    }
 
-b, i, blue = fl, 0, 0
-while b < B["black"] - 0.5:
-    u = (b - fl) / (B["black"] - fl)                 # 0 → 1 across the act
-    ring = 0.10 + 0.42 * u
-    ang = i * 2.399963                                # golden angle: no two adjacent
-    w = round(W * fill_rng.uniform(0.13, 0.24))
-    h = round(w * fill_rng.uniform(0.58, 0.82))
-    x = round(W / 2 + math.cos(ang) * W * ring - w / 2)
-    y = round(H / 2 + math.sin(ang) * H * ring - h / 2)
-    x = max(8, min(x, W - w - 8))
-    y = max(8, min(y, H - h - 8))
-    wid = f"fw{i}"
-    fill_ids.append(wid)
-    roll = fill_rng.random()
-    if roll < 0.45:
-        hexc = fill_rng.choice(PALETTE + ["#0B0E16"])   # drawn either way — see above
-        if blue in CA_CARDS:
-            ca = CA_CARDS[blue]
-            add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
-                "content": {"kind": "automaton", "rule": ca["rule"], "seed": ca["seed"],
-                            "hz": ca["hz"], "fontSize": 9,
-                            "chrome": "mixed", "title": ca["title"]},
-                "animate": {"kind": "springIn"}, "interactive": True})
-        elif blue in GLITCH_BLUES:
-            g = sorted(GLITCH_BLUES).index(blue)
-            add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
-                "content": {"kind": "glitch", "path": GLITCH_SOURCES[g],
-                            "intensity": round(0.45 + 0.18 * g, 2), "seed": 4100 + 17 * g,
-                            "chrome": "mixed", "title": "recovered.jpg"},
-                "animate": {"kind": "springIn"}, "interactive": True})
+    b, i, blue = fl, 0, 0
+    while b < B["black"] - 0.5:
+        u = (b - fl) / (B["black"] - fl)                 # 0 → 1 across the act
+        ring = 0.10 + 0.42 * u
+        ang = i * 2.399963                                # golden angle: no two adjacent
+        w = round(W * fill_rng.uniform(0.13, 0.24))
+        h = round(w * fill_rng.uniform(0.58, 0.82))
+        x = round(W / 2 + math.cos(ang) * W * ring - w / 2)
+        y = round(H / 2 + math.sin(ang) * H * ring - h / 2)
+        x = max(8, min(x, W - w - 8))
+        y = max(8, min(y, H - h - 8))
+        wid = f"fw{i}"
+        fill_ids.append(wid)
+        roll = fill_rng.random()
+        if roll < 0.45:
+            hexc = fill_rng.choice(PALETTE + ["#0B0E16"])   # drawn either way — see above
+            if blue in CA_CARDS:
+                ca = CA_CARDS[blue]
+                add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
+                    "content": {"kind": "automaton", "rule": ca["rule"], "seed": ca["seed"],
+                                "hz": ca["hz"], "fontSize": 9,
+                                "chrome": "mixed", "title": ca["title"]},
+                    "animate": {"kind": "springIn"}, "interactive": True})
+            elif blue in GLITCH_BLUES:
+                g = sorted(GLITCH_BLUES).index(blue)
+                add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
+                    "content": {"kind": "glitch", "path": GLITCH_SOURCES[g],
+                                "intensity": round(0.45 + 0.18 * g, 2), "seed": 4100 + 17 * g,
+                                "chrome": "mixed", "title": "recovered.jpg"},
+                    "animate": {"kind": "springIn"}, "interactive": True})
+            else:
+                add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
+                    "content": {"kind": "color", "hex": hexc,
+                                "chrome": "mixed", "title": "look://again"},
+                    "animate": {"kind": "springIn"}, "interactive": True})
+            blue += 1
+        elif roll < 0.75:
+            add(b, "openWindow", {"id": wid, "frame": [x, y, max(w, 300), h],
+                "content": {"kind": "code", "text": lyrics.code(i), "chrome": "terminal",
+                            "title": "haunt.sh"},
+                "animate": {"kind": "none"}, "interactive": True})
         else:
-            add(b, "openWindow", {"id": wid, "frame": [x, y, w, h],
-                "content": {"kind": "color", "hex": hexc,
-                            "chrome": "mixed", "title": "look://again"},
-                "animate": {"kind": "springIn"}, "interactive": True})
-        blue += 1
-    elif roll < 0.75:
-        add(b, "openWindow", {"id": wid, "frame": [x, y, max(w, 300), h],
-            "content": {"kind": "code", "text": lyrics.code(i), "chrome": "terminal",
-                        "title": "haunt.sh"},
-            "animate": {"kind": "none"}, "interactive": True})
-    else:
-        # No lyric popups in the fill (cut 2026-09-01): these slots are terminals now,
-        # so the fill keeps its density without alert dialogs quoting the lyric. No
-        # fill_rng draws added or removed — the layout of every other window holds.
-        add(b, "openWindow", {"id": wid, "frame": [x, y, max(w, 300), h],
-            "content": {"kind": "code", "text": lyrics.code(i), "chrome": "terminal",
-                        "title": "haunt.sh"},
-            "animate": {"kind": "none"}, "interactive": True})
-    # 4 beats apart at the start, 0.25 at the end.
-    b += 4 * (1 - u) ** 2 + 0.25
-    i += 1
+            # No lyric popups in the fill (cut 2026-09-01): these slots are terminals now,
+            # so the fill keeps its density without alert dialogs quoting the lyric. No
+            # fill_rng draws added or removed — the layout of every other window holds.
+            add(b, "openWindow", {"id": wid, "frame": [x, y, max(w, 300), h],
+                "content": {"kind": "code", "text": lyrics.code(i), "chrome": "terminal",
+                            "title": "haunt.sh"},
+                "animate": {"kind": "none"}, "interactive": True})
+        # 4 beats apart at the start, 0.25 at the end.
+        b += 4 * (1 - u) ** 2 + 0.25
+        i += 1
 
 # =============================================================================
-# Cue 16 (1:37) — the desktop goes black and the windows close one by one: a hard swap
-# dressed as a fade (see cue 2), the closes staggered in the order the windows arrived.
+# Cue 16 (1:37) — the way out of the map. The desktop goes black and the screen FILLS
+# WITH WINDOWS: 30 tiles on a 6×5 grid, one a transport frame, in scattered order,
+# until there is nothing of the map left to see. The map closes behind that cover, so
+# the orbit is never seen to stop — it is buried mid-turn. Then the tiles DISSOLVE,
+# three a frame, a quarter-second of alpha each, timed so the last of them is still
+# going transparent as cue 17's raymarcher springs in: the shader is uncovered rather
+# than cut to.
+#
+# The build is an accumulation and the dissolve is a fade — neither reverses the
+# screen, so a one-a-frame cadence is not a flash rate. The only full-screen change
+# here is the single black `screenFlash` this cue always had.
 # =============================================================================
 bk = B["black"]
+FRAME = 1.0 / FPS / BEAT                 # one transport frame, in beats
 add(bk, "deskWallpaper", {"id": "dark", "mode": "solid", "hex": BLACK})
 add(bk, "screenFlash", {"color": BLACK, "durationBeats": 0.6})
-add(bk + 0.2, "closeWindow", {"id": "map0"})
-# The closes cross the section line by a little: the raymarcher opens while the last
-# stragglers are still leaving, instead of after a beat of emptied-screen dead air.
-close_span = (B["tbd_099"] - bk) + 1.5
-for i, wid in enumerate(fill_ids):
-    add(bk + 0.2 + close_span * i / max(1, len(fill_ids) - 1), "closeWindow", {"id": wid})
+
+TX_COLS, TX_ROWS = 6, 5
+TX_BLEED = 10                            # tiles overlap, so the cover has no seams
+TX_FADE = 0.25                           # seconds of alpha per tile on the way out
+tx_rng = random.Random(53)
+cells = [(c, r) for r in range(TX_ROWS) for c in range(TX_COLS)]
+tx_rng.shuffle(cells)                    # scattered, not raster — it reads as a wipe
+tx_ids = []
+tw = round(W / TX_COLS) + 2 * TX_BLEED
+th = round(H / TX_ROWS) + 2 * TX_BLEED
+for n, (c, r) in enumerate(cells):
+    x = max(0, min(round(c * W / TX_COLS) - TX_BLEED, W - tw))
+    y = max(0, min(round(r * H / TX_ROWS) - TX_BLEED, H - th))
+    wid = f"tx{n}"
+    tx_ids.append(wid)
+    add(bk + n * FRAME, "openWindow", {"id": wid, "frame": [x, y, tw, th],
+        "content": {"kind": "color", "hex": tx_rng.choice(PALETTE),
+                    "chrome": "mixed", "title": "look://again"},
+        "animate": {"kind": "none"}})    # a springIn would open gaps in the cover
+
+# Covered at TX_COVERED; the map goes a couple of frames after that, unseen. MAP_CLOSE
+# up at cue 14 is this number — the flight is sized to end on it.
+TX_COVERED = bk + (len(cells) - 1) * FRAME
+add(MAP_CLOSE, "closeWindow", {"id": "map0"})
+assert MAP_CLOSE > TX_COVERED, "the map would still be visible when it closes"
+
+# The dissolve is timed BACKWARD from cue 17 so the last tile is a quarter-second into
+# its fade as the shader arrives: the two cross rather than one following the other.
+TX_PER_FRAME = 3
+tx_out = list(tx_ids)
+tx_rng.shuffle(tx_out)
+tx_last = B["tbd_099"] + 0.1 - TX_FADE / BEAT
+tx_first = tx_last - ((len(tx_out) - 1) // TX_PER_FRAME) * FRAME
+assert tx_first > MAP_CLOSE, "the dissolve would start before the map is gone"
+for n, wid in enumerate(tx_out):
+    add(tx_first + (n // TX_PER_FRAME) * FRAME,
+        "closeWindow", {"id": wid, "fadeSeconds": TX_FADE})
+
+# With FILL_ACT back on, its windows leave in the order they arrived and the stagger
+# crosses the section line: the raymarcher opens while the last stragglers are still
+# leaving, instead of after a beat of emptied-screen dead air.
+if fill_ids:
+    close_span = (B["tbd_099"] - bk) + 1.5
+    for i, wid in enumerate(fill_ids):
+        add(bk + 0.2 + close_span * i / max(1, len(fill_ids) - 1), "closeWindow", {"id": wid})
 
 # =============================================================================
 # Cue 17 (1:30) — the artist's GLSL raymarcher, alone on the emptied screen until
@@ -1119,7 +1189,7 @@ LABELS = {
     "face": "pixelface desktop", "traveller": "traveller + trail",
     "spiral": "lyric spiral", "video1": "video slot", "tbd_048": "TBD",
     "words": "lyrics desktop", "torus1": "magic torus + greeting",
-    "map": "maps: here", "fill": "windows fill", "black": "to black",
+    "map": "maps: here", "fill": "fill (pulled)", "black": "to black",
     "tbd_099": "glsl + hydra", "booth": "photo booth", "wall": "photo wall",
     "facestrobe": "pixelface strobe", "horse": "the horse",
     "torus2": "torus + face ring", "video2": "video on top", "video3": "video + swarm",
@@ -1194,7 +1264,19 @@ print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.
       f"question at f {frame_at(secs(ORACLE_AT))} "
       f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
       f"(f {frame_at(secs(ORACLE_AT + ORACLE_BEATS))}), cut at f {frame_at(secs(mp)):d}")
-print(f"  fill     {len(fill_ids)} windows, 4 beats apart → 0.25")
+if FILL_ACT:
+    print(f"  fill     {len(fill_ids)} windows, 4 beats apart → 0.25")
+else:
+    print(f"  fill     pulled from the cut (FILL_ACT = False) — the map has bridge B to "
+          f"itself, f {frame_at(secs(mp))} until cue 16's wipe covers it f {frame_at(secs(bk))}")
+print(f"  map      f {frame_at(secs(mp))} → f {frame_at(secs(MAP_CLOSE))}: falls "
+      f"{2_600_000:,}m → 260m in {MAP_FALL:g}s (f {frame_at(secs(mp) + MAP_FALL)}), then "
+      f"{MAP_ORBIT:g}° round the fix over {MAP_SECONDS - MAP_FALL:g}s "
+      f"({MAP_ORBIT / (MAP_SECONDS - MAP_FALL):.1f}°/s), still turning when it is covered")
+print(f"  wipe     {len(tx_ids)} tiles {tw}x{th} on a {TX_COLS}x{TX_ROWS} grid, one a frame "
+      f"f {frame_at(secs(bk))} → f {frame_at(secs(TX_COVERED))}, dissolve {TX_PER_FRAME}/frame "
+      f"f {frame_at(secs(tx_first))} → f {frame_at(secs(tx_last) + TX_FADE)} "
+      f"({TX_FADE:g}s each), shader lands f {frame_at(secs(B['tbd_099']))}")
 print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
 print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
       f"exits beat {horse_exit:.0f}")
