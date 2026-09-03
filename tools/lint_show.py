@@ -39,7 +39,10 @@ if times != sorted(times):
 # --- window lifetimes ----------------------------------------------------------
 # Which event types put a window on screen under an id, and which take one away.
 OPENS = {"openWindow", "fakeDialog", "typeText", "systemProbe", "glassTorus", "sprite",
-         "photoWall", "photoBooth", "oracle", "credits", "reboot", "cursorTrail"}
+         "photoWall", "photoBooth", "oracle", "credits", "reboot", "cursorTrail",
+         # brickBreaker puts a whole table of windows up under one id — the bricks, the
+         # ball and the paddle all live and die with it.
+         "brickBreaker"}
 CLOSES = {"closeWindow"}
 # These end on their own, so leaving one open is not a leak.
 SELF_ENDING = {"photoBooth", "credits", "reboot", "sprite"}

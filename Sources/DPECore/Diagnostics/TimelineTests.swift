@@ -18,11 +18,11 @@ enum TimelineTests {
                     "every type string must decode to the case reporting that name")
 
             t.equal(TimelineEvent.registeredTypeNames,
-                    ["closeWindow", "credits", "cursorPath", "cursorTrail", "deskWallpaper",
-                     "fakeDialog", "fileSwarm", "glassTorus", "hideOtherApps", "jiggle", "moveWindow",
-                     "openWindow", "oracle", "photoBooth", "photoWall", "rearrangeIcons",
-                     "reboot", "screenFlash", "sprite", "systemProbe", "typeText",
-                     "wallpaper"],
+                    ["brickBreaker", "closeWindow", "credits", "cursorPath", "cursorTrail",
+                     "deskWallpaper", "fakeDialog", "fileSwarm", "glassTorus", "hideOtherApps",
+                     "jiggle", "moveWindow", "openWindow", "oracle", "photoBooth", "photoWall",
+                     "rearrangeIcons", "reboot", "screenFlash", "sprite", "systemProbe",
+                     "typeText", "wallpaper"],
                     "registered event types")
 
             // The stage-clearing event takes no required params at all.
@@ -305,6 +305,34 @@ enum TimelineTests {
                 // Same as the torn cards: the automata came with the pulled fill, so
                 // the count is 0 until `FILL_ACT` goes back on.
 
+                // NOTHING THE SHOW PLAYS ASKS FOR SCREEN RECORDING. The outro no longer
+                // captures the display and the glass torus reflects the wallpaper file
+                // rather than a live stream, which leaves `deskWallpaper` mode
+                // "recursive" as the last path in the engine that reaches
+                // ScreenCaptureKit. Authoring one would put a permission dialog in front
+                // of a viewer mid-performance — macOS cannot even settle that one with a
+                // prompt, it sends them to System Settings and wants a relaunch.
+                for ev in tl.events {
+                    guard case .deskWallpaper(let p) = ev.action else { continue }
+                    t.expect(p.mode != "recursive",
+                             "no recursive wallpaper — it is the last thing here that "
+                             + "would ask for Screen Recording")
+                }
+
+                // The game (cue 5). It ends when the cue closes it — a `brickBreaker`
+                // with no close is a table of windows left on the desktop, which is the
+                // one thing the piece is not allowed to do.
+                for ev in tl.events {
+                    guard case .brickBreaker(let p) = ev.action else { continue }
+                    let closed = tl.events.contains {
+                        if case .closeWindow(let c) = $0.action { return c.id == p.id }
+                        return false
+                    }
+                    t.expect(closed, "the brick breaker \(p.id) is closed by the timeline")
+                    t.expect((p.rows ?? 4) * (p.cols ?? 8) >= 8,
+                             "…and racks a wall worth hitting (\((p.rows ?? 4) * (p.cols ?? 8)) bricks)")
+                }
+
                 // DooM. One window, one id, and NOT one of the eruption's recycled
                 // `w0…w13`: re-opening an id rebuilds the content view, which restarts
                 // the game — a DooM that reboots every few beats never leaves its title
@@ -314,8 +342,9 @@ enum TimelineTests {
                 for ev in tl.events {
                     guard case .openWindow(let p) = ev.action, p.content.kind == "doom" else { continue }
                     doomIds.append(p.id)
-                    t.expect(p.frame.count == 4 && p.frame[2] > 0 && p.frame[2] <= 480,
-                             "the DooM window is one of the small ones (\(Int(p.frame[2]))pt wide)")
+                    t.expect(p.frame.count == 4 && p.frame[2] > 0 && p.frame[2] <= 560,
+                             "the DooM window is a window on the desktop, not the screen "
+                             + "(\(Int(p.frame[2]))pt wide)")
                 }
                 t.equal(doomIds.count, 1, "the show runs DooM in exactly one window")
                 if let id = doomIds.first {

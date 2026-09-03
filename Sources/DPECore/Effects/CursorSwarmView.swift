@@ -28,6 +28,7 @@ final class CursorSwarmView: NSView {
         var maxSpeed = 0.0
         var accel = 0.0
         var angle = 0.0                 // last heading, kept for when it is standing still
+        var bornAt = 0.0                // seconds after the window opens that it arrives
     }
 
     private let mode: Mode
@@ -47,8 +48,14 @@ final class CursorSwarmView: NSView {
     /// large and shrunk, every one of them is crisp.
     private static let master: CGFloat = 256
 
-    init(size: NSSize, seed: Int, count: Int, mode: Mode = .chase) {
+    /// Seconds over which the swarm arrives, one pointer at a time. 0 is what it did
+    /// before: the whole population on the frame the window opens, which lands as a
+    /// wall and gives the section it arrives in a hard edge.
+    private let ramp: Double
+
+    init(size: NSSize, seed: Int, count: Int, mode: Mode = .chase, rampSeconds: Double = 0) {
         self.mode = mode
+        self.ramp = max(0, rampSeconds)
         rng = SplitMix64(seed: UInt64(bitPattern: Int64(seed == 0 ? 3 : seed)))
         super.init(frame: NSRect(origin: .zero, size: size))
         wantsLayer = true
@@ -100,6 +107,10 @@ final class CursorSwarmView: NSView {
                 p.accel = rand(600, 1000) * (1.0 - 0.3 * v)
                 p.angle = atan2(p.vy, p.vx)
             }
+            // Spread arrivals evenly across the ramp. Evenly, not randomly: a random
+            // schedule clumps, and what this is for is a section that fills rather than
+            // one that starts.
+            p.bornAt = n > 1 ? ramp * Double(i) / Double(n - 1) : 0
             swarm.append(p)
 
             let l = CALayer()
@@ -159,7 +170,8 @@ final class CursorSwarmView: NSView {
 
     private func step() {
         let dt = CursorSwarmView.dt
-        for i in swarm.indices {
+        let age = CACurrentMediaTime() - started
+        for i in swarm.indices where swarm[i].bornAt <= age {
             let dx = Double(target.x) - swarm[i].x
             let dy = Double(target.y) - swarm[i].y
             let d = max(1, (dx * dx + dy * dy).squareRoot())
@@ -213,7 +225,8 @@ final class CursorSwarmView: NSView {
         let p2 = School.perception * School.perception
         let s2 = School.personal * School.personal
 
-        for i in swarm.indices {
+        let age = CACurrentMediaTime() - started
+        for i in swarm.indices where swarm[i].bornAt <= age {
             let me = swarm[i]
             var cohX = 0.0, cohY = 0.0, aliX = 0.0, aliY = 0.0, sepX = 0.0, sepY = 0.0
             var seen = 0.0
@@ -273,10 +286,15 @@ final class CursorSwarmView: NSView {
     }
 
     private func draw() {
+        let age = CACurrentMediaTime() - started
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         for (i, p) in swarm.enumerated() {
             let l = layers[i]
+            // Not yet arrived: hidden rather than parked off-screen, so a pointer that
+            // has not been born cannot be seen sitting at its spawn point.
+            if p.bornAt > age { l.opacity = 0; continue }
+            if l.opacity != 1 { l.opacity = 1 }
             l.position = CGPoint(x: p.x, y: p.y)
             l.setAffineTransform(
                 CGAffineTransform(rotationAngle: CGFloat(p.angle - CursorSwarmView.artAngle)))
@@ -343,6 +361,10 @@ final class CursorSwarmView: NSView {
 
     /// Test seams.
     var countForTesting: Int { swarm.count }
+    var arrivedForTesting: Int {
+        let age = CACurrentMediaTime() - started
+        return swarm.filter { $0.bornAt <= age }.count
+    }
     var sizesForTesting: [Double] { swarm.map(\.size) }
     var headingsForTesting: [Double] { swarm.map(\.angle) }
     var positionsForTesting: [(Double, Double)] { swarm.map { ($0.x, $0.y) } }

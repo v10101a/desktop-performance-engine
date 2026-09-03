@@ -44,6 +44,22 @@ struct Meta: Decodable {
     let authoredSize: [Double]?
 }
 
+/// `brickBreaker`: the machine's own furniture, racked up and knocked down. Bricks are
+/// real windows, the ball is the system's beach ball, and the paddle is wherever the
+/// viewer's pointer happens to be. Ends on `closeWindow` with the same `id`.
+struct BrickBreakerParams: Decodable {
+    let id: String
+    /// The play area, authored [x, y, w, h]; the whole screen if absent.
+    var frame: [Double]? = nil
+    var rows: Int? = nil          // default 4
+    var cols: Int? = nil          // default 8
+    var speed: Double? = nil      // ball speed in authored points/sec (default 520)
+    var ball: Double? = nil       // ball diameter, authored points (default 44)
+    var paddle: [Double]? = nil   // [width, height], authored points (default [190, 26])
+    var screen: Int? = nil
+    var seed: Int? = nil          // fixes the serve angles
+}
+
 // MARK: - Event parameter payloads
 
 /// A real Apple Maps camera move, for `content.kind == "map"`. The camera flies from
@@ -114,6 +130,9 @@ struct ContentSpec: Decodable {
     var drop: Double? = nil
     var vol: Double? = nil
     var midi: Double? = nil
+    /// "shader" only: turn the canvas, in degrees per second (0/absent = still). The
+    /// canvas is scaled up to keep covering its window as it goes — see `layoutCanvas`.
+    var spin: Double? = nil
     // "automaton" kind: an elementary cellular automaton, running and scrolling.
     var rule: Int? = nil        // Wolfram's numbering, 0…255 (default 30)
     var hz: Double? = nil       // generations per second (default 12)
@@ -123,7 +142,17 @@ struct ContentSpec: Decodable {
     /// "cursors" kind: how the swarm moves. "chase" (default) hunts the viewer's own
     /// pointer; "school" ignores it entirely, laying the cursors out on a spiral and
     /// flocking them like fish.
+    ///
+    /// "particles" kind: which behaviour — "vortex" (default), "rain" or "orbit".
     var mode: String? = nil
+    /// "cursors" kind: seconds over which the swarm arrives, one pointer at a time.
+    /// Absent or 0 puts the whole population up on one frame. (Not `ramp` — that name
+    /// is the ascii kind's character ramp.)
+    var spawnSeconds: Double? = nil
+    /// "particles" kind: what the particles are made of — "icons" (default, the system's
+    /// own file icons), "cursors" (the Mac pointer) or "beachballs" (the real spinner,
+    /// all fifteen frames of it).
+    var sprite: String? = nil
 }
 
 struct AnimateSpec: Decodable {
@@ -567,6 +596,7 @@ enum EventAction {
     case photoBooth(PhotoBoothParams)
     case credits(CreditsParams)
     case hideOtherApps(HideOtherAppsParams)
+    case brickBreaker(BrickBreakerParams)
 }
 
 extension EventAction {
@@ -595,6 +625,7 @@ extension EventAction {
         case .photoBooth: return "photoBooth"
         case .credits: return "credits"
         case .hideOtherApps: return "hideOtherApps"
+        case .brickBreaker: return "brickBreaker"
         }
     }
 }
@@ -635,6 +666,7 @@ struct TimelineEvent: Decodable {
         "photoBooth": { .photoBooth(try $0.decode(PhotoBoothParams.self, forKey: .params)) },
         "credits": { .credits(try $0.decode(CreditsParams.self, forKey: .params)) },
         "hideOtherApps": { .hideOtherApps(try $0.decode(HideOtherAppsParams.self, forKey: .params)) },
+        "brickBreaker": { .brickBreaker(try $0.decode(BrickBreakerParams.self, forKey: .params)) },
     ]
 
     /// Every `"type"` string the decoder accepts. Ordered, for stable test output.

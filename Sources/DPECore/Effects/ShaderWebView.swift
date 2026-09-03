@@ -17,6 +17,8 @@ final class ShaderCanvasView: NSView, WKNavigationDelegate {
     private let web: WKWebView
     private var started = false
     private var pending: String?
+    /// Degrees per second the canvas turns, 0 for the still shot it was before.
+    private var spin = 0.0
 
     override init(frame: NSRect) {
         let config = WKWebViewConfiguration()
@@ -36,6 +38,27 @@ final class ShaderCanvasView: NSView, WKNavigationDelegate {
 
     /// The window owns the mouse — a live canvas is scenery, exactly as with hydra.
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    /// Turn the picture at `degreesPerSecond`. Applied in the PAGE, not on this view's
+    /// layer: rotating the layer means scaling the canvas up so its corners cannot swing
+    /// off the window, and that scale crops the shot — the shader composes against
+    /// `u_resolution`, so a bigger canvas renders a bigger scene and the window shows
+    /// the middle of it. See `withSpin` in shader.html for what happens instead.
+    func startSpinning(degreesPerSecond: Double) {
+        spin = degreesPerSecond
+        if started { applySpin() }
+    }
+
+    private func applySpin() {
+        guard spin != 0 else { return }
+        web.evaluateJavaScript("window.__dpeShaderSpin(\(spin))") { value, _ in
+            // A shader with no `gl_FragCoord` or no `u_resolution` cannot be rewritten
+            // to turn. Saying so beats a cue that silently holds still.
+            if let ok = value as? Bool, !ok {
+                NSLog("[DPE] shader: spin ignored — this shader has nothing to rotate")
+            }
+        }
+    }
 
     /// Load the host page, then the shader at `path` once it is up.
     func load(shaderAt path: String) {
@@ -65,7 +88,10 @@ final class ShaderCanvasView: NSView, WKNavigationDelegate {
         // The page returns its compile error rather than throwing, because a shader that
         // fails to compile renders black — which looks exactly like a shader that renders
         // black. Without this the failure is invisible.
-        web.evaluateJavaScript("window.__dpeShader(\(ShaderCanvasView.jsString(src)))") { result, error in
+        web.evaluateJavaScript("window.__dpeShader(\(ShaderCanvasView.jsString(src)))") { [weak self] result, error in
+            // The spin goes in after the source, not before it: whether this shader can
+            // be rewritten to turn is only known once the page has looked at it.
+            self?.applySpin()
             if let error {
                 // The message, not just "A JavaScript exception occurred" — WebKit puts
                 // the real one in userInfo and the description alone says nothing.

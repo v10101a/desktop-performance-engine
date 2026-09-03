@@ -76,6 +76,10 @@ enum IntroGate {
     /// than relying on the two matching.
     static let djBlue = "#020AF5"
     static let faceAsset = "assets/pixelface.jpg"
+    /// The same face with its eyes shut — the blink's other frame. Cut from the artist's
+    /// own `sarah's assets/blink.jpg` by `build_face_blink` in the generator, registered
+    /// to `faceAsset` on the MOUTH so only the eyes change between the two.
+    static let faceBlinkAsset = "assets/pixelface_blink.jpg"
     static let buttonSound = "assets/bubble_sound.wav"
 
     static let backdrop = "#050508"
@@ -724,6 +728,12 @@ final class RestartCardView: NSView {
     private let fill = CALayer()
     private let glyph = NSTextField(labelWithString: "\u{F8FF}")
     private let face = NSImageView()
+    /// The two frames, both keyed to transparency once at load: the blink is a swap
+    /// between prepared images, never a re-mask, which is a full bitmap pass.
+    private var eyesOpen: NSImage?
+    private var eyesShut: NSImage?
+    private var shutNow = false
+    private var turnedAt = 0.0
     private let trackWidth: CGFloat
     private var timer: Timer?
     private let start = CACurrentMediaTime()
@@ -763,8 +773,11 @@ final class RestartCardView: NSView {
         // in over it — so the swap reads as the logo *becoming* the face rather than as
         // one thing leaving and another arriving.
         let faceH = size.height * RestartCardView.logoHeight
+        eyesShut = NSImage(contentsOfFile: resolveResourcePath(IntroGate.faceBlinkAsset))
+            .map(RestartCardView.maskingField)
         if let image = NSImage(contentsOfFile: resolveResourcePath(IntroGate.faceAsset))
             .map(RestartCardView.maskingField) {
+            eyesOpen = image
             face.image = image
             let ratio = image.size.height > 0 ? image.size.width / image.size.height : 1
             face.frame = NSRect(x: (size.width - faceH * ratio) / 2,
@@ -849,14 +862,39 @@ final class RestartCardView: NSView {
     }
 
     private func tick() {
-        let t = min(1.0, (CACurrentMediaTime() - start) / duration)
+        let now = CACurrentMediaTime()
+        let t = min(1.0, (now - start) / duration)
         setProgress(t)
         // The turn happens the moment the bar catches, not when it finishes.
         if t >= RestartCardView.risePortion { turn() }
-        if t >= 1.0 {
-            timer?.invalidate()
-            timer = nil
-        }
+        // The timer used to stop itself here, when the bar filled. It runs on now: the
+        // card holds until the viewer answers the gate, and the face blinks the whole
+        // time it is up. It is a 30 Hz timer setting an image property — the cost of
+        // leaving it running is nothing next to a face that goes dead the moment the
+        // progress bar reaches the end.
+        blink(now)
+    }
+
+    /// Eye-shut moments, in seconds from the face arriving, and how long each lasts.
+    /// Deliberately uneven, with two doubles in it: a face that blinks on a metronome
+    /// reads as an animation loop, and this one has to read as something looking back
+    /// at the person deciding whether to run it. The pattern repeats after `blinkSpan`.
+    private static let blinkAt: [Double] = [1.3, 4.2, 4.9, 8.4, 12.0, 12.7, 16.1, 20.4]
+    private static let blinkFor = 0.11
+    private static let blinkSpan = 23.0
+
+    static func eyesAreShut(at since: Double) -> Bool {
+        guard since >= 0 else { return false }
+        let t = since.truncatingRemainder(dividingBy: blinkSpan)
+        return blinkAt.contains { t >= $0 && t < $0 + blinkFor }
+    }
+
+    private func blink(_ now: Double) {
+        guard turned, let open = eyesOpen, let shut = eyesShut else { return }
+        let want = RestartCardView.eyesAreShut(at: now - turnedAt)
+        guard want != shutNow else { return }      // only on the change
+        shutNow = want
+        face.image = want ? shut : open
     }
 
     /// Draw the bar at `t`, where `t` is 0…1 across the bar's whole life.
@@ -894,6 +932,7 @@ final class RestartCardView: NSView {
     private func turn() {
         guard !turned else { return }
         turned = true
+        turnedAt = CACurrentMediaTime()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         layer?.backgroundColor = (NSColor(hex: IntroGate.djBlue) ?? .systemBlue).cgColor

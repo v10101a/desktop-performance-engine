@@ -26,8 +26,9 @@ swift run GiveIt2Me_DJ_Dave_malware path/to/timeline.json
 ```
 
 Packaged `.app` — **double-click it and the piece runs**, no terminal. Also what
-Phase 3's Finder Automation needs to prompt cleanly. It carries its own icon (a BSOD-blue
-tile with a little window and a pink glitch bar through it; redraw with
+Phase 3's Finder Automation needs to prompt cleanly. It carries its own icon (the
+pixelface on the show's blue — the artwork the drop puts on the desktop at cue 7, on the
+artwork's own `#001FFD` field so there is no edge where it sits; redraw with
 `python3 tools/make_icon.py`) and embeds the backing track, so it runs from anywhere:
 
 ```bash
@@ -116,6 +117,14 @@ mid-song (`Permissions.preflight`; see Act 0). It needs no Accessibility (`curso
 runs in `warp` mode), no Automation (no `rearrangeIcons`), no Contacts, no Bluetooth and
 no Screen Recording. It does want the network, for the Apple Maps flights.
 
+That last one is now true rather than aspirational. Two things used to reach
+ScreenCaptureKit: the glass torus streamed the display for its reflections, and the
+**outro captured the screen** for the glitch dump — which put the prompt on the *ending*,
+behind the force-quit alert, in the last seconds of the show. Both are gone (the torus
+reflects the wallpaper snapshot, the dump is synthesised), and `deskWallpaper` mode
+`recursive` is the only path left in the engine that would ask for it. `TimelineTests`
+fails a cut that authors one, so the claim above cannot quietly stop being true again.
+
 That includes the two macOS has no request API for. **Files and Folders** — the photo
 wall's roots and the probe's home-directory census both read `~/Desktop`, `~/Documents`
 and `~/Downloads` — and **Automation → Finder**, which `rearrangeIcons` and `fileSwarm`
@@ -142,6 +151,18 @@ taken the computer over. The bar does not finish: it catches at **60%**, the gro
 to blue and the face arrives, and only then does it fill. Drawn by `RestartCardView`, which deliberately is *not*
 `BootView` (the fake reboot and the outro share that one; the stall, the colour cut and
 the image swap are a one-off and don't belong in it).
+
+**And then it blinks.** Once the face is up it shuts its eyes for 110 ms on an uneven
+pattern with two doubles in it — a face blinking on a metronome reads as an animation
+loop, and this one has to read as something looking back at the person deciding whether
+to run it. The shut frame is `assets/pixelface_blink.jpg`, built by `build_face_blink` in
+the generator from the artist's own full-screen grab (`sarah's assets/blink.jpg`) and
+registered to `pixelface.jpg` **on the mouth**, not on the ink as a whole: the mouth is
+identical in both frames and the eyes are not, so matching bounding boxes would slide the
+mouth up and down on every blink. Both frames are keyed to transparency once at load, so
+a blink is an image swap and not a bitmap pass. The card's timer used to stop itself when
+the progress bar filled; it runs on now, because the card holds until the viewer answers
+the gate and a face that goes dead the moment the bar lands is worse than no blink.
 
 The blue is **`#020AF5`** — rgb(2, 10, 245), the signature blue, `PALETTE[1]` in the
 generator and the one the horse and the strobe are built from. The desktop wallpaper
@@ -395,6 +416,78 @@ alone took the main thread from 60 Hz to 8. Nothing looked slow about the mandal
 display pump is coalesced, so what it looked like was the whole show running badly.
 `--bench-views` is what found it.
 
+### `brickBreaker`
+
+Brick breaker, played on the machine's own furniture. Every brick is a real window, the
+ball is the system's beach ball (all fifteen frames, spinning), and the paddle is
+wherever the viewer's pointer is.
+
+```jsonc
+{ "beat": 44, "type": "brickBreaker", "params": {
+    "id": "bricks", "frame": [115, 90, 1210, 702],
+    "rows": 4, "cols": 8, "speed": 560, "ball": 46, "paddle": [200, 26], "seed": 44 } }
+```
+
+`frame` is the play area (authored points, whole screen if absent); `speed`, `ball` and
+`paddle` are authored points and scale with the canvas like every other geometry here.
+It ends on `closeWindow` with the same `id` — the bricks, the ball and the paddle all
+live and die together, and `TimelineTests` fails a `brickBreaker` the timeline never
+closes.
+
+**It plays itself if nobody plays it.** The ball serves on the frame the event fires and
+never waits for a click; a ball that gets past the paddle is served again rather than
+ending anything; when the last brick goes, the rack comes back. A cue cannot stall
+waiting for a viewer who is not touching the machine, because the track does not wait.
+
+**No clicks, ever.** The paddle simply *is* `NSEvent.mouseLocation` — there is nothing to
+focus and nothing to hit, so it works whether the viewer knows they are playing or not,
+and it does not fight the show for the pointer the way a real game window would.
+
+Two things worth knowing before changing the physics: the paddle bounce sets the outgoing
+vector from where on the paddle the ball landed (edges throw it wide) and **re-normalises
+to `speed`** — a bounce that scales the existing vector drifts to a crawl or a blur over a
+few hundred hits, which is what the speed assertion in `RendererTests` is guarding; and
+brick collisions bounce on whichever overlap is *shallower*, which is the cheap way to
+make a corner hit behave. It runs on its own 60 Hz timer rather than the pump, like every
+other live view here — the pump is coalesced and carrying the whole show, and physics that
+inherits its hitches reads as a ball that sticks.
+
+### `particles` content
+
+Three more ways to throw the desktop around, beside `fileworks`' fireworks. One view, two
+dials: `mode` is what the particles do, `sprite` is what they are made of, and every
+combination is legal — nine, not three.
+
+```jsonc
+{ "kind": "particles", "mode": "vortex", "sprite": "beachballs",
+  "seed": 1174, "intensity": 0.55, "chrome": "none", "title": "drain" }
+```
+
+| `mode` | |
+|---|---|
+| `vortex` (default) | a drain — everything circles inward, faster as it closes on the middle, gone at the centre, the rim feeding it |
+| `rain` | gravity — they fall in, bounce off the bottom losing most of it each time, settle, and are rained again elsewhere |
+| `orbit` | the pointer as a gravitational body — rings turn around wherever the mouse is, the far ones lagging, so the system swings after the cursor and keeps spinning when it stops |
+
+| `sprite` | |
+|---|---|
+| `icons` (default) | the system's own file icons, on real UTTypes — whatever *this* Mac draws for a PDF or a folder |
+| `cursors` | the Mac pointer |
+| `beachballs` | the real spinner, all fifteen frames, stepped at its own 30 fps |
+
+`intensity` scales the population (1.0 = 64), `seed` fixes it. Transparent, like the
+fireworks: pair it with `[0, 0, 0, 0]` and `chrome: "none"`. **Nothing in the show uses
+one yet** — the drain briefly had cue 11 and came back out, because a behaviour still
+being chosen between is not a cue. They are one line away from any slot that wants one.
+
+```bash
+swift run GiveIt2Me_DJ_Dave_malware --test-particles     # all three, side by side
+DPE_HOLD=1 swift run GiveIt2Me_DJ_Dave_malware --test-particles   # …and leave them up
+```
+
+The preview reports how far each field moved in eight seconds, because "it built" and
+"it is running" look identical in a screenshot of a particle system.
+
 ### `cursors` content
 
 A swarm of Mac pointers, in one of two `mode`s: **`chase`** (the default) hunts the
@@ -422,6 +515,16 @@ rotation subtracts `artAngle` — the bisector of the two edges meeting at the t
 rather than guessed. It pivots about its **tip**, because a cursor does; about its centre
 it swings like a compass needle. `--test-cursors=out.png` warps the real pointer across
 the window and reports how many are pointing the same way.
+
+**`spawnSeconds` lets the swarm arrive one at a time.** Absent or 0 puts the whole
+population up on the frame the window opens, which lands as a wall and gives the section
+a hard edge. With it, arrivals are spread evenly across that many seconds — evenly and
+not randomly, because a random schedule clumps and what this is for is a section that
+*fills* rather than one that starts. Cue 22 opens the swarm a whole section early at
+~10.7 s of ramp, roughly one pointer every eighth of a second, so it bleeds through the
+torus act and is at full strength when cue 25 leaves it alone with the pointer. A pointer
+that has not arrived yet is hidden rather than parked, so it cannot be seen sitting on
+its spawn point.
 
 **`mode: "school"`** is the same particles with the mouse taken away — cue 28's shoal:
 
@@ -453,14 +556,41 @@ a knob to turn to 1.0 in the middle of the eruption without measuring again.
 ### `doom` content
 
 It runs DooM. Not a recording of it — id Software's 1997 `linuxdoom-1.10` sources, built
-to a freestanding wasm32 module, playing in a 320×200 window in the middle of the
-eruption (cue 27).
+to a freestanding wasm32 module, playing **in the video slot** (cues 23–25): the window
+that always said "video goes here", same geometry, same `untitled.mov` title bar.
 
 ```jsonc
-{ "kind": "doom", "chrome": "mixed", "title": "doom.wasm" }
+{ "kind": "doom", "chrome": "mac", "title": "untitled.mov" }
 ```
 
-No parameters: the engine knows where it lives and the window is scenery. **The binary is
+No parameters: the engine knows where it lives and the window is scenery.
+
+**It comes up in the middle of E1M1, not on the title card.** Left alone, DooM shows its
+title for about five seconds and then runs an attract demo — and this window is only up
+for eight, so the title would be most of it. The page walks the menu instead (Escape,
+New Game, Episode 1, the default skill: four keys a fifth of a second apart, because the
+menu reads one keydown per frame), and **the canvas is hidden until that is done**, so
+what the slot shows is a game already in progress and never the machinery of getting
+there. The ~1.2 s of black before it reads as a video slot buffering, which is what the
+window is dressed as.
+
+**It is recoloured to the piece's palette.** The engine hands over a finished RGBA frame,
+so the recolour happens on the way to the canvas: each pixel's Rec.601 luma is looked up
+in a 256-entry ramp built from the show's own colours — near-black, `#020AF5`, `#68BDF8`,
+`#F2F4FE`. A table read and one pass over 256k pixels a frame is fine; four interpolations
+per pixel would not be. The WAD is untouched, so every frame the game can draw — menus,
+status bar, the marine's face — comes out in the piece's colours. The ramp's stops are
+pulled toward the dark end deliberately: DooM's midtones are most of the picture, and a
+ramp with the signature blue in the middle flattens the level into one wash where walls,
+floor and ceiling land on the same colour.
+
+Then the page **plays it**: forward held down, turning and shooting and opening doors on
+its own cadence. Nobody can play it — the window is click-through scenery like every
+other live canvas here — and without the autopilot the marine stands on his spawn point
+for the whole cue, which is a screenshot rather than a game. It is also what puts him in
+the *middle* of the level: this build has no warp, so the way into a level is to walk
+into it. The canvas is `object-fit: contain`, so the game keeps its own 640×400 whatever
+shape of window it is dropped in. **The binary is
 not in this repo** — `tools/fetch_doom.sh` installs it to `assets/doom.wasm`, which is
 gitignored. Two reasons, and both matter before you hand the piece to anyone:
 
@@ -495,14 +625,54 @@ Two things that will bite anyone changing this:
   *"Unexpected response MIME type"*, which reaches the stage as a blank window.
 
 ```bash
-swift run GiveIt2Me_DJ_Dave_malware --test-doom   # proves it is drawing, not just loading
+swift run GiveIt2Me_DJ_Dave_malware --test-doom=out.png     # and look at it
+DPE_DOOM_WAIT=2.2 swift run GiveIt2Me_DJ_Dave_malware --test-doom=out.png
 ```
 
-`--test-doom` stands the window up **on screen** and asks the page how much of its canvas
-is lit after six seconds (a healthy run is most of it; ours reports ~1863 of 2640 sampled
-pixels). On screen matters: WebKit throttles `requestAnimationFrame` to nothing in a
-window nobody can see, and the game loop is a rAF loop, so off-screen it reports black
-whether the engine works or not.
+`--test-doom` stands the window up **on screen** and reports how much of the canvas is
+lit, then writes the canvas to a PNG. Both halves matter. On screen, because WebKit
+throttles `requestAnimationFrame` to nothing in a window nobody can see and the game loop
+is a rAF loop, so off-screen it reports black whether the engine works or not. And the
+PNG, because a lit-pixel count cannot tell the title card from a firefight — the picture
+is the only thing that says whether the menu walk landed. `DPE_DOOM_WAIT` moves the
+capture, which is how you check that it is in the level by the time the slot needs it.
+
+**`spin` turns the picture.** `{"kind": "shader", "path": "…", "spin": 8}` rotates it at
+that many degrees per second. Cue 17 runs at 8°/s — about 170° over the time it is up,
+visibly moving without ever coming back round.
+
+It is done **in the shader, not on the view**, and the difference is the whole point.
+Rotating the view's layer means scaling the canvas up by diagonal/short-side so its
+corners cannot swing off the window — and that scale is a **crop**: the shader composes
+against `u_resolution`, so a canvas 1.9× the window renders the scene 1.9× bigger and the
+window shows the middle third of it. That version read as a magnified fragment, and at
+some angles as an empty one. (`--test-shader` reported `LIVE = false` fourteen seconds
+in, which is how it was caught.)
+
+So `withSpin` in `shader.html` rewrites every read of `gl_FragCoord` in the artist's
+source to a coordinate rotated about the centre of the frame, and drives the angle from a
+`u_dpe_spin` uniform. The image turns while the shader still fills every pixel of its
+window: no scale, no crop, no corners to cover, and the framing is the one they wrote.
+The rewrite is mechanical and self-limiting — it only runs on a shader that both reads
+`gl_FragCoord` and declares `u_resolution` (the helper needs it), the helper is inserted
+ahead of the artist's own uniform block so it lands after the precision qualifier, and
+`window.__dpeShaderSpin` returns false for a shader it could not rewrite so a cue that
+asked to turn and cannot says so in the log instead of quietly holding still.
+
+```bash
+DPE_SHADER_WAIT=13 swift run GiveIt2Me_DJ_Dave_malware --test-shader=out.png
+```
+
+Two runs at different waits are two angles of the same shot — which is how you check a
+rotation, since one frame of a raymarcher looks like any other.
+
+**Authored paths are resolved, never used as written.** An `image` (or `glitch`) window
+names its file the way the timeline does — `assets/pixelface.jpg` — and the loader puts
+that through `resolveResourcePath` before touching the disk. Skipping it works under
+`swift run` from the repo and fails in a double-clicked `.app`, where the working
+directory is `/`: the window keeps the `#111116` ground it is given and comes up as a
+black frame. That is what the eight faces round the torus were doing, and `RendererTests`
+now loads one with the working directory set to `/` to keep it fixed.
 
 ### `fileworks` content
 
@@ -1345,13 +1515,20 @@ memory (default 0.5), a boot bar for `bootSeconds` (default 5), and the app quit
 
 The dump is **not** the `GlitchImage` engine the wallpaper uses — that one is analogue in
 character (sine warps, chroma bleed, scanlines) and reads as a broken CRT. This is
-digital: the screen capture is pixelated to a 128-cell grid with interpolation off, every
-channel is thresholded to 0 or 255 (an eight-colour palette, no gradients), and then rows
-slip sideways by whole cells, runs are overwritten with a repeating 4-cell pattern read
-from elsewhere in the buffer, and other runs go all-bits-low or all-bits-high. It is
-drawn with `magnificationFilter = .nearest`, without which the blow-up to a 5K display
-would smooth the cells straight back out. No Screen Recording grant: the source is
-synthesised from hard blue-and-white bands instead and the sequence is unchanged.
+digital: the source is pixelated to a 128-cell grid with interpolation off, every channel
+is thresholded to 0 or 255 (an eight-colour palette, no gradients), and then rows slip
+sideways by whole cells, runs are overwritten with a repeating 4-cell pattern read from
+elsewhere in the buffer, and other runs go all-bits-low or all-bits-high. It is drawn with
+`magnificationFilter = .nearest`, without which the blow-up to a 5K display would smooth
+the cells straight back out.
+
+**That source is synthesised — hard blue-and-white bands — never a capture** (2026-09-02).
+It used to grab the real display so the dump was made of the viewer's own desktop, and
+that one call was the entire reason the piece asked for Screen Recording; it asked at the
+worst moment there is, on the ending. The synthesised source was already the fallback
+whenever the grant was missing, so it is now simply the source. Given what the pass does
+to it — one bit per channel, then corrupted — what the capture bought was a suggestion of
+a desktop under a lot of damage.
 
 Quitting routes through `applicationWillTerminate` → `engine.stopAndRestore()`, so the
 desktop is restored before the process goes — the ending is not a way around the
@@ -1421,7 +1598,10 @@ into one event:
   not from the current wallpaper — compounding each pass would dissolve to noise in a
   second). `intensity` 0…1, `seed` for a reproducible tear.
 - **`recursive`** — the desktop set to a screenshot of the desktop, deepening each pass.
-  Needs Screen Recording.
+  **The last thing in the engine that needs Screen Recording**, and nothing in the cut
+  uses it: authoring one puts a permission dialog in front of a viewer mid-performance,
+  and it is the one grant macOS will not settle with a prompt — it sends them to System
+  Settings and wants a relaunch. `TimelineTests` fails a cut that contains one.
 - **`slides`** — a list of `images`, one per tick (or on an `at` schedule; see above).
 
 A `slides` run stretches each image over the whole desktop, so anything that should sit

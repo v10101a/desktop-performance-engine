@@ -19,6 +19,9 @@
   var gl = canvas.getContext('webgl', { antialias: false, alpha: false,
                                         preserveDrawingBuffer: false });
   var program = null, frame = null, start = 0, ticks = 0;
+  // Degrees per second the image turns, and whether this shader could be rewritten to
+  // take it (see withSpin).
+  var spinRate = 0, spinnable = false;
   var uniforms = {};
   // The scalars the engine can drive. Named to match the artist's uniform block.
   var vals = { u_vol: 0, drop: 0, midi: 0 };
@@ -85,12 +88,59 @@
     if (uniforms.u_vol) gl.uniform1f(uniforms.u_vol, vals.u_vol);
     if (uniforms.drop) gl.uniform1f(uniforms.drop, vals.drop);
     if (uniforms.midi) gl.uniform1f(uniforms.midi, vals.midi);
+    if (uniforms.u_dpe_spin) {
+      var turned = spinRate * (performance.now() - start) / 1000 * Math.PI / 180;
+      gl.uniform1f(uniforms.u_dpe_spin, turned);
+    }
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  // TURNING THE PICTURE, NOT THE CANVAS.
+  //
+  // The first version of this rotated the WKWebView's layer and scaled it up by
+  // diagonal/short-side so its corners could not swing off the window. That scale is a
+  // CROP: the shader composes against u_resolution, so a canvas 1.9x the window renders
+  // the scene 1.9x bigger and the window shows the middle third of it. On screen it read
+  // as a magnified fragment, and at some angles as an empty one.
+  //
+  // So the rotation happens where the picture is made. Every read of `gl_FragCoord` in
+  // the artist's source is rewritten to a coordinate rotated about the centre of the
+  // frame, which turns the IMAGE while the shader still fills every pixel of its window
+  // — no scale, no crop, no corners to cover, and the composition is the one they wrote.
+  //
+  // The rewrite is mechanical and self-limiting: it only runs on a shader that both
+  // reads gl_FragCoord and declares u_resolution (the helper needs it), and the helper
+  // goes in ahead of the artist's own uniform block so it lands after the precision
+  // qualifier — a float uniform declared before that does not compile.
+  function withSpin(src) {
+    if (!/gl_FragCoord/.test(src) || !/uniform\s+vec2\s+u_resolution\s*;/.test(src)) {
+      return { src: src, spun: false };
+    }
+    var body = [
+      '',
+      'vec4 dpeFragCoord() {',
+      '  vec2 c = u_resolution * 0.5;',
+      '  vec2 d = gl_FragCoord.xy - c;',
+      '  float s = sin(u_dpe_spin), k = cos(u_dpe_spin);',
+      '  return vec4(c + vec2(d.x * k - d.y * s, d.x * s + d.y * k), gl_FragCoord.zw);',
+      '}',
+      ''
+    ].join('\n');
+    // Rewrite FIRST, then add the helper — otherwise the helper rewrites itself into
+    // infinite recursion.
+    var out = src.replace(/gl_FragCoord/g, 'dpeFragCoord()');
+    var head = 'uniform float u_dpe_spin;\nvec4 dpeFragCoord();\n';
+    var at = out.search(/^\s*uniform\b/m);
+    out = at < 0 ? head + out : out.slice(0, at) + head + out.slice(at);
+    return { src: out + body, spun: true };
   }
 
   window.__dpeShader = function (src) {
     try {
       if (!gl) throw new Error('no WebGL context');
+      var prepared = withSpin(src);
+      src = prepared.src;
+      spinnable = prepared.spun;
       var p = gl.createProgram();
       gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT));
       gl.attachShader(p, compile(gl.FRAGMENT_SHADER, src));
@@ -109,7 +159,7 @@
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-      ['u_time', 'u_resolution', 'u_vol', 'drop', 'midi'].forEach(function (n) {
+      ['u_time', 'u_resolution', 'u_vol', 'drop', 'midi', 'u_dpe_spin'].forEach(function (n) {
         uniforms[n] = gl.getUniformLocation(p, n);
       });
       ['u_prevFrame', 'u_window'].forEach(function (n, i) {
@@ -132,6 +182,13 @@
 
   // Drive the artist's scalar uniforms from the show.
   window.__dpeShaderSet = function (name, value) { vals[name] = value; return ticks; };
+  /// Degrees per second. Returns false if this shader could not be rewritten to take a
+  /// rotation, so Swift can say so rather than leaving a still shot that was asked to
+  /// turn looking like a bug in the cue.
+  window.__dpeShaderSpin = function (degreesPerSecond) {
+    spinRate = degreesPerSecond || 0;
+    return spinnable;
+  };
   window.__dpeShaderTicks = function () { return ticks; };
 }());
 </script>

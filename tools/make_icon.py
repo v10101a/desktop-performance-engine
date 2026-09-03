@@ -2,88 +2,77 @@
 
     python3 tools/make_icon.py
 
-A BSOD-blue tile with a little white window on it, pink traffic lights, and one pink
-glitch bar tearing through — the piece in one square. Drawn at every size macOS asks
-for rather than downscaled from one bitmap, so the 16pt version stays legible.
+The pixelface on the show's blue — the artwork the drop puts on the desktop (cue 7),
+squared off as an icon. The ground is the artwork's OWN field colour sampled from the
+file, the same `#001FFD` `build_face_desktop` uses in the generator, so the face has no
+visible edge where it sits on the tile.
+
+Drawn at every size macOS asks for rather than downscaled from one bitmap. Scaling up is
+NEAREST — it is pixel art, and every other appearance of it in the show is hard-edged —
+but scaling DOWN is an area average: the face's strokes are a few source pixels wide, and
+nearest-neighbour at 16pt drops whole features (an eye loses half its X). Averaged, they
+survive as lighter blue, which is what a 16pt icon can carry anyway.
 
 Requires Pillow and `iconutil` (ships with macOS).
 """
 import os, shutil, subprocess
-from PIL import Image, ImageDraw
+from PIL import Image
 
-BLUE = (0, 120, 215)      # BSOD blue
-PINK = (255, 45, 149)
-WHITE = (242, 244, 254)
-INK = (11, 14, 22)
+# The artwork's own field colour, sampled from assets/pixelface.jpg — NOT the signature
+# #020AF5. A shade off, and the shade that makes the paste seamless.
+GROUND = (0, 31, 253)
+FACE = "assets/pixelface.jpg"
+# The face's width as a fraction of the tile. It is wider than it is tall and its ink
+# runs to all four edges, so the ceiling here is the corner radius: at 0.84 the outer
+# corner of each eye still sits inside the rounded corner's arc, and by ~0.92 the eyes
+# are crowding it. Set for the Dock rather than for a 512pt preview — the face wants the
+# presence at 32pt, where the margin a smaller share buys is just lost blue.
+FACE_SHARE = 0.84
 
-SIZES = [16, 32, 64, 128, 256, 512, 1024]
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+SIZES = [16, 32, 128, 256, 512]
 
 
-def draw(size):
+def draw(size, src):
     """One icon at `size`px. Everything is a fraction of size — no fixed pixels."""
     s = size
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
 
-    # rounded tile
-    r = s * 0.22
-    d.rounded_rectangle([0, 0, s - 1, s - 1], radius=r, fill=BLUE)
+    # The rounded tile, in the artwork's own blue.
+    tile = Image.new("RGBA", (s, s), GROUND + (255,))
+    mask = Image.new("L", (s * 4, s * 4), 0)
+    from PIL import ImageDraw
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, s * 4 - 1, s * 4 - 1],
+                                           radius=s * 4 * 0.22, fill=255)
+    tile.putalpha(mask.resize((s, s), Image.LANCZOS))   # 4x then down: clean arcs
+    im.alpha_composite(tile)
 
-    # the window: a white sheet with a title bar
-    wx0, wy0 = s * 0.17, s * 0.24
-    wx1, wy1 = s * 0.83, s * 0.72
-    wr = max(1, s * 0.035)
-    d.rounded_rectangle([wx0, wy0, wx1, wy1], radius=wr, fill=WHITE)
-
-    bar_h = (wy1 - wy0) * 0.26
-    d.rounded_rectangle([wx0, wy0, wx1, wy0 + bar_h * 2], radius=wr, fill=(214, 216, 228))
-    d.rectangle([wx0, wy0 + bar_h, wx1, wy0 + bar_h * 2], fill=(214, 216, 228))
-    d.rectangle([wx0, wy0 + bar_h, wx1, wy1 - wr], fill=WHITE)
-
-    # traffic lights, all pink — the tell that this window is not yours
-    dot = bar_h * 0.36
-    cx = wx0 + bar_h * 0.62
-    for i in range(3):
-        d.ellipse([cx - dot / 2, wy0 + bar_h / 2 - dot / 2,
-                   cx + dot / 2, wy0 + bar_h / 2 + dot / 2], fill=PINK)
-        cx += dot * 1.7
-
-    # content: two ink lines, then the glitch tears the rest away
-    if s >= 32:
-        lx0, lx1 = wx0 + (wx1 - wx0) * 0.10, wx0 + (wx1 - wx0) * 0.72
-        ly = wy0 + bar_h * 1.9
-        lh = max(1, s * 0.022)
-        for i, w in enumerate([1.0, 0.62]):
-            d.rounded_rectangle([lx0, ly, lx0 + (lx1 - lx0) * w, ly + lh],
-                                radius=lh / 2, fill=INK)
-            ly += lh * 2.6
-
-    # the glitch: a pink bar shoved sideways, running past the window's edge
-    gy0 = wy0 + (wy1 - wy0) * 0.62
-    gh = (wy1 - wy0) * 0.17
-    d.rectangle([s * 0.06, gy0, s * 0.94, gy0 + gh], fill=PINK)
-    d.rectangle([s * 0.30, gy0 + gh, s * 0.70, gy0 + gh * 1.45], fill=(255, 130, 200))
+    w = max(1, round(s * FACE_SHARE))
+    h = max(1, round(src.height * w / src.width))
+    # Up: NEAREST, it is pixel art. Down: BOX, or the strokes vanish. See the docstring.
+    face = src.resize((w, h), Image.NEAREST if w >= src.width else Image.BOX)
+    im.alpha_composite(face.convert("RGBA"), ((s - w) // 2, (s - h) // 2))
     return im
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    iconset = os.path.join(root, "build", "AppIcon.iconset")
+    src = Image.open(os.path.join(ROOT, FACE)).convert("RGB")
+    iconset = os.path.join(ROOT, "build", "AppIcon.iconset")
     shutil.rmtree(iconset, ignore_errors=True)
     os.makedirs(iconset, exist_ok=True)
 
     # iconutil wants both the 1x and 2x file for each logical size.
-    for pt in [16, 32, 128, 256, 512]:
-        draw(pt).save(os.path.join(iconset, f"icon_{pt}x{pt}.png"))
-        draw(pt * 2).save(os.path.join(iconset, f"icon_{pt}x{pt}@2x.png"))
+    for pt in SIZES:
+        draw(pt, src).save(os.path.join(iconset, f"icon_{pt}x{pt}.png"))
+        draw(pt * 2, src).save(os.path.join(iconset, f"icon_{pt}x{pt}@2x.png"))
 
-    out = os.path.join(root, "assets", "AppIcon.icns")
+    out = os.path.join(ROOT, "assets", "AppIcon.icns")
     subprocess.run(["iconutil", "-c", "icns", iconset, "-o", out], check=True)
     shutil.rmtree(iconset, ignore_errors=True)
     print(f"wrote {os.path.normpath(out)}")
     # A flat PNG too, handy for READMEs and posters.
-    png = os.path.join(root, "assets", "app_icon.png")
-    draw(1024).save(png)
+    png = os.path.join(ROOT, "assets", "app_icon.png")
+    draw(1024, src).save(png)
     print(f"wrote {os.path.normpath(png)}")
 
 

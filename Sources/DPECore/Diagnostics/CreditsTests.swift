@@ -142,6 +142,12 @@ enum CreditsTests {
 
             // The dump is pixelated and 1-bit-per-channel: every pixel it emits must be
             // a corner of the colour cube, never an intermediate value.
+            //
+            // `from: nil` is not a corner case any more — it is the ONLY way the ending
+            // is built. The outro used to capture the display for this and that single
+            // call was the whole reason the piece asked for Screen Recording, so it was
+            // dropped (2026-09-02); the synthesised source it fell back to is now the
+            // source. This test is what says the ending still has a dump without it.
             let frames = OutroController.previewFrames(from: nil, size: NSSize(width: 320, height: 200))
             t.expect(frames.count == 8, "the dump renders eight frames — got \(frames.count)")
             if let first = frames.first,

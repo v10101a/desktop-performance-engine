@@ -20,6 +20,7 @@ final class PerformanceEngine {
     private let booth = PhotoBoothController()
     private let credits = CreditsController()
     private let otherApps = OtherAppsController()
+    private let bricks = BrickBreakerController()
     private let context: EventContext
     private let restore: RestoreManager
     private let panic = PanicController()
@@ -29,7 +30,7 @@ final class PerformanceEngine {
     private var executors: [Executor] {
         // `otherApps` last: the show's own windows are gone before the viewer's return.
         [windows, cursor, photos, torus, probe, wallpaper, swarm, reboot, oracle, booth, credits,
-         otherApps]
+         bricks, otherApps]
     }
 
     /// True once the track has ended under a held end card: the show is paused there,
@@ -71,7 +72,8 @@ final class PerformanceEngine {
         context = EventContext(windows: windows, cursor: cursor, icons: icons,
                                wallpaper: wallpaper, photos: photos, torus: torus,
                                probe: probe, swarm: swarm, reboot: reboot, oracle: oracle,
-                               booth: booth, credits: credits, otherApps: otherApps)
+                               booth: booth, credits: credits, otherApps: otherApps,
+                               bricks: bricks)
         restore = RestoreManager(windows: windows)
         credits.onDismiss = { [weak self] in
             self?.stopAndRestore()

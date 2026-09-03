@@ -191,11 +191,19 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // The three particle behaviours, side by side, so they can be LOOKED at: which
+        // one belongs on a cue is a judgement about the piece, not something a number
+        // settles. Each window is one mode; move the mouse over the third.
+        if CommandLine.arguments.contains("--test-particles") {
+            runParticleSelfTest()
+            return
+        }
+
         // Does it actually run DooM? A window that opens on a black canvas and one that
         // opens on the title screen are the same window from Swift, so this asks the
         // page how much of its canvas is lit after it has had a few seconds to boot.
-        if CommandLine.arguments.contains("--test-doom") {
-            runDoomSelfTest()
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-doom") }) {
+            runDoomSelfTest(savingTo: arg.contains("=") ? String(arg.split(separator: "=")[1]) : nil)
             return
         }
 
@@ -575,7 +583,53 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func runDoomSelfTest() {
+    private func runParticleSelfTest() {
+        let size = NSSize(width: 460, height: 420)
+        let modes: [(ParticleFieldView.Mode, ParticleFieldView.Sprite, String)] = [
+            (.vortex, .icons, "vortex · file icons"),
+            (.rain, .beachballs, "rain · beach balls"),
+            (.orbit, .cursors, "orbit · pointers (move the mouse over me)"),
+        ]
+        var views: [ParticleFieldView] = []
+        for (i, m) in modes.enumerated() {
+            let win = NSWindow(contentRect: NSRect(x: 60 + CGFloat(i) * (size.width + 20), y: 200,
+                                                   width: size.width, height: size.height),
+                               styleMask: [.titled], backing: .buffered, defer: false)
+            win.title = m.2
+            win.backgroundColor = NSColor(hex: "#0B0E16") ?? .black
+            let host = NSView(frame: NSRect(origin: .zero, size: size))
+            host.wantsLayer = true
+            let field = ParticleFieldView(size: size, seed: 11, count: 54, mode: m.0, sprite: m.1)
+            field.autoresizingMask = [.width, .height]
+            host.addSubview(field)
+            win.contentView = host
+            win.orderFrontRegardless()
+            views.append(field)
+            NSLog("[DPE] particles: %@ — %d particles", m.2, field.countForTesting)
+        }
+        // Prove they are actually running, not just placed: where was everything eight
+        // seconds ago, and how far has it moved since.
+        let before = views.map(\.positionsForTesting)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) {
+            for (i, v) in views.enumerated() {
+                let now = v.positionsForTesting
+                let moved = zip(before[i], now).map { hypot($0.0 - $1.0, $0.1 - $1.1) }
+                let mean = moved.reduce(0, +) / Double(max(1, moved.count))
+                NSLog("[DPE] particles: %@ moved %.0fpt on average in 8s",
+                      modes[i].2, mean)
+            }
+            // Quits when it has reported, so it can be run from a script; DPE_HOLD=1
+            // leaves the three windows up to actually watch, which is the point of it.
+            if ProcessInfo.processInfo.environment["DPE_HOLD"] == "1" {
+                NSLog("[DPE] particles: DPE_HOLD=1 — windows held, ⌘Q when you are done")
+            } else {
+                NSLog("[DPE] particles: DPE_HOLD=1 holds the windows open to watch")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
+            }
+        }
+    }
+
+    private func runDoomSelfTest(savingTo path: String?) {
         let size = NSSize(width: 640, height: 400)
         // ON screen, unlike the map's self-test: WebKit throttles requestAnimationFrame
         // to nothing in a window nobody can see, and the game loop IS a rAF loop — run
@@ -589,11 +643,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
               + "(tools/fetch_doom.sh if not)")
         // Long enough to fetch 6.5 MB off disk, instantiate it, run main() and get some
         // frames up — the title screen alone is a couple of seconds in.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+        let wait = ProcessInfo.processInfo.environment["DPE_DOOM_WAIT"].flatMap(Double.init) ?? 6.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
             doom.report { line in
                 NSLog("[DPE] doom: %@", line)
                 NSLog("[DPE] doom: a lit count near zero means it booted onto a black screen")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
+                doom.snapshot { png in
+                    if let path, let png {
+                        try? png.write(to: URL(fileURLWithPath: path))
+                        NSLog("[DPE] doom: wrote %@ (%d bytes)", path, png.count)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
+                }
             }
         }
     }
@@ -690,7 +751,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Three seconds: the page, the GL context, the shader compile and a few hundred
         // frames — a raymarcher whose first frames are legitimately dark has moved on.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        // DPE_SHADER_WAIT moves the capture, which is how the SPIN is checked: two runs
+        // at different waits are two different angles of the same shot.
+        let wait = ProcessInfo.processInfo.environment["DPE_SHADER_WAIT"].flatMap(Double.init) ?? 3.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
             guard let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
                                                      CGWindowID(host.windowNumber),
                                                      [.boundsIgnoreFraming, .bestResolution]) else {

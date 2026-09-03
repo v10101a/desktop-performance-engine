@@ -34,22 +34,29 @@ final class OutroController {
 
     // MARK: - Prewarm
 
-    /// Grab the screen and render the glitch frames ahead of time.
+    /// Render the glitch frames ahead of time.
     ///
-    /// Kicked off when the credits finish typing — the capture is async and permission
-    /// gated, and half a second is not enough to do it in. If the capture fails (no
-    /// Screen Recording grant, no display) the frames are synthesised instead, so the
-    /// sequence looks the same and never stalls.
+    /// **No screen capture** (2026-09-02). This used to grab the display through
+    /// ScreenCaptureKit so the dump was made of the viewer's own desktop — and that one
+    /// call was the entire reason the piece asked for Screen Recording. It asked for it
+    /// at the worst possible moment, too: the prompt landed on the ending, behind the
+    /// force-quit alert, in the last seconds of the show. The dump is built from the
+    /// synthesised source instead, which was already the fallback whenever the grant was
+    /// missing — it is thresholded to one bit per channel and then corrupted, so what
+    /// the capture bought was a suggestion of a desktop under a lot of damage.
+    ///
+    /// The glass torus made the same trade earlier and for the same reason; see
+    /// `ScreenEnvironment`. Nothing in the show requests Screen Recording now. The
+    /// `recursive` wallpaper mode still captures if a timeline ever asks for it — this
+    /// cut does not — and the `--test-*` snapshot flags use `CGWindowListCreateImage`,
+    /// which is a developer running a tool, not a viewer watching the piece.
+    ///
+    /// Still kicked off when the credits finish typing, and still off the main thread:
+    /// rendering the frames is far too much to do on main while the alert is up.
     func prewarmGlitch(screen: NSScreen) {
-        let displayID = WallpaperImage.displayID(of: screen)
         let size = screen.frame.size
-        // Only the display ID crosses into the task — NSScreen isn't Sendable. The
-        // glitch pass runs in the task, off the main thread: rendering the frames is
-        // far too much to do on main while the alert is up.
         Task.detached(priority: .userInitiated) { [weak self] in
-            var source: CGImage?
-            if let id = displayID { source = try? await WallpaperImage.captureDisplay(id) }
-            let rendered = OutroController.renderGlitchFrames(from: source, size: size)
+            let rendered = OutroController.renderGlitchFrames(from: nil, size: size)
             DispatchQueue.main.async {
                 guard let me = self else { return }
                 me.glitchFrames = rendered

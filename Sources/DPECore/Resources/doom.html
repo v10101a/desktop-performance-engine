@@ -17,7 +17,17 @@
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
   /* 640x400 of DooM in whatever the window is, nearest-neighbour: it is a 1997 game
      and a smoothed one looks like a screenshot of a video of it. */
-  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  /* Starts INVISIBLE. The window is only up for eight seconds and the first second of
+     any DooM is a title card and a menu being walked through — see the script. The
+     canvas is revealed once the marine is in the level, so what the slot shows is a
+     game already in progress and never the machinery of getting there. Black until
+     then reads as a video slot buffering, which is what this window is dressed as. */
+  /* `contain`, so the game keeps its own 640x400 whatever shape the window it is put
+     in happens to be — the video slot is not DooM's aspect and a stretched marine is
+     the tell that this is a picture in a box rather than the thing itself. */
+  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated;
+           object-fit: contain;
+           opacity: 0; transition: opacity 180ms linear; }
   #missing {
     display: none; box-sizing: border-box; height: 100%; padding: 14px;
     color: #68BDF8; background: #000; font: 11px ui-monospace, Menlo, monospace;
@@ -51,9 +61,51 @@ const log = (tag) => (off, len) => {
   if (s) console.log('[doom]' + tag, s);
 };
 
+// THE PROJECT'S PALETTE, NOT id's.
+//
+// The engine hands over a finished RGBA frame, so the recolour happens on the way to the
+// canvas: each pixel's luminance is looked up in a 256-entry ramp built from the show's
+// own colours — black, the signature #020AF5, #68BDF8, #F2F4FE. Doing it here rather
+// than in the WAD means the game is untouched and every frame it can ever draw, menus
+// and status bar included, comes out in the piece's colours.
+//
+// A lookup table and one pass: 256k pixels a frame at 35 fps is fine as a table read,
+// and is not fine as four interpolations per pixel.
+// The stops are pulled toward the dark end on purpose. DooM's midtones are most of the
+// picture, so a ramp with the signature blue in the middle flattens the game into one
+// wash — the walls, the floor and the ceiling all land on the same colour. Putting the
+// blue low and giving the top third to #68BDF8 and #F2F4FE keeps the level readable:
+// lighting, muzzle flashes and the status bar still separate.
+const RAMP = [[0, [0, 0, 6]], [0.26, [2, 10, 245]], [0.58, [104, 189, 248]],
+              [0.86, [242, 244, 254]], [1, [255, 255, 255]]];
+const LUT = (() => {
+  const t = new Uint8Array(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const u = i / 255;
+    let a = RAMP[0], b = RAMP[RAMP.length - 1];
+    for (let k = 0; k < RAMP.length - 1; k++) {
+      if (u >= RAMP[k][0] && u <= RAMP[k + 1][0]) { a = RAMP[k]; b = RAMP[k + 1]; break; }
+    }
+    const f = b[0] === a[0] ? 0 : (u - a[0]) / (b[0] - a[0]);
+    for (let c = 0; c < 3; c++) t[i * 3 + c] = a[1][c] + (b[1][c] - a[1][c]) * f;
+  }
+  return t;
+})();
+// Written into once and reused: a fresh ImageData every frame is 1 MB of garbage 35
+// times a second.
+const out = ctx.createImageData(W, H);
+
 function drawScreen(ptr) {
   const frame = new Uint8ClampedArray(memory.buffer, ptr, W * H * 4);
-  ctx.putImageData(new ImageData(frame, W, H), 0, 0);
+  const dst = out.data;
+  for (let i = 0; i < frame.length; i += 4) {
+    // Rec.601 luma, integer: the ramp is a value ramp, so what matters is how bright
+    // the original pixel was, not which of id's colours it happened to be.
+    const l = (frame[i] * 77 + frame[i + 1] * 150 + frame[i + 2] * 29) >> 8;
+    const j = l * 3;
+    dst[i] = LUT[j]; dst[i + 1] = LUT[j + 1]; dst[i + 2] = LUT[j + 2]; dst[i + 3] = 255;
+  }
+  ctx.putImageData(out, 0, 0);
 }
 
 function fail(why) {
@@ -76,12 +128,55 @@ const imports = {
 
 // Page and engine are served over the same custom scheme by DoomView, so this is a
 // same-origin fetch — a file:// page cannot fetch its own sibling.
+// DooM's own key codes, as the engine wants them (they are mostly ASCII; these are the
+// ones that are not). `add_browser_event(0, code)` is a keydown, `(1, code)` a keyup.
+const KEY = { enter: 13, esc: 27, up: 0xad, left: 0xac, right: 0xae,
+              fire: 0x80 + 0x1d, use: 32, run: 0x80 + 0x36 };
+
 WebAssembly.instantiateStreaming(fetch('doom.wasm'), imports).then((obj) => {
-  obj.instance.exports.main();
-  const step = () => {
-    obj.instance.exports.doom_loop_step();
-    requestAnimationFrame(step);
-  };
+  const api = obj.instance.exports;
+  api.main();
+  const step = () => { api.doom_loop_step(); requestAnimationFrame(step); };
   requestAnimationFrame(step);
+
+  const down = (k) => api.add_browser_event(0, k);
+  const up = (k) => api.add_browser_event(1, k);
+  const tap = (k, at) => { setTimeout(() => down(k), at); setTimeout(() => up(k), at + 70); };
+
+  // SKIP THE TITLE AND START PLAYING. Left alone, DooM shows its title card for about
+  // five seconds and then runs its attract demo — and the window this lives in is only
+  // up for eight, so the title would be most of it. This is the menu walked by hand:
+  // Escape off the title card, then New Game / Episode 1 / the default skill, which
+  // drops straight into E1M1. Four keys, a fifth of a second apart, because the menu
+  // reads one keydown per frame and eats anything faster.
+  [KEY.esc, KEY.enter, KEY.enter, KEY.enter].forEach((k, i) => tap(k, 240 + i * 170));
+
+  // …and then someone plays it. Nobody can — the window is click-through scenery, like
+  // every other live canvas here — so the page walks it: forward always, turning and
+  // shooting and opening doors on its own cadence. Without this the marine stands on
+  // the spawn point for the whole cue, which is a screenshot, not a game. It is also
+  // what puts it in the MIDDLE of the level rather than at the start of it: there is no
+  // warp in this build, so the way into the level is to walk into it.
+  let seed = 20250902;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  setTimeout(() => {
+    down(KEY.run);                                  // shift: twice the ground covered
+    down(KEY.up);                                   // held for the rest of the cue
+    const turn = () => {
+      const k = rnd() < 0.5 ? KEY.left : KEY.right;
+      down(k);
+      setTimeout(() => up(k), 260 + rnd() * 380);
+      setTimeout(turn, 900 + rnd() * 1600);
+    };
+    setTimeout(turn, 700);
+    setInterval(() => tap(KEY.fire, 0), 1500);      // there is always something to shoot
+    setInterval(() => tap(KEY.use, 0), 2600);       // and doors to walk into
+  }, 900);
+
+  // The reveal is LATER than the first frame of gameplay on purpose. Everything above
+  // runs behind a hidden canvas, so by the time anyone sees this window the marine is
+  // well into E1M1 — running, several rooms along — rather than standing in the opening
+  // doorway. Two and a half seconds of the eight, spent buying a better starting shot.
+  setTimeout(() => { canvas.style.opacity = '1'; }, 2500);
 }).catch((e) => fail(e && e.message ? e.message : e));
 </script>

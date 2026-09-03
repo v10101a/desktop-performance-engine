@@ -59,6 +59,18 @@ final class DoomView: NSView {
         }
     }
 
+    /// The canvas as PNG bytes, straight out of the page. A lit-pixel count cannot tell
+    /// the title screen from a firefight; this can.
+    func snapshot(_ done: @escaping (Data?) -> Void) {
+        web.evaluateJavaScript("document.getElementById('screen').toDataURL('image/png')") { v, _ in
+            guard let s = v as? String, let comma = s.firstIndex(of: ","),
+                  let data = Data(base64Encoded: String(s[s.index(after: comma)...])) else {
+                done(nil); return
+            }
+            done(data)
+        }
+    }
+
     /// Whether the engine is actually installed. The window is built either way — the
     /// page explains itself — but the show's tests and `--test-doom` want to know.
     static var isInstalled: Bool {

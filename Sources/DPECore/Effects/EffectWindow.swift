@@ -36,7 +36,9 @@ private func loadGlitchImageAsync(_ path: String, intensity: Double, seed: UInt6
         return
     }
     dpeImageQueue.async { [weak imageView] in
-        guard let source = try? WallpaperImage.load(at: URL(fileURLWithPath: path)),
+        // Resolved for the same reason as `decodeThumbnail` — a torn card whose source
+        // cannot be found is another black frame.
+        guard let source = try? WallpaperImage.load(at: URL(fileURLWithPath: resolveResourcePath(path))),
               let bitmap = try? Bitmap.render(source, maxEdge: 512),
               let torn = try? glitch(bitmap, settings: GlitchSettings(intensity: intensity,
                                                                       seed: seed)),
@@ -52,8 +54,15 @@ private func loadGlitchImageAsync(_ path: String, intensity: Double, seed: UInt6
 }
 
 /// Decode a downsampled thumbnail directly (never fully decodes the source bitmap).
+/// `path` is an AUTHORED path ("assets/pixelface.jpg"), so it is resolved here rather
+/// than handed to the filesystem as written. Without that it is relative to the process's
+/// working directory: fine under `swift run` from the repo, and nothing at all in a
+/// double-clicked .app, where the cwd is `/`. An `image` window that cannot find its file
+/// keeps the `#111116` ground it was given and comes up as a black frame — which is
+/// exactly what the eight faces round the torus were doing.
 private func decodeThumbnail(_ path: String, maxPixel: Int) -> NSImage? {
-    guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil) else { return nil }
+    let resolved = resolveResourcePath(path)
+    guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: resolved) as CFURL, nil) else { return nil }
     let opts: [CFString: Any] = [
         kCGImageSourceCreateThumbnailFromImageAlways: true,
         kCGImageSourceThumbnailMaxPixelSize: maxPixel,
@@ -459,6 +468,15 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
                              rings: content.cols ?? 5, intensity: content.intensity ?? 1.0)
         mv.autoresizingMask = [.width, .height]
         view.addSubview(mv)
+    case "particles":
+        // Transparent, like the fireworks and the swarm: no ground, so the field is over
+        // whatever the show has on screen. `mode` is the behaviour, `sprite` the body.
+        let pf = ParticleFieldView(size: body.size, seed: content.seed ?? 11,
+                                   count: Int((content.intensity ?? 1.0) * 64),
+                                   mode: ParticleFieldView.Mode(content.mode),
+                                   sprite: ParticleFieldView.Sprite(content.sprite))
+        pf.autoresizingMask = [.width, .height]
+        view.addSubview(pf)
     case "doom":
         // It runs DooM. The engine is fetched, not committed (tools/fetch_doom.sh); the
         // page says so in the window if it is missing.
@@ -470,7 +488,8 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         // the show has on screen. `intensity` is the population, `mode` the behaviour.
         let cs = CursorSwarmView(size: body.size, seed: content.seed ?? 3,
                                  count: Int((content.intensity ?? 1.0) * 90),
-                                 mode: CursorSwarmView.Mode(content.mode))
+                                 mode: CursorSwarmView.Mode(content.mode),
+                                 rampSeconds: content.spawnSeconds ?? 0)
         cs.autoresizingMask = [.width, .height]
         view.addSubview(cs)
     case "fileworks":
@@ -494,6 +513,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         let sv = ShaderCanvasView(frame: body)
         sv.autoresizingMask = [.width, .height]
         view.addSubview(sv)
+        if let spin = content.spin { sv.startSpinning(degreesPerSecond: spin) }
         if let path = content.path {
             sv.load(shaderAt: path)
             for (name, value) in [("drop", content.drop), ("u_vol", content.vol),

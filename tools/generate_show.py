@@ -52,6 +52,12 @@ BLACK = "#000000"
 # NOT the lighter #0078D7 the lyric cards use.
 DJ_BLUE = "#020AF5"
 
+# The three images the piece tears, with the same displacement/chroma-split pass the
+# desktop gets. Up here rather than inside one act because four different parts of the
+# show put torn cards up now: both eruptions, the cue-16 wipe, and every seam.
+GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
+                  "assets/credits_tile.png"]
+
 # --- the tempo map, straight from the analysis ---
 with open(os.path.join(ROOT, "assets", "track_analysis.json")) as f:
     analysis = json.load(f)
@@ -187,6 +193,52 @@ def kicks_between(b0, b1):
 def fullscreen():
     return [0, 0, 0, 0]          # w/h of 0 stretch to the far edge on any display
 
+# --- the seam between two acts ---------------------------------------------------
+# Every changeover in the piece used to be a hard cut: one act's windows close, the
+# next act's open, and on the frames in between there is a bare desktop. This is the
+# stitch — a handful of small windows thrown across the boundary, opening in the bar
+# before it and dissolving out in the bar after, so the seam is covered by something
+# moving rather than being a hole.
+#
+# Kept SUBTLE on purpose: eight small cards, none bigger than a sixth of the screen,
+# each up for under a second. It is a transition, not an act — the moment it reads as
+# an event of its own it is competing with the cue it exists to hide.
+#
+# Each seam gets its own RNG, seeded by name, so adding or moving one leaves the layout
+# of every other seam exactly where it was.
+SEAM_N = 8
+SEAM_FADE = 0.18                 # seconds of dissolve per card
+SEAM_LEAD = 0.75                 # beats: the cards are all up before the downbeat
+SEAM_TAIL = 1.25                 # beats: and all gone this long after it
+
+def seam(beat, tag, n=SEAM_N, torn_every=4):
+    """Throw `n` small windows across the changeover at `beat`. Returns their ids."""
+    rng = random.Random(abs(hash(tag)) % (2 ** 31))
+    ids = []
+    for i in range(n):
+        w = round(W * rng.uniform(0.09, 0.17))
+        h = round(w * rng.uniform(0.60, 0.85))
+        # Round the edges of the screen rather than the middle: the middle is where the
+        # act that is arriving puts its own picture, and the seam must not sit on it.
+        edge = rng.random()
+        x = round(rng.uniform(0.02, 0.30) * W) if edge < 0.5 else round(rng.uniform(0.68, 0.96) * W - w)
+        y = round(rng.uniform(0.04, 0.90) * (H - h))
+        x = max(8, min(x, W - w - 8))
+        wid = f"sm{tag}{i}"
+        ids.append(wid)
+        torn = i % torn_every == 2
+        body = ({"kind": "glitch", "path": GLITCH_SOURCES[i % len(GLITCH_SOURCES)],
+                 "intensity": round(0.40 + 0.10 * (i % 3), 2), "seed": 7000 + 13 * i,
+                 "chrome": "mixed", "title": "recovered.jpg"}
+                if torn else
+                {"kind": "color", "hex": rng.choice(PALETTE),
+                 "chrome": "mixed", "title": "look://again"})
+        add(beat - SEAM_LEAD + i * (SEAM_LEAD / n), "openWindow", {
+            "id": wid, "frame": [x, y, w, h], "content": body,
+            "animate": {"kind": "none"}})
+        add(beat + i * (SEAM_TAIL / n), "closeWindow", {"id": wid, "fadeSeconds": SEAM_FADE})
+    return ids
+
 def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none", anchor=None):
     """One lyric-video frame. `i` alternates the ground/type between blue and white."""
     blue_ground = (i % 2 == 0)
@@ -291,6 +343,11 @@ add(B["probe"], "closeWindow", {"id": "welcome"})
 PROBE_FRAME = [round(W * 0.18), round(H * 0.08), round(W * 0.64), round(H * 0.84)]
 add(B["probe"], "systemProbe", {"id": "probe", "linesPerBeat": 6, "frame": PROBE_FRAME,
                                 "title": "./scan_identity"})
+# The probe's session is HALF what it was (2026-09-02): it used to type all the way to
+# cue 6, three bars from the drop, and the report had said what it had to say long
+# before that — the machine knows who you are, and reading it twice adds nothing. It
+# closes on cue 5 now and the game takes the rest of INTRO B.
+add(B["hydra"] - 0.3, "closeWindow", {"id": "probe"})
 
 # =============================================================================
 # Cue 5 (0:30) — a hydra sketch is dragged onto the screen, pulled bigger by its
@@ -314,6 +371,25 @@ def hydra_window(wid, beat, frame, patch, running, animate="none", interactive=T
                     "chrome": "browser", "hex": "#68BDF8", "running": running},
         "animate": {"kind": animate},
         "interactive": interactive, "respawn": interactive})
+
+# =============================================================================
+# Cue 5 (0:30) — BRICK BREAKER, played on the machine's own furniture. The probe has
+# just closed; 32 windows rack up where the report was, the system's beach ball is the
+# ball, and the paddle is the viewer's pointer — moving the mouse plays it, and moving
+# it is the only thing anyone can do here, so anyone at the machine is playing whether
+# they meant to be or not.
+#
+# It starts moving on the frame it opens: the ball serves itself, a missed ball is
+# served again rather than ending anything, and when the last brick goes the rack comes
+# back. Nothing in it can stall — the track does not wait, so neither can the game. It
+# has INTRO B to itself until cue 6 clears the screen for the drop.
+#
+# The slot is the hydra act's; that act is still pulled, and this is what is in its
+# place. See `BrickBreakerController` for the physics.
+# =============================================================================
+add(B["hydra"], "brickBreaker", {
+    "id": "bricks", "frame": [round(W * 0.08), round(H * 0.10), round(W * 0.84), round(H * 0.78)],
+    "rows": 4, "cols": 8, "speed": 560, "ball": 46, "paddle": [200, 26], "seed": 44})
 
 # PULLED from the cut for now (2026-09-01) — kept behind HYDRA_ACT for when it returns.
 # The hand-built hydra sketch itself lives on in the show: it moved to the breakdown,
@@ -383,7 +459,7 @@ if HYDRA_ACT:
 # No duration: cue 7 replaces it a beat later. An expiry would restore the viewer's
 # picture for the two frames before the face lands — a flicker of the wrong image.
 # =============================================================================
-for wid in hydra_ids + ["probe"]:
+for wid in hydra_ids + ["bricks"]:
     add(B["blue2"] - 0.2, "closeWindow", {"id": wid})
 add(B["blue2"], "deskWallpaper", {"id": "desk2", "mode": "solid", "hex": DJ_BLUE})
 add(B["blue2"], "screenFlash", {"color": WHITE, "durationBeats": 0.4})
@@ -422,6 +498,78 @@ def build_face_desktop():
     return w, h
 
 FACE_W, FACE_H = build_face_desktop()
+
+# The face with its eyes SHUT — the second frame of the gate's blink (cue 1). The artist
+# drew it as a full screen grab (`sarah's assets/blink.jpg`, 3024x1964, loading bar and
+# all), so it has to be cut down to exactly the framing of pixelface.jpg or the face
+# would jump between frames instead of blinking.
+#
+# The two frames are matched on the MOUTH, not on the ink as a whole: the mouth bar is
+# identical in both and the eyes are not — that is the whole point of the frame — so
+# aligning bounding boxes would slide the mouth up and down on every blink.
+FACE_BLINK_SRC = "assets/sarah's assets/blink.jpg"
+FACE_BLINK = "assets/pixelface_blink.jpg"
+
+def mouth_box(im):
+    """The mouth graphic's bounding box, (x0, y0, x1, y1).
+
+    Found in two steps because neither alone is reliable. First the widest run of white
+    in the top three quarters locates the BAR — three quarters because the source grab
+    has a loading bar under the face that is wider than the mouth. Then every white pixel
+    within a fifth of the height of that row is collected, which picks up the teeth and
+    the far end of a bar the run missed: a row interrupted by a tooth gives a short run,
+    and matching frames on a short run is what silently zooms one of them."""
+    px = im.load()
+    def white(x, y):
+        r, g, b = px[x, y][:3]
+        return r > 170 and g > 170 and b > 170
+    best_len, bar_y = 0, 0
+    for y in range(int(im.height * 0.75)):
+        run = 0
+        for x in range(im.width):
+            run = run + 1 if white(x, y) else 0
+            if run > best_len:
+                best_len, bar_y = run, y
+    # The band is measured in BAR LENGTHS, not in image heights: the face fills
+    # pixelface.jpg and is a fifth of the height of the screen grab, so a band that is a
+    # fraction of the image is two different things in the two frames — it took in the
+    # eyes on one side and not the other, and the "mouth" it matched was the eye dashes.
+    # A bar length is the same face-relative unit in both.
+    lo = max(0, bar_y - int(best_len * 0.08))
+    hi = min(im.height, bar_y + int(best_len * 0.32))
+    xs, ys = [], []
+    for y in range(lo, hi):
+        for x in range(im.width):
+            if white(x, y):
+                xs.append(x); ys.append(y)
+    return min(xs), min(ys), max(xs), max(ys)
+
+def build_face_blink():
+    from PIL import Image
+    open_im = Image.open(os.path.join(ROOT, "assets/pixelface.jpg")).convert("RGB")
+    shut = Image.open(os.path.join(ROOT, FACE_BLINK_SRC)).convert("RGB")
+    ox0, oy0, ox1, _ = mouth_box(open_im)
+    sx0, sy0, sx1, _ = mouth_box(shut)
+    k = (sx1 - sx0) / max(1, ox1 - ox0)          # source pixels per open-frame pixel
+    oy, sy = oy0, sy0
+    # Put the crop where the mouth lands in the same place it does in the open frame.
+    left = sx0 - ox0 * k
+    top = sy - oy * k
+    crop = shut.crop((round(left), round(top),
+                      round(left + open_im.width * k), round(top + open_im.height * k)))
+    small = crop.resize(open_im.size, Image.BOX)
+    # Two colours, hard edges: BOX leaves grey fringes on what is pixel art, and every
+    # other appearance of this face in the show is hard-edged.
+    ground = tuple(int(FACE_GROUND[i:i + 2], 16) for i in (1, 3, 5))
+    px = small.load()
+    for y in range(small.height):
+        for x in range(small.width):
+            r, g, b = px[x, y]
+            px[x, y] = (255, 255, 255) if (r + g + b) / 3 > 140 else ground
+    small.save(os.path.join(ROOT, FACE_BLINK), quality=95)
+    return small.size
+
+FACE_BLINK_W, FACE_BLINK_H = build_face_blink()
 # Applied 2×DESK_LATENCY early so the swap has FINISHED before the drop: fired on the
 # beat it landed late, and fired 300 ms early it was still mid-swap while the drop's 21
 # window opens hit — the WindowServer paid for both at once and the whole entrance
@@ -455,9 +603,13 @@ TRAIL_LAG = 1.0 / (FPS * BEAT)               # …and one frame at 30 fps behind
 CHAIN_SPAN = TRAIL_LINKS * TRAIL_DX
 tx = round((W - TRAVEL_W + CHAIN_SPAN) / 2)
 
-# It travels for as long as it is on screen: the end is pinned off cue 12 rather than
-# a fixed bar count, and the margin is asserted below once the close time is known.
-TRAVEL_END = B["words"] - 3
+# HALF the run it used to have (2026-09-02). It travelled from the drop all the way to
+# cue 12's close — 16 legs, the whole of chorus 1A — and the wave had made its point
+# long before the end of that. Now it takes half the span and LEAVES on the last leg
+# rather than parking: a chain that stops and sits is the thing the full-length version
+# was written to avoid, so the fix for "half as long" is a shorter life, not a shorter
+# journey followed by a wait.
+TRAVEL_END = tv + (B["words"] - 3 - tv) / 2
 legs, b, leg = [], tv, 0
 while b + LEG <= TRAVEL_END:
     legs.append(y_top if leg % 2 == 0 else y_bot)
@@ -499,6 +651,15 @@ for i, to_y in enumerate(legs):
 # is still catching up after the leader has stopped.
 TRAIL_LAST_MOVE = tv + (len(legs) - 1) * LEG + TRAIL_LINKS * TRAIL_LAG
 
+# …and it goes when it arrives, leader first, the chain following it off the screen in
+# the order the delay line already puts them in. Cue 12 used to close this; leaving it
+# there would have the wave standing still for the second half of chorus 1A, which is
+# the thing the halving was for.
+TRAVEL_CLOSE = TRAIL_LAST_MOVE + LEG + 0.15
+add(TRAVEL_CLOSE, "closeWindow", {"id": "traveller"})
+for k in range(1, TRAIL_LINKS + 1):
+    add(TRAVEL_CLOSE + k * TRAIL_LAG, "closeWindow", {"id": f"tr{k}"})
+
 # =============================================================================
 # Cue 9 (0:43) — the spiral of lyrics, one card per lyric cue, winding out from the
 # middle. Authored from the screen's CENTRE (`anchor: center`) — top-left frames would
@@ -529,19 +690,17 @@ for i, (when, text) in enumerate(spiral_phrases):
                chrome="mac", animate="springIn", anchor="center")
 
 # =============================================================================
-# Cue 10 (0:38) — the desktop throws itself into the air: `fileworks`, shells bursting
-# into desktop file icons, on a TRANSPARENT full-screen window with no ground of its
-# own so the spiral stays visible through it. Up from here to cue 13 — about one shell
-# a second keeps each burst legible; cue 12 closes it with the spiral.
-add(B["video1"], "openWindow", {
-    "id": "video", "frame": fullscreen(),
-    "content": {"kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
-                "chrome": "none", "title": "Desktop"},
-    "animate": {"kind": "none"}})
+# Cue 10 — MOVED (2026-09-02). The bursting file icons used to go up here, over the
+# spiral and the traveller, and chorus 1A was carrying three moving pictures at once
+# with the drop's own wallpaper under them. The act is intact and it is not gone: it
+# opens at cue 25 instead, where the screen has just been cut back to the swarm and
+# there is room to watch a shell rise. The slot is empty again.
 
 # =============================================================================
-# Cue 11 (0:48) — TBD. Deliberately empty: the author has not decided, and a filler
-# event here would have to be found and removed later. The gap is the note.
+# Cue 11 (0:48) — TBD. Deliberately empty again: the drain that was put here was one of
+# the three particle behaviours being explored, and a behaviour on trial is not a cue.
+# All three are still in the engine and `--test-particles` shows them side by side; when
+# one of them earns a place in the piece it can have this slot. The gap is the note.
 # =============================================================================
 
 # =============================================================================
@@ -602,7 +761,9 @@ assert TRAIL_LAST_MOVE + LEG <= words_event_beat - 0.2, (
 # The fireworks go too (no embers): a transparent full-screen window with live
 # particles keeps the compositor repainting the whole screen every frame, and under
 # the ~300 ms wallpaper swaps it dragged the words — and everything after them.
-for wid in spiral_ids + trail_ids + ["traveller", "video"]:
+# No "video" here any more: cue 10's fireworks owned that id and they have moved to
+# cue 25 (as "works"), and the video slot itself is the DooM window ("doomvid").
+for wid in spiral_ids:
     add(words_event_beat - 0.2, "closeWindow", {"id": wid})
 add_t(words_event_at, "deskWallpaper", {
     "id": "words", "mode": "slides",
@@ -703,8 +864,6 @@ if FILL_ACT:
     # even when its hex goes unused: `fill_rng` seeds the whole act's layout, so a draw
     # added or skipped here would reshuffle every window after it.
     GLITCH_BLUES = {1, 4, 8}
-    GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
-                      "assets/credits_tile.png"]
 
     # ...and two more RUN a Wolfram elementary cellular automaton, computed by the engine
     # (`AutomatonView`): it has to keep going for as long as the window is up, and it sizes
@@ -800,9 +959,16 @@ for n, (c, r) in enumerate(cells):
     y = max(0, min(round(r * H / TX_ROWS) - TX_BLEED, H - th))
     wid = f"tx{n}"
     tx_ids.append(wid)
+    # Two of the thirty are torn rather than flat — the wipe is the one place in the
+    # piece where a card is on screen for a whole second with nothing else asking for
+    # attention. By index, not by a draw: `tx_rng` seeds the tile order above.
+    body = ({"kind": "glitch", "path": GLITCH_SOURCES[n % len(GLITCH_SOURCES)],
+             "intensity": 0.63, "seed": 2645 + n, "chrome": "mixed", "title": "recovered.jpg"}
+            if n in (11, 23) else
+            {"kind": "color", "hex": tx_rng.choice(PALETTE),
+             "chrome": "mixed", "title": "look://again"})
     add(bk + n * FRAME, "openWindow", {"id": wid, "frame": [x, y, tw, th],
-        "content": {"kind": "color", "hex": tx_rng.choice(PALETTE),
-                    "chrome": "mixed", "title": "look://again"},
+        "content": body,
         "animate": {"kind": "none"}})    # a springIn would open gaps in the cover
 
 # Covered at TX_COVERED; the map goes a couple of frames after that, unseen. MAP_CLOSE
@@ -843,6 +1009,11 @@ add(B["tbd_099"], "openWindow", {
     "id": "tbd1", "anchor": "center",
     "frame": [0, 0, SHADER_W, SHADER_H],
     "content": {"kind": "shader", "path": "assets/shaders/graphic.frag", "drop": 0.0,
+                # It turns. 8°/s is about 170° over the time it is up — you can see it
+                # moving without ever watching it come back round, which is the point:
+                # the breakdown is the one still passage in the piece and a shot that
+                # holds perfectly still for twenty seconds reads as a freeze.
+                "spin": 8,
                 "chrome": "mixed", "title": "graphic.frag"},
     "animate": {"kind": "springIn"}, "interactive": True})
 
@@ -919,6 +1090,13 @@ add(wl + 0.25, "photoWall", {"id": "wall", "fillPerBeat": 12, "churnPerBeat": 2.
                              "windows": 40, "minFrac": 0.10, "maxFrac": 0.42})
 
 # =============================================================================
+# Cue 20 — PULLED (2026-09-02): the window that alternated the face with a flat blue
+# card at 6 Hz, right on the heels of the photo wall. It was the only thing in the piece
+# that flashed a window's whole ground on and off, it landed immediately after the
+# spam — the busiest picture in the show — and it read as a fault rather than a beat.
+# The wall now runs to the horse unaccompanied. Kept behind FACESTROBE_ACT; the slot
+# keeps its number. What it used to be:
+#
 # Cue 20 (1:58) — the face strobes over the wall, in a WINDOW centre-screen, not over
 # the whole picture. Same 6 Hz as ever — well clear of the 15–20 Hz photosensitivity
 # band. ONE window re-opened under the same id, never shown/hidden (show/hide once
@@ -931,15 +1109,17 @@ FLASH_W = round(W * 0.36)
 FLASH_H = round(FLASH_W * 320 / 425)            # pixelface.jpg's own aspect
 FACE_FRAME = {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"}
 BLUE_FRAME = {"kind": "color", "hex": DJ_BLUE, "chrome": "none"}
+FACESTROBE_ACT = False
 k, b = 0, fs
-while b < face_until:
+while FACESTROBE_ACT and b < face_until:
     add(b, "openWindow", {"id": "faceflash", "anchor": "center",
         "frame": [0, 0, FLASH_W, FLASH_H],
         "content": FACE_FRAME if k % 2 == 0 else BLUE_FRAME,
         "animate": {"kind": "none"}})
     b += 0.5 / face_hz / BEAT          # one swap per half-cycle: face, blue, face, …
     k += 1
-add(face_until, "closeWindow", {"id": "faceflash"})
+if FACESTROBE_ACT:
+    add(face_until, "closeWindow", {"id": "faceflash"})
 
 # =============================================================================
 # Cue 21 (2:00) — everything cuts out to the bare desktop, and the horse gets out.
@@ -970,25 +1150,68 @@ add(t2, "closeWindow", {"id": "horse"})
 add(t2, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 add(t2, "glassTorus", {"id": "torus", "material": "crystal", "speed": 1.2,
                        "size": round(min(W, H) * 0.56)})
+# THE POINTER SWARM STARTS HERE, under the torus, and arrives ONE AT A TIME.
+#
+# It used to open on cue 24 with all ninety pointers on a single frame, which put a hard
+# edge on the section: the screen went from no cursors to a wall of them between two
+# frames. Now the window opens a section early and `spawnSeconds` trickles them in —
+# roughly one every eighth of a second — so the swarm bleeds through the torus act and
+# is at full strength exactly when cue 25 cuts everything else and leaves it alone with
+# the viewer's pointer. Transparent and click-through, so it costs the acts it overlaps
+# nothing but the sight of it.
+SWARM_RAMP = round((B["tbd_136"] - B["torus2"]) * BEAT, 1)
+add(t2 + 0.5, "openWindow", {
+    "id": "tbd2", "frame": fullscreen(),
+    "content": {"kind": "cursors", "seed": 3136, "intensity": 1.0,
+                "spawnSeconds": SWARM_RAMP,
+                "chrome": "none", "title": "pointer"},
+    "animate": {"kind": "none"}})
+
 FACE_RING = 8
 RING_W = round(W * 0.15)
 RING_H = round(RING_W * 320 / 425)              # pixelface.jpg's own aspect
 rx, ry = W * 0.36, H * 0.40
 clock_ids = []
+# Three of the eight are HYDRA SKETCHES rather than faces — the patches from the pulled
+# intro act, running. Three and not four: `HydraWeb` pre-warms three canvases, and a
+# fourth would be compiled mid-show, which is a visible drop. They sit at 1, 4 and 6 so
+# no two are adjacent on the ring.
+HYDRA_SLOTS = {1, 4, 6}
 for i in range(FACE_RING):
     ang = -math.pi / 2 + 2 * math.pi * i / FACE_RING        # 12 o'clock, clockwise
     wid = f"ck{i}"
     clock_ids.append(wid)
+    if i in HYDRA_SLOTS:
+        src_code, title = PATCHES[sorted(HYDRA_SLOTS).index(i) % len(PATCHES)]
+        body = {"kind": "livecode", "text": src_code, "title": title,
+                "chrome": "browser", "hex": "#68BDF8", "running": True}
+    else:
+        body = {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"}
     add(t2 + i, "openWindow", {"id": wid, "anchor": "center",
         "frame": [round(rx * math.cos(ang)), round(ry * math.sin(ang)), RING_W, RING_H],
-        "content": {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"},
+        "content": body,
         "animate": {"kind": "none"}})
 
 # =============================================================================
 # Cue 23 (2:08) — all of it stays, and the video slot lands on top.
 # =============================================================================
-placeholder("video", B["video2"], VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
-            title="untitled.mov")
+# The video slot is not a placeholder any more: it RUNS DOOM. Same window, same
+# geometry, same `untitled.mov` title bar — the slot that always said "video goes here"
+# is filled by the 1997 sources playing E1M1 (`tools/fetch_doom.sh` installs the engine;
+# without it the window says so).
+#
+# It skips its own title card and menu and comes up already in the level — see
+# doom.html: the canvas is hidden while the menu is walked, so the ~1.2 s of getting
+# there is black, which on a window dressed as a video slot reads as buffering. The
+# level is played by the page, since nothing here is clickable.
+# Its OWN id, not the `video` the fireworks already borrow at cue 10: re-opening an id
+# rebuilds the window's content view, which for this one means the game starts again
+# from its title card. An id shared between a transparent overlay and a running game is
+# a restart waiting for someone to move a cue.
+add(B["video2"], "openWindow", {
+    "id": "doomvid", "anchor": "center", "frame": [0, 0, VIDEO_W, VIDEO_H],
+    "content": {"kind": "doom", "chrome": "mac", "title": "untitled.mov"},
+    "animate": {"kind": "springIn"}})
 
 # =============================================================================
 # Cue 24 (2:09) — the torus and the ring cut out from under it, leaving the slot alone
@@ -999,20 +1222,25 @@ placeholder("video", B["video2"], VIDEO_LABEL, [0, 0, VIDEO_W, VIDEO_H],
 v3 = B["video3"]
 for wid in clock_ids + ["torus"]:
     add(v3, "closeWindow", {"id": wid})
-# A full-screen transparent swarm of Mac pointers chasing `NSEvent.mouseLocation`, so
-# it follows the pointer whether the viewer is moving it or the show is (`cursorPath`
-# drives the pointer elsewhere in the piece).
-add(v3 + 0.2, "openWindow", {
-    "id": "tbd2", "frame": fullscreen(),
-    "content": {"kind": "cursors", "seed": 3136, "intensity": 1.0,
-                "chrome": "none", "title": "pointer"},
-    "animate": {"kind": "none"}})
+# The swarm is opened back at cue 22, not here — see there. It has been filling under
+# the torus and the video slot for the whole of this section.
 
 # =============================================================================
 # Cue 25 (2:06) — the video cuts and the swarm, up since cue 24, is alone with the
 # viewer's pointer.
 # =============================================================================
-add(B["tbd_136"], "closeWindow", {"id": "video"})
+add(B["tbd_136"], "closeWindow", {"id": "doomvid"})
+
+# THE ICON EXPLOSIONS, moved here from cue 10. The video slot has just cut and the only
+# thing left is the pointer swarm, so a shell going up is legible in a way it never was
+# over the spiral. Transparent and full-screen, like it always was; it burns from here
+# to the eruption, which is about the seven seconds it had in chorus 1A.
+add(B["tbd_136"] + 0.2, "openWindow", {
+    "id": "works", "frame": fullscreen(),
+    "content": {"kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
+                "chrome": "none", "title": "Desktop"},
+    "animate": {"kind": "none"}})
+add(B["spam"] - 0.2, "closeWindow", {"id": "works"})
 
 # =============================================================================
 # Cue 26 (2:08) — the mouse spinner, taken the other way: nothing in the app sets the
@@ -1062,9 +1290,21 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0):
             hexc = chaos_rng.choice(body_colors)
             packed = chaos_rng.random() < ui_chaos
             animate = {"kind": "none" if chaos_rng.random() < 0.8 else "springIn"}
+            # Every ninth flat card comes up TORN instead of blank — the same
+            # displacement/chroma-split pass the piece uses at the end, run once over one
+            # of the show's own images. Chosen off the window counter, never off
+            # `chaos_rng`: a draw taken here and not there would re-scatter every window
+            # in both eruptions. This is also where the tear went when cue 15 was pulled
+            # — that act was the only thing using the `glitch` kind.
+            torn = chaos["w"] % 9 == 4
+            g = (chaos["w"] // 9) % len(GLITCH_SOURCES)
             content = ({"kind": "uichaos", "seed": 900 + chaos["w"], "intensity": 1.15,
                         "chrome": "mixed", "title": "Finder"}
                        if packed else
+                       {"kind": "glitch", "path": GLITCH_SOURCES[g],
+                        "intensity": round(0.45 + 0.18 * g, 2), "seed": 4100 + 17 * chaos["w"],
+                        "chrome": "mixed", "title": "recovered.jpg"}
+                       if torn else
                        {"kind": "color", "hex": hexc,
                         "chrome": "mixed", "title": "look://again"})
             add(b, "openWindow", {"id": f"w{chaos['w'] % 14}", "frame": [round(x), round(y), w, h],
@@ -1099,22 +1339,6 @@ sm = B["spam"]
 add(sm - 0.2, "closeWindow", {"id": "tbd3"})
 add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 
-# One of the small windows in the eruption is running DooM. Not a picture of it: the
-# 1997 linuxdoom sources built to wasm32, playing its own attract-mode demo in a 320x200
-# window (`tools/fetch_doom.sh` installs the engine; without it the window says so).
-#
-# It opens on the FIRST eruption rather than the second, and that is a timing decision:
-# DooM holds its title screen for about five seconds before the demo starts, so a window
-# opened at cue 28 would be a title card for half its life. From here it has the whole of
-# chorus 2A to boot and get into the demo, and it is still going at the stop.
-#
-# Its own id, deliberately NOT one of the `w0…w13` pool: the eruption recycles those
-# every few beats, and a re-opened id rebuilds the content view — which would restart
-# the game, and a DooM that reboots every four beats is a title screen forever.
-add(sm, "openWindow", {
-    "id": "doom0", "frame": [round(W * 0.06), round(H * 0.60), 320, 200],
-    "content": {"kind": "doom", "chrome": "mixed", "title": "doom.wasm"},
-    "animate": {"kind": "springIn"}})
 erupt(sm, B["glitch"], W / 2, H / 2, ui_chaos=0.25)
 
 # The ground flashes on every kick underneath it.
@@ -1184,7 +1408,7 @@ ag = B["allglitch"]
 lw = B["lastwords"]
 add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
 for wid in (sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]
-            + ["school", "doom0"]):
+            + ["school"]):
     add(lw + 0.05, "closeWindow", {"id": wid})
 
 # =============================================================================
@@ -1218,6 +1442,16 @@ add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
     "outroDelay": OUTRO_DELAY,
     "backdrop": "#FFFFFF",
     "tile": "assets/credits_tile.png", "tileDriftSeconds": 4})
+
+# =============================================================================
+# THE SEAMS — every phrase changeover in the piece, stitched (see `seam`). Two are
+# deliberately not in this list: BREAKDOWN, where cue 16's 30-tile wipe is already the
+# transition and a second one would be noise on top of it, and BREAK, where the end
+# card is the point and anything thrown across it is litter on the ending.
+# =============================================================================
+for _phrase in ["introB", "chorus1A", "chorus1B", "bridgeA", "bridgeB",
+                "instrumentalA", "instrumentalB", "chorus2A", "chorus2B"]:
+    seam(phrase_beat(_phrase), _phrase)
 
 # --- markers for the scrubber: the analyser's sections plus every cue ---
 LABELS = {
@@ -1279,6 +1513,8 @@ for i, (name, (p, bars, beats)) in enumerate(CUES.items(), start=1):
           + ("   (past the end of the track)" if g > DURATION else ""))
 print()
 print(f"  face     {FACE_DESKTOP} {FACE_W}x{FACE_H} on 2560x1600 ({FACE_SHARE:.0%} of the height)")
+print(f"  bricks   4x8 windows, f {frame_at(secs(B['hydra']))} → f {frame_at(secs(B['blue2'] - 0.2))} "
+      f"({secs(B['blue2']) - secs(B['hydra']):.0f}s), probe closes f {frame_at(secs(B['hydra'] - 0.3))}")
 print(f"  welcome  {len(WELCOME_LINES)} lines @{WELCOME_LPB:g}/beat in a {WELCOME_W}x{WELCOME_H} terminal, "
       f"last line lands f {frame_at(secs(B['welcome'] + len(WELCOME_LINES) / WELCOME_LPB))}, "
       f"closed f {frame_at(secs(B['probe']))}")
@@ -1314,20 +1550,26 @@ print(f"  wipe     {len(tx_ids)} tiles {tw}x{th} on a {TX_COLS}x{TX_ROWS} grid, 
       f"f {frame_at(secs(bk))} → f {frame_at(secs(TX_COVERED))}, dissolve {TX_PER_FRAME}/frame "
       f"f {frame_at(secs(tx_first))} → f {frame_at(secs(tx_last) + TX_FADE)} "
       f"({TX_FADE:g}s each), shader lands f {frame_at(secs(B['tbd_099']))}")
-print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
+if FACESTROBE_ACT:
+    print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
+else:
+    print("  face     cue 20 pulled (FACESTROBE_ACT = False) — no blue strobe after the wall")
 print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
       f"exits beat {horse_exit:.0f}")
 print(f"  hydra2   breakdown sketch over the raymarcher: cursor walks f {frame_at(secs(hb))}, "
       f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
 print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "
       f"count starts f {frame_at(secs(bo))}, shutter f {frame_at(secs(B['wall']))}")
-print(f"  ring     {len(clock_ids)} pixelfaces round the torus, one a beat, "
+print(f"  swarm    90 pointers, one every {SWARM_RAMP / 90:.2f}s over {SWARM_RAMP:g}s, "
+      f"f {frame_at(secs(t2 + 0.5))} → full at f {frame_at(secs(t2 + 0.5) + SWARM_RAMP)}")
+print(f"  ring     {len(clock_ids)} windows round the torus ({FACE_RING - len(HYDRA_SLOTS)} faces, "
+      f"{len(HYDRA_SLOTS)} live hydra), one a beat, "
       f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
 print(f"  spam     {chaos['w']} windows, {chaos['d']} alerts, {n_kick} kick flashes, "
       f"{chaos['ui']} packed with macOS UI (both eruptions)")
-print(f"  doom     320x200 window running wasm DooM, f {frame_at(secs(sm))} → "
-      f"f {frame_at(secs(B['lastwords'] + 0.05))} "
-      f"({(secs(B['lastwords']) - secs(sm)):.0f}s; ~5s of that is its title screen)")
+print(f"  doom     the video slot ({VIDEO_W}x{VIDEO_H}) runs DooM, f {frame_at(secs(B['video2']))} → "
+      f"f {frame_at(secs(B['tbd_136']))} ({secs(B['tbd_136']) - secs(B['video2']):.1f}s; "
+      f"~1.2s of that is the menu, hidden)")
 print(f"  school   54 pointers on a {2.5:g}-turn spiral, flocking behind the eruption "
       f"f {frame_at(secs(gl2))} → f {frame_at(secs(B['lastwords'] + 0.05))}")
 print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events over "

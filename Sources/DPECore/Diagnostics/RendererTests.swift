@@ -516,6 +516,59 @@ enum SystemProbeTests {
             t.expect(closest > 3, "the shoal has not collapsed onto one point "
                      + "(closest pair \(Int(closest))pt)")
 
+            // An `image` window loads its file through the RESOLVER, not through the
+            // working directory. This is pinned from a cwd of "/" because that is the
+            // real failure: authored paths are relative ("assets/pixelface.jpg"), a
+            // double-clicked .app runs with cwd "/", and an image window that cannot
+            // find its file keeps its #111116 ground and comes up as a black frame. The
+            // eight faces round the torus were doing exactly that.
+            let fm = FileManager.default
+            let cwd = fm.currentDirectoryPath
+            fm.changeCurrentDirectoryPath("/")
+            let imageView = MainActor.assumeIsolated {
+                makeEffectContentView(ContentSpec(kind: "image", path: "assets/pixelface_blink.jpg",
+                                                  chrome: "none"),
+                                      size: NSSize(width: 216, height: 162))
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.8))   // the load is async
+            fm.changeCurrentDirectoryPath(cwd)
+            let loaded = MainActor.assumeIsolated {
+                imageView.subviews.compactMap { $0 as? NSImageView }.first?.image
+            }
+            t.expect(loaded != nil,
+                     "an image window finds its file with the working directory elsewhere")
+
+            // BRICK BREAKER. Four things have to hold for this to be a game rather
+            // than a screensaver, and each is a way it is known to break: the ball has
+            // to stay on the table, it has to keep its speed (a bounce that scales the
+            // vector drifts to a crawl or to a blur over a few hundred hits), bricks
+            // have to actually come off the wall, and a ball that gets past the paddle
+            // has to be served again rather than ending the show's cue early.
+            let game = BrickBreakerController()
+            let area: [Double] = [100, 100, 1000, 600]
+            MainActor.assumeIsolated {
+                game.startForTesting(BrickBreakerParams(id: "t", frame: area, rows: 3, cols: 6,
+                                                        speed: 600, ball: 40, seed: 7))
+            }
+            t.equal(game.bricksAlive, 18, "the wall is racked")
+            let speed0 = game.ballSpeed
+            t.expect(speed0 > 1, "the ball is moving on the frame it opens (\(Int(speed0))pt/s)")
+
+            // Ten seconds of play with the paddle parked in the middle.
+            MainActor.assumeIsolated {
+                game.setPaddleForTesting(x: 600)
+                game.stepForTesting(600)
+            }
+            let p = game.ballPosition
+            t.expect(p.x > 60 && p.x < 1140 && p.y > 60 && p.y < 760,
+                     "the ball is still on the table after ten seconds (\(Int(p.x)), \(Int(p.y)))")
+            t.near(game.ballSpeed, speed0, speed0 * 0.02, "…and has not gained or lost speed")
+            t.expect(game.bricksAlive < 18,
+                     "…and has taken bricks off the wall (\(18 - game.bricksAlive) gone)")
+            MainActor.assumeIsolated { game.closeAll() }
+            t.equal(game.bricksAlive, 0, "closeAll clears the table")
+            t.expect(!game.isPlaying, "…and stops the clock")
+
             // The mandala. Its TURNING is checked by `--test-mandala`; here it is the
             // arrangement and the one safety number.
             let mv = MainActor.assumeIsolated {
