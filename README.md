@@ -112,10 +112,30 @@ xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/GiveIt2Me_DJ_Dave_malw
 ```
 
 The piece asks for **Camera** (the photo booth) and **Location Services** (the probe and
-the map) — both **at the intro gate, before the first beat**, so no system dialog lands
+the map) — both **on the answer to the question, before the machine restarts**: the
+viewer presses YES, macOS asks over the card they just answered, and the restart does not
+begin until every prompt has been accepted or denied. Nothing is asked of anyone who says
+no, and nothing is asked once the track is running, so no system dialog lands
 mid-song (`Permissions.preflight`; see Act 0). It needs no Accessibility (`cursorPath`
 runs in `warp` mode), no Automation (no `rearrangeIcons`), no Contacts, no Bluetooth and
 no Screen Recording. It does want the network, for the Apple Maps flights.
+
+**Whether a prompt will actually appear is a property of the machine, not the code.**
+macOS asks once per app identity and remembers the answer forever; a request for
+something already granted or denied returns silently, which looks exactly like a gate
+that forgot to ask.
+
+```bash
+swift run GiveIt2Me_DJ_Dave_malware --check-permissions
+```
+
+prints the plan and the current state of each entry — `not determined` is the only one
+that shows a window — and prompts nothing itself, so it is safe to run five minutes
+before a show. `tccutil reset All com.computerart.giveit2me` puts a machine back to
+never-asked. Note that `swift run` and the bundled `.app` are different identities with
+separate records, so check whichever one you are about to perform with; ad-hoc signing
+also gives the `.app` a new identity on every `bundle.sh`, which is its own source of
+"why is it asking again".
 
 That last one is now true rather than aspirational. Two things used to reach
 ScreenCaptureKit: the glass torus streamed the display for its reflections, and the
@@ -144,11 +164,36 @@ names real people.
 
 ### Act 0 — the intro gate
 
-Launching the app opens on the machine **restarting**: black, the Apple logo, a progress
-bar. When the bar lands the ground turns **DJ Dave blue** and the logo becomes the face
-(`assets/pixelface.jpg`) — the first thing the viewer sees is the show having already
-taken the computer over. The bar does not finish: it catches at **60%**, the ground cuts
-to blue and the face arrives, and only then does it fill. Drawn by `RestartCardView`, which deliberately is *not*
+Launching the app opens on **the question**: the photosensitivity warning and DO YOU WANT
+THE MALWARE? in real macOS chrome, with nothing else on screen and no timeout. Consent
+comes before anything happens, not after the takeover has already been shown (reordered
+2026-09-02).
+
+**YES. INFECT ME.** and the question **goes**: the card fades out and the gate leaves the
+screen entirely, and only then are the permission prompts raised
+(`Permissions.preflight`). They arrive on the viewer's own desktop with nothing of the
+piece in front of them — the only arrangement where it is obvious what is being asked and
+by whom — and the gate holds off screen until each has been accepted or denied. Its
+buttons go inert meanwhile, so a second click cannot jump the queue, and the window drops
+below `.screenSaver` as well: belt to the braces, since a gate that is still up for any
+reason must not sit above a system alert. When the prompts are done the restart card is
+built while the window is still hidden and the whole thing fades back in — built first,
+shown second, or the restart is seen being assembled. The **location** prompt is the
+one exception to waiting indefinitely: it is waited on like the rest but on a 12-second
+leash (`Permissions.locationGrace`), because it is the one macOS will happily leave
+sitting there, and a gate that waits 45 seconds has failed in front of an audience. It
+keeps warming either way, and a fix that arrives inside the first minute is still used by
+both the probe and the map.
+
+Then the machine restarts — or appears to: black, the Apple logo, a
+progress bar. When the bar lands the ground turns **DJ Dave blue** and the logo becomes
+the face (`assets/pixelface.jpg`), so the first thing the viewer sees after agreeing is
+the show having already taken the computer over. The bar does not finish: it catches at
+**60%**, the ground cuts to blue and the face arrives, and only then does it fill. **The
+track starts out of this card**, not off the button — the restart is what the music
+arrives on. `IntroGateController.proceed` is the one place that decides what "forward"
+means, so the answer and the last card cannot disagree about who starts the show, and
+`GateTests` pins the order. Drawn by `RestartCardView`, which deliberately is *not*
 `BootView` (the fake reboot and the outro share that one; the stall, the colour cut and
 the image swap are a one-off and don't belong in it).
 

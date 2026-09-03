@@ -37,20 +37,18 @@ struct IntroCard {
 }
 
 enum IntroGate {
+    /// The order matters and it was reversed (2026-09-02). The question is ASKED FIRST
+    /// and the machine restarts on the answer: consent, and then the consequence. The
+    /// restart card used to open the piece and the question followed it, which put the
+    /// warning after the takeover had already been shown.
+    ///
+    /// The last card is the one that starts the show — see `IntroGateController.proceed`
+    /// — so the track comes up out of the restart, on the blue screen with the face,
+    /// rather than on the click of a button.
     static let script: [IntroCard] = [
-        // The machine appears to restart before the piece begins. It ends on the
-        // signature blue with the face where the logo was — the first thing the viewer
-        // sees is the show having already taken the computer over.
-        IntroCard(
-            kicker: "",
-            title: "",
-            body: "",
-            accent: djBlue,
-            dwell: 7.0,
-            style: .restart),
-        // The warning and the question, together, in real macOS chrome. The
-        // photosensitivity notice is the part that actually matters here; it is not a
-        // joke, and it stays in front of the viewer until they answer.
+        // The warning and the question, together, in real macOS chrome, before anything
+        // else happens. The photosensitivity notice is the part that actually matters
+        // here; it is not a joke, and it stays in front of the viewer until they answer.
         IntroCard(
             kicker: "malware",
             title: "DO YOU WANT THE MALWARE?",
@@ -64,7 +62,18 @@ enum IntroGate {
             accent: "#0078D7",
             dwell: nil,
             style: .macAlert,
-            glyph: "?")
+            glyph: "?"),
+        // …and the machine "restarts" on YES. It ends on the signature blue with the
+        // face where the logo was — the first thing the viewer sees after agreeing is
+        // the show having already taken the computer over — and the music starts out of
+        // it, so the restart is what the track arrives on.
+        IntroCard(
+            kicker: "",
+            title: "",
+            body: "",
+            accent: djBlue,
+            dwell: 7.0,
+            style: .restart)
     ]
 
     /// The signature blue: rgb(2, 10, 245). The desktop wallpaper and the restart card
@@ -83,6 +92,18 @@ enum IntroGate {
     static let buttonSound = "assets/bubble_sound.wav"
 
     static let backdrop = "#050508"
+
+    /// The gate covers everything — including, if it is left there, the system's own
+    /// permission dialogs.
+    ///
+    /// `.screenSaver` is what makes the gate a takeover: nothing of the desktop shows
+    /// through it and no other window can get in front. macOS's TCC prompts are ordinary
+    /// system alerts and they sit BELOW that level, so while the prompts are up the gate
+    /// drops to `.normal` and comes back afterwards. Raising a prompt behind an opaque
+    /// window that cannot be moved is the same thing as not raising it at all — the
+    /// viewer sees the question card sit there and nothing happens.
+    static let level: NSWindow.Level = .screenSaver
+    static let consentLevel: NSWindow.Level = .normal
 
     /// On-screen size of a `.popup` card's window.
     static let popupSize = NSSize(width: 620, height: 300)
@@ -505,24 +526,54 @@ private final class IntroWindow: NSWindow {
     override func mouseDown(with event: NSEvent) { onClick?() }
 }
 
+/// What pressing "forward" on a card should do. Pulled out of the controller so the
+/// order — answer, then prompts, then the restart, then the track — is a thing that can
+/// be asserted rather than a thing that has to be performed to be checked.
+enum GateStep: Equatable {
+    /// A choice card with something after it: run the permission prompts on the answer
+    /// and only move on once they have all been dealt with.
+    case consentThenNext
+    case next
+    /// The last card: this is what starts the show.
+    case finish
+}
+
 final class IntroGateController {
+    static func step(at index: Int, consented: Bool, hasConsentHandler: Bool,
+                     script: [IntroCard] = IntroGate.script) -> GateStep {
+        guard index + 1 < script.count else { return .finish }
+        if script[index].dwell == nil && !consented && hasConsentHandler { return .consentThenNext }
+        return .next
+    }
+
     private let onStart: () -> Void
     private let onExit: () -> Void
+    /// Run when the viewer answers YES, with a completion the gate waits on. This is
+    /// where the permission prompts happen: on the answer, in front of the question card
+    /// they just agreed to, and each one accepted or denied BEFORE the restart begins.
+    /// Nil is allowed — a gate with no prompts to raise just moves on.
+    private let onConsent: ((@escaping () -> Void) -> Void)?
+    /// The prompts are up. YES again, Return again and a stray click all do nothing
+    /// while they are: the answer has been given and macOS owns the screen.
+    private var consenting = false
+    private var consented = false
     private var window: IntroWindow?
     private var keyMonitor: Any?
     private var index = 0
     private var dwellToken = 0
 
-    init(onStart: @escaping () -> Void, onExit: @escaping () -> Void) {
+    init(onStart: @escaping () -> Void, onExit: @escaping () -> Void,
+         onConsent: ((@escaping () -> Void) -> Void)? = nil) {
         self.onStart = onStart
         self.onExit = onExit
+        self.onConsent = onConsent
     }
 
     func present() {
         let frame = (NSScreen.main ?? NSScreen.screens[0]).frame
         let win = IntroWindow(contentRect: frame, styleMask: [.borderless],
                               backing: .buffered, defer: false)
-        win.level = .screenSaver
+        win.level = IntroGate.level
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         win.backgroundColor = NSColor(hex: IntroGate.backdrop) ?? .black
         win.hasShadow = false
@@ -545,11 +596,7 @@ final class IntroGateController {
                 self.dismiss(then: self.onExit)
                 return nil
             case 36:                                   // return — the default action
-                if IntroGate.script[self.index].dwell == nil {
-                    self.dismiss(then: self.onStart)
-                } else {
-                    self.advance()
-                }
+                self.proceed()                         // answer the question, or skip on
                 return nil
             case 49:                                   // space — advance the dwell cards only
                 if IntroGate.script[self.index].dwell != nil { self.advance() }
@@ -589,7 +636,7 @@ final class IntroGateController {
 
         let install = {
             let view = makeIntroCardView(card, size: win.frame.size,
-                                         onStart: { [weak self] in self?.dismiss(then: self?.onStart) },
+                                         onStart: { [weak self] in self?.proceed() },
                                          onExit: { [weak self] in self?.dismiss(then: self?.onExit) })
             if fade {
                 view.alphaValue = 0
@@ -636,11 +683,83 @@ final class IntroGateController {
         }
     }
 
-    /// Click / space / timer: step to the next card. Stops at the choice card — that
-    /// one only moves on a deliberate answer.
+    /// Click / space / timer: step to the next card, or start the show if this was the
+    /// last one. A choice card does not advance on its own — it has no dwell and
+    /// ignores space — so it still only moves on a deliberate answer.
     private func advance() {
-        guard index + 1 < IntroGate.script.count else { return }
-        show(cardAt: index + 1)
+        proceed()
+    }
+
+    /// Forward, whatever "forward" is here: the prompts, the next card, or the end of
+    /// the gate.
+    ///
+    /// Every exit goes through this so YES means the same thing wherever the question
+    /// sits in the script. It used to mean "dismiss and start", which was only correct
+    /// while the question happened to be last; with the restart card after it, pressing
+    /// YES has to hand over to the restart and let THAT finish the gate — otherwise the
+    /// track starts under the answer and the restart plays over its own opening bars.
+    ///
+    /// And the permissions go here, on the ANSWER: the viewer says yes, macOS asks its
+    /// questions over the card they just answered, and the machine only starts restarting
+    /// once every one of them has been accepted or denied. Nothing is asked of anyone who
+    /// says no, and nothing is asked while the show is running.
+    private func proceed() {
+        guard !consenting else { return }
+        switch IntroGateController.step(at: index, consented: consented,
+                                        hasConsentHandler: onConsent != nil) {
+        case .consentThenNext:
+            consenting = true
+            consented = true
+            dwellToken &+= 1               // no timer may move the card out from under it
+            // The question is ANSWERED, so it goes: the card fades out and the gate
+            // leaves the screen before macOS is asked anything. The prompts then arrive
+            // on the viewer's own desktop with nothing of the piece in front of them,
+            // which is the only arrangement where it is obvious what is being asked and
+            // by whom. The level drop is the belt to that braces — if the fade is ever
+            // interrupted, the gate still cannot sit above a system alert.
+            window?.level = IntroGate.consentLevel
+            hideForConsent { [weak self] in
+                guard let self else { return }
+                self.onConsent? { [weak self] in
+                    guard let self else { return }
+                    self.consenting = false
+                    self.showAfterConsent()
+                }
+            }
+        case .next:
+            show(cardAt: index + 1)
+        case .finish:
+            dismiss(then: onStart)
+        }
+    }
+
+    /// Take the gate off the screen, keeping the window, and call back when it is gone.
+    /// Not `dismiss` — that one drops the window and ends the gate; this one is a
+    /// curtain, and the restart card comes up behind it.
+    private func hideForConsent(_ done: @escaping () -> Void) {
+        guard let win = window else { done(); return }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.35
+            win.animator().alphaValue = 0
+        }, completionHandler: {
+            win.orderOut(nil)
+            done()
+        })
+    }
+
+    /// The prompts are done: build the next card while the window is still off screen,
+    /// then bring the whole thing back. Built first and shown second — the other way
+    /// round, the restart card is seen being assembled.
+    private func showAfterConsent() {
+        guard let win = window else { return }
+        win.level = IntroGate.level
+        show(cardAt: index + 1, fade: false)
+        win.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.5
+            win.animator().alphaValue = 1
+        }
     }
 
     private func dismiss(then action: (() -> Void)?) {

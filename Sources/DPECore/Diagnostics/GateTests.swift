@@ -5,6 +5,47 @@ import AppKit
 enum GateTests {
     static func run(_ t: TestHarness) {
         t.suite("gate") { t in
+            // THE ORDER OF THE SCRIPT. The question is asked first and the machine
+            // restarts on the answer — consent, then the consequence — and the LAST card
+            // is what finishes the gate, so the track comes up out of the restart rather
+            // than on the click of a button.
+            t.equal(IntroGate.script.first?.style, .macAlert,
+                    "the question is the first thing the viewer sees")
+            t.equal(IntroGate.script.last?.style, .restart,
+                    "…and the restart is the last card, so the track starts out of it")
+            t.expect(IntroGate.script.first?.dwell == nil,
+                     "the question waits for an answer rather than timing out")
+            // The last card carries the gate: with no dwell and no buttons it would sit
+            // there forever and the piece would never start.
+            t.notNil(IntroGate.script.last?.dwell,
+                     "the card that ends the gate advances on its own")
+
+            // WHERE THE PERMISSION PROMPTS GO. On the answer, and nowhere else: the
+            // viewer says yes, macOS asks over the card they just answered, and the
+            // restart does not begin until every prompt has been accepted or denied.
+            // These are the three states of `proceed`, which is the only thing in the
+            // gate that decides what happens next.
+            let last = IntroGate.script.count - 1
+            t.equal(IntroGateController.step(at: 0, consented: false, hasConsentHandler: true),
+                    .consentThenNext, "YES raises the prompts before anything else moves")
+            t.equal(IntroGateController.step(at: 0, consented: true, hasConsentHandler: true),
+                    .next, "…once, not again on the way past")
+            t.equal(IntroGateController.step(at: last, consented: true, hasConsentHandler: true),
+                    .finish, "the last card is what starts the show")
+            // A gate with nothing to ask for must not stall waiting to ask it.
+            t.equal(IntroGateController.step(at: 0, consented: false, hasConsentHandler: false),
+                    .next, "no prompts to raise means straight on")
+
+            // …and it has to be POSSIBLE to answer them. The gate is a takeover at
+            // `.screenSaver`, which is above the level macOS puts its own permission
+            // dialogs at, so while the prompts are up it drops out of the way. A prompt
+            // raised behind an opaque window nobody can move is the same as no prompt:
+            // the viewer watches the question card sit there and nothing happens.
+            t.expect(IntroGate.consentLevel.rawValue < IntroGate.level.rawValue,
+                     "the gate drops below its own level while the prompts are up")
+            t.expect(IntroGate.consentLevel.rawValue <= NSWindow.Level.normal.rawValue,
+                     "…to at or below a normal window, which system alerts sit above")
+
             let alert = IntroGate.script.first { $0.style == .macAlert }
             t.notNil(alert, "the gate has a macOS-chrome alert card")
             guard let alert else { return }

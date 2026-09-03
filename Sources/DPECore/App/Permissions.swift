@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import CoreLocation
 import CoreServices
 
 /// Every permission prompt the loaded show will need, raised BEFORE the music starts.
@@ -75,6 +76,42 @@ enum Permissions {
         return plan
     }
 
+    /// How long the gate will hold for the location prompt specifically. Long enough to
+    /// read it and press a button, short enough that an ignored prompt costs a pause and
+    /// not a performance.
+    static let locationGrace: Double = 12
+
+    /// What macOS currently thinks about one of these, WITHOUT asking it. Every call
+    /// here is a status read: none of them can raise a window, so `--check-permissions`
+    /// is safe to run in front of an audience five minutes before a show.
+    ///
+    /// The folder and automation entries have no non-prompting status API — asking IS
+    /// the check — so they are reported as unknown rather than tested.
+    static func status(of request: Request) -> String {
+        switch request {
+        case .camera:
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .notDetermined: return "not determined — WILL show a window"
+            case .authorized:    return "already granted — no window"
+            case .denied:        return "already denied — no window (System Settings ▸ Privacy)"
+            case .restricted:    return "restricted — no window"
+            @unknown default:    return "unknown"
+            }
+        case .location:
+            switch CLLocationManager().authorizationStatus {
+            case .notDetermined: return "not determined — WILL show a window"
+            case .authorizedAlways, .authorized: return "already granted — no window"
+            case .denied:        return "already denied — no window (System Settings ▸ Privacy)"
+            case .restricted:    return "restricted — no window"
+            @unknown default:    return "unknown"
+            }
+        case .folder(let root):
+            return "asked by reading ~/\(root.lastPathComponent) — a window only the first time"
+        case .finderAutomation:
+            return "asked by talking to Finder — a window only the first time"
+        }
+    }
+
     static func preflight(for events: [ResolvedEvent], done: @escaping () -> Void) {
         let requests = plan(for: events)
         NSLog("[DPE] preflight: \(requests.count) prompt(s) — "
@@ -96,16 +133,31 @@ enum Permissions {
 
         case .location:
             return { next in
-                // Asked for, but NOT waited on. This is the one prompt that can sit
-                // unanswered — `warm` gives it 45 seconds — and while it does, the show
-                // has not started and nothing on screen says why. Hitting "yes" and
-                // getting silence is the worst thing the gate can do.
+                // Waited on like the others, but on a LEASH. Every prompt is meant to be
+                // accepted or denied before the machine starts restarting, and location
+                // is a prompt like any other — but it is also the one that can sit
+                // unanswered (`warm` gives it 45 seconds), and a gate that waits that
+                // long is a gate that has failed in front of an audience. So: whichever
+                // comes first, the answer or `locationGrace`, and then on.
                 //
-                // Nothing needs a fix for a long time: the probe is ~60 s in and says
-                // `<no fix>` without one, and the map is ~103 s in and falls back to Los
-                // Angeles. A fix that arrives during the first minute is used by both.
-                LocationStore.shared.warm { NSLog("[DPE] preflight: location settled") }
-                next()
+                // Nothing needs a fix immediately even if it is still hanging: the probe
+                // is ~60 s in and prints `<no fix>` without one, and the map is ~103 s in
+                // and falls back to Los Angeles. A fix that arrives during the first
+                // minute is used by both.
+                var moved = false
+                let once = {
+                    guard !moved else { return }
+                    moved = true
+                    next()
+                }
+                LocationStore.shared.warm {
+                    NSLog("[DPE] preflight: location settled")
+                    DispatchQueue.main.async(execute: once)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + locationGrace) {
+                    if !moved { NSLog("[DPE] preflight: location still unanswered — going on") }
+                    once()
+                }
             }
 
         case .folder(let root):

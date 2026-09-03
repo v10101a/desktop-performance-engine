@@ -48,6 +48,29 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // What will macOS actually ASK, and what has it already decided? A permission
+        // that was answered on some earlier run is remembered forever and the request
+        // returns silently — which looks exactly like a gate that forgot to ask. This
+        // prints the plan and the current status of each entry, prompts nothing, and
+        // quits; `tccutil reset All com.computerart.giveit2me` is how to get the asking
+        // back.
+        if CommandLine.arguments.contains("--check-permissions") {
+            if let url = AppDelegate.bundledTimelineURL(),
+               let tl = try? TimelineLoader.load(from: url) {
+                let plan = Permissions.plan(for: tl.events)
+                NSLog("[DPE] permissions: the show plans %d prompt(s)", plan.count)
+                for request in plan {
+                    NSLog("[DPE] permissions: %@ — %@", request.description, Permissions.status(of: request))
+                }
+                NSLog("[DPE] permissions: \"not determined\" is the only state that shows a window;")
+                NSLog("[DPE] permissions: anything else was answered on an earlier run and is remembered.")
+            } else {
+                NSLog("[DPE] permissions: no timeline to plan from")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            return
+        }
+
         // Is this copy self-contained? Loads the bundled show, resolves the backing
         // track, reports what it found and quits — no windows, nothing touched. Run it
         // from a copy of the .app somewhere else to prove the bundle travels.
@@ -333,19 +356,29 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             // space bar) could start the show under the gate.
             engine.disarm()
             gate = IntroGateController(
+                // The restart card has finished: arm and go. Nothing is asked of the
+                // viewer here — every prompt was dealt with on the answer, below.
                 onStart: { [weak self] in
                     guard let self else { return }
-                    // Every prompt the show will need, answered before the first beat.
-                    NSLog("[DPE] gate: yes — running preflight")
-                    Permissions.preflight(for: self.engine.events) { [weak self] in
-                        guard let self else { return }
-                        NSLog("[DPE] gate: preflight done — arming and starting")
-                        self.engine.arm()
-                        self.controller?.startShow()
-                        NSLog("[DPE] gate: startShow returned, isPlaying=\(self.engine.isPlaying)")
-                    }
+                    NSLog("[DPE] gate: restart done — arming and starting")
+                    self.engine.arm()
+                    self.controller?.startShow()
+                    NSLog("[DPE] gate: startShow returned, isPlaying=\(self.engine.isPlaying)")
                 },
-                onExit: { NSApp.terminate(nil) })
+                onExit: { NSApp.terminate(nil) },
+                // YES: every prompt the show will need, raised now, over the question
+                // they just answered. The gate holds here — the machine does not start
+                // restarting until each one has been accepted or denied — so the prompts
+                // are never competing with the restart animation, and never with the
+                // track.
+                onConsent: { [weak self] done in
+                    guard let self else { done(); return }
+                    NSLog("[DPE] gate: yes — running preflight")
+                    Permissions.preflight(for: self.engine.events) {
+                        NSLog("[DPE] gate: preflight done — starting the restart")
+                        done()
+                    }
+                })
             gate?.present()
         }
 

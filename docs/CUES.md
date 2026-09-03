@@ -62,7 +62,9 @@ and the kicks stop for 53–55; bar 56 is the pickup back in.
 
 | # | phrase | fires on | what happens | how |
 |---|---|---|---|---|
-| 1 | INTRO A + 0.0 | f 11 · beat 0 | The intro sequence **as it is** — the stalled restart card, the face, the photosensitivity alert, DO YOU WANT THE MALWARE?. Every permission the show needs is raised here. Every other app is hidden so the desktop is in view, and it is already DJ blue. | `IntroGate` (untouched) + `hideOtherApps` + `deskWallpaper` solid `#020AF5` |
+| 1 | INTRO A + 0.0 | f 11 · beat 0 | The intro sequence **as it is** — the stalled restart card, the face, the photosensitivity alert, DO YOU WANT THE MALWARE?. Every permission the show needs is raised here. Every other app is hidden so the desktop is in view, and it is already DJ blue. | The intro sequence, **reordered 2026-09-02**: the photosensitivity warning and **DO YOU WANT THE MALWARE?** come FIRST, and the machine "restarts" on the answer — consent, then the consequence. The restart card is now the last thing before the music: it stalls at 60%, the ground cuts to DJ blue, the logo becomes the face (which blinks), and **the track starts out of it**. Every permission the show needs is raised **on the answer**, before the restart: YES, the
+question card leaves the screen, then the prompts on the bare desktop, each accepted or
+denied, and only then the restart card. Every other app is hidden so the desktop is in view, and it is already blue.
 | 2 | INTRO A + 2.0 | f 123 · beat 8 | At bar 3 the blue desktop goes and the viewer's **own** wallpaper is back. | the Act-1 `deskWallpaper` expires; `WallpaperController` restores the snapshot |
 | 3 | INTRO A + 2.2 | f 151 · beat 10 | A centred **Terminal window types itself out**, one line a beat with a block cursor — the same surface and cadence as the credits on the end card. It says what the show is about to do to the machine, and ends on `⌃⌥⌘Esc` and `$ ./giveit2me --play`. 12 lines, the last landing f 320 — two and a half bars of air before cue 4 takes it. | `typeText` · `chrome: terminal` |
 | 4 | INTRO B + 0.0 | f 460 · beat 32 | The welcome window closes; the **system probe** opens in real macOS chrome, titled `./scan_identity`, and starts typing. | The welcome window closes; the **system probe** opens in real macOS chrome, titled `./scan_identity`, and starts typing. Its session is **half what it was** (2026-09-02): it used to type all the way to cue 6, three bars from the drop, and the report has said what it has to say — the machine knows who you are — long before that. It closes at f 623 and cue 5 takes the rest of INTRO B. | `closeWindow` + `systemProbe` |
@@ -120,10 +122,11 @@ hard swaps. Both are covered by a short `screenFlash` so the change reads as int
 rather than as a dropped frame.
 
 **Cue 1 is the gate, and the gate is not on the timeline.** The intro sequence runs
-*before* the transport starts — it is what arms it — so its ~300 frames are the gate's
-own pace, set by how fast the viewer reads and answers, not a slot on the clock. Frame 0
-is the moment they press **YES. INFECT ME.**, and the only cue-1 event on the timeline is
-the desktop going blue. If the intent was for the intro to play *over* the first three
+*before* the transport starts — it is what arms it — so its frames are the gate's own
+pace, set by how fast the viewer reads and answers, not a slot on the clock. **YES.
+INFECT ME.** no longer starts the clock: it starts the *restart card*, and frame 0 is the
+moment that card finishes, about seven seconds later, on the blue screen with the face.
+The only cue-1 event on the timeline is the desktop going blue. If the intent was for the intro to play *over* the first three
 hundred frames of music instead, that is a different build and the gate would have to
 move onto the timeline.
 
