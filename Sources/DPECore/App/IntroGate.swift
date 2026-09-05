@@ -47,17 +47,22 @@ enum IntroGate {
     /// rather than on the click of a button.
     static let script: [IntroCard] = [
         // The warning and the question, together, in real macOS chrome, before anything
-        // else happens. The photosensitivity notice is the part that actually matters
-        // here; it is not a joke, and it stays in front of the viewer until they answer.
+        // else happens. It reads as the consent sheet the piece is a parody of — and the
+        // list is literal: every permission named is something the show actually does.
+        // The photosensitivity notice is the part that matters most; it is not a joke,
+        // and it stays in front of the viewer until they answer.
         IntroCard(
             kicker: "malware",
-            title: "DO YOU WANT THE MALWARE?",
+            title: "PERMISSION IS REQUESTED",
             body: """
-                  This presentation contains strobing light, rapid flashing and sudden \
-                  full-screen color for approximately three minutes.
+                  This presentation may parse your information, fingerprint this device, \
+                  access your camera, access your location, retrieve memories of the past, \
+                  ask you questions, and await further instructions.
 
-                  Federal law provides mild civil and criminal penalties for the \
-                  unauthorized reproduction, distribution or exhibition of this software.
+                  By proceeding you accept these terms.
+
+                  ⚠ WARNING: This presentation contains strobing light, rapid flashing, \
+                  and sudden full-screen color for approximately three minutes.
                   """,
             accent: "#0078D7",
             dwell: nil,
@@ -75,6 +80,12 @@ enum IntroGate {
             dwell: 7.0,
             style: .restart)
     ]
+
+    /// The two answers. One definition: the alert card, the VHS card, the full-screen
+    /// card and `pressYesForTesting` all name the same strings, and a rewrite that
+    /// reached only three of them would leave a button wired to nothing.
+    static let yesTitle = "GIVE IT 2 ME"
+    static let noTitle = "DENY"
 
     /// The signature blue: rgb(2, 10, 245). The desktop wallpaper and the restart card
     /// both take it, so the ground under the whole piece is one colour. It matches
@@ -108,8 +119,11 @@ enum IntroGate {
     /// On-screen size of a `.popup` card's window.
     static let popupSize = NSSize(width: 620, height: 300)
     /// On-screen size of the `.macAlert` card's window. Taller than a stock alert
-    /// because the warning body is four lines of real text, not a one-liner.
-    static let alertSize = NSSize(width: 620, height: 250)
+    /// because the body is three paragraphs of real text — the permissions, the
+    /// acceptance, and the photosensitivity warning — not a one-liner. Measured off the
+    /// rendered card (`--snapshot-gate`): shorter than it was, because the copy wraps to
+    /// five lines where the legalese it replaced wrapped to four with more air.
+    static let alertSize = NSSize(width: 620, height: 240)
 }
 
 
@@ -128,9 +142,9 @@ final class VHSWarningView: NSView {
         // The choice card carries the two answers inside the blue panel; the dwell
         // cards carry nothing at all (they advance on their own).
         guard card.dwell == nil else { return }
-        let yes = GateButton(title: "YES. INFECT ME.", fill: .white,
+        let yes = GateButton(title: IntroGate.yesTitle, fill: .white,
                              textColor: Self.field, size: 15, handler: { onStart?() })
-        let no = GateButton(title: "no thank you", fill: nil,
+        let no = GateButton(title: IntroGate.noTitle, fill: nil,
                             textColor: NSColor(white: 1, alpha: 0.8), size: 13,
                             handler: { onExit?() })
         buttons = [yes, no]
@@ -486,10 +500,10 @@ func makeIntroCardView(_ card: IntroCard, size: NSSize,
 
     if card.dwell == nil {
         let row = NSView(frame: NSRect(x: 0, y: 0, width: colW, height: 46))
-        let yes = GateButton(title: "YES. INFECT ME.", fill: accent, textColor: .white, size: 15,
+        let yes = GateButton(title: IntroGate.yesTitle, fill: accent, textColor: .white, size: 15,
                              handler: { onStart?() })
         yes.frame = NSRect(x: 0, y: 0, width: 260, height: 46)
-        let no = GateButton(title: "no thank you", fill: nil,
+        let no = GateButton(title: IntroGate.noTitle, fill: nil,
                             textColor: NSColor(white: 0.65, alpha: 1), size: 13,
                             handler: { onExit?() })
         no.frame = NSRect(x: 280, y: 0, width: 180, height: 46)
@@ -789,8 +803,8 @@ final class GateAlertView: NSView {
 
     init(_ card: IntroCard, size: NSSize, onStart: (() -> Void)?, onExit: (() -> Void)?) {
         super.init(frame: NSRect(origin: .zero, size: size))
-        let yes = "YES. INFECT ME."
-        let no = "no thank you"
+        let yes = IntroGate.yesTitle
+        let no = IntroGate.noTitle
         let content = makeDialogContentView(title: card.title, message: card.body,
                                             buttons: [no, yes], icon: .caution, size: size)
         content.frame = bounds
@@ -818,7 +832,7 @@ final class GateAlertView: NSView {
     /// no use when the thing being checked is what the gate's answer sets in motion.
     func pressYesForTesting() {
         (subviews.first?.subviews.compactMap { $0 as? NSButton }
-            .first { $0.title == "YES. INFECT ME." }?.target as? GateButtonAction)?.fire()
+            .first { $0.title == IntroGate.yesTitle }?.target as? GateButtonAction)?.fire()
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }

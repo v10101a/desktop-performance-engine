@@ -87,6 +87,14 @@ if [ -d assets/shaders ]; then
   cp -R assets/shaders "$APP/Contents/Resources/assets/"
 fi
 
+# Clips the timeline segments (cue 21's segSwarm). By the path the timeline names them
+# with, so `resolveResourcePath` finds them in a bundle that has left the repo behind.
+for clip in assets/*.mov assets/*.mp4; do
+  [ -e "$clip" ] || continue
+  mkdir -p "$APP/Contents/Resources/assets"
+  cp "$clip" "$APP/Contents/Resources/assets/"
+done
+
 # The lyric face (EffectWindow's LyricFont registers it from this path at run time).
 if [ -d assets/fonts/hack ]; then
   mkdir -p "$APP/Contents/Resources/assets/fonts"
@@ -138,19 +146,19 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>NSHighResolutionCapable</key> <true/>
     <key>LSUIElement</key>             <false/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Desktop Performance Engine rearranges your desktop icons during a performance and restores them when it finishes.</string>
+    <string></string>
     <key>NSDesktopFolderUsageDescription</key>
-    <string>The photo wall reads image files from your Desktop to show them during a performance. Nothing is copied, moved or modified.</string>
+    <string></string>
     <key>NSDocumentsFolderUsageDescription</key>
-    <string>The photo wall reads image files from your Documents folder to show them during a performance. Nothing is copied, moved or modified.</string>
+    <string></string>
     <key>NSDownloadsFolderUsageDescription</key>
-    <string>The photo wall reads image files from your Downloads folder to show them during a performance. Nothing is copied, moved or modified.</string>
+    <string></string>
     <key>NSCameraUsageDescription</key>
-    <string>The photo booth shows your camera during a performance and takes one photo for the end card. It is kept in memory only and discarded when the show ends.</string>
+    <string></string>
     <key>NSLocationUsageDescription</key>
-    <string>The system probe and the map show where this machine is. Nothing leaves this computer.</string>
+    <string></string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>The system probe and the map show where this machine is. Nothing leaves this computer.</string>
+    <string></string>
 </dict>
 </plist>
 PLIST

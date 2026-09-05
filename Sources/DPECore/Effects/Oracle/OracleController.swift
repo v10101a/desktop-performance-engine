@@ -31,10 +31,18 @@ final class OracleController {
     private var askedCount = 0
     var bpm: Double = 120
 
+    /// The torus only speaks in absolutes — and half of them are a "yes" with a catch.
+    /// Rewriting this list is the whole of rewriting what the torus says; the answer
+    /// card sizes itself to whatever is in it (see `makeAnswerView`).
     static let defaultAnswers = [
-        "yes", "no", "maybe", "don't count on it", "ask again later",
-        "it is certain", "very doubtful", "so give it to me", "i can't get enough",
-        "outlook not so good", "without a doubt", "reply hazy, try again"
+        "NO",
+        "YES",
+        "MAYBE",
+        "YES FOR NOW",
+        "YES, BUT NOT LIKE YOU THINK",
+        "YOU MUST ASK THE VERSION OF YOU FROM YESTERDAY",
+        "NO, THOUGH IT WILL FEEL LIKE YES",
+        "NO, AND YOU WILL KNOW WHY"
     ]
 
     /// The answer for a question. Deterministic — FNV-1a over the lowercased text — so
@@ -171,15 +179,32 @@ final class OracleController {
         return (root, field)
     }
 
+    /// The answer's face: display size, SHRUNK TO FIT rather than clipped. The answers
+    /// are copy and meant to be rewritten — the long ones ("YOU MUST ASK THE VERSION OF
+    /// YOU FROM YESTERDAY") run to three lines, at which point the last of them falls
+    /// out of the card and the torus appears to trail off mid-sentence.
+    static func answerFont(for answer: String, in box: NSSize) -> NSFont {
+        var pt: CGFloat = 30
+        func font(_ pt: CGFloat) -> NSFont { .systemFont(ofSize: pt, weight: .heavy) }
+        while pt > 13, answer.boundingRect(
+                with: NSSize(width: box.width, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin],
+                attributes: [.font: font(pt)]).height > box.height {
+            pt -= 1
+        }
+        return font(pt)
+    }
+
     /// The answer card: the question quoted in the title, the answer big and pink.
     static func makeAnswerView(size: NSSize, question: String, answer: String, icon: DialogIcon) -> NSView {
         let title = question.isEmpty ? "you didn't ask. the torus says:" : "“\(question)” — the torus says:"
         let root = makeDialogContentView(title: title, message: "", buttons: ["ok"], icon: icon, size: size)
         let x = textX(for: size, icon: icon)
         let big = NSTextField(wrappingLabelWithString: answer)
-        big.font = .systemFont(ofSize: 30, weight: .heavy)
         big.textColor = NSColor(hex: "#FF2D95") ?? .systemPink
-        big.frame = NSRect(x: x, y: 50, width: size.width - x - 20, height: size.height - 100)
+        let box = NSRect(x: x, y: 50, width: size.width - x - 20, height: size.height - 100)
+        big.font = answerFont(for: answer, in: box.size)
+        big.frame = box
         root.addSubview(big)
         return root
     }

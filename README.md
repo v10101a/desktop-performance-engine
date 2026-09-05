@@ -12,8 +12,10 @@ quit or via a global **panic hotkey (⌃⌥⌘Esc)**. Your files are never touch
 One event is an exception worth stating plainly: `fileSwarm` draws patterns out of real
 file icons, so it *creates and deletes its own* throwaway files in `~/Desktop` — marked
 with an extended attribute, swept on stop/panic/quit, and never touching anything it
-didn't make. It is gated behind `meta.allowDesktopFiles` and off by default, as is the
-`deskWallpaper` swap behind `meta.allowWallpaper`.
+didn't make. It is gated behind `meta.allowDesktopFiles` and off by default, as is any
+event that changes the machine's real desktop picture, behind `meta.allowWallpaper`.
+The show itself needs neither: it paints the desktop on a **window pinned under the
+desktop icons**, which looks the same and cannot outlive the process.
 
 ## Build & run
 
@@ -111,6 +113,13 @@ Test a build the way a recipient gets it, by faking the quarantine flag:
 xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/GiveIt2Me_DJ_Dave_malware.zip
 ```
 
+**The prompts carry no explanation** (2026-09-03). The usage strings in both `Info.plist`
+files — the embedded one `swift run` uses and the one `bundle.sh` writes — are present but
+empty, so each alert shows the app's name, the two buttons, and nothing else. The keys
+themselves must stay: macOS faults an app that touches a protected resource with a *missing*
+key, where an empty one is merely silent. If a future macOS ever refuses an empty string,
+a single space is the fallback.
+
 The piece asks for **Camera** (the photo booth) and **Location Services** (the probe and
 the map) — both **on the answer to the question, before the machine restarts**: the
 viewer presses YES, macOS asks over the card they just answered, and the restart does not
@@ -164,12 +173,12 @@ names real people.
 
 ### Act 0 — the intro gate
 
-Launching the app opens on **the question**: the photosensitivity warning and DO YOU WANT
-THE MALWARE? in real macOS chrome, with nothing else on screen and no timeout. Consent
-comes before anything happens, not after the takeover has already been shown (reordered
-2026-09-02).
+Launching the app opens on **the question**: PERMISSION IS REQUESTED — what the piece is
+about to do to the machine, the acceptance, and the photosensitivity warning — in real
+macOS chrome, with nothing else on screen and no timeout. Consent comes before anything
+happens, not after the takeover has already been shown (reordered 2026-09-02).
 
-**YES. INFECT ME.** and the question **goes**: the card fades out and the gate leaves the
+**GIVE IT 2 ME** and the question **goes**: the card fades out and the gate leaves the
 screen entirely, and only then are the permission prompts raised
 (`Permissions.preflight`). They arrive on the viewer's own desktop with nothing of the
 piece in front of them — the only arrangement where it is obvious what is being asked and
@@ -219,10 +228,13 @@ representation — `GateTests` pins that the asset file is untouched.
 
 Then a **plain macOS alert** on the desktop, built from `makeDialogContentView` — the
 same builder the show's forty-one fake dialogs use, so the first window the viewer sees
-is indistinguishable from the ones that follow. It carries the photosensitivity warning
-and the parody legalese, and asks **DO YOU WANT THE MALWARE?** with two answers:
-**YES. INFECT ME.** or **no thank you** (which quits). Either button plays
-`assets/bubble_sound.wav` before it acts.
+is indistinguishable from the ones that follow. It is headed **PERMISSION IS REQUESTED** and lists what the
+presentation may do — parse your information, fingerprint this device, take the camera,
+take the location, retrieve memories of the past, ask you questions, await further
+instructions — every item of which the show actually does; then the acceptance, then the
+photosensitivity warning. Two answers: **GIVE IT 2 ME** or **DENY** (which quits). Either
+button plays `assets/bubble_sound.wav` before it acts. The two titles are
+`IntroGate.yesTitle` / `noTitle`, named once and used by every card.
 
 The photosensitivity notice is the part that actually matters: it is not a joke, and it
 stays in front of the viewer until they answer.
@@ -497,6 +509,127 @@ make a corner hit behave. It runs on its own 60 Hz timer rather than the pump, l
 other live view here — the pump is coalesced and carrying the whole show, and physics that
 inherits its hitches reads as a ball that sticks.
 
+### `segcam` content
+
+Real-time segmentation in a window: the picture, with every segment it finds stroked as a
+box and labelled with its id. The engine is **imported from `~/segcam`** — a standalone
+app of the artist's — and lives in `Sources/DPECore/Effects/SegCam/`.
+
+```jsonc
+{ "kind": "segcam", "mode": "motion", "intensity": 0.7,
+  "chrome": "mixed", "title": "segcam" }                       // the camera
+
+{ "kind": "segcam", "mode": "face", "path": "assets/clip.mov",
+  "chrome": "mixed", "title": "segcam" }                       // a video file, looping
+```
+
+| `mode` | what it segments |
+|---|---|
+| `face` (default) | eye and mouth boxes from Vision's face landmarks — `eye.L#412`, `eye.R#412`, `mouth#412` are one face at one instant |
+| `threshold` | connected regions brighter than a level; `intensity` is the level, `invert` takes the dark ones instead |
+| `motion` | connected regions that changed against an adapting background; `intensity` is sensitivity |
+
+`path` absent means the **camera**; `path` present means that **video file**, looping.
+Those are the only two sources, which is the point of the import: upstream, segcam can
+also read a **Syphon** feed, and that means a framework borrowed out of TouchDesigner or
+OBS at build time — a dependency on somebody else's app being installed. It is not here.
+
+`mirror` flips the picture and the boxes together, defaulting to on for the camera (a
+camera is a mirror) and off for a clip. `labels` draws the ids, `fg` recolours the boxes
+from segcam's green, and `hz` is the pull rate for a file (default 30).
+
+**Nothing in it can be operated.** segcam has a HUD, a sensitivity slider, keys for
+switching segmenter and display, and device cycling; none of that came across. A cue says
+what it wants when the window opens and the window does that until it closes — the same
+rule every other live surface here follows.
+
+**What was imported, and what was left.** The engine came over whole and unchanged
+(`SegmentEngine`, the three segmenters, `ConnectedComponents`, `Frame`, `Segment`), each
+file carrying a header that says where it came from: fixes belong upstream first, and if
+the two copies drift the one in `~/segcam` is the original. Left behind: the Syphon
+source and its bridging header, the HUD and slider, the keyboard handling, the device
+cycling, the desktop swarm (segcam's second display, where every segment gets its own
+real window — that one is a window-spawning act rather than a content kind, and it is not
+ported), and the app scaffolding.
+
+What is new here is `SegCamSource.swift` — the camera trimmed of its UI affordances, plus
+a looping video-file source that did not exist upstream — and `SegCamView.swift`, which is
+segcam's overlay drawing with the HUD taken out.
+
+One thing worth knowing if you touch the view: it is **drawn, not layered**. The obvious
+build is a `CALayer` with the frame as its `contents`, but the view is flipped (`NormRect`
+is top-left origin and the imported `FrameMap.fit` is written against that), and a flipped
+view's backing layer flips its sublayers' geometry with it — which turns the picture
+upside down and puts the boxes somewhere else again. One `draw(_:)` doing both keeps them
+in the same coordinate system by construction.
+
+```bash
+swift run GiveIt2Me_DJ_Dave_malware --test-segcam                    # the camera
+swift run GiveIt2Me_DJ_Dave_malware --test-segcam="assets/clip.mov"  # a file
+DPE_SEGCAM_MODE=motion DPE_SEGCAM_PNG=out.png swift run … --test-segcam
+```
+
+reports whether frames arrived **and** how many segments were found — a black window and
+a window full of picture with no boxes on it are different failures, and one number
+cannot tell them apart.
+
+### `segSwarm`
+
+The imported segmenter with the **desktop** as its canvas rather than a window: no
+picture at all, and every segment it finds becomes its own titled window holding the
+piece of frame it was cut from, pinned where it was found. This is segcam's second
+display, and cue 21 is it.
+
+```jsonc
+{ "beat": 237, "type": "segSwarm", "params": {
+    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
+    "intensity": 0.62, "maxWindows": 60, "mirror": false } }
+```
+
+**`window` is a third source, and it did not exist upstream.** Point it at the id of a
+window the show already has open and *that* is what gets segmented — cue 14 runs the map
+through it, so every part of the orbiting picture that moves is cut out and pinned to the
+desktop as its own window. The act is processed rather than accompanied.
+
+It needs **no Screen Recording**: it never captures the screen, it asks one view we own to
+draw itself into a bitmap, which is an in-process drawing call. That MapKit would even
+answer such a call was measured before the source was written — a live `MKMapView` came
+back with 15996 of 16000 sampled pixels lit — because a view that composites on the GPU
+can perfectly well return an empty bitmap. `windowHz` (default 15) paces it: view drawing
+has to happen on the main thread, so it is deliberately not 30, and the capture is scaled
+down on the way in.
+
+Same three segmenters as the `segcam` content kind, and `path` absent with no `window`
+means the camera — but `mode` defaults to **motion** here rather than `face`: a window
+shows you a face being found, and a screen filling up wants something that finds a lot.
+`border` takes a hex or `"none"` — segcam rings each panel green to mark it as a
+detection, which reads as a debug overlay when the panels are meant to be the furniture;
+both cues turn it off. `level` takes `openWindow`'s vocabulary, and `"below"` is how cue
+21 gets the torus, the video window, the fireworks and the mandala to play on top of the
+pile instead of being buried by it. `maxWindows` is how deep the pile goes before the
+oldest panel is recycled; panels are
+re-dressed rather than closed and rebuilt, because at thirty frames a second of new
+instances, churning real windows costs far more than changing what one shows.
+
+**Nothing is tracked between frames**, which is the whole effect: a thing that simply
+keeps moving mints a new instance — and a new window — every frame, so the screen fills
+with everything the clip has done rather than showing where things are now.
+
+The panels sit above everything (one level below the shielding window), so this act owns
+the screen while it runs. It ends on `closeWindow` with the same `id`, and `closeAll`
+sweeps every panel — `TimelineTests` fails a `segSwarm` the timeline never closes, and
+`SegCamTests` pins that the controller leaves nothing behind.
+
+```bash
+swift run GiveIt2Me_DJ_Dave_malware --test-segswarm            # a clip filling the desktop
+swift run GiveIt2Me_DJ_Dave_malware --test-segswarm="assets/other.mov"
+swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # cue 14's arrangement, whole
+```
+
+puts it up for six seconds against the show's own clip and reports the count as it fills
+— 54 windows at two seconds, the 60 cap by five, zero after it clears. There is no way to
+check this one that does not look like the act.
+
 ### `particles` content
 
 Three more ways to throw the desktop around, beside `fileworks`' fireworks. One view, two
@@ -719,6 +852,27 @@ directory is `/`: the window keeps the `#111116` ground it is given and comes up
 black frame. That is what the eight faces round the torus were doing, and `RendererTests`
 now loads one with the working directory set to `/` to keep it fixed.
 
+**Terminals can be recoloured per window.** `hex` is the ground and `fg` the type, on
+both `typeText` (with `chrome: "terminal"`) and `systemProbe` — the same two fields the
+`text` and `lyric` kinds use. Absent, both print the way Terminal ships: black on white.
+The intro's welcome card and the five probe windows take the show's blue with white type;
+the eruption's `haunt.sh` terminals are left alone, which is the point of doing it per
+window rather than by changing `TerminalStyle`.
+
+For the probe the colours go through `Phosphor.use`, which also **re-derives the accents**
+— ANSI's dark blue section headers and dark red alerts are close to invisible on a
+saturated blue ground, so on a themed surface they become light tints that keep their
+meaning. That palette is a set of statics, so every probe window in a show shares one
+look; cue 4 puts five on screen at once and they are one machine talking. `closeAll`
+puts it back to Terminal Basic so a colour a show set cannot leak into the still renderer
+or the next run.
+
+**`systemProbe` is one report per `id`.** It used to be one report full stop — opening a
+second window tore the first one down — which is why cue 4 could not be split until now.
+A window opened with `focus` reads out only the sections named (`identity`, `machine`,
+`network`, `geolocation`, `contacts`), so five windows running five focused scans is the
+same probe five times over rather than five different things.
+
 ### `fileworks` content
 
 Fireworks made of the desktop. Shells rise from the bottom, hang, and burst radially, and
@@ -900,8 +1054,9 @@ in the torus clock. `text` kind also takes `hex`/`fg`/`fontSize` now, but at a f
 ```jsonc
 { "kind": "lyric", "text": "so give it to me", "hex": "#0078D7", "fg": "#F2F4FE", "chrome": "none" }
 ```
-Gated off by default: `wallpaper`, `deskWallpaper` (`meta.allowWallpaper`), `fileSwarm`
-(`meta.allowDesktopFiles`).
+Gated off by default: `wallpaper`, `deskWallpaper` with `surface: "wallpaper"`
+(`meta.allowWallpaper`), `fileSwarm` (`meta.allowDesktopFiles`). `deskWallpaper` on its
+default surface needs no gate — it draws on a window, not on your Mac.
 
 
 The bundled default demo (`Resources/timeline.json`) is **the show**
@@ -923,8 +1078,8 @@ seconds, for reading.
 | 0:30 | **THE TRAVELLER** | one window runs up and down the screen dragging a **delay line** of 20 identical copies, each 1% of the screen further left and one frame further behind — link *k* is where the leader was *k* frames ago, so the tail is most of a leg behind the head and the chain snakes. The assembly straddles the screen's centre, and it keeps travelling for the whole 13.7 s it is up |
 | 0:30 | **THE SPIRAL** | the lyric, card by card, ALL CAPS in Hack Bold, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
 | 0:38 | **THE FIREWORKS** | the desktop goes up in the air: a transparent full-screen overlay of shells rising and bursting, every spark a **macOS file icon with a filename** — `Resume FINAL v3.pdf`, `do not delete`, `passwords.txt`. The lyric spiral keeps going underneath; it closes with the spiral when the words take the desktop |
-| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the wallpaper is swapped for a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each swap issued ~300 ms early so it is seen on the word). macOS sustains about three swaps a second (see `deskWallpaper` — a hard ceiling, not a tuning knob), so a word it cannot fit is skipped, not queued. Nothing else competes with the desktop — everything else has closed |
-| 1:00 | **THE TORUS** | the glass torus, and a window typing out *"Greetings, I am the magic torus… ask me anything"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself. The two flank the torus rather than sitting on it |
+| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the desktop is replaced by a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each change issued ~300 ms early so it is seen on the word). It runs on the desktop layer, so every word lands. Nothing else competes with the desktop — everything else has closed |
+| 1:00 | **THE TORUS** | the glass torus, and a window typing out *"I am the Magic Torus! I am shaped like a question that answers itself… Ask me one (1) question. Make it yes or no"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself, in absolutes (*YES, BUT NOT LIKE YOU THINK*; *NO, THOUGH IT WILL FEEL LIKE YES*). The two flank the torus rather than sitting on it |
 | 1:15 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
 | 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle. Five of the flat cards come up broken: three **torn** — the piece's own images through the desktop's glitch pass — and two **Wolfram elementary automata** actually running, black on white, scrolling a generation at a time. The fill decays as it thickens |
 | 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived — the last few still leaving as the raymarcher opens |
@@ -1452,13 +1607,14 @@ show. It is **the one window in the piece allowed to take the keyboard** (a text
 needs it); it is a non-activating panel, so typing into it never brings the app forward,
 and it hands key status back the moment it has answered. The same question always gets
 the same answer (a hash of the text picks from `answers`), so it feels like the torus
-knows.
+knows. The answer is set at display size and **shrunk to fit** the card, so a long one
+(*YOU MUST ASK THE VERSION OF YOU FROM YESTERDAY*) does not run off the bottom of it.
 
 ```jsonc
 { "beat": 248, "type": "oracle", "params": { "id": "oracle", "frame": [1000, 350, 460, 186],
     "title": "hey, i'm the magic torus", "body": "ask me a question",
     "placeholder": "will you give it 2 me?", "answerBeats": 10,
-    "answers": ["yes", "no", "maybe", "don't count on it"] } }
+    "answers": ["YES", "NO", "MAYBE", "NO, AND YOU WILL KNOW WHY"] } }
 ```
 
 ### `photoBooth`
@@ -1488,7 +1644,8 @@ The end card, laid out as one collage centred on the screen: on the left the boo
 photo in a white frame — pinned on at a tilt (`photoTilt` degrees, default −4, positive
 anticlockwise), lapping over the credits' edge — with a flattering filter (`filter`:
 `instant` default, `chrome`, `fade`, `none`), `caption` under it in Apple Garamond
-(default *I survived DJ_Dave GiveIt2Me*; Hoefler Text where Garamond isn't installed),
+(default *I SURVIVED THE GIVE IT 2 ME MALWARE EXPERIENCE!*; Hoefler Text where Garamond
+isn't installed, and shrunk to fit the card on one line rather than truncated),
 and a **save photo** button under that unless `allowSave` is false; beside it the
 credits, in a terminal titled `title` (default `credits`) sized to its copy, **typing
 `lines` out**; and tucked under the credits, flush right, the machine's vitals in the
@@ -1497,9 +1654,13 @@ probe's terminal (`showInfo`).
 The credits type either **by the character** at `charsPerSecond` (default 7 —
 deliberately slow) or, when `linesPerSecond` is set, **by the line**: each line lands
 whole and the caret waits on the next one, the way the probe reveals its report. The
-show types one line per beat (`linesPerSecond` = BPM/60 ≈ 2.14), so the copy is done in
-about five seconds. `fontSize` is the credits' type size in points (default 11,
-Terminal's; the show uses 22). Preview the whole card without running the show:
+show types one line per beat (`linesPerSecond` = BPM/60 ≈ 2.14), so its fifteen lines are
+done in about seven. `fontSize` is the credits' type size in points (default 11,
+Terminal's; the show asks for 22) — **asks**, because the face is then shrunk until the
+longest line fits the width the terminal is allowed to take: `rollSize` caps that, so at
+the authored size a long credit would wrap in the middle of a name rather than widen the
+window. The song's own block runs to 44 characters and lands at 20.5pt on a 1440-wide
+screen. Preview the whole card without running the show:
 `--snapshot-credits=out.png`, which reads the bundled show's `credits` event and lays
 the real windows out off-screen at your display's size.
 
@@ -1515,7 +1676,7 @@ through like any other line. Leading and trailing blanks are trimmed.
 
 ```jsonc
 { "beat": 345, "type": "credits", "params": { "id": "credits",
-    "lines": ["GiveIt2Me", "by DJ_Dave", "", "Bye"], "hold": true,
+    "lines": ["Give it 2 me", "by DJ_Dave", "", "Bye"], "hold": true,
     "linesPerSecond": 2.142, "fontSize": 22, "photoTilt": -4,
     "tile": "assets/credits_tile.png", "tileDriftSeconds": 4 } }
 ```
@@ -1657,8 +1818,25 @@ instruction. The engine briefly had a `fit: "center"` that composed exactly that
 time; a picture the generator already made has one less thing to go wrong when the show
 is playing, and the composed version did go wrong.
 
-**Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
-reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.
+**Which surface it draws on.** `surface` picks between the two, and the default is the
+one that isn't a wallpaper at all:
+
+- **`"layer"` (default)** — a borderless window pinned at the desktop level: above the
+  picture the window server draws, *below the Finder's desktop icons*, below everything
+  the show opens. Your icons sit on top of it exactly as they sit on a real wallpaper,
+  and clicks pass straight through (`ignoresMouseEvents`). It needs **no gate**: the
+  window dies with the process, so a crash, a panic or a `kill -9` cannot leave the
+  desktop changed. There is no snapshot to restore, no `Index.plist` to put back, no
+  agent to bounce, and no per-Space blind spot — `canJoinAllSpaces` means the one window
+  is already on every desktop.
+- **`"wallpaper"`** — the machine's actual desktop picture, via `setDesktopImageURL`.
+  **Gated behind `meta.allowWallpaper`**, same as the `wallpaper` event and for the same
+  reason: macOS cannot reliably restore Aerial/dynamic wallpapers through the public API.
+  Use it only when the point is that the wallpaper is *really* changed — that a viewer
+  could open System Settings and see it.
+
+Everything below about per-Space restore and the ~3 Hz ceiling describes
+`surface: "wallpaper"`. None of it applies to the layer.
 
 **Every Space comes back.** `setDesktopImageURL` reaches only the *active* Space of each
 screen — a viewer with more desktops used to keep the show's blue on all the others. So
@@ -1668,13 +1846,30 @@ live), and the final stop writes it back and bounces the agent so every Space re
 its original picture. Final stop only — a bounce mid-show or on seek would flicker the
 desktop — and skipped entirely when the store never changed.
 
-`hz` is an apply rate, not a beat division, and it has a hard ceiling that isn't ours.
-`setDesktopImageURL` measures at **~270–330 ms per call per screen** on macOS 26, and the
-cost barely moves with image size — a 64×64 solid PNG costs 268 ms and a 3024×1964 JPEG
-327 ms — so what you are paying for is the WallpaperAgent round-trip, not the decode.
-That is a **~3 Hz wall**. Asking for more gets you the wall, and the compositor may still
-drop frames on top of that. (An earlier note here claimed ~58 ms and a ~17 Hz ceiling;
-that was measured on an older system and is wrong by roughly 5×.)
+`hz` is an apply rate, not a beat division, and on the real surface it has a hard ceiling
+that isn't ours. `setDesktopImageURL` measures at **~270–330 ms per call per screen** on
+macOS 26, and the cost barely moves with image size — a 64×64 solid PNG costs 268 ms and a
+3024×1964 JPEG 327 ms — so what you are paying for is the WallpaperAgent round-trip, not
+the decode. That is a **~3 Hz wall**. Asking for more gets you the wall, and the
+compositor may still drop frames on top of that. (An earlier note here claimed ~58 ms and
+a ~17 Hz ceiling; that was measured on an older system and is wrong by roughly 5×.)
+
+**The layer is not on that wall.** Measured with `--bench-wallpaper` on the same machine:
+
+| | median per change | ceiling |
+|---|---|---|
+| `setDesktopImageURL`, 64×64, one screen | ~270–330 ms | **~3 Hz** |
+| layer, `CALayer` background colour (`solid`, `strobe`) | **0.005 ms** | — |
+| layer, 64×64 contents | **0.054 ms** | — |
+| layer, full-screen 3024×1964 contents | **11.7 ms** | ~86 Hz |
+| layer, sustained on the show's own `DisplayPump` | — | **119 Hz**, main-thread probe 60/60 |
+
+Forty times the real surface, with the pump untouched. Which is why `hz` on the layer is
+**capped in software at 12 Hz** (`WallpaperController.layerMaxHz`) and a higher request is
+clamped with a log line. The ~3 Hz wall used to enforce photosensitivity limits by
+accident; nothing enforces them on the layer, so the cap does it on purpose. It sits under
+the 15–20 Hz band and at the peak the current cut already measures. Raising it means
+re-measuring the whole show, not editing a number.
 
 Two things follow, and the controller does both:
 
@@ -1701,9 +1896,16 @@ landed *after* the restore and left a lyric card on the desktop.
 Frames are written under `~/Library/Application Support/DPE/wallpaper` (macOS stores the
 path, not a copy, so they have to stay on disk while displayed) and swept on restore.
 
-`--test-wallpaper` checks the gate, the glitch engine's determinism, and that frames are
-written and swept. It never calls `setDesktopImageURL` — a test that changed your actual
+`swift run dpe-tests` covers the gate, the surface switch, the glitch engine's
+determinism, that frames are written and swept, and — against the window server's own
+on-screen list, not by eye — that the layer lands above the wallpaper and below the
+desktop icons. None of it calls `setDesktopImageURL`: a test that changed your actual
 wallpaper would be a bad citizen.
+
+`--bench-wallpaper` produces the table above and prints the layer's z-order neighbours
+with a verdict line. Its desktop-layer rounds are harmless; the `setDesktopImageURL` round
+is opt-in behind `--include-real` because it really does swap your wallpaper.
+`--above-icons` runs the layer over the icons instead of under them.
 
 **A schedule instead of a rate.** `slides` also takes `at`: seconds from the event's
 start at which each image lands, one per image, ascending. The list then plays **once**,
@@ -1711,14 +1913,17 @@ in time, the last image holds until the run ends, and `hz` is ignored:
 
 ```jsonc
 { "t": 53.96, "type": "deskWallpaper", "params": { "id": "words", "mode": "slides",
-    "images": ["assets/lyrics_desktops/I.jpg", "assets/lyrics_desktops/TOLD.jpg"],
+    "images": ["assets/lyrics_desktops/I.jpg", "assets/lyrics_desktops/TOLD_YOU.jpg"],
     "at": [0, 0.233], "durationSeconds": 15 } }
 ```
 
 This is how the lyric lands on the desktop word by word (cue 12): the times come from
 `tools/lyrics.py`, and the generator issues the event ~300 ms before the first word so
-each swap is *seen* on the word. The ~3 Hz ceiling still applies — a word the window
-server cannot fit is skipped, never queued behind the one being sung.
+each change is *seen* on the word. On the layer every word lands — the tightest gap in
+the cue is 187 ms, comfortably clear of the ~12 ms a full-screen card costs, and the next
+few cards are decoded ahead on a background queue (`SlideStore`) so no decode ever lands
+in the tick that shows it. On `surface: "wallpaper"` the ~3 Hz ceiling still applies and a
+word the window server cannot fit is skipped, never queued behind the one being sung.
 
 ### `photoWall`
 
@@ -1791,12 +1996,14 @@ They all come back on stop, panic, seek, or `closeWindow` with the event's `id`
 
 ### `wallpaper` (disabled by default)
 
-Swaps the desktop wallpaper (`path` to an image, or a solid `color` hex; `screen` or
-all). **Off unless `meta.allowWallpaper` is `true`**, because on modern macOS the
-public API (`NSWorkspace.setDesktopImageURL`) can't restore Aerial/dynamic wallpapers
+Swaps the machine's real desktop wallpaper (`path` to an image, or a solid `color` hex;
+`screen` or all). **Off unless `meta.allowWallpaper` is `true`**, because on modern macOS
+the public API (`NSWorkspace.setDesktopImageURL`) can't restore Aerial/dynamic wallpapers
 and applies unreliably without restarting the WallpaperAgent — so it can't meet the
-reversibility guarantee. Enable only if you accept it may not fully restore the
-original.
+reversibility guarantee. Enable only if you accept it may not fully restore the original.
+
+For *looking* like the wallpaper changed — which is what a show wants — use
+`deskWallpaper`, whose default surface is a window and is reversible by construction.
 
 ## Targets
 

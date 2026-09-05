@@ -8,15 +8,51 @@ import AppKit
 /// glow). ANSI-ish accents are kept for the few line kinds that need to stand apart,
 /// at the weights a real terminal would print them.
 enum Phosphor {
-    static let base    = Color.black
-    static let dim     = Color(white: 0.42)
-    static let section = Color(red: 0.00, green: 0.31, blue: 0.75)   // ANSI blue
-    static let alert   = Color(red: 0.70, green: 0.00, blue: 0.00)   // ANSI red
-    static let warn    = Color(red: 0.60, green: 0.36, blue: 0.00)   // ANSI yellow, darkened
-    static let ok      = Color(red: 0.00, green: 0.45, blue: 0.10)   // ANSI green
-    static let ground  = Color.white
+    static var base    = Color.black
+    static var dim     = Color(white: 0.42)
+    static var section = Color(red: 0.00, green: 0.31, blue: 0.75)   // ANSI blue
+    static var alert   = Color(red: 0.70, green: 0.00, blue: 0.00)   // ANSI red
+    static var warn    = Color(red: 0.60, green: 0.36, blue: 0.00)   // ANSI yellow, darkened
+    static var ok      = Color(red: 0.00, green: 0.45, blue: 0.10)   // ANSI green
+    static var ground  = Color.white
     /// Highlighter yellow, for the lines a `focus` re-read points at.
-    static let marker  = Color(red: 1.00, green: 0.90, blue: 0.20).opacity(0.85)
+    static var marker  = Color(red: 1.00, green: 0.90, blue: 0.20).opacity(0.85)
+
+    /// Print the report on another surface: `ground` behind, `text` on it.
+    ///
+    /// **Static, so every probe window in a show shares one look.** That is what the
+    /// piece wants — cue 4 puts five of them on the screen at once and they are one
+    /// machine talking — and it is the reason this is a set of variables rather than an
+    /// environment value threaded through the view. Two probe windows in two different
+    /// colours at the same time would need that; nothing asks for it.
+    ///
+    /// The accents are re-derived rather than kept: ANSI's dark blue section headers and
+    /// dark red alerts are close to invisible on a saturated blue ground. On a themed
+    /// surface they become light tints that hold their meaning — the section still reads
+    /// as the piece's own light blue, the alert still reads as an alert.
+    static func use(background: NSColor, text: NSColor) {
+        ground  = Color(nsColor: background)
+        base    = Color(nsColor: text)
+        dim     = Color(nsColor: text).opacity(0.55)
+        section = Color(red: 0.41, green: 0.74, blue: 0.97)          // #68BDF8
+        alert   = Color(red: 1.00, green: 0.58, blue: 0.64)
+        warn    = Color(red: 1.00, green: 0.83, blue: 0.30)
+        ok      = Color(red: 0.61, green: 0.91, blue: 0.69)
+        marker  = Color(nsColor: text).opacity(0.30)
+    }
+
+    /// Back to Terminal's Basic profile. The still renderer and the tests draw the
+    /// report too, and they must not inherit a colour a show happened to set.
+    static func useTerminalBasic() {
+        base = .black
+        dim = Color(white: 0.42)
+        section = Color(red: 0.00, green: 0.31, blue: 0.75)
+        alert = Color(red: 0.70, green: 0.00, blue: 0.00)
+        warn = Color(red: 0.60, green: 0.36, blue: 0.00)
+        ok = Color(red: 0.00, green: 0.45, blue: 0.10)
+        ground = .white
+        marker = Color(red: 1.00, green: 0.90, blue: 0.20).opacity(0.85)
+    }
 }
 
 /// Terminal renders everything at one size in one face; the `size` argument is kept

@@ -17,6 +17,7 @@ final class EventContext {
     let credits: CreditsController
     let otherApps: OtherAppsController
     let bricks: BrickBreakerController
+    let segSwarm: SegSwarmController
 
     /// Document BPM, so beat-based durations resolve to seconds.
     var bpm: Double = 120
@@ -27,7 +28,8 @@ final class EventContext {
          probe: SystemProbeController, swarm: FileSwarmController,
          reboot: RebootController, oracle: OracleController,
          booth: PhotoBoothController, credits: CreditsController,
-         otherApps: OtherAppsController, bricks: BrickBreakerController) {
+         otherApps: OtherAppsController, bricks: BrickBreakerController,
+         segSwarm: SegSwarmController) {
         self.windows = windows
         self.cursor = cursor
         self.icons = icons
@@ -42,6 +44,7 @@ final class EventContext {
         self.credits = credits
         self.otherApps = otherApps
         self.bricks = bricks
+        self.segSwarm = segSwarm
     }
 
     /// Always invoked on the main thread (the pump hops to main before ticking).
@@ -55,6 +58,7 @@ final class EventContext {
         case .closeWindow(let p):
             windows.close(id: p.id, fadeSeconds: p.fadeSeconds ?? 0)
             bricks.stop(id: p.id)
+            segSwarm.stop(id: p.id)
             photos.stop(id: p.id)
             torus.stop(id: p.id)
             wallpaper.stopDesk(id: p.id)
@@ -103,6 +107,10 @@ final class EventContext {
             credits.begin(p, at: now, bpm: bpm)
         case .brickBreaker(let p):
             bricks.start(p)
+        case .segSwarm(let p):
+            // A `window` source is another of the show's own windows; only the window
+            // manager knows where they are.
+            segSwarm.begin(p, sourceView: p.window.flatMap { windows.windows[$0]?.contentView })
         case .hideOtherApps(let p):
             otherApps.begin(p)
         }

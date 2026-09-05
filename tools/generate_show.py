@@ -26,6 +26,7 @@ desktop words (cue 12) both read that list, so tuning a word moves both.
 Seeded, so the show is identical take to take.
 """
 import json, math, os, random, sys
+import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_horse import PALETTE, build_frames, horse_event
@@ -67,9 +68,17 @@ BEAT = 60.0 / BPM
 KICKS = analysis["kicks"]
 DURATION = analysis["duration"]        # 169.85 — the last two cues are past this
 
-# One desktop swap takes ~300 ms to land (WallpaperController, measured) — anything
-# that must be SEEN on a beat is applied this early.
-DESK_LATENCY = 0.30
+# How early a desktop change has to be issued to be SEEN on its beat.
+#
+# It was 0.30 when `deskWallpaper` drove the real wallpaper: `setDesktopImageURL` takes
+# ~270–330 ms to land, so a word fired on its beat was heard before it was seen. The
+# default surface is now the desktop LAYER, where a change is a `CALayer` assignment that
+# lands on the next vsync — 0.03 covers the ~12 ms a full-screen card costs plus a frame
+# at 60 Hz. Leaving it at 0.30 would not be conservative: on the layer it puts every word
+# on the desktop two thirds of a beat BEFORE it is sung.
+#
+# Raise it back toward 0.30 for any cue moved to `surface: "wallpaper"`.
+DESK_LATENCY = 0.03
 
 def secs(beat):
     """Absolute seconds for a timeline beat (matches the loader's beat→time math)."""
@@ -213,7 +222,12 @@ SEAM_TAIL = 1.25                 # beats: and all gone this long after it
 
 def seam(beat, tag, n=SEAM_N, torn_every=4):
     """Throw `n` small windows across the changeover at `beat`. Returns their ids."""
-    rng = random.Random(abs(hash(tag)) % (2 ** 31))
+    # crc32, NOT hash(): Python salts string hashing per process, so `hash(tag)` handed
+    # this a different seed on every run and every seam in the piece was laid out afresh
+    # each time the generator was invoked — the one act in the show that was not the same
+    # twice. Found by regenerating and diffing against a previously generated file
+    # (2026-09-03): same ids, same beats, different geometry everywhere.
+    rng = random.Random(zlib.crc32(tag.encode()))
     ids = []
     for i in range(n):
         w = round(W * rng.uniform(0.09, 0.17))
@@ -272,9 +286,8 @@ VIDEO_W, VIDEO_H = round(W * 0.34), round(H * 0.32)
 
 # =============================================================================
 # Cue 1 (0:00) — THE BLUE. The desktop takes the signature blue; the duration IS cue 2:
-# when the deskWallpaper expires, WallpaperController puts the viewer's own picture
-# back. Gated on `meta.allowWallpaper`; the snapshot is taken before the first swap and
-# restored on stop, panic and quit as well.
+# when the deskWallpaper expires, the layer closes and the viewer's own picture is
+# simply there again — it was never covered by anything but a window.
 # =============================================================================
 # Clear the stage: other apps are hidden, not minimised — `unhide` puts each window
 # back exactly where it was, on stop/panic too.
@@ -284,7 +297,8 @@ add(0, "deskWallpaper", {"id": "desk", "mode": "solid", "hex": DJ_BLUE,
 
 # =============================================================================
 # Cue 2 (beat 8) — the blue goes and the viewer's own desktop is underneath it.
-# setDesktopImageURL has no fade and takes ~300 ms, so a white wash covers the swap.
+# The wash is no longer hiding a ~300 ms setDesktopImageURL stall (the layer closes in a
+# frame), but it stays: the cut is written around a flash on this beat.
 # =============================================================================
 add(B["restore"], "screenFlash", {"color": WHITE, "durationBeats": 0.5})
 
@@ -330,6 +344,10 @@ add(B["welcome"], "typeText", {
     "id": "welcome",
     "frame": [round((W - WELCOME_W) / 2), round((H - WELCOME_H) / 2), WELCOME_W, WELCOME_H],
     "text": WELCOME, "chrome": "terminal", "linesPerBeat": WELCOME_LPB,
+    # Not Terminal's own black-on-white: the piece's blue, typed in white. It is the
+    # first window of the show and it should look like the show, not like a shell that
+    # happens to be open (`hex` is the ground, `fg` the type).
+    "hex": DJ_BLUE, "fg": WHITE,
     "fontSize": WELCOME_PT, "interactive": True})
 
 # =============================================================================
@@ -338,16 +356,40 @@ add(B["welcome"], "typeText", {
 # from the gap to the end of the hydra act rather than picked.
 # =============================================================================
 add(B["probe"], "closeWindow", {"id": "welcome"})
-# The frame is the OUTER one, title bar included — the report wears real macOS chrome
-# and is named for the command that produced it.
-PROBE_FRAME = [round(W * 0.18), round(H * 0.08), round(W * 0.64), round(H * 0.84)]
-add(B["probe"], "systemProbe", {"id": "probe", "linesPerBeat": 6, "frame": PROBE_FRAME,
-                                "title": "./scan_identity"})
+# ONE WINDOW PER SECTION, scattered (2026-09-03). The probe used to be a single tall
+# report in the middle of the screen reading itself out top to bottom. It is five
+# windows now, each running one section of the same scan, thrown around the desktop the
+# way a machine that is interrogating itself would leave them — and all five typing at
+# once, so the report arrives as a machine talking over itself rather than as a document.
+#
+# `focus` is the probe's own mechanism for this and it already existed: a window opened
+# with it reads out only the sections named. Each gets its own id, so `SystemProbeController`
+# keeps five reports rather than replacing one (it used to hold exactly one and tear the
+# previous down — see the `reports` dictionary).
+#
+# Blue ground, white type, same as the welcome terminal: this is the show talking.
+PROBE_SECTIONS = [
+    ("identity",    "./scan_identity",   0.03, 0.06, 0.40, 0.40),
+    ("machine",     "./scan_machine",    0.55, 0.04, 0.41, 0.34),
+    ("network",     "./scan_network",    0.30, 0.36, 0.38, 0.30),
+    ("geolocation", "./scan_where",      0.02, 0.52, 0.36, 0.32),
+    ("contacts",    "./scan_contacts",   0.60, 0.46, 0.37, 0.36),
+]
+probe_ids = []
+for i, (section, title, fx, fy, fw, fh) in enumerate(PROBE_SECTIONS):
+    wid = f"probe{i}"
+    probe_ids.append(wid)
+    # A beat apart, so they land one after another rather than as a wall of windows.
+    add(B["probe"] + i * 0.75, "systemProbe", {
+        "id": wid, "linesPerBeat": 6, "focus": [section], "title": title,
+        "hex": DJ_BLUE, "fg": WHITE,
+        "frame": [round(W * fx), round(H * fy), round(W * fw), round(H * fh)]})
 # The probe's session is HALF what it was (2026-09-02): it used to type all the way to
 # cue 6, three bars from the drop, and the report had said what it had to say long
 # before that — the machine knows who you are, and reading it twice adds nothing. It
 # closes on cue 5 now and the game takes the rest of INTRO B.
-add(B["hydra"] - 0.3, "closeWindow", {"id": "probe"})
+for wid in probe_ids:
+    add(B["hydra"] - 0.3, "closeWindow", {"id": wid})
 
 # =============================================================================
 # Cue 5 (0:30) — a hydra sketch is dragged onto the screen, pulled bigger by its
@@ -394,10 +436,28 @@ add(B["hydra"], "brickBreaker", {
 # PULLED from the cut for now (2026-09-01) — kept behind HYDRA_ACT for when it returns.
 # The hand-built hydra sketch itself lives on in the show: it moved to the breakdown,
 # where it is set up over the raymarcher (cue 17).
-HYDRA_ACT = False
+# =============================================================================
+# Cue 11 (0:48) — THE HYDRA ACT, moved here (2026-09-03). Somebody sets a sketch up by
+# hand in the middle of the drop: it appears small with its code written but not
+# running, the cursor takes it by the title bar and hauls it down the screen, pulls it
+# bigger by its lower-right corner, and hits run — and then two more arrive already
+# running. It was written for cue 5 (INTRO B + 3.0) and pulled; the brick breaker has
+# that slot now, and this is the empty one the author left in chorus 1A.
+#
+# Scaled to fit. The act is 13 beats as written and there are 13 between here and cue
+# 12, which would put the last sketch on screen for no time at all — so every offset
+# AND every move duration is multiplied by HY_S, and it lands with about four beats to
+# spare. Scaling the offsets alone would leave a 1.8-beat drag running under the step
+# that follows it.
+# =============================================================================
+HY_S = 0.70
+hy = B["tbd_048"]
+def hs(x):
+    return hy + x * HY_S
+
+HYDRA_ACT = True
 hydra_ids = []
 if HYDRA_ACT:
-    hy = B["hydra"]
     DRAG_ID = "hy0"
     hydra_ids = [DRAG_ID]
 
@@ -407,13 +467,13 @@ if HYDRA_ACT:
 
     # 2. the cursor takes it by the title bar and hauls it down the screen
     d_grab = (d_small[0] + d_small[2] * 0.5, d_small[1] + 12)
-    add(hy + 1, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+    add(hs(1), "cursorPath", {"path": "linear", "durationBeats": round(1.2 * HY_S, 3), "easing": "easeInOut",
         "mode": "warp", "points": [[round(W * 0.02), round(H * 0.08)],
                                    [round(d_grab[0]), round(d_grab[1])]]})
     d_lift = (round(W * 0.05), round(H * 0.48), d_small[2], d_small[3])
-    add(hy + 2.4, "moveWindow", {"id": DRAG_ID, "frame": [d_lift[0], d_lift[1]],
-        "durationBeats": 1.6, "easing": "easeInOut"})
-    add(hy + 2.4, "cursorPath", {"path": "linear", "durationBeats": 1.6, "easing": "easeInOut",
+    add(hs(2.4), "moveWindow", {"id": DRAG_ID, "frame": [d_lift[0], d_lift[1]],
+        "durationBeats": round(1.6 * HY_S, 3), "easing": "easeInOut"})
+    add(hs(2.4), "cursorPath", {"path": "linear", "durationBeats": round(1.6 * HY_S, 3), "easing": "easeInOut",
         "mode": "warp", "points": [[round(d_grab[0]), round(d_grab[1])],
                                    [round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)]]})
 
@@ -422,25 +482,25 @@ if HYDRA_ACT:
     d_corner = (d_lift[0] + d_lift[2], d_lift[1] + d_lift[3])
     d_big = (d_lift[0], d_lift[1], round(W * 0.28), round(H * 0.32))
     d_new_corner = (d_big[0] + d_big[2], d_big[1] + d_big[3])
-    add(hy + 4.2, "cursorPath", {"path": "linear", "durationBeats": 1.0, "easing": "easeInOut",
+    add(hs(4.2), "cursorPath", {"path": "linear", "durationBeats": round(1.0 * HY_S, 3), "easing": "easeInOut",
         "mode": "warp", "points": [[round(d_lift[0] + d_small[2] * 0.5), round(d_lift[1] + 12)],
                                    [round(d_corner[0]), round(d_corner[1])]]})
-    add(hy + 5.4, "moveWindow", {"id": DRAG_ID,
+    add(hs(5.4), "moveWindow", {"id": DRAG_ID,
         "frame": [d_big[0], d_big[1], d_big[2], d_big[3]],
-        "durationBeats": 1.8, "easing": "easeOut"})
-    add(hy + 5.4, "cursorPath", {"path": "linear", "durationBeats": 1.8, "easing": "easeOut",
+        "durationBeats": round(1.8 * HY_S, 3), "easing": "easeOut"})
+    add(hs(5.4), "cursorPath", {"path": "linear", "durationBeats": round(1.8 * HY_S, 3), "easing": "easeOut",
         "mode": "warp", "points": [[round(d_corner[0]), round(d_corner[1])],
                                    [round(d_new_corner[0]), round(d_new_corner[1])]]})
     # Re-open at the final size once the drag settles: the layout stretched during the
     # resize gets rebuilt cleanly at the new dimensions. Still not running.
-    hydra_window(DRAG_ID, hy + 7.4, d_big, PATCHES[1], running=False)
+    hydra_window(DRAG_ID, hs(7.4), d_big, PATCHES[1], running=False)
 
     # 4. up to hydra's run button, top-right — and the sketch starts.
     d_play = (d_big[0] + d_big[2] - 26, d_big[1] + 34)
-    add(hy + 7.6, "cursorPath", {"path": "linear", "durationBeats": 1.2, "easing": "easeInOut",
+    add(hs(7.6), "cursorPath", {"path": "linear", "durationBeats": round(1.2 * HY_S, 3), "easing": "easeInOut",
         "mode": "warp", "points": [[round(d_new_corner[0]), round(d_new_corner[1])],
                                    [round(d_play[0]), round(d_play[1])]]})
-    HYDRA_RUN = hy + 9.0
+    HYDRA_RUN = hs(9.0)
     hydra_window(DRAG_ID, HYDRA_RUN, d_big, PATCHES[1], running=True)
     add(HYDRA_RUN, "screenFlash", {"color": "#68BDF8", "durationSeconds": 0.06})
 
@@ -449,7 +509,7 @@ if HYDRA_ACT:
     for i, (dx, dy, s) in enumerate([(0.62, 0.10, 0.30), (0.70, 0.52, 0.26)], start=1):
         wid = f"hy{i}"
         hydra_ids.append(wid)
-        beat = HYDRA_RUN + 2 + 2 * (i - 1)
+        beat = HYDRA_RUN + (2 + 2 * (i - 1)) * HY_S
         hydra_window(wid, beat, (round(W * dx), round(H * dy),
                                  round(W * s), round(H * s * 1.05)),
                      PATCHES[(i + 1) % len(PATCHES)], running=True, animate="springIn")
@@ -459,7 +519,7 @@ if HYDRA_ACT:
 # No duration: cue 7 replaces it a beat later. An expiry would restore the viewer's
 # picture for the two frames before the face lands — a flicker of the wrong image.
 # =============================================================================
-for wid in hydra_ids + ["bricks"]:
+for wid in ["bricks"]:
     add(B["blue2"] - 0.2, "closeWindow", {"id": wid})
 add(B["blue2"], "deskWallpaper", {"id": "desk2", "mode": "solid", "hex": DJ_BLUE})
 add(B["blue2"], "screenFlash", {"color": WHITE, "durationBeats": 0.4})
@@ -498,6 +558,55 @@ def build_face_desktop():
     return w, h
 
 FACE_W, FACE_H = build_face_desktop()
+
+# The lyric desktop cards, cue 12. The artist draws them 1920x1080, full bleed: condensed
+# type edge to edge on her blue, one picture per phrase.
+#
+# They cannot go on the desktop as drawn. A desktop picture is shown FILLED — the engine's
+# layer uses `resizeAspectFill`, the real wallpaper `scaleAxesIndependently` — and 16:9 on
+# the 1.54:1 screen these play on crops ~8% off each side, straight through the first and
+# last letter. So each card is composited onto a 4:3 field of its OWN blue, sampled from
+# the source's corner rather than assumed. Because the field is the card's own colour
+# there is no edge where it sits.
+#
+# The padding buys a BAND, not immunity. Filled, the visible slice of a 4:3 canvas is the
+# full width by 1920/aspect: the type (1080 tall, centred) survives while that is ≥ 1080,
+# i.e. for any display from 4:3 up to 16:9. Narrower than 4:3 clips the letters left and
+# right, wider than 16:9 clips them top and bottom — and 16:9 is where the artwork is
+# drawn, so nothing can extend the band upward without shrinking the type off the edges
+# it is meant to touch. Every display Apple ships is inside it (MacBooks 16:10, every
+# desktop panel 16:9); a third-party ultrawide is not.
+LYRIC_SRC = "assets/sarah's assets/lyrics_desktop_new"
+LYRIC_DIR = "assets/lyrics_desktops"
+LYRIC_ASPECT = 4 / 3
+
+def build_lyric_desktops():
+    """Composite every source card onto a 4:3 field of its own colour. Returns the
+    (name, size) list, or [] when the artist's originals are not in this checkout —
+    they are gitignored, so a fresh clone regenerates everything else and leaves the
+    committed cards alone."""
+    from PIL import Image
+    src_dir = os.path.join(ROOT, LYRIC_SRC)
+    if not os.path.isdir(src_dir):
+        return []
+    out_dir = os.path.join(ROOT, LYRIC_DIR)
+    os.makedirs(out_dir, exist_ok=True)
+    built = []
+    for name in sorted(os.listdir(src_dir)):
+        if not name.lower().endswith((".jpg", ".jpeg", ".png")):
+            continue
+        src = Image.open(os.path.join(src_dir, name)).convert("RGB")
+        field = src.getpixel((1, 1))
+        canvas_w = src.width
+        canvas_h = max(src.height, round(canvas_w / LYRIC_ASPECT))
+        canvas = Image.new("RGB", (canvas_w, canvas_h), field)
+        canvas.paste(src, (0, (canvas_h - src.height) // 2))
+        stem = os.path.splitext(name)[0]
+        canvas.save(os.path.join(out_dir, f"{stem}.jpg"), quality=92)
+        built.append((stem, (canvas_w, canvas_h), field))
+    return built
+
+LYRIC_CARDS = build_lyric_desktops()
 
 # The face with its eyes SHUT — the second frame of the gate's blink (cue 1). The artist
 # drew it as a full screen grab (`sarah's assets/blink.jpg`, 3024x1964, loading bar and
@@ -570,7 +679,41 @@ def build_face_blink():
     return small.size
 
 FACE_BLINK_W, FACE_BLINK_H = build_face_blink()
-# Applied 2×DESK_LATENCY early so the swap has FINISHED before the drop: fired on the
+
+# The end card's tiling face (2026-09-03). The card's backdrop is white and this drifts
+# across it, so the face is inked in the signature blue ON white — the app icon's
+# artwork with the two colours the other way round, which is what a blue-on-white
+# surface wants.
+#
+# Built from `pixelface.jpg` rather than drawn, so it is the same face as the icon, the
+# desktop and the ring, pixel for pixel: the old tile was a soft rounded rendition of it
+# and read as a different drawing. NEAREST and a hard threshold keep the edges square —
+# every other appearance of this face in the piece is hard-edged.
+CREDITS_TILE = "assets/credits_tile.png"
+CREDITS_TILE_SIZE = (432, 331)      # unchanged: the drift is written around this size
+CREDITS_TILE_SHARE = 0.82           # margin enough that the repeats read as separate
+
+def build_credits_tile():
+    from PIL import Image
+    src_im = Image.open(os.path.join(ROOT, "assets/pixelface.jpg")).convert("RGB")
+    tw, th = CREDITS_TILE_SIZE
+    ink = tuple(int(DJ_BLUE[i:i + 2], 16) for i in (1, 3, 5))
+    tile = Image.new("RGB", (tw, th), (255, 255, 255))
+    w = round(tw * CREDITS_TILE_SHARE)
+    h = round(src_im.height * w / src_im.width)
+    face = src_im.resize((w, h), Image.NEAREST)
+    px = face.load()
+    for y in range(face.height):
+        for x in range(face.width):
+            r, g, b = px[x, y]
+            # The artwork is white ink on its own blue field: bright is the face.
+            px[x, y] = ink if (r + g + b) / 3 > 140 else (255, 255, 255)
+    tile.paste(face, ((tw - w) // 2, (th - h) // 2))
+    tile.save(os.path.join(ROOT, CREDITS_TILE))
+    return w, h
+
+CREDITS_TILE_W, CREDITS_TILE_H = build_credits_tile()
+# Applied 2×DESK_LATENCY early so the change has FINISHED before the drop: fired on the
 # beat it landed late, and fired 300 ms early it was still mid-swap while the drop's 21
 # window opens hit — the WindowServer paid for both at once and the whole entrance
 # stuttered. Landing ~0.3 s early on an already-blue field reads as anticipation.
@@ -712,43 +855,60 @@ for i, (when, text) in enumerate(spiral_phrases):
 wd = B["words"]                     # chorus 1B; the run starts on the pickup, one bar before
 zero_1B = lyric_zero("chorus1B")
 
-# The cards, one file per word as it is sung (RUNNIN, CANT, 2) in assets/lyrics_desktops.
-# A cue whose whole text has a card ("NEED YOUR LOVE.jpg") is one card; otherwise its
-# words are spread evenly to the next cue, one card each. A word with no file is skipped
-# — the previous word holds — and listed below, so a new cue is never a silent gap.
+# The cards. The artist draws a PHRASE at a time, edge to edge — "NEED YOUR LOVE" is one
+# picture, not three — so the file for a card is its words joined by underscores
+# (NEED_YOUR_LOVE.jpg) and the grouping lives in `lyrics.DESKTOP`. A card with no file is
+# skipped (the previous one holds) and listed below, so a new card is never a silent gap.
 WORDS_DIR = "assets/lyrics_desktops"
 def word_key(word):
+    """A word as the filenames spell it: upper case, apostrophes dropped (CANT, IM),
+    and TO written the way it is sung."""
     key = word.upper().replace("’", "").replace("'", "").strip(".,!?:;")
-    return {"RUNNING": "RUNNIN", "TO": "2"}.get(key, key)
-def card_path(key):
-    path = f"{WORDS_DIR}/{key}.jpg"
+    return {"TO": "2"}.get(key, key)
+def card_path(text):
+    path = f"{WORDS_DIR}/{'_'.join(word_key(w) for w in text.split())}.jpg"
     return path if os.path.exists(os.path.join(ROOT, path)) else None
-def cue_cards(text):
-    words = text.split()
-    if len(words) > 1:
-        whole = card_path(" ".join(word_key(w) for w in words))
-        if whole:
-            return [(text, whole)]
-    return [(w, card_path(word_key(w))) for w in words]
 
 # The schedule: the whole lyric (lyrics.CUES, 32 beats) at chorus 1B's position, each
-# word applied DESK_LATENCY early so the ~300 ms swap lands ON the word as it is sung.
+# card applied DESK_LATENCY early so the change lands ON the word as it is sung.
+#
+# CUES is word by word (that is what the chorus 1A spiral wants); the cards come in
+# phrases. So the words are flattened to a stream first — a multi-word cue spreads evenly
+# to the next one, exactly as the spiral reads it — and then `lyrics.DESKTOP` groups that
+# stream back up into cards, each landing on the time of its FIRST word. One source of
+# timing: retune a word in CUES and its card moves with it.
 lyric_end = zero_1B + 32
 word_times = [lyric_beat(zero_1B, when) for when, _ in lyrics.CUES] + [lyric_end]
-word_slides, words_missing, words_interpolated = [], [], []
+word_stream = []                      # [(seconds, WORD), ...] — the lyric, word by word
 for k, (when, text) in enumerate(lyrics.CUES):
     b0, b1 = word_times[k], word_times[k + 1]
-    cards = cue_cards(text)
-    if len(cards) > 1:
-        words_interpolated.append(text)
-    for j, (label, img) in enumerate(cards):
-        if img is None:
-            if word_key(label) not in words_missing:
-                words_missing.append(word_key(label))
-            continue
-        word_slides.append((secs(b0 + (b1 - b0) * j / len(cards)), img))
+    words = text.split()
+    for j, w in enumerate(words):
+        word_stream.append((secs(b0 + (b1 - b0) * j / len(words)), w))
+
+# Group it into cards. The assert is the guard that keeps `lyrics.DESKTOP` honest: it is a
+# regrouping of CUES, not a second copy of the lyric, and a word added, cut or reworded up
+# there has to be reflected down here or the build stops.
+word_slides, words_missing = [], []
+cursor = 0
+for card in lyrics.DESKTOP:
+    words = card.split()
+    got = word_stream[cursor:cursor + len(words)]
+    assert len(got) == len(words) and all(
+        lyrics._key(a) == lyrics._key(b) for (_, a), b in zip(got, words)), (
+        f"lyrics.DESKTOP: card {card!r} at word {cursor} does not match CUES "
+        f"({[w for _, w in got]!r}) — DESKTOP must regroup CUES exactly")
+    cursor += len(words)
+    img = card_path(card)
+    if img is None:
+        words_missing.append(card)
+        continue
+    word_slides.append((got[0][0], img))
+assert cursor == len(word_stream), (
+    f"lyrics.DESKTOP covers {cursor} of {len(word_stream)} words in CUES — "
+    f"{[w for _, w in word_stream[cursor:]]!r} has no card")
 if not word_slides:
-    sys.exit("CHORUS 1B: no desktop word has a card")
+    sys.exit("CHORUS 1B: no desktop card has a picture")
 words_first = word_slides[0][0]
 words_event_at = words_first - DESK_LATENCY
 words_event_beat = (words_event_at - OFFSET) / BEAT
@@ -763,7 +923,7 @@ assert TRAIL_LAST_MOVE + LEG <= words_event_beat - 0.2, (
 # the ~300 ms wallpaper swaps it dragged the words — and everything after them.
 # No "video" here any more: cue 10's fireworks owned that id and they have moved to
 # cue 25 (as "works"), and the video slot itself is the DooM window ("doomvid").
-for wid in spiral_ids:
+for wid in spiral_ids + hydra_ids:
     add(words_event_beat - 0.2, "closeWindow", {"id": wid})
 add_t(words_event_at, "deskWallpaper", {
     "id": "words", "mode": "slides",
@@ -774,22 +934,34 @@ add_t(words_event_at, "deskWallpaper", {
 # =============================================================================
 # Cue 13 (1:09) — the magic torus introduces itself in typed text, then actually asks:
 # the `oracle` is the only window in the piece allowed to take the keyboard — without
-# it the torus makes an offer the show cannot honour. They flank the torus, greeting
-# bottom-right, question bottom-left.
+# it the torus makes an offer the show cannot honour. They flank the torus, the
+# greeting down the whole right of it, the question bottom-left.
 # =============================================================================
 t1 = B["torus1"]
 add(t1, "screenFlash", {"color": WHITE, "durationBeats": 0.5})
 TORUS_SIZE = round(min(W, H) * 0.58)
 add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
                        "size": TORUS_SIZE})
-GREETING = ("Greetings, I am the magic torus. I rotate infinitely around an axis in "
-            "the 3D plane, thus I am all knowing... ask me anything")
-GREETING_CPB = 11
+GREETING = ("I am the Magic Torus! I am shaped like a question that answers itself. A "
+            "closed loop with no beginning, no end. My surface curves back into itself "
+            "infinitely, doubly, along two independent paths that never meet and never "
+            "stop. My Euler characteristic is zero: perfectly balanced between what "
+            "exists and what doesn’t."
+            "\n\n"
+            "Ask me one (1) question. Make it yes or no — I only speak in absolutes, "
+            "and I would hate to disappoint you.")
+# 28 chars a beat — the monologue is three times the length of the one it replaced and
+# the phrase is the same 32 beats, so it types at roughly a fast printer rather than a
+# person. Everything downstream is derived from the copy, so it can be rewritten again
+# and the invitation and the dialog move with it; only the phrase is fixed.
+GREETING_CPB = 28
 # The greeting sits fully to the RIGHT of the torus window, taking what is left of the
-# screen past its edge.
+# screen past its edge. It runs from mid-height to the same baseline the question sits
+# on, rather than the bottom quarter: the copy is ten wrapped lines now, and a box the
+# old height would have typed its last sentence past its own bottom edge.
 GREET_X = round((W + TORUS_SIZE) / 2 + W * 0.02)
 add(t1 + 1, "typeText", {"id": "greeting",
-    "frame": [GREET_X, round(H * 0.62), W - GREET_X - round(W * 0.02), round(H * 0.26)],
+    "frame": [GREET_X, round(H * 0.42), W - GREET_X - round(W * 0.02), round(H * 0.46)],
     "text": GREETING, "charsPerBeat": GREETING_CPB, "fontSize": 15,
     "title": "torus.txt — Edited", "interactive": True})
 
@@ -797,8 +969,9 @@ add(t1 + 1, "typeText", {"id": "greeting",
 # the greeting moves the invitation with it.
 ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB + 1
 # Answered and read before the map cuts in at cue 14. A viewer who won't play cannot
-# stall the show: it answers itself.
-ORACLE_BEATS = 14
+# stall the show: it answers itself. Four beats shorter than it was, because the longer
+# greeting takes the beats from this end of the phrase.
+ORACLE_BEATS = 10
 add(ORACLE_AT, "oracle", {"id": "oracle",
     "frame": [round(W * 0.04), round(H * 0.62), 460, 186],
     "title": "hey, i'm the magic torus", "body": "ask me a question",
@@ -806,7 +979,7 @@ add(ORACLE_AT, "oracle", {"id": "oracle",
 
 # The desktop goes back to blue under the torus. This REPLACES the words event before
 # it expires — an expiry restores the viewer's own picture for a ~300 ms flicker — and
-# leads the cue by DESK_LATENCY so the blue lands with the flash, not a swap after it.
+# leads the cue by DESK_LATENCY so the blue lands with the flash, not a frame after it.
 add_t(secs(t1) - DESK_LATENCY, "deskWallpaper",
       {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
 
@@ -837,6 +1010,28 @@ DESCENT = dict(FALL, here=True, altitude=2_600_000, toAltitude=260,
                pitch=0, toPitch=62, heading=0, toHeading=30,
                seconds=MAP_SECONDS, zoomSeconds=MAP_FALL, orbitDegrees=MAP_ORBIT,
                style=MAP_STYLE)
+# …AND THE MAP IS RUN THROUGH THE SEGMENTER (2026-09-03). Once the fall has landed, the
+# map window itself becomes the segmenter's source: every part of the orbiting picture
+# that MOVES is cut out and pinned to the desktop as its own titled window, so the act
+# is processed rather than accompanied. It reads the map window in-process — the window
+# draws itself into a bitmap, which costs no Screen Recording and no permission.
+#
+# It starts on the LANDING, not on the open: the descent from 2,600 km is the shot, and
+# burying it under its own fragments would be covering the thing being segmented. And it
+# ends a beat before cue 16's wipe, because these panels sit above everything and would
+# otherwise be on top of the transition as well.
+# PULLED in the timeline (2026-09-03): the map is left to fall and orbit on its own.
+MAPSEG_ACT = False
+SEG_MAP_FROM = mp + MAP_FALL / BEAT
+if MAPSEG_ACT:
+    add(SEG_MAP_FROM, "segSwarm", {
+        "id": "mapseg", "window": "map0", "mode": "motion",
+    # Lower than the clip's: an orbiting camera moves the WHOLE frame, so a twitchy
+    # setting boxes everything and the pile stops meaning anything.
+        "intensity": 0.35, "maxWindows": 48, "windowHz": 15,
+        "mirror": False, "border": "none"})
+    add(B["black"] - 0.1, "closeWindow", {"id": "mapseg"})
+
 add(mp, "openWindow", {"id": "map0",
     "frame": [round(W * 0.10), round(H * 0.07), round(W * 0.80), round(H * 0.78)],
     "content": {"kind": "map", "chrome": "browser", "title": "maps://{ip}", "map": DESCENT},
@@ -1109,6 +1304,30 @@ FLASH_W = round(W * 0.36)
 FLASH_H = round(FLASH_W * 320 / 425)            # pixelface.jpg's own aspect
 FACE_FRAME = {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"}
 BLUE_FRAME = {"kind": "color", "hex": DJ_BLUE, "chrome": "none"}
+# THE SEGMENTER SWARM STARTS HERE (2026-09-03), in the slot the pulled strobe left:
+# bar 59, five bars earlier than it was. `assets/giveit2meclip.mov` segmented for
+# MOTION, every region that moves becoming its own titled window holding the piece of
+# frame it was cut from, pinned where it was found, up to 60 before the oldest is
+# recycled. Nothing is tracked between frames, so a thing that keeps moving mints a new
+# window every frame and the screen fills.
+#
+# It runs through the end of bar 64 — under the horse's old slot, under the torus and
+# its ring (cue 22), under the video window (cue 23) — and `level: below` is what makes
+# that read: the pile sits beneath everything the show opens, still over the desktop, so
+# each of those acts arrives ON it rather than instead of it. Upstream, segcam pins the
+# panels above everything, because there the swarm is the whole screen.
+add(B["facestrobe"], "segSwarm", {
+    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
+    "intensity": 0.62, "maxWindows": 60, "mirror": False, "level": "below",
+    # No keyline. Upstream rings every panel green to mark it as a detection; here the
+    # panels ARE the picture, and sixty green rectangles read as a debug overlay laid
+    # over the show rather than as the show.
+    "border": "none"})
+# It runs to the vocal pickup — bar 72, where the eruption takes the screen. Everything
+# in between (the video slot, the pointer swarm, the fireworks, the mandala) plays on
+# top of it: `level: below` is what makes that the arrangement rather than a fight.
+add(B["spam"] - 0.2, "closeWindow", {"id": "segswarm"})
+
 FACESTROBE_ACT = False
 k, b = 0, fs
 while FACESTROBE_ACT and b < face_until:
@@ -1133,12 +1352,29 @@ add(hs - 0.2, "closeWindow", {"id": "hyb"})
 # happens invisibly under the opaque card, and the desktop is back before quit.
 add(hs, "deskWallpaper", {"id": "desk4", "mode": "solid", "hex": DJ_BLUE,
                           "durationSeconds": round(secs(B["ending"]) + 2 * BEAT - secs(hs), 3)})
-frames, gc, gr, max_lit = build_frames(cols=HORSE_COLS)
+# THE HORSE IS CUT (2026-09-03) and this is what is in its place: the imported
+# segmenter with the DESKTOP as its canvas. A clip is segmented for motion and every
+# region that moves becomes its own titled window holding the piece of frame it was cut
+# from, pinned where it was found — and since nothing is tracked between frames, a thing
+# that simply keeps moving mints a new window every frame. The screen fills with
+# everything the clip has done.
+#
+# It reads as the same sentence the horse did — the desktop taken over by one moving
+# thing — in the show's own furniture rather than in a sprite. The blue desktop above is
+# unchanged and still runs to the end card; this sits on it.
+#
+# The horse act is kept behind HORSE_ACT for when it comes back.
+HORSE_ACT = False
+gc = gr = max_lit = 0
+horse_exit = horse_end = hs
 HORSE_BEATS = B["torus2"] - hs
-horse, horse_exit, horse_end = horse_event(
-    frames, gc, gr, W, H, span=HORSE_SPAN, start_beat=hs,
-    in_beats=4, hold=round(HORSE_BEATS - 7, 1), out_beats=3)
-events.append(horse)
+if HORSE_ACT:
+    frames, gc, gr, max_lit = build_frames(cols=HORSE_COLS)
+    horse, horse_exit, horse_end = horse_event(
+        frames, gc, gr, W, H, span=HORSE_SPAN, start_beat=hs,
+        in_beats=4, hold=round(HORSE_BEATS - 7, 1), out_beats=3)
+    events.append(horse)
+
 
 # =============================================================================
 # Cue 22 (2:05) — the horse is cut mid-stride and the glass torus takes the middle,
@@ -1146,10 +1382,16 @@ events.append(horse)
 # rhythm slowed to the beat. They stay up until cue 24 cuts the whole clock.
 # =============================================================================
 t2 = B["torus2"]
-add(t2, "closeWindow", {"id": "horse"})
+if HORSE_ACT:
+    add(t2, "closeWindow", {"id": "horse"})
 add(t2, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
-add(t2, "glassTorus", {"id": "torus", "material": "crystal", "speed": 1.2,
-                       "size": round(min(W, H) * 0.56)})
+# PULLED in the timeline (2026-09-03): the torus and its ring of faces and sketches are
+# out, and instrumental B is the segmenter's swarm and the pointer swarm alone. The
+# screen flash on the cue stays — it is the cut, not the act.
+TORUS2_ACT = False
+if TORUS2_ACT:
+    add(t2, "glassTorus", {"id": "torus", "material": "crystal", "speed": 1.2,
+                           "size": round(min(W, H) * 0.56)})
 # THE POINTER SWARM STARTS HERE, under the torus, and arrives ONE AT A TIME.
 #
 # It used to open on cue 24 with all ninety pointers on a single frame, which put a hard
@@ -1177,7 +1419,7 @@ clock_ids = []
 # fourth would be compiled mid-show, which is a visible drop. They sit at 1, 4 and 6 so
 # no two are adjacent on the ring.
 HYDRA_SLOTS = {1, 4, 6}
-for i in range(FACE_RING):
+for i in range(FACE_RING if TORUS2_ACT else 0):
     ang = -math.pi / 2 + 2 * math.pi * i / FACE_RING        # 12 o'clock, clockwise
     wid = f"ck{i}"
     clock_ids.append(wid)
@@ -1208,10 +1450,14 @@ for i in range(FACE_RING):
 # rebuilds the window's content view, which for this one means the game starts again
 # from its title card. An id shared between a transparent overlay and a running game is
 # a restart waiting for someone to move a cue.
-add(B["video2"], "openWindow", {
-    "id": "doomvid", "anchor": "center", "frame": [0, 0, VIDEO_W, VIDEO_H],
-    "content": {"kind": "doom", "chrome": "mac", "title": "untitled.mov"},
-    "animate": {"kind": "springIn"}})
+# PULLED in the timeline (2026-09-03): the video slot is empty again. The `doom` content
+# kind and its engine are untouched — one line here brings it back.
+DOOMVID_ACT = False
+if DOOMVID_ACT:
+    add(B["video2"], "openWindow", {
+        "id": "doomvid", "anchor": "center", "frame": [0, 0, VIDEO_W, VIDEO_H],
+        "content": {"kind": "doom", "chrome": "mac", "title": "untitled.mov"},
+        "animate": {"kind": "springIn"}})
 
 # =============================================================================
 # Cue 24 (2:09) — the torus and the ring cut out from under it, leaving the slot alone
@@ -1220,7 +1466,7 @@ add(B["video2"], "openWindow", {
 # build before it is alone with the pointer.
 # =============================================================================
 v3 = B["video3"]
-for wid in clock_ids + ["torus"]:
+for wid in clock_ids + (["torus"] if TORUS2_ACT else []):
     add(v3, "closeWindow", {"id": wid})
 # The swarm is opened back at cue 22, not here — see there. It has been filling under
 # the torus and the video slot for the whole of this section.
@@ -1229,18 +1475,23 @@ for wid in clock_ids + ["torus"]:
 # Cue 25 (2:06) — the video cuts and the swarm, up since cue 24, is alone with the
 # viewer's pointer.
 # =============================================================================
-add(B["tbd_136"], "closeWindow", {"id": "doomvid"})
+if DOOMVID_ACT:
+    add(B["tbd_136"], "closeWindow", {"id": "doomvid"})
 
 # THE ICON EXPLOSIONS, moved here from cue 10. The video slot has just cut and the only
 # thing left is the pointer swarm, so a shell going up is legible in a way it never was
 # over the spiral. Transparent and full-screen, like it always was; it burns from here
 # to the eruption, which is about the seven seconds it had in chorus 1A.
-add(B["tbd_136"] + 0.2, "openWindow", {
-    "id": "works", "frame": fullscreen(),
-    "content": {"kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
-                "chrome": "none", "title": "Desktop"},
-    "animate": {"kind": "none"}})
-add(B["spam"] - 0.2, "closeWindow", {"id": "works"})
+# PULLED in the timeline (2026-09-03). They were moved here from cue 10 and are now out
+# of the cut altogether; the act is intact behind the flag.
+WORKS_ACT = False
+if WORKS_ACT:
+    add(B["tbd_136"] + 0.2, "openWindow", {
+        "id": "works", "frame": fullscreen(),
+        "content": {"kind": "fileworks", "seed": 1046, "hz": 1.0, "intensity": 1.0,
+                    "chrome": "none", "title": "Desktop"},
+        "animate": {"kind": "none"}})
+    add(B["spam"] - 0.2, "closeWindow", {"id": "works"})
 
 # =============================================================================
 # Cue 26 (2:08) — the mouse spinner, taken the other way: nothing in the app sets the
@@ -1249,11 +1500,14 @@ add(B["spam"] - 0.2, "closeWindow", {"id": "works"})
 # fixed and turns.
 # =============================================================================
 add(B["spinner"] - 0.2, "closeWindow", {"id": "tbd2"})
-add(B["spinner"], "openWindow", {
-    "id": "tbd3", "frame": fullscreen(),
-    "content": {"kind": "mandala", "seed": 3863, "cols": 5, "intensity": 1.0,
-                "chrome": "none", "title": "wait"},
-    "animate": {"kind": "none"}})
+# PULLED in the timeline (2026-09-03).
+MANDALA_ACT = False
+if MANDALA_ACT:
+    add(B["spinner"], "openWindow", {
+        "id": "tbd3", "frame": fullscreen(),
+        "content": {"kind": "mandala", "seed": 3863, "cols": 5, "intensity": 1.0,
+                    "chrome": "none", "title": "wait"},
+        "animate": {"kind": "none"}})
 
 # =============================================================================
 # Cue 27 (2:23) — a ton of crazy UI windows. The eruption: windows, terminals, alerts
@@ -1336,7 +1590,8 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0):
         b += max(0.15, rate * chaos_rng.uniform(0.7, 1.3))
 
 sm = B["spam"]
-add(sm - 0.2, "closeWindow", {"id": "tbd3"})
+if MANDALA_ACT:
+    add(sm - 0.2, "closeWindow", {"id": "tbd3"})
 add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 
 erupt(sm, B["glitch"], W / 2, H / 2, ui_chaos=0.25)
@@ -1386,6 +1641,53 @@ for ev in strobe["events"]:
 # `screenFlash` overlays, which are normal windows, so the strobe no longer whites the
 # fish out. It stays click-through either way (`hitTest` returns nil), so the eruption's
 # interactive cards underneath are still the viewer's.
+# THE SECOND HALF RUNS. From the midpoint of this cue the screen picks up a horizontal
+# CURRENT: twelve windows crossing it, half going left and half going right, each at its
+# own speed, each looping — off one edge and straight back on from the other.
+#
+# They are their own windows, deliberately NOT the eruption's `w0…w13` pool. That pool is
+# re-opened every fifth of a beat at a fresh random position, and a window being moved
+# and re-placed at the same time snaps back and forth instead of travelling; these slide
+# over the top of that while it carries on underneath.
+#
+# A lap is a full traverse plus the window's own width, so it is completely off the
+# screen before it comes back on and the wrap is never seen. The return leg is a move
+# with a millisecond on it rather than a duration of zero: the mover divides by its
+# duration.
+SLIDE_FROM = gl2 + (B["lastwords"] - gl2) / 2
+SLIDE_N = 12
+slide_rng = random.Random(316)
+slide_ids = []
+for i in range(SLIDE_N):
+    wid = f"sl{i}"
+    slide_ids.append(wid)
+    w = round(W * slide_rng.uniform(0.11, 0.17))
+    h = round(w * slide_rng.uniform(0.58, 0.80))
+    y = round((H - h) * (i + 0.5) / SLIDE_N)
+    rightward = i % 2 == 0
+    x_in, x_out = (-w, W) if rightward else (W, -w)
+    # 2.4-3.6 beats to cross: about a second and a half at this tempo, which reads as a
+    # current rather than as drifting. No two the same, so the band never locks into step.
+    lap = round(2.4 + 1.2 * (i / max(1, SLIDE_N - 1)) + slide_rng.uniform(-0.12, 0.12), 3)
+    body = {"kind": "color", "hex": slide_rng.choice(PALETTE),
+            "chrome": "mixed", "title": "look://again"}
+    # Staggered entry, so they do not all arrive on one frame.
+    b = SLIDE_FROM + lap * (i / SLIDE_N)
+    # The open lands BEFORE the first move, not on the same beat as it. Ties are not
+    # ordered — `sorted(by:)` is not stable — and `beginMove` drops a move aimed at a
+    # window that is not open yet, which would leave that slider parked off screen for
+    # the whole cue. Same reason the traveller staggers its opens by OPEN_STEP.
+    add(b - 0.02, "openWindow", {"id": wid, "frame": [x_in, y, w, h], "content": body,
+                                 "animate": {"kind": "none"}})
+    while b < B["lastwords"] - 0.1:
+        add(b, "moveWindow", {"id": wid, "frame": [x_out, y],
+                              "durationBeats": lap, "easing": "linear"})
+        b += lap
+        if b >= B["lastwords"] - 0.1:
+            break
+        add(b, "moveWindow", {"id": wid, "frame": [x_in, y], "durationSeconds": 0.001})
+        b += 0.02
+
 add(gl2, "openWindow", {
     "id": "school", "frame": fullscreen(), "level": "floating",
     "content": {"kind": "cursors", "mode": "school", "seed": 4438, "intensity": 0.6,
@@ -1408,7 +1710,7 @@ ag = B["allglitch"]
 lw = B["lastwords"]
 add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
 for wid in (sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]
-            + ["school"]):
+            + ["school"] + slide_ids):
     add(lw + 0.05, "closeWindow", {"id": wid})
 
 # =============================================================================
@@ -1419,10 +1721,14 @@ for wid in (sorted(strobe_ids) + [f"w{i}" for i in range(14)] + [f"d{i}" for i i
 en = B["ending"]
 add(en, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
 CREDITS = [
-    "GiveIt2Me",
+    "Give it 2 me",
     "by DJ_Dave",
-    "produced by ninajirachi",
-    "2026",
+    "from DJ_Dave’s debut album Hardcore Software",
+    "",
+    "[ performed by DJ_Dave,",
+    "  produced by DJ_Dave + Ninajirachi,",
+    "  written by DJ_Dave + Ninajirachi,",
+    "  mixed and mastered by Patrick O’Halloran ]",
     "",
     "Malware and music video",
     "by Computer Art, LLC",
@@ -1436,7 +1742,10 @@ CREDITS = [
 CREDITS_LPS = round(1 / BEAT, 3)
 CARD_AT = secs(en)
 TYPED_AT = CARD_AT + len(CREDITS) / CREDITS_LPS
-OUTRO_DELAY = 4.0
+# The song's credit block is four lines longer than what it replaced, and one line a
+# beat is the cadence, not a knob — so the hold gives the beats back. The quit still has
+# to land on the end of the file (the printout below checks it), not after it.
+OUTRO_DELAY = 2.0
 add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
     "linesPerSecond": CREDITS_LPS, "fontSize": 22, "photoTilt": -4,
     "outroDelay": OUTRO_DELAY,
@@ -1449,8 +1758,11 @@ add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
 # transition and a second one would be noise on top of it, and BREAK, where the end
 # card is the point and anything thrown across it is litter on the ending.
 # =============================================================================
+# instrumentalB is not stitched: that changeover was taken out in the timeline
+# (2026-09-03) — the swarm is already carrying the section and a seam on top of it is
+# one more thing arriving where nothing should.
 for _phrase in ["introB", "chorus1A", "chorus1B", "bridgeA", "bridgeB",
-                "instrumentalA", "instrumentalB", "chorus2A", "chorus2B"]:
+                "instrumentalA", "chorus2A", "chorus2B"]:
     seam(phrase_beat(_phrase), _phrase)
 
 # --- markers for the scrubber: the analyser's sections plus every cue ---
@@ -1486,11 +1798,15 @@ doc = {"meta": {"bpm": BPM, "beatOffset": OFFSET, "audioFile": AUDIO,
                 # display gets the same composition, centred and scaled.
                 "authoredSize": [W, H],
                 "analyzedBpm": BPM, "markers": markers,
-                # On by default — the desktop is painted in cue 1; false skips and logs
-                # every deskWallpaper. WallpaperController snapshots the viewer's own
-                # picture before the first swap and restores it on stop, panic and quit.
-                # ALLOW_WALLPAPER=0 opts back out.
-                "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") != "0",
+                # Gates the machine's REAL desktop picture — `wallpaper` events and
+                # `deskWallpaper` with `surface: "wallpaper"`. The show does not use
+                # either: every deskWallpaper here draws on the desktop LAYER, a window
+                # pinned under the desktop icons that looks the same, changes at display
+                # rate instead of ~3 Hz, and cannot outlive the process. So the gate is
+                # off, and it must stay off unless a cue genuinely needs the wallpaper
+                # itself swapped — the timeline test pairs the two.
+                # ALLOW_WALLPAPER=1 opens it for a cut that does.
+                "allowWallpaper": os.environ.get("ALLOW_WALLPAPER") == "1",
                 "allowDesktopFiles": os.environ.get("ALLOW_DESKTOP_FILES") == "1"},
        "events": events}
 for out in (os.path.join(ROOT, "examples", "timeline_show.json"),
@@ -1526,13 +1842,11 @@ print(f"  trail    {len(trail_ids)} delayed copies over {len(legs)} legs, "
       f"{TRAIL_DX:.0f}px and {TRAIL_LAG:.3f} beats apart "
       f"(tail {TRAIL_LINKS * TRAIL_LAG * BEAT:.2f}s behind the leader, leg {LEG * BEAT:.2f}s)")
 print(f"  spiral   {len(spiral_ids)} lyric cards, r {r0:.0f}→{r1:.0f}px")
-print(f"  words    {len(word_slides)} desktop words on the sung lyric, {words_first:.2f}s → "
-      f"{word_slides[-1][0]:.2f}s, last holds to {secs(B['torus1']):.1f}s "
+print(f"  words    {len(word_slides)} desktop cards over {len(word_stream)} sung words, "
+      f"{words_first:.2f}s → {word_slides[-1][0]:.2f}s, last holds to {secs(B['torus1']):.1f}s "
       f"(applied {DESK_LATENCY * 1000:.0f} ms early; min gap "
       f"{min(b - a for (a, _), (b, _) in zip(word_slides, word_slides[1:])):.2f}s)"
-      + (f"\n           no card yet for: {', '.join(words_missing)}" if words_missing else "")
-      + (f"\n           inner words spread evenly in: {', '.join(repr(t) for t in words_interpolated)}"
-         if words_interpolated else ""))
+      + (f"\n           no card yet for: {', '.join(words_missing)}" if words_missing else ""))
 print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.2f}s, "
       f"question at f {frame_at(secs(ORACLE_AT))} "
       f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
@@ -1546,6 +1860,11 @@ print(f"  map      f {frame_at(secs(mp))} → f {frame_at(secs(MAP_CLOSE))}: fal
       f"{2_600_000:,}m → 260m in {MAP_FALL:g}s (f {frame_at(secs(mp) + MAP_FALL)}), then "
       f"{MAP_ORBIT:g}° round the fix over {MAP_SECONDS - MAP_FALL:g}s "
       f"({MAP_ORBIT / (MAP_SECONDS - MAP_FALL):.1f}°/s), still turning when it is covered")
+if MAPSEG_ACT:
+    print(f"  mapseg   the map window segmented for motion, f {frame_at(secs(SEG_MAP_FROM))} → "
+          f"f {frame_at(secs(B['black'] - 0.1))} (starts on the landing, ends before the wipe)")
+else:
+    print("  mapseg   pulled (MAPSEG_ACT = False) — the map falls and orbits alone")
 print(f"  wipe     {len(tx_ids)} tiles {tw}x{th} on a {TX_COLS}x{TX_ROWS} grid, one a frame "
       f"f {frame_at(secs(bk))} → f {frame_at(secs(TX_COVERED))}, dissolve {TX_PER_FRAME}/frame "
       f"f {frame_at(secs(tx_first))} → f {frame_at(secs(tx_last) + TX_FADE)} "
@@ -1554,22 +1873,35 @@ if FACESTROBE_ACT:
     print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
 else:
     print("  face     cue 20 pulled (FACESTROBE_ACT = False) — no blue strobe after the wall")
-print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
-      f"exits beat {horse_exit:.0f}")
+if HORSE_ACT:
+    print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
+          f"exits beat {horse_exit:.0f}")
+else:
+    print(f"  segswarm assets/giveit2meclip.mov, motion, up to 60 windows, level below, "
+          f"f {frame_at(secs(B['facestrobe']))} → f {frame_at(secs(B['spam'] - 0.2))} "
+          f"(bars 59-72, no keyline; the horse is cut — HORSE_ACT = False)")
 print(f"  hydra2   breakdown sketch over the raymarcher: cursor walks f {frame_at(secs(hb))}, "
       f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
 print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "
       f"count starts f {frame_at(secs(bo))}, shutter f {frame_at(secs(B['wall']))}")
 print(f"  swarm    90 pointers, one every {SWARM_RAMP / 90:.2f}s over {SWARM_RAMP:g}s, "
       f"f {frame_at(secs(t2 + 0.5))} → full at f {frame_at(secs(t2 + 0.5) + SWARM_RAMP)}")
-print(f"  ring     {len(clock_ids)} windows round the torus ({FACE_RING - len(HYDRA_SLOTS)} faces, "
-      f"{len(HYDRA_SLOTS)} live hydra), one a beat, "
-      f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
+if TORUS2_ACT:
+    print(f"  ring     {len(clock_ids)} windows round the torus ({FACE_RING - len(HYDRA_SLOTS)} faces, "
+          f"{len(HYDRA_SLOTS)} live hydra), one a beat, "
+          f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
+else:
+    print("  ring     pulled (TORUS2_ACT = False) — no torus, no ring at cue 22")
 print(f"  spam     {chaos['w']} windows, {chaos['d']} alerts, {n_kick} kick flashes, "
       f"{chaos['ui']} packed with macOS UI (both eruptions)")
-print(f"  doom     the video slot ({VIDEO_W}x{VIDEO_H}) runs DooM, f {frame_at(secs(B['video2']))} → "
-      f"f {frame_at(secs(B['tbd_136']))} ({secs(B['tbd_136']) - secs(B['video2']):.1f}s; "
-      f"~1.2s of that is the menu, hidden)")
+if DOOMVID_ACT:
+    print(f"  doom     the video slot ({VIDEO_W}x{VIDEO_H}) runs DooM, f {frame_at(secs(B['video2']))} → "
+          f"f {frame_at(secs(B['tbd_136']))} ({secs(B['tbd_136']) - secs(B['video2']):.1f}s; "
+          f"~1.2s of that is the menu, hidden)")
+else:
+    print("  doom     pulled (DOOMVID_ACT = False) — the video slot is empty again")
+print(f"  slide    {SLIDE_N} windows crossing f {frame_at(secs(SLIDE_FROM))} → "
+      f"f {frame_at(secs(B['lastwords']))}, laps 2.4-3.6 beats, both directions, looping")
 print(f"  school   54 pointers on a {2.5:g}-turn spiral, flocking behind the eruption "
       f"f {frame_at(secs(gl2))} → f {frame_at(secs(B['lastwords'] + 0.05))}")
 print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events over "

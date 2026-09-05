@@ -98,8 +98,7 @@ final class CreditsController {
         while lines.first?.isEmpty == true { lines.removeFirst() }
         while lines.last?.isEmpty == true { lines.removeLast() }
         let body = lines.joined(separator: "\n")
-        let fontSize = CGFloat(p.fontSize ?? 11)
-        let rollFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let rollFont = CreditsController.rollFont(for: lines, size: p.fontSize ?? 11, in: sf)
 
         // Sizes first, then the layout places them as a group — see `layout`.
         let photoW = min(W * 0.32, 480)
@@ -248,16 +247,39 @@ final class CreditsController {
         return Layout(photo: onScreen(photoRect), roll: onScreen(rollRect), info: onScreen(infoRect))
     }
 
+    /// The widest the credits terminal is allowed to get, as a fraction of the screen:
+    /// past this the collage stops being a group and becomes a wall of type.
+    static let rollWidthFraction: CGFloat = 0.46
+
+    /// What the terminal WOULD take across to hold `lines` at `font` — the longest line
+    /// plus a little air, plus Terminal's insets and the strip the photo laps over.
+    static func naturalRollWidth(for lines: [String], font: NSFont) -> CGFloat {
+        let charW = ("M" as NSString).size(withAttributes: [.font: font]).width
+        let longest = CGFloat(lines.map(\.count).max() ?? 0)
+        return charW * (longest + 6) + TerminalStyle.inset * 2 + photoOverlap + 12
+    }
+
+    /// The credits face, shrunk until the longest line fits the width the terminal is
+    /// allowed to take. `rollSize` clamps the width, so at the authored size a long line
+    /// does not widen the window — it WRAPS, and a credit that breaks in the middle of a
+    /// name reads as a bug. The song's own credit block runs to 44 characters.
+    static func rollFont(for lines: [String], size: Double, in sf: NSRect) -> NSFont {
+        var pt = CGFloat(size)
+        func font(_ pt: CGFloat) -> NSFont { .monospacedSystemFont(ofSize: pt, weight: .regular) }
+        while pt > 11, naturalRollWidth(for: lines, font: font(pt)) > sf.width * rollWidthFraction {
+            pt -= 0.5
+        }
+        return font(pt)
+    }
+
     /// The credits terminal, sized to its copy: the longest line plus a little air across,
     /// the line count plus a spare line down (the caret sits on its own line while the
     /// copy types by the line), plus Terminal's insets and a title bar.
     static func rollSize(for lines: [String], font: NSFont, in sf: NSRect) -> NSSize {
         let lineH = NSLayoutManager().defaultLineHeight(for: font)
-        let charW = ("M" as NSString).size(withAttributes: [.font: font]).width
-        let longest = CGFloat(lines.map(\.count).max() ?? 0)
-        let w = charW * (longest + 6) + TerminalStyle.inset * 2 + photoOverlap + 12
+        let w = naturalRollWidth(for: lines, font: font)
         let h = lineH * CGFloat(lines.count + 2) + TerminalStyle.inset * 2 + 28
-        return NSSize(width: min(sf.width * 0.46, max(sf.width * 0.28, w)),
+        return NSSize(width: min(sf.width * rollWidthFraction, max(sf.width * 0.28, w)),
                       height: min(sf.height * 0.62, max(sf.height * 0.22, h)))
     }
 
@@ -544,7 +566,7 @@ final class CreditsController {
 
     // MARK: - Pieces
 
-    static func defaultCaption() -> String { "I survived DJ_Dave GiveIt2Me" }
+    static func defaultCaption() -> String { "I SURVIVED THE GIVE IT 2 ME MALWARE EXPERIENCE!" }
 
     /// A white card with the photo and a caption under it — the frame a photo gets
     /// when somebody wants to keep it.
@@ -577,12 +599,13 @@ final class CreditsController {
 
         let hasButton = showsSave
         let cap = NSTextField(labelWithString: caption)
-        cap.font = captionFont(size: 21)
+        let capW = size.width - 16
+        cap.font = fittedCaptionFont(caption, in: capW)
         cap.textColor = NSColor(white: 0.12, alpha: 1)
         cap.alignment = .center
-        cap.maximumNumberOfLines = 1
+        cap.maximumNumberOfLines = 2
         cap.cell?.truncatesLastVisibleLine = true
-        cap.frame = NSRect(x: 8, y: hasButton ? 60 : 22, width: size.width - 16, height: 30)
+        cap.frame = NSRect(x: 8, y: hasButton ? 56 : 18, width: capW, height: 36)
         root.addSubview(cap)
 
         if hasButton {
@@ -609,6 +632,25 @@ final class CreditsController {
         }
         return root
     }
+
+    /// The caption, set on ONE LINE and shrunk until it fits the card. Truncating it to
+    /// "I SURVIVED THE GIVE IT 2 ME MALWA…" would be worse than setting it small, and the
+    /// caption is the one line on the end card the viewer is meant to read off the photo.
+    ///
+    /// Fitted to the box less `captionSideMargin`: a text field is a little wider than
+    /// the type inside it, and measured flush the last character comes out clipped
+    /// against the card's edge. Under the floor it wraps to a second line instead.
+    static func fittedCaptionFont(_ caption: String, in width: CGFloat) -> NSFont {
+        var pt: CGFloat = 21
+        while pt > 12, caption.size(withAttributes: [.font: captionFont(size: pt)]).width
+                > width - captionSideMargin {
+            pt -= 0.5
+        }
+        return captionFont(size: pt)
+    }
+
+    /// Air kept either side of the caption, on top of the field's own inset.
+    static let captionSideMargin: CGFloat = 16
 
     /// The caption's face: Apple Garamond when installed (it never shipped with the
     /// system), then Hoefler Text, then Georgia. Never a handwriting face.

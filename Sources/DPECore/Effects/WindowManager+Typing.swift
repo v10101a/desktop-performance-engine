@@ -20,7 +20,8 @@ extension WindowManager {
         let sink: TypedTextSink
         if p.chrome == "terminal" {
             let term = EffectWindow(contentRect: frame,
-                                    content: ContentSpec(kind: "code", text: "",
+                                    content: ContentSpec(kind: "code", hex: p.hex, text: "",
+                                                         fg: p.fg,
                                                          chrome: "terminal", title: p.title))
             guard let label = firstTextField(in: term.contentView) else { return }
             label.font = .monospacedSystemFont(ofSize: CGFloat(p.fontSize ?? 11), weight: .regular)

@@ -440,11 +440,16 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         // that it is indistinguishable from the real thing sitting next to it.
         //
         // Manual frame (no autolayout) — created at volume during the show.
-        view.layer?.backgroundColor = TerminalStyle.background.cgColor
+        // …unless the event asks for another surface. `hex` is the ground and `fg` the
+        // type, the same two fields the `text` and `lyric` kinds use, so a terminal can
+        // be recoloured per window without every terminal in the piece changing with it.
+        let termGround = content.hex.flatMap { NSColor(hex: $0) } ?? TerminalStyle.background
+        let termInk = content.fg.flatMap { NSColor(hex: $0) } ?? TerminalStyle.text
+        view.layer?.backgroundColor = termGround.cgColor
         view.layer?.cornerRadius = 0            // Terminal has square content corners
         let label = NSTextField(wrappingLabelWithString: content.text ?? "")
         label.font = TerminalStyle.font
-        label.textColor = TerminalStyle.text
+        label.textColor = termInk
         label.drawsBackground = false
         label.isBezeled = false
         label.isEditable = false
@@ -468,6 +473,11 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
                              rings: content.cols ?? 5, intensity: content.intensity ?? 1.0)
         mv.autoresizingMask = [.width, .height]
         view.addSubview(mv)
+    case "segcam":
+        // The imported segmenter (~/segcam), headless: camera or clip in, boxes out.
+        let sc = SegCamView(size: body.size, content: content)
+        sc.autoresizingMask = [.width, .height]
+        view.addSubview(sc)
     case "particles":
         // Transparent, like the fireworks and the swarm: no ground, so the field is over
         // whatever the show has on screen. `mode` is the behaviour, `sprite` the body.
@@ -1004,10 +1014,7 @@ final class TextEditorView: NSView, TypedTextSink {
         layer?.cornerRadius = 6
         layer?.masksToBounds = true
 
-        let pad = min(max(size.width * 0.055, 14), 40)
-        textLayer.frame = CGRect(x: pad, y: pad,
-                                 width: size.width - pad * 2,
-                                 height: size.height - pad * 1.4)
+        textLayer.frame = TextEditorView.textBox(in: size)
         textLayer.isWrapped = true
         textLayer.alignmentMode = .left
         textLayer.truncationMode = .none
@@ -1016,6 +1023,28 @@ final class TextEditorView: NSView, TypedTextSink {
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    /// The page inside the document — the frame the copy actually has to fit in, and the
+    /// one thing a cue can get wrong: `typeText` authors an outer window frame, and copy
+    /// longer than this box types straight off the bottom of its own window with no
+    /// scroll and no warning. Shared so a test can measure the box the show authors.
+    static func textBox(in size: NSSize) -> CGRect {
+        let pad = min(max(size.width * 0.055, 14), 40)
+        return CGRect(x: pad, y: pad, width: size.width - pad * 2, height: size.height - pad * 1.4)
+    }
+
+    /// How tall `text` sets in that box at `fontSize`, with the same line spacing
+    /// `showTyped` uses. Bigger than the box means the copy does not fit.
+    static func textHeight(_ text: String, in size: NSSize, fontSize: CGFloat) -> CGFloat {
+        let para = NSMutableParagraphStyle()
+        para.lineSpacing = fontSize * 0.30
+        let box = textBox(in: size)
+        return text.boundingRect(
+            with: NSSize(width: box.width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin],
+            attributes: [.font: NSFont.systemFont(ofSize: fontSize, weight: .regular),
+                         .paragraphStyle: para]).height
+    }
 
     /// CATextLayer anchors its string at the TOP of its frame, which is what a
     /// document does — the text grows downward as it is typed.

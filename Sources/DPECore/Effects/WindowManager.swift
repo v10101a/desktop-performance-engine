@@ -445,6 +445,10 @@ final class WindowManager {
         switch name {
         case "floating": return .floating
         case "front":    return NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
+        // Under everything the show opens, still over the desktop picture. For a layer
+        // that is meant to be covered — cue 21's swarm, which the torus, the ring and the
+        // video slot all land on top of.
+        case "below":    return NSWindow.Level(rawValue: NSWindow.Level.normal.rawValue - 1)
         default:         return .normal
         }
     }

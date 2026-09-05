@@ -3,9 +3,40 @@ import AppKit
 /// Swaps the desktop wallpaper during the show and restores the original per-screen
 /// image afterward. `NSWorkspace.setDesktopImageURL` needs no special permission.
 final class WallpaperController {
+    /// Where a desktop change is drawn.
+    enum Surface {
+        /// A window at the desktop level (`DesktopLayer`). Looks like the wallpaper,
+        /// costs a layer assignment, changes nothing about the machine.
+        case layer
+        /// The machine's real desktop picture, via `NSWorkspace.setDesktopImageURL`.
+        /// Gated on `enabled`, and ~3 Hz whatever is asked for.
+        case wallpaper
+
+        init(_ name: String?) { self = name == "wallpaper" ? .wallpaper : .layer }
+    }
+
+    /// The photosensitivity cap on the desktop layer, in changes per second.
+    ///
+    /// This is a safety limit, not a performance one — the layer is measured at 119 Hz
+    /// sustained on the show's own pump. The ~3 Hz wall in `setDesktopImageURL` used to
+    /// enforce this by accident; on the layer nothing does, so it is enforced here.
+    /// 12 Hz is the peak full-screen change rate the current cut already measures at, and
+    /// it leaves clear air under the 15–20 Hz band that triggers photosensitive seizures
+    /// (see CLAUDE.md). Raising it means re-measuring the whole show, not editing a
+    /// number.
+    static let layerMaxHz: Double = 12
+
     /// Off by default. Only true when the timeline sets `meta.allowWallpaper = true`,
     /// acknowledging the swap may not fully restore (see Meta.allowWallpaper).
+    ///
+    /// Gates the REAL wallpaper only — `wallpaper` events, and `deskWallpaper` with
+    /// `surface: "wallpaper"`. The desktop layer needs no gate: it makes no persistent
+    /// change to reverse.
     var enabled = false
+
+    /// The desktop-level window every `surface: "layer"` change is drawn into. Opened on
+    /// the first such change and closed on teardown; costs nothing while it is shut.
+    private let layer = DesktopLayer()
 
     /// Resolves relative `path` params against the timeline file's directory.
     var baseDir: URL?
@@ -40,11 +71,18 @@ final class WallpaperController {
 
     // MARK: - Snapshot / restore
 
-    func snapshot() {
+    /// Just the per-screen picture URLs — what `glitch` tears and what the glass torus
+    /// reflects. No agent-store copy, because nothing that reads this is going to undo a
+    /// swap. Cheap enough that the layer path can take it on every run.
+    func snapshotOriginals() {
         original = NSScreen.screens.compactMap { screen in
             guard let url = NSWorkspace.shared.desktopImageURL(for: screen) else { return nil }
             return (screen, url)
         }
+    }
+
+    func snapshot() {
+        snapshotOriginals()
         storeSnapshot = nil
         if FileManager.default.fileExists(atPath: Self.agentStore.path) {
             let copy = FileManager.default.temporaryDirectory
@@ -142,6 +180,9 @@ final class WallpaperController {
     private struct Desk {
         let id: String
         let mode: String
+        /// Layer or real wallpaper. Fixed for the run — a single effect does not move
+        /// between surfaces halfway through.
+        let surface: Surface
         let hz: Double
         let intensity: Double
         let seed: UInt64
@@ -154,6 +195,10 @@ final class WallpaperController {
         let slideTimes: [Double]
         /// Index of the last scheduled slide applied; −1 before the first.
         var slide = -1
+        /// How many frames this run actually put on the desktop. Diagnostics: the claim
+        /// that the layer lands every word of a scheduled run is only worth making if
+        /// something counts them.
+        var shown = 0
         let startTime: Double
         var endTime: Double?
         /// Timeline position of the last applied frame, for rate limiting.
@@ -164,19 +209,54 @@ final class WallpaperController {
 
     private var desk: Desk?
 
+    /// Diagnostics only — `desk` itself stays private. `DesktopLayerTests` reads these to
+    /// assert what the gate and the hz cap actually did, rather than inferring it from a
+    /// log line.
+    var deskIsRunning: Bool { desk != nil }
+    var deskHz: Double { desk?.hz ?? 0 }
+    var deskFramesShown: Int { desk?.shown ?? 0 }
+
     /// Snapshot happened at play(); `enabled` is the meta.allowWallpaper gate. Both are
     /// already wired — this reuses them rather than opening a second path to the same
     /// global state.
     func beginDesk(_ p: DeskWallpaperParams, at now: Double, bpm: Double) {
-        guard enabled else {
-            NSLog("[DPE] deskWallpaper skipped — disabled for reversibility "
-                + "(set meta.allowWallpaper=true to enable)")
+        let surface = Surface(p.surface)
+        // The gate is about persistence, so it only applies to the surface that
+        // persists. A layer run leaves nothing behind to fail to restore.
+        if surface == .wallpaper, !enabled {
+            NSLog("[DPE] deskWallpaper skipped — surface=\"wallpaper\" is disabled for "
+                + "reversibility (set meta.allowWallpaper=true, or drop the surface param "
+                + "to draw on the desktop layer instead)")
             return
         }
-        if !hasSnapshot { snapshot() }
+        switch surface {
+        case .wallpaper:
+            if !hasSnapshot { snapshot() }
+        case .layer:
+            // `glitch` tears the ORIGINAL desktop picture, and the glass torus reflects
+            // it, so both still need to know what it is — but the agent-store copy that
+            // `snapshot()` also takes exists purely so the real swap can be undone on
+            // every Space, and there is nothing to undo here.
+            if original.isEmpty { snapshotOriginals() }
+            layer.open()
+            // Decode slides to the layer's own backing size and no further — carrying a
+            // 3024-px card on a 1440-px display is pure memory.
+            slides.maxPixel = NSScreen.screens.map {
+                Int(max($0.frame.width, $0.frame.height) * $0.backingScaleFactor)
+            }.max() ?? 3024
+        }
         let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)
+        // The real surface is capped by the window server at ~3 Hz; the layer is capped
+        // here, for eyes rather than for throughput.
+        let asked = max(0, p.hz ?? 8)
+        let hz = surface == .layer ? min(asked, Self.layerMaxHz) : asked
+        if hz < asked {
+            NSLog("[DPE] deskWallpaper: hz \(asked) clamped to \(hz) — the desktop layer is "
+                + "fast enough to reach the photosensitive band, so it is limited here")
+        }
         desk = Desk(id: p.id, mode: p.mode ?? "strobe",
-                    hz: max(0, p.hz ?? 8),
+                    surface: surface,
+                    hz: hz,
                     intensity: min(1, max(0, p.intensity ?? 0.6)),
                     seed: UInt64(p.seed ?? 1),
                     hex: p.hex ?? "#020AF5",
@@ -192,21 +272,49 @@ final class WallpaperController {
     }
 
     func stopDesk(id: String) {
-        guard desk?.id == id else { return }
+        guard let d = desk, d.id == id else { return }
         desk = nil
-        restore()
+        tearDown(d)
     }
 
-    /// Idempotent teardown for panic/seek. Puts the original wallpaper back and removes
-    /// every frame this run wrote.
+    /// Idempotent teardown for panic/seek. Takes the desktop back and removes every
+    /// frame this run wrote.
     func closeDesk() {
-        guard desk != nil else { return }
+        guard let d = desk else {
+            // A layer left open by a run that has already ended (duration expiry closes
+            // the effect but panic can still arrive after). Shutting a shut layer is free.
+            layer.close()
+            slides.removeAll()
+            return
+        }
         desk = nil
-        restore()
+        tearDown(d)
         WallpaperImage.cleanUp()
     }
 
+    /// Give the desktop back, by whichever route this run took it.
+    ///
+    /// The layer is the cheap case and the honest one: closing the window *is* the
+    /// restore, it cannot half-fail, and it costs no `setDesktopImageURL` call. The real
+    /// surface has to be written back from the snapshot, on the swap queue, as ever.
+    private func tearDown(_ d: Desk) {
+        switch d.surface {
+        case .layer:
+            layer.close()
+            slides.removeAll()
+        case .wallpaper:
+            restore()
+        }
+    }
+
     /// Called each tick from the engine.
+    ///
+    /// Everything below about cost and back-pressure describes `surface: "wallpaper"`.
+    /// On the default `surface: "layer"` none of it applies — a change is a
+    /// `CALayer.contents` assignment (measured median 0.054 ms for a strobe frame,
+    /// 11.7 ms for a full-screen one, 119 Hz sustained on this same pump), there is no
+    /// in-flight swap to wait on, and `hz` is honoured up to `layerMaxHz`. The two paths
+    /// share this method because they share the *timing*; only the last step differs.
     ///
     /// `setDesktopImageURL` is far slower than it looks. Measured on this machine
     /// (macOS 26, one built-in display) it blocks for **~270–330 ms per call**, and the
@@ -231,7 +339,7 @@ final class WallpaperController {
 
         if let end = d.endTime, now >= end {
             desk = nil
-            restore()
+            tearDown(d)
             WallpaperImage.cleanUp()
             return
         }
@@ -247,14 +355,21 @@ final class WallpaperController {
             guard !applying else { return }
             let elapsed = now - d.startTime
             let due = d.slideTimes.lastIndex { $0 <= elapsed } ?? -1
+            // Keep the next few words decoded. The schedule is known in advance, so the
+            // layer never has to decode a card in the tick that shows it.
+            if d.surface == .layer, due != d.slide {
+                slides.prewarm(Array(d.slides[max(0, due)...]))
+            }
             if due != d.slide, due >= 0, due < d.slides.count {
-                let url = d.slides[due]
-                if FileManager.default.fileExists(atPath: url.path) {
-                    apply(url, to: NSScreen.screens)
-                } else {
-                    NSLog("[DPE] deskWallpaper: slide missing at \(url.path)")
+                // `present` reports whether the frame actually landed. A slide still
+                // decoding leaves `d.slide` alone so the next tick tries again — and if
+                // the word after it has come due by then, that one goes up instead. A
+                // word the machine could not fit is skipped, never queued behind the one
+                // being sung.
+                if present(d.slides[due], surface: d.surface) {
+                    d.slide = due
+                    d.shown += 1
                 }
-                d.slide = due
             }
             desk = d
             return
@@ -272,32 +387,34 @@ final class WallpaperController {
         switch d.mode {
         case "solid":
             // One shot: paint it once and stop. Re-applying a static colour every tick
-            // would rewrite the desktop picture at `hz` for no visible change, and the
-            // window server charges for every one of those.
-            if d.frame == 1, let url = try? WallpaperImage.solid(hex: d.hex) {
-                apply(url, to: NSScreen.screens)
-            }
+            // would rewrite the desktop at `hz` for no visible change, and on the real
+            // surface the window server charges for every one of those.
+            if d.frame == 1 { present(hex: d.hex, surface: d.surface) }
         case "slides":
             // A word per tick, wrapping — the list is shorter than the run, so it plays
-            // through more than once. The files are handed to the window server as they
-            // are: nothing is rendered, written or cleaned up, so the only cost per tick
-            // is the swap itself.
+            // through more than once.
             guard !d.slides.isEmpty else {
                 NSLog("[DPE] deskWallpaper: slides with no images")
                 desk = nil
                 return
             }
-            let url = d.slides[(d.frame - 1) % d.slides.count]
-            if FileManager.default.fileExists(atPath: url.path) {
-                apply(url, to: NSScreen.screens)
+            let index = (d.frame - 1) % d.slides.count
+            if d.surface == .layer {
+                // Wrapping, so the lookahead wraps too.
+                slides.prewarm((0...SlideStore.lookahead).map {
+                    d.slides[(index + $0) % d.slides.count]
+                })
+            }
+            if present(d.slides[index], surface: d.surface) {
+                d.shown += 1
             } else if d.frame == 1 {
-                NSLog("[DPE] deskWallpaper: slide missing at \(url.path)")
+                // First tick only: a missing file is worth one line, not one per tick.
+                NSLog("[DPE] deskWallpaper: slide not ready or missing at \(d.slides[index].path)")
             }
         case "strobe":
-            // Alternate solid black and solid white on every screen.
-            if let url = try? WallpaperImage.solid(gray: d.frame % 2 == 0 ? 0 : 1) {
-                apply(url, to: NSScreen.screens)
-            }
+            // Alternate black and white on every screen. On the layer that is two floats;
+            // on the real surface it is two cached 64×64 PNGs and a swap.
+            present(gray: d.frame % 2 == 0 ? 0 : 1, surface: d.surface)
         case "glitch":
             applyGlitch(&d)
         case "recursive":
@@ -326,6 +443,7 @@ final class WallpaperController {
         let settings = GlitchSettings(intensity: d.intensity, seed: d.seed &+ UInt64(d.frame))
         let sequence = d.frame
         let cached = glitchSource?.url == source ? glitchSource?.bitmap : nil
+        let surface = d.surface
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             defer { DispatchQueue.main.async { self?.desk?.busy = false } }
             let bitmap: Bitmap
@@ -339,8 +457,17 @@ final class WallpaperController {
                 DispatchQueue.main.async { self?.glitchSource = (source, fresh) }
             }
             guard let glitched = try? glitch(bitmap, settings: settings),
-                  let out = try? glitched.makeImage(),
-                  let url = try? WallpaperImage.uniqueURL(prefix: "glitch", sequence: sequence),
+                  let out = try? glitched.makeImage()
+            else { return }
+            // The layer takes the frame as it stands. Only the real surface needs it on
+            // disk, because macOS stores a path rather than the picture — so the JPEG
+            // encode and the write are skipped entirely on the layer, along with the
+            // sweep that would have had to remove the file afterwards.
+            if surface == .layer {
+                DispatchQueue.main.async { self?.layer.show(out) }
+                return
+            }
+            guard let url = try? WallpaperImage.uniqueURL(prefix: "glitch", sequence: sequence),
                   (try? WallpaperImage.write(out, to: url)) != nil
             else { return }
             DispatchQueue.main.async { self?.apply(url, to: NSScreen.screens) }
@@ -356,15 +483,35 @@ final class WallpaperController {
         // Only the display IDs cross into the task — NSScreen isn't Sendable, and the
         // screen is re-resolved on the main thread when the capture lands.
         let ids = NSScreen.screens.compactMap(WallpaperImage.displayID(of:))
+        let surface = d.surface
         Task.detached(priority: .userInitiated) { [weak self] in
+            var captured: [(CGDirectDisplayID, CGImage)] = []
             var written: [(CGDirectDisplayID, URL)] = []
             for id in ids {
-                guard let image = try? await WallpaperImage.captureDisplay(id),
-                      let url = try? WallpaperImage.uniqueURL(prefix: "recursive-\(id)",
+                guard let image = try? await WallpaperImage.captureDisplay(id) else { continue }
+                // The layer shows the capture directly — and note it is genuinely
+                // recursive either way, since a desktop-level window is on screen and so
+                // is in the shot.
+                if surface == .layer { captured.append((id, image)); continue }
+                guard let url = try? WallpaperImage.uniqueURL(prefix: "recursive-\(id)",
                                                              sequence: sequence),
                       (try? WallpaperImage.write(image, to: url)) != nil
                 else { continue }
                 written.append((id, url))
+            }
+            if surface == .layer {
+                let shots = captured
+                DispatchQueue.main.async {
+                    guard let me = self else { return }
+                    for (id, image) in shots {
+                        guard let screen = NSScreen.screens.first(where: {
+                            WallpaperImage.displayID(of: $0) == id
+                        }) else { continue }
+                        me.layer.show(image, on: screen)
+                    }
+                    me.desk?.busy = false
+                }
+                return
             }
             let done = written
             // Hop back the way the rest of DPE does. `MainActor.run` capturing the weak
@@ -380,6 +527,57 @@ final class WallpaperController {
                 }
                 me.desk?.busy = false
             }
+        }
+    }
+
+    // MARK: - Presenting a frame on whichever surface the run chose
+
+    /// The slides the layer path has decoded, kept a few ahead of the one on screen.
+    private let slides = SlideStore()
+
+    /// A flat colour. `solid` and `strobe` want nothing else, and on the layer that means
+    /// no bitmap, no file and no window server: two floats into a `CALayer`.
+    private func present(hex: String, surface: Surface) {
+        switch surface {
+        case .layer:
+            guard let color = NSColor(hex: hex)?.cgColor else {
+                NSLog("[DPE] deskWallpaper: not a colour: \(hex)")
+                return
+            }
+            layer.show(color: color)
+        case .wallpaper:
+            guard let url = try? WallpaperImage.solid(hex: hex) else { return }
+            apply(url, to: NSScreen.screens)
+        }
+    }
+
+    private func present(gray: CGFloat, surface: Surface) {
+        switch surface {
+        case .layer:
+            layer.show(color: CGColor(red: gray, green: gray, blue: gray, alpha: 1))
+        case .wallpaper:
+            guard let url = try? WallpaperImage.solid(gray: gray) else { return }
+            apply(url, to: NSScreen.screens)
+        }
+    }
+
+    /// A slide from disk. Returns whether the frame actually went up.
+    ///
+    /// `false` on the layer means the decode has not finished yet — the caller drops the
+    /// tick and retries, which is the same back-pressure the real surface gets from
+    /// `applying`, for the same reason: a frame that cannot be shown now must not be
+    /// queued to show later, or the desktop keeps changing after the section has ended.
+    @discardableResult
+    private func present(_ url: URL, surface: Surface) -> Bool {
+        switch surface {
+        case .layer:
+            guard let image = slides.image(at: url) else { return false }
+            layer.show(image)
+            return true
+        case .wallpaper:
+            guard FileManager.default.fileExists(atPath: url.path) else { return false }
+            apply(url, to: NSScreen.screens)
+            return true
         }
     }
 

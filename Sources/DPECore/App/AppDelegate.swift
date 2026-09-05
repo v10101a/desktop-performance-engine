@@ -214,6 +214,98 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // What the desktop actually costs to change, both ways: a window at the desktop
+        // level vs. `setDesktopImageURL`. The layer rounds are harmless; the real-API
+        // round changes your wallpaper, so it only runs with --include-real.
+        // --above-icons puts the layer over the desktop icons instead of under them.
+        if CommandLine.arguments.contains("--bench-wallpaper") {
+            WallpaperBench.run(
+                includeReal: CommandLine.arguments.contains("--include-real"),
+                depth: CommandLine.arguments.contains("--above-icons") ? .aboveIcons : .belowIcons
+            ) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSApp.terminate(nil) }
+            }
+            return
+        }
+
+        // Cue 14's arrangement end to end: a live map window, segmented for motion by
+        // reading that window in-process. Proves the whole chain — window drawing →
+        // pixel buffer → engine → panels — and needs no Screen Recording to do it.
+        if CommandLine.arguments.contains("--test-mapseg") {
+            let size = NSSize(width: 900, height: 560)
+            let spec = ContentSpec(kind: "map", chrome: "browser", title: "maps://{ip}",
+                                   map: MapSpec(lat: 34.0522, lon: -118.2437, here: true,
+                                                toLat: nil, toLon: nil,
+                                                altitude: 2_600_000, toAltitude: 260,
+                                                pitch: 0, toPitch: 62,
+                                                heading: 0, toHeading: 30,
+                                                seconds: 14, style: "hybrid",
+                                                zoomSeconds: 3, orbitDegrees: 180))
+            let win = NSWindow(contentRect: NSRect(x: 60, y: 200, width: size.width, height: size.height),
+                               styleMask: [.titled], backing: .buffered, defer: false)
+            win.title = "map"
+            win.contentView = makeEffectContentView(spec, size: size)
+            win.orderFrontRegardless()
+
+            let swarm = SegSwarmController()
+            // Started after the fall, exactly as the cue does.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                NSLog("[DPE] mapseg: segmenting the map window")
+                swarm.begin(SegSwarmParams(id: "t", window: "x", mode: "motion",
+                                           intensity: 0.35, mirror: false,
+                                           maxWindows: 48, border: "none"),
+                            sourceView: win.contentView)
+            }
+            for wait in [6.0, 10.0] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+                    NSLog("[DPE] mapseg: %.0fs — %d window(s)", wait, swarm.windowCountForTesting)
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
+                swarm.closeAll()
+                NSLog("[DPE] mapseg: cleared — %d window(s) left", swarm.windowCountForTesting)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { NSApp.terminate(nil) }
+            }
+            return
+        }
+
+        // The swarm display (cue 21): does a clip actually fill the desktop with windows?
+        // It puts real panels above everything for a few seconds and then clears them,
+        // which is exactly what the cue does — there is no way to check it that does not
+        // look like the act.
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-segswarm") }) {
+            let clip = arg.contains("=") ? String(arg.split(separator: "=", maxSplits: 1)[1])
+                                         : "assets/giveit2meclip.mov"
+            let swarm = SegSwarmController()
+            NSLog("[DPE] segswarm: %@", clip)
+            swarm.begin(SegSwarmParams(id: "t", path: clip, mode: "motion",
+                                       intensity: 0.62, mirror: false, maxWindows: 60))
+            for wait in [2.0, 5.0] {
+                DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+                    NSLog("[DPE] segswarm: %.0fs — %d window(s)", wait, swarm.windowCountForTesting)
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+                swarm.closeAll()
+                NSLog("[DPE] segswarm: cleared — %d window(s) left", swarm.windowCountForTesting)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { NSApp.terminate(nil) }
+            }
+            return
+        }
+
+        // segcam, imported from ~/segcam: does it get frames, and does it find anything
+        // in them? Both halves matter — a black window and a window full of picture with
+        // no boxes on it are different failures.
+        //
+        //   --test-segcam                       the camera
+        //   --test-segcam=path/to/clip.mov      a video file
+        //   DPE_SEGCAM_MODE=motion --test-segcam
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-segcam") }) {
+            let clip = arg.contains("=") ? String(arg.split(separator: "=", maxSplits: 1)[1]) : nil
+            runSegCamSelfTest(clip: clip)
+            return
+        }
+
         // The three particle behaviours, side by side, so they can be LOOKED at: which
         // one belongs on a cue is a judgement about the piece, not something a number
         // settles. Each window is one mode; move the mouse over the third.
@@ -613,6 +705,42 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             NSApp.terminate(nil)
+        }
+    }
+
+    private func runSegCamSelfTest(clip: String?) {
+        let size = NSSize(width: 720, height: 460)
+        let mode = ProcessInfo.processInfo.environment["DPE_SEGCAM_MODE"] ?? "face"
+        let spec = ContentSpec(kind: "segcam", path: clip, chrome: "mixed",
+                               title: clip.map { "segcam · \($0)" } ?? "segcam · camera",
+                               mode: mode)
+        NSLog("[DPE] segcam: source %@, segmenter %@",
+              clip ?? "camera", mode)
+        // ON screen: the view draws in `draw(_:)`, and an off-screen window is not asked
+        // to draw — it would report no picture however well the capture is working.
+        let host = NSWindow(contentRect: NSRect(x: 80, y: 80, width: size.width, height: size.height),
+                            styleMask: [.titled], backing: .buffered, defer: false)
+        host.title = "segcam"
+        let content = makeEffectContentView(spec, size: size)
+        host.contentView = content
+        host.orderFrontRegardless()
+        let view = content.subviews.compactMap { $0 as? SegCamView }.first
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            guard let view else { NSLog("[DPE] segcam: no view built"); NSApp.terminate(nil); return }
+            NSLog("[DPE] segcam: picture=%@ segments=%d status=%@",
+                  view.hasPictureForTesting ? "yes" : "NO",
+                  view.segmentCountForTesting,
+                  view.statusForTesting ?? "—")
+            if let shot = CGWindowListCreateImage(.null, .optionIncludingWindow,
+                                                  CGWindowID(host.windowNumber),
+                                                  [.boundsIgnoreFraming, .bestResolution]),
+               let path = ProcessInfo.processInfo.environment["DPE_SEGCAM_PNG"],
+               let png = NSBitmapImageRep(cgImage: shot).representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: path))
+                NSLog("[DPE] segcam: wrote %@", path)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
         }
     }
 

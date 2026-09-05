@@ -252,8 +252,8 @@ enum StillRenderer {
         // the credits dialog. Cut off partway through the copy, the way the viewer first
         // sees it, caret and all.
         let creditsCopy = [
-            "GiveIt2Me", "by DJ_Dave", "produced by ninajirachi", "2026", "",
-            "Malware and mu\u{2588}",
+            "Give it 2 me", "by DJ_Dave", "from DJ_Dave\u{2019}s debut album Hardcore Software", "",
+            "[ performed by DJ_Dave,", "  produced by DJ_Dave + Nin\u{2588}",
         ].joined(separator: "\n")
         let roll = makeEffectContentView(
             ContentSpec(kind: "code", text: creditsCopy, chrome: "terminal", title: "credits"),

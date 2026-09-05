@@ -28,7 +28,10 @@ final class SystemProbeController {
         var finished = false
     }
 
-    private var report: Report?
+    /// One report per id, not one report. Cue 4 splits the probe into a window per
+    /// section and scatters them, so several are up and typing at once; before that this
+    /// was a single optional and opening a second window tore the first one down.
+    private var reports: [String: Report] = [:]
 
     var bpm: Double = 120
 
@@ -40,16 +43,28 @@ final class SystemProbeController {
     func begin(_ p: SystemProbeParams, at now: Double, bpm: Double) {
         // Same id, already up, and a `focus`: don't rebuild the window — clear the text
         // and read the named sections back out, highlighted. The pacing can change too.
-        if var r = report, r.id == p.id, let focus = p.focus {
+        if var r = reports[p.id], let focus = p.focus {
             MainActor.assumeIsolated { r.probe.rerun(focus: focus) }
             if let rate = p.linesPerBeat { r.cadence.ratePerBeat = rate }
             r.finished = false
             let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)
             r.endTime = duration.map { now + $0 }
-            report = r
+            reports[p.id] = r
             return
         }
-        if report != nil { teardown() }
+        // Only this id is replaced. Another report under another id is another window
+        // and stays where it is.
+        teardown(id: p.id)
+
+        // The surface every report prints on. Static and shared — see `Phosphor.use` —
+        // so this is the LAST one to open deciding the look for all of them; in the show
+        // they are opened together with the same colours, which is what that is for.
+        if let ground = p.hex.flatMap({ NSColor(hex: $0) }),
+           let ink = p.fg.flatMap({ NSColor(hex: $0) }) {
+            Phosphor.use(background: ground, text: ink)
+        } else {
+            Phosphor.useTerminalBasic()
+        }
 
         // Probe is @MainActor because it drives SwiftUI; the pump already guarantees
         // main, which is what assumeIsolated asserts.
@@ -63,7 +78,7 @@ final class SystemProbeController {
         window.orderFront(nil)
 
         let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)
-        report = Report(id: p.id, probe: probe, window: window,
+        reports[p.id] = Report(id: p.id, probe: probe, window: window,
                         cadence: Cadence(ratePerBeat: p.linesPerBeat ?? 24,
                                          burstCap: SystemProbeController.maxRevealsPerTick,
                                          start: now),
@@ -74,30 +89,35 @@ final class SystemProbeController {
         MainActor.assumeIsolated { probe.start(focus: p.focus) }
     }
 
-    func stop(id: String) {
-        guard report?.id == id else { return }
-        teardown()
+    func stop(id: String) { teardown(id: id) }
+
+    func closeAll() {
+        for id in reports.keys { teardown(id: id) }
+        // Back to Terminal's own profile: a colour a show set must not outlive it into
+        // the still renderer or the next run.
+        Phosphor.useTerminalBasic()
     }
 
-    func closeAll() { teardown() }
-
-    private func teardown() {
-        guard let r = report else { return }
+    private func teardown(id: String) {
+        guard let r = reports.removeValue(forKey: id) else { return }
         r.window.orderOut(nil)
         r.window.close()
-        report = nil
     }
 
     // MARK: - Tick
 
     func update(now: Double) {
-        guard var r = report else { return }
+        for id in reports.keys { update(id: id, now: now) }
+    }
+
+    private func update(id: String, now: Double) {
+        guard var r = reports[id] else { return }
 
         // Cadence absorbs the seek/stall guard as well as the rate.
         let budgetOrZero = r.cadence.step(now: now, bpm: bpm)
 
         if let end = r.endTime, now >= end {
-            teardown()
+            teardown(id: id)
             return
         }
 
@@ -115,7 +135,7 @@ final class SystemProbeController {
                 if !more { r.finished = true; break }
             }
         }
-        report = r
+        reports[id] = r
     }
 
     /// The command the report is the output of — what its title bar says.

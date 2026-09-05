@@ -60,6 +60,39 @@ struct BrickBreakerParams: Decodable {
     var seed: Int? = nil          // fixes the serve angles
 }
 
+/// `segSwarm`: the imported segmenter with the desktop as its canvas — every segment it
+/// finds becomes its own window holding the frame it was cut from. Ends on `closeWindow`
+/// with the same `id`.
+struct SegSwarmParams: Decodable {
+    let id: String
+    /// A video file to segment; absent means the machine's camera. The Syphon feed did
+    /// not come across from segcam, but there is a third source that did not exist
+    /// upstream: `window`.
+    var path: String? = nil
+    /// The id of a window the show already has open — segment THAT. Cue 14's map is run
+    /// through the segmenter this way. Takes precedence over `path` and the camera, and
+    /// needs no Screen Recording: the window draws itself into a bitmap in-process.
+    var window: String? = nil
+    /// How often that window is redrawn for the segmenter (default 15). Drawing happens
+    /// on the main thread, so this is deliberately not 30.
+    var windowHz: Double? = nil
+    var mode: String? = nil        // "motion" (default here) | "threshold" | "face"
+    var intensity: Double? = nil   // that segmenter's one knob, 0…1, always "more"
+    var invert: Bool? = nil        // threshold only: take the dark regions instead
+    var mirror: Bool? = nil        // defaults on for the camera, off for a clip
+    var maxWindows: Int? = nil     // how deep the pile goes before the oldest is recycled
+    /// The keyline round each panel: a hex, or `"none"` for a bare window. Absent, it is
+    /// segcam's own green — which marks a detection, and reads as a debug overlay when
+    /// the panels are meant to be the furniture rather than an annotation of it.
+    var border: String? = nil
+    /// Window level, same vocabulary as `openWindow`: "below" puts the pile under
+    /// everything the show opens (still over the desktop), which is how another act gets
+    /// to play on top of it. Absent, it is segcam's own — above everything.
+    var level: String? = nil
+    var hz: Double? = nil          // file pull rate (default 30)
+    var screen: Int? = nil
+}
+
 // MARK: - Event parameter payloads
 
 /// A real Apple Maps camera move, for `content.kind == "map"`. The camera flies from
@@ -149,6 +182,10 @@ struct ContentSpec: Decodable {
     /// Absent or 0 puts the whole population up on one frame. (Not `ramp` — that name
     /// is the ascii kind's character ramp.)
     var spawnSeconds: Double? = nil
+    /// "segcam" kind: mirror the picture (a camera is a mirror, a clip is not — the
+    /// default follows from whether `path` is set) and label each segment with its id.
+    var mirror: Bool? = nil
+    var labels: Bool? = nil
     /// "particles" kind: what the particles are made of — "icons" (default, the system's
     /// own file icons), "cursors" (the Mac pointer) or "beachballs" (the real spinner,
     /// all fifteen frames of it).
@@ -317,6 +354,10 @@ struct TypeTextParams: Decodable {
     /// macOS chrome; `"terminal"` is Terminal.app's own window — the same surface the
     /// credits type into, monospaced with a block cursor.
     var chrome: String? = nil
+    /// The surface's colours, `"terminal"` chrome only: `hex` the ground, `fg` the type.
+    /// Absent, it is Terminal's own Basic profile — black on white.
+    var hex: String? = nil
+    var fg: String? = nil
     /// Let the viewer pick the window up and move it around while it types.
     var interactive: Bool? = nil
 }
@@ -418,6 +459,19 @@ struct DeskWallpaperParams: Decodable {
     /// image holds until the event ends, and `hz` is ignored.
     var at: [Double]? = nil
     var hz: Double? = nil            // applies per second (default 8)
+    /// Which surface the desktop change is made on.
+    ///
+    /// `"layer"` (the default) draws into a window pinned at the desktop level — above
+    /// the wallpaper picture, under the desktop icons. It looks the same, costs a layer
+    /// assignment instead of a ~300 ms `setDesktopImageURL` round trip, and is reversible
+    /// by construction: the window dies with the process, so nothing survives a crash or
+    /// a `kill -9`. `hz` is honoured up to `WallpaperController.layerMaxHz`.
+    ///
+    /// `"wallpaper"` sets the machine's actual desktop picture. It is a real, persistent
+    /// change to the viewer's Mac, so it is gated on `meta.allowWallpaper`, and it is
+    /// capped at ~3 Hz by the window server no matter what `hz` asks for. Use it only
+    /// when the point is that the wallpaper is *really* changed.
+    var surface: String? = nil       // "layer" (default) | "wallpaper"
     var intensity: Double? = nil     // glitch only, 0…1 (default 0.6)
     var seed: Int? = nil             // glitch only, for a reproducible tear pattern
     var durationBeats: Double? = nil
@@ -447,6 +501,11 @@ struct SystemProbeParams: Decodable {
     /// The title bar's text. The report wears real macOS chrome like the rest of the
     /// show's big windows, so it needs a name; it is the command that produced it.
     var title: String? = nil        // default "./scan_identity"
+    /// The report's colours: `hex` the ground, `fg` the type. Absent, it prints the way
+    /// Terminal ships — black on white. Every probe window in a show shares one look;
+    /// see `Phosphor.use`.
+    var hex: String? = nil
+    var fg: String? = nil
     /// Fired at an id that is already on screen: the terminal is cleared and ONLY these
     /// sections are read out again, every line of them highlighted — the machine going
     /// back to the parts that matter. Names: `geolocation`, `network`, `identity`,
@@ -597,6 +656,7 @@ enum EventAction {
     case credits(CreditsParams)
     case hideOtherApps(HideOtherAppsParams)
     case brickBreaker(BrickBreakerParams)
+    case segSwarm(SegSwarmParams)
 }
 
 extension EventAction {
@@ -626,6 +686,7 @@ extension EventAction {
         case .credits: return "credits"
         case .hideOtherApps: return "hideOtherApps"
         case .brickBreaker: return "brickBreaker"
+        case .segSwarm: return "segSwarm"
         }
     }
 }
@@ -667,6 +728,7 @@ struct TimelineEvent: Decodable {
         "credits": { .credits(try $0.decode(CreditsParams.self, forKey: .params)) },
         "hideOtherApps": { .hideOtherApps(try $0.decode(HideOtherAppsParams.self, forKey: .params)) },
         "brickBreaker": { .brickBreaker(try $0.decode(BrickBreakerParams.self, forKey: .params)) },
+        "segSwarm": { .segSwarm(try $0.decode(SegSwarmParams.self, forKey: .params)) },
     ]
 
     /// Every `"type"` string the decoder accepts. Ordered, for stable test output.

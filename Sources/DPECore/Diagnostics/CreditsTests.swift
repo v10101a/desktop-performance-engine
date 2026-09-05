@@ -115,6 +115,16 @@ enum CreditsTests {
             t.expect(face.hasPrefix("AppleGaramond") || face.hasPrefix("HoeflerText") || face == "Georgia",
                      "the caption face is a Mac serif — got \(face)")
 
+            // …and it fits the card ON ONE LINE. The caption is the line the viewer is
+            // meant to read off the photo; the fit has a floor, so copy long enough to
+            // hit it would wrap or clip instead. Measured at the narrowest card the show
+            // builds — `photoW` is capped at 480, so 512 across is as small as it gets.
+            let capW: CGFloat = 512 - 16
+            let capFont = CreditsController.fittedCaptionFont(CreditsController.defaultCaption(), in: capW)
+            let capWidth = CreditsController.defaultCaption().size(withAttributes: [.font: capFont]).width
+            t.expect(capWidth <= capW - CreditsController.captionSideMargin,
+                     "the photo caption fits the card on one line at \(capFont.pointSize)pt")
+
             // The outro is on unless a show turns it off: the piece ends by quitting.
             let defaults = CreditsParams(id: "d")
             t.equal(defaults.outro ?? true, true, "outro defaults on")

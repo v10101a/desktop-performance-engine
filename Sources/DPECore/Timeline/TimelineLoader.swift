@@ -17,9 +17,26 @@ struct LoadedTimeline {
         events.contains { if case .rearrangeIcons = $0.action { return true } else { return false } }
     }
 
-    /// Whether the show swaps the wallpaper — gates snapshot/restore of the original.
+    /// Whether the show changes the machine's REAL desktop picture — gates the snapshot
+    /// and the restore of the original, on every Space.
+    ///
+    /// `deskWallpaper` counts only when it asks for `surface: "wallpaper"`. On the
+    /// default layer surface nothing about the machine changes, so there is nothing to
+    /// snapshot and nothing to put back.
+    ///
+    /// It used to check `.wallpaper` alone. That missed `deskWallpaper` entirely — and
+    /// the shipped show is *all* `deskWallpaper` — so `wallpaperArmed` was false through
+    /// a run that painted the desktop blue, and `restoreAllSpaces()` never ran. The
+    /// active Space came back (the effect's own teardown does that); every other desktop
+    /// kept the show's blue.
     var usesWallpaper: Bool {
-        events.contains { if case .wallpaper = $0.action { return true } else { return false } }
+        events.contains {
+            switch $0.action {
+            case .wallpaper: return true
+            case .deskWallpaper(let p): return p.surface == "wallpaper"
+            default: return false
+            }
+        }
     }
 }
 

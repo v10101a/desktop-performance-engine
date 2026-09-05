@@ -45,9 +45,11 @@ def buttons(i):
 # The lyric video: the cues, word by word.
 #
 # Every line of the song is chorus (it repeats each time), so one pass of these is one
-# chorus. Each entry is (when, text). In chorus B each cue is a card ON THE DESKTOP —
-# the wallpaper itself, one word at a time (assets/lyrics_desktops/<WORD>.jpg) — landing
-# when the word is sung. Word by word, so it moves.
+# chorus. Each entry is (when, text). This is the lyric WORD BY WORD, which is what the
+# chorus 1A spiral wants — one small window per word, accumulating round the spiral.
+#
+# The chorus 1B desktop cards are drawn a phrase at a time, so they read this through
+# `DESKTOP` below rather than directly. Tune a word here and both follow it.
 #
 # `when` is either of:
 #   4.0      beats from the START of the chorus (32 beats = 8 bars long; 0.4669 s/beat)
@@ -108,6 +110,47 @@ CUES = [
     (30.5, "IT"),
     (31.0, "2"),
     (31.5, "ME"),
+]
+
+
+# The DESKTOP cards, as grouped by the artwork.
+#
+# `CUES` above is the lyric word by word — that is what the chorus 1A spiral wants, one
+# small window per word. The desktop cards are drawn a phrase at a time ("NEED YOUR LOVE"
+# is one picture, edge to edge), so this is the SAME lyric regrouped into the units the
+# cards come in. One entry per card, in order, and the concatenation of these must be the
+# concatenation of CUES exactly — `generate_show.py` asserts it, so a word retimed or
+# reworded in CUES that is not reflected here fails the build rather than silently
+# landing the wrong picture on the wrong beat.
+#
+# NO TIMES HERE. Each card lands on its FIRST word, at whatever time that word has in
+# CUES — tune a word up there and its card follows. That is the whole reason this is a
+# grouping and not a second schedule.
+#
+# The files are `assets/lyrics_desktops/<WORDS_JOINED_BY_UNDERSCORE>.jpg`
+# (WHAT_I.jpg, NEED_YOUR_LOVE.jpg, IT_2_ME.jpg), derived by the generator from the
+# artist's originals in `assets/sarah's assets/lyrics_desktop_new`.
+DESKTOP = [
+    "WHAT I", "WANT",
+    "I", "TOLD YOU", "THAT I",
+    "NEED YOUR LOVE",
+    "SO GIVE", "IT 2 ME",
+
+    "RUNNING UP",
+    "MY CURRENTS",
+    "I", "CAN'T", "GET ENOUGH",
+    "OF THIS", "FEELING", "BABY",
+
+    "ALL I", "GOT",
+    "I’M", "GIVING THAT",
+    "SO", "GIVE IT UP",
+
+    "I", "TOLD YOU", "THAT I",
+    "NEED YOUR LOVE",
+    "SO GIVE", "IT 2 ME",
+
+    "NEED YOUR LOVE",
+    "SO GIVE", "IT 2 ME",
 ]
 
 

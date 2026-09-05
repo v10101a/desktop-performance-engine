@@ -21,8 +21,8 @@ enum TimelineTests {
                     ["brickBreaker", "closeWindow", "credits", "cursorPath", "cursorTrail",
                      "deskWallpaper", "fakeDialog", "fileSwarm", "glassTorus", "hideOtherApps",
                      "jiggle", "moveWindow", "openWindow", "oracle", "photoBooth", "photoWall",
-                     "rearrangeIcons", "reboot", "screenFlash", "sprite", "systemProbe",
-                     "typeText", "wallpaper"],
+                     "rearrangeIcons", "reboot", "screenFlash", "segSwarm", "sprite",
+                     "systemProbe", "typeText", "wallpaper"],
                     "registered event types")
 
             // The stage-clearing event takes no required params at all.
@@ -204,18 +204,66 @@ enum TimelineTests {
                 // The scheduler walks a single advancing cursor, so order is load-bearing.
                 let sorted = zip(tl.events, tl.events.dropFirst()).allSatisfy { $0.fireTime <= $1.fireTime }
                 t.expect(sorted, "bundled show events are sorted by fire time")
-                // The show as shipped must not write to the disk. It DOES swap the
-                // wallpaper now — Act 1 paints the desktop DJ Dave blue — so that gate is
-                // deliberately on. The pairing below is the actual guard: the gate may
-                // only be open if the show has an event that needs it, so a stray `true`
-                // with nothing behind it still fails.
-                let swapsWallpaper = tl.events.contains {
+                // The show as shipped must not write to the disk, and must not change
+                // the machine's real desktop picture. Act 1 still paints the desktop DJ
+                // Dave blue — it just does it on the desktop LAYER, a window that cannot
+                // outlive the process, so the gate that covers the real wallpaper stays
+                // shut. The pairing is the actual guard: the gate may only be open if
+                // some event genuinely needs it, so a stray `true` with nothing behind it
+                // still fails, and a cue that quietly switches to `surface: "wallpaper"`
+                // without opening the gate fails too.
+                t.equal(tl.meta.allowWallpaper == true, tl.usesWallpaper,
+                        "wallpaper gate is open exactly when the show changes the real wallpaper")
+                t.expect(!tl.usesWallpaper, "shipped show never touches the real wallpaper")
+                let paintsDesktop = tl.events.contains {
                     if case .deskWallpaper = $0.action { return true }; return false
                 }
-                t.equal(tl.meta.allowWallpaper == true, swapsWallpaper,
-                        "wallpaper gate is open exactly when the show swaps the wallpaper")
-                t.expect(swapsWallpaper, "shipped show paints the desktop in Act 1")
+                t.expect(paintsDesktop, "shipped show paints the desktop in Act 1")
                 t.expect(tl.meta.allowDesktopFiles != true, "shipped show ships file gate off")
+
+                // THE COPY HAS TO FIT THE WINDOW IT IS AUTHORED INTO. Both of these are
+                // written to be rewritten — the torus's monologue and the end card's
+                // credits are the piece's two blocks of prose — and neither surface
+                // scrolls or wraps to a bigger window: copy past the bottom of a
+                // `typeText` page types off the end of it, and a credit line wider than
+                // the terminal breaks in the middle of a name. Measured against the
+                // frames the show actually authors.
+                for ev in tl.events {
+                    guard case .typeText(let p) = ev.action, p.chrome != "terminal",
+                          p.frame.count == 4 else { continue }
+                    let frame = NSSize(width: p.frame[2], height: p.frame[3])
+                    let page = BaseEffectWindow.contentSize(forFrame: NSRect(origin: .zero, size: frame),
+                                                            native: true)
+                    let fontSize = CGFloat(p.fontSize ?? 13)
+                    let needs = TextEditorView.textHeight(p.text, in: page, fontSize: fontSize)
+                    t.expect(needs <= TextEditorView.textBox(in: page).height,
+                             "\"\(p.id)\" fits its page — needs \(Int(needs))pt of "
+                             + "\(Int(TextEditorView.textBox(in: page).height))")
+                }
+                for ev in tl.events {
+                    guard case .credits(let p) = ev.action, let lines = p.lines else { continue }
+                    // The narrowest screen the piece is meant to play on. `rollFont`
+                    // shrinks the face until the longest line fits; bottoming out at the
+                    // floor means it no longer does, at any size worth reading.
+                    let small = NSRect(x: 0, y: 0, width: 1440, height: 900)
+                    let font = CreditsController.rollFont(for: lines, size: p.fontSize ?? 11, in: small)
+                    t.expect(font.pointSize > 11,
+                             "the credits fit the terminal on a 1440-wide screen — "
+                             + "fitted to \(font.pointSize)pt")
+                    let size = CreditsController.rollSize(for: lines, font: font, in: small)
+                    t.expect(CreditsController.naturalRollWidth(for: lines, font: font) <= size.width,
+                             "…without the longest line wrapping")
+                }
+                // Every answer the torus can give fits the card the show opens for it.
+                let answerBox = NSSize(width: 460 - (20 + DialogIcon.side + 16) - 20, height: 186 - 100)
+                for answer in OracleController.defaultAnswers {
+                    let font = OracleController.answerFont(for: answer, in: answerBox)
+                    let h = answer.boundingRect(
+                        with: NSSize(width: answerBox.width, height: .greatestFiniteMagnitude),
+                        options: [.usesLineFragmentOrigin], attributes: [.font: font]).height
+                    t.expect(h <= answerBox.height,
+                             "the torus's \"\(answer)\" fits its card at \(font.pointSize)pt")
+                }
 
                 // The lyric wallpapers are named by path in the timeline and swapped in
                 // during the show. A misnamed one is silent — the desktop just keeps
@@ -333,6 +381,24 @@ enum TimelineTests {
                              "…and racks a wall worth hitting (\((p.rows ?? 4) * (p.cols ?? 8)) bricks)")
                 }
 
+                // The swarm owns real windows above everything and nothing but its own
+                // close takes them away, so a `segSwarm` the timeline never closes is a
+                // desktop full of panels for the rest of the run.
+                for ev in tl.events {
+                    guard case .segSwarm(let p) = ev.action else { continue }
+                    let closed = tl.events.contains {
+                        if case .closeWindow(let c) = $0.action { return c.id == p.id }
+                        return false
+                    }
+                    t.expect(closed, "the segmenter swarm \(p.id) is closed by the timeline")
+                    // A clip is named by an authored path, and a missing one is a black
+                    // screen where an act should be.
+                    if let path = p.path {
+                        t.expect(FileManager.default.fileExists(atPath: resolveResourcePath(path)),
+                                 "…and its clip resolves (\(path))")
+                    }
+                }
+
                 // DooM. One window, one id, and NOT one of the eruption's recycled
                 // `w0…w13`: re-opening an id rebuilds the content view, which restarts
                 // the game — a DooM that reboots every few beats never leaves its title
@@ -346,7 +412,10 @@ enum TimelineTests {
                              "the DooM window is a window on the desktop, not the screen "
                              + "(\(Int(p.frame[2]))pt wide)")
                 }
-                t.equal(doomIds.count, 1, "the show runs DooM in exactly one window")
+                // Pulled in the timeline (2026-09-03) — `DOOMVID_ACT = False` in the
+                // generator, so the count is 0. The per-window checks above are what
+                // stands guard when the video slot takes it back.
+                t.expect(doomIds.count <= 1, "DooM runs in at most one window")
                 if let id = doomIds.first {
                     let opens = tl.events.filter {
                         if case .openWindow(let p) = $0.action { return p.id == id }
@@ -435,9 +504,11 @@ enum TimelineTests {
                     t.equal(p.content.chrome ?? "", "none", "the fireworks wear no chrome")
                     t.expect(p.content.seed != nil, "the fireworks are seeded")
                 }
-                // Once: cue 10's burst, closed with the spiral at cue 12 — a live
-                // full-screen particle layer over the word swaps dragged chorus 1B.
-                t.expect(fireworks == 1, "the show carries the fireworks once (cue 10)")
+                // Pulled in the timeline (2026-09-03) — `WORKS_ACT = False`. They moved
+                // from cue 10 to cue 25 and then out of the cut altogether, so the count
+                // is 0; never more than one, because a live full-screen particle layer
+                // over the word swaps is what dragged chorus 1B.
+                t.expect(fireworks <= 1, "the fireworks are up at most once")
 
                 // Both cursor swarms — the one that chases the pointer (cue 24) and the
                 // shoal that ignores it (cue 28) — are transparent full-screen overlays,
@@ -477,7 +548,8 @@ enum TimelineTests {
                     t.equal(p.content.chrome ?? "", "none", "the mandala wears no chrome")
                     t.expect((p.content.cols ?? 0) >= 2, "the mandala has rings")
                 }
-                t.expect(mandalas == 1, "the show carries the mandala once (cue 26)")
+                // Pulled in the timeline (2026-09-03) — `MANDALA_ACT = False`.
+                t.expect(mandalas <= 1, "the mandala is up at most once")
 
                 // A quarter of the eruption's flat cards come up packed with macOS UI
                 // instead. The rate is what is authored, so this checks the proportion

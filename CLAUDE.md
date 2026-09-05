@@ -52,14 +52,26 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.
+- `Sources/DPECore/Effects/SegCam/` is imported from `~/segcam` and its engine files are
+  meant to stay identical to that repo's — fix there first, then re-import. The `segcam`
+  content kind takes the camera or a video file; the Syphon input, the HUD and the keys
+  did not come across, and a cue is the only thing that configures it.
 - `tools/fetch_doom.sh` installs the wasm DooM cue 27 runs (`assets/doom.wasm`,
   gitignored — GPL engine, shareware IWAD baked in; read the script header before
   shipping a build with it). Without it that window comes up saying so, and everything
   else works. `--test-doom` proves it is drawing.
 - The show must stay **reversible**: no event may leave the machine changed after stop,
   panic or quit. `fileSwarm` is the only thing that touches disk and is gated off
-  (`meta.allowDesktopFiles`); wallpaper swaps are gated on `meta.allowWallpaper` and
-  restore from a snapshot taken before the first swap.
+  (`meta.allowDesktopFiles`). Changing the machine's REAL desktop picture is gated on
+  `meta.allowWallpaper` and restores from a snapshot taken before the first swap — the
+  shipped cut needs neither: `deskWallpaper` defaults to `surface: "layer"`, a window
+  pinned under the desktop icons (`DesktopLayer`) that looks the same and dies with the
+  process. `TimelineTests` pairs the gate to `usesWallpaper`, so a cue that switches to
+  `surface: "wallpaper"` without opening the gate fails the suite.
 - **Photosensitivity is a real constraint, not a style note.** Keep full-screen change
   rates out of the 15–20 Hz band and re-measure from the generated timeline if you
   change the cadence. The current cut is median 2.9 Hz, peak 12.0 Hz.
+  `deskWallpaper` used to be held under that band by accident — `setDesktopImageURL` is
+  a ~3 Hz wall — but the desktop layer sustains 119 Hz, so the limit is now explicit:
+  `WallpaperController.layerMaxHz` (12 Hz), clamped with a log line. Raising it means
+  re-measuring the show, not editing a number.

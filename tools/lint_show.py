@@ -42,7 +42,9 @@ OPENS = {"openWindow", "fakeDialog", "typeText", "systemProbe", "glassTorus", "s
          "photoWall", "photoBooth", "oracle", "credits", "reboot", "cursorTrail",
          # brickBreaker puts a whole table of windows up under one id — the bricks, the
          # ball and the paddle all live and die with it.
-         "brickBreaker"}
+         "brickBreaker",
+         # segSwarm fills the desktop with windows under one id.
+         "segSwarm"}
 CLOSES = {"closeWindow"}
 # These end on their own, so leaving one open is not a leak.
 SELF_ENDING = {"photoBooth", "credits", "reboot", "sprite"}

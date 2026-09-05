@@ -66,6 +66,7 @@ public enum UnitTests {
         PhotoWallAlgorithmTests.run(t)
         FileSwarmPatternTests.run(t)
         GlitchEngineTests.run(t)
+        DesktopLayerTests.run(t)
         ScreenGeometryTests.run(t)
         SystemProbeTests.run(t)
         RendererTests.run(t)
@@ -74,6 +75,7 @@ public enum UnitTests {
         CreditsTests.run(t)
         GateTests.run(t)
         PermissionsTests.run(t)
+        SegCamTests.run(t)
         return t.report()
     }
 }
