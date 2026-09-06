@@ -129,7 +129,7 @@ struct MapSpec: Decodable {
 /// defaults — dev-tool and preview code that builds these by hand then doesn't need
 /// touching every time the format gains a field.
 struct ContentSpec: Decodable {
-    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "glitch" | "automaton" | "shader" | "uichaos" | "fileworks" | "cursors" | "mandala" | "livecode" | "map" | "doom"
+    let kind: String      // "color" | "text" | "lyric" | "code" | "image" | "ascii" | "asciilog" | "glitch" | "automaton" | "shader" | "uichaos" | "fileworks" | "cursors" | "mandala" | "livecode" | "map" | "doom"
     var hex: String? = nil
     var text: String? = nil
     var path: String? = nil
@@ -169,6 +169,29 @@ struct ContentSpec: Decodable {
     // "automaton" kind: an elementary cellular automaton, running and scrolling.
     var rule: Int? = nil        // Wolfram's numbering, 0…255 (default 30)
     var hz: Double? = nil       // generations per second (default 12)
+    // "asciilog" kind: a live monospaced text plane, transparent, usually full screen.
+    // Set in Monaco (see `AsciiFont`). Reuses `hex` as the type colour, `fontSize`,
+    // `hz`, `seed` and `cols` from the fields above.
+    /// Which generator feeds the plane:
+    ///   "hex"     — a memory dump, scrolling at `hz`
+    ///   "lines"   — `lines`, pushed one at a time at `hz` as log records
+    ///   "text"    — `text`, drawn once and left
+    ///   "windows" — the show's own windows as box art, redrawn as they come and go
+    var source: String? = nil
+    /// `source: "lines"` only: the records to push, cycled.
+    var lines: [String]? = nil
+    /// 0…1. Stacks combining diacriticals over, under and through every glyph, so the
+    /// text bleeds into the rows above and below. 0 (default) leaves it clean.
+    var zalgo: Double? = nil
+    /// The plane's ground. ABSENT MEANS TRANSPARENT, which is the usual case — the
+    /// screen shows through the gaps between the glyphs. Set it and the plane covers
+    /// what is under it.
+    var bg: String? = nil
+    /// Strobe rate in Hz, 0/absent = steady. The plane alternates between drawn and
+    /// GONE — not dimmed — so the real screen shows through on the off phase.
+    /// Photosensitivity: this is a full-screen change at twice this rate. Keep the
+    /// show's total out of the 15–20 Hz band and re-measure after changing it.
+    var strobe: Double? = nil
     // "glitch" kind: `path` torn once by the wallpaper's own glitch pass.
     var intensity: Double? = nil   // 0…1, scales every part of the tear (default 0.6)
     var seed: Int? = nil           // the tear is a pure function of this — same every take

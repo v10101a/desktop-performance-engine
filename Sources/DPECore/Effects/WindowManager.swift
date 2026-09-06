@@ -31,6 +31,43 @@ final class WindowManager {
     /// Test hook: current on-screen origin of a spawned window.
     func frameOrigin(id: String) -> NSPoint? { windows[id]?.frame.origin }
 
+    /// Every window this manager has open, **back to front**, as (screen frame, label).
+    ///
+    /// Read by `AsciiLogView`'s window map, which draws these as box art instead of
+    /// capturing the screen — the engine opened them, so it already knows where they are,
+    /// and capturing would need Screen Recording that the cut is not allowed to ask for.
+    ///
+    /// Ordered back to front by `NSWindow.orderedIndex` (0 is frontmost), because the map
+    /// draws later boxes over earlier ones and the overlaps only read correctly in the
+    /// order the window server composites in.
+    ///
+    /// It walks THIS DICTIONARY, not `NSApp.orderedWindows`. The obvious version asked
+    /// AppKit for the ordered list and intersected it with ours, and it came back empty
+    /// every time — measured, `provider gave 0 rects` with three windows plainly on
+    /// screen. `orderedWindows` does not list these: they are borderless, non-activating
+    /// panels ordered in with `orderFrontRegardless`, and the app's window list is not
+    /// where they live. The manager's own dictionary is the authority on what the show
+    /// has open; `orderedIndex` is only used to sort it.
+    ///
+    /// The label is the window's ID — `w3`, `d1`, `sl7`. Not a shortcut: these wear DRAWN
+    /// chrome, so `NSWindow.title` is empty on all of them, and the id is what the machine
+    /// calls the thing. A window map captioned with the show's own internal handles is the
+    /// machine looking at itself, which is the act.
+    func asciiSnapshot(excluding asking: NSWindow? = nil) -> [(NSRect, String)] {
+        // Openness is THIS DICTIONARY, not `isVisible`. `close(id:)` nils the entry, so a
+        // tracked window is by definition one the show has open — and `isVisible` came
+        // back false for every one of them with three plainly on screen (measured:
+        // "3 tracked, 0 visible"). These are borderless panels ordered in with
+        // `orderFrontRegardless`, and AppKit's idea of visible does not cover them.
+        //
+        // `alphaValue` is the one real filter: windows mid-fade on their way out are
+        // still tracked for a moment after they stop being anything to look at.
+        windows
+            .filter { $0.value.alphaValue > 0.01 && $0.value !== asking }
+            .sorted { $0.value.orderedIndex > $1.value.orderedIndex }   // back → front
+            .map { ($0.value.frame, $0.key) }
+    }
+
     struct Jiggle {
         let base: NSPoint
         let start: Double

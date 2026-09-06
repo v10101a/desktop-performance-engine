@@ -94,6 +94,11 @@ final class PerformanceEngine {
         torus.desktopPictureURL = { [wallpaper] screen in
             wallpaper.desktopPictureURL(for: screen)
         }
+        // The ASCII window map draws the show's own windows as box art. It is built by
+        // `makeEffectContentView`, a free function with no route to the manager, so the
+        // provider is handed over here rather than threaded through every content view
+        // for the sake of one source.
+        AsciiLogView.windowProvider = { [windows] asking in windows.asciiSnapshot(excluding: asking) }
         panic.onPanic = { [weak self] in
             self?.stopAndRestore()
         }

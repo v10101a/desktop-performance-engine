@@ -523,8 +523,9 @@ enum TimelineTests {
                           p.content.kind == "cursors" else { continue }
                     modes.append(p.content.mode ?? "chase")
                     // The shoal has to outrank the eruption it swims through: the show's
-                    // z-order is the order things opened in, and cue 28 opens a window
-                    // every fifth of a beat after it. Without the level it is buried.
+                    // z-order is the order things opened in, and the eruption it rides
+                    // (cue 21 since the 2026-09-05 swap) opens a window every fifth of a
+                    // beat after it. Without the level it is buried.
                     if p.content.mode == "school" {
                         t.equal(p.level ?? "normal", "floating", "the shoal floats above the show")
                     }
@@ -535,7 +536,7 @@ enum TimelineTests {
                              "cursor swarm mode \(p.content.mode ?? "chase") is a real one")
                 }
                 t.equal(modes.sorted(), ["chase", "school"],
-                        "the show carries one pointer-chasing swarm (cue 24) and one shoal (cue 28)")
+                        "the show carries one pointer-chasing swarm (cue 24) and one shoal (cue 21)")
 
                 // The mandala (cue 26): the third transparent full-screen overlay, and
                 // the same rule applies -- chrome would paint a ground over the piece.

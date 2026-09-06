@@ -128,6 +128,13 @@ if [ -d assets/lyrics_desktops ]; then
   cp assets/lyrics_desktops/*.jpg "$APP/Contents/Resources/assets/lyrics_desktops/"
 fi
 
+# The broken-screen photographs the bar-72 eruption throws up, same arrangement: the
+# timeline names them by folder, so the folder has to exist under Contents/Resources.
+if [ -d assets/broken_screens ]; then
+  mkdir -p "$APP/Contents/Resources/assets/broken_screens"
+  cp assets/broken_screens/*.jpg "$APP/Contents/Resources/assets/broken_screens/"
+fi
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

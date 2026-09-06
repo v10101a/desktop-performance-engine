@@ -67,6 +67,7 @@ public enum UnitTests {
         FileSwarmPatternTests.run(t)
         GlitchEngineTests.run(t)
         DesktopLayerTests.run(t)
+        AsciiLogTests.run(t)
         ScreenGeometryTests.run(t)
         SystemProbeTests.run(t)
         RendererTests.run(t)

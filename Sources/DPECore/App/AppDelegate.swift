@@ -611,11 +611,20 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                                                    rule: 30, seed: 0, fontSize: 9, hz: 14)
             case "uichaos":   return UIChaosView(size: NSSize(width: 360, height: 240),
                                                  seed: 900, density: 1.15)
+            // The ASCII planes run FULL SCREEN and redraw the whole grid — the hex dump
+            // at 26 lines a second, the window map twelve times a second — so they are
+            // benched at the size they actually run at, not in a card like the others.
+            case "asciihex":  return AsciiLogView(size: size, source: .hex(seed: 4472),
+                                                  fg: .green, background: nil, hz: 26,
+                                                  fontSize: 12, zalgo: 0, strobe: 0, seed: 4472)
+            case "asciiwin":  return AsciiLogView(size: size, source: .windows,
+                                                  fg: .green, background: .blue, hz: 12,
+                                                  fontSize: 13, zalgo: 0, strobe: 3, seed: 4475)
             default:          return nil
             }
         }
         let names = ["baseline", "fileworks", "cursors", "school", "mandala", "automaton",
-                     "uichaos", "all"]
+                     "uichaos", "asciihex", "asciiwin", "all"]
         var index = 0
         // ONE window for the whole run, its content swapped each round. Closing a window
         // between rounds ends the app: it is the only one open, and AppKit terminates on

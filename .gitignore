@@ -23,6 +23,12 @@ assets/*.wav
 # assets/ (pixelface.jpg, lyrics_desktops/), so the masters stay out.
 assets/sarah's assets/
 
+# The broken-screen drop: 22 photographs and screen grabs, 18 MB, of which the cut uses
+# eight. Same arrangement as sarah's assets — the drop stays out, and what the show loads
+# is a downsized derived copy under assets/broken_screens/ (built by generate_show.py's
+# build_broken_screens), which IS committed.
+assets/broken_computer/
+
 # Reference images nothing in the piece loads. Named individually rather than by a
 # pattern: a blanket assets/*.png would have swallowed credits_tile.png and app_icon.png,
 # and a blanket rule is exactly how bubble_sound.wav ended up silently untracked.

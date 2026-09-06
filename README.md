@@ -430,6 +430,60 @@ conversion runs off the main thread and is cached, like the `image` kind. Works 
 `chrome`/`title` too. See `examples/timeline_ascii.json`; preview with
 `DPE_ASCII_DEMO=1 swift run GiveIt2Me_DJ_Dave_malware --snapshot=ascii.png`.
 
+### `asciilog` content
+
+A **live** monospaced text plane, transparent, normally the whole screen. Not the `ascii`
+kind above: that converts a picture or a block of text to art and lays it out **once** in
+a card; this one has a clock, scrolls, strobes, and draws itself rather than hosting a
+text system. Full-screen text through `NSTextView` re-lays every glyph on every change,
+which is the whole frame budget at these sizes.
+
+Set in **Monaco** — the system's own bitmap-descended monospace, so it needs no asset, no
+licence file and no registration. Checked before it was picked: `isFixedPitch`, one
+advance width (8.4pt at 14pt) across every glyph the planes use, and 11 of the 12
+combining marks `zalgo` wants. Drop a `.ttf` into `assets/fonts/pixel/` and it overrides
+Monaco, with the same fixed-pitch check applied — a proportional face is refused rather
+than drawn wrong, because the window map rules its boxes by column arithmetic.
+
+`source` picks the generator:
+
+| `source` | what it draws |
+|---|---|
+| `"hex"` | a memory dump — offset, bytes, printable gutter — scrolling at `hz` |
+| `"lines"` | `lines`, pushed one at a time at `hz` as log records with a clock, a level and `giveit2me[1337]` |
+| `"text"` | `text`, drawn once and left |
+| `"windows"` | the show's own windows as ASCII box art, redrawn as they come and go |
+
+`hex` is the type colour (default matrix-green). **`bg` absent means transparent**, which
+is the usual case — everything under the plane shows through the gaps between the glyphs.
+Set it and the plane covers what is under it. `strobe` (Hz) alternates the plane between
+drawn and **gone** — not dimmed — so the real screen is what shows on the off phase.
+
+`zalgo` (0…1) stacks combining diacriticals over, under and through every glyph so the
+text bleeds into the rows above and below. Deterministic on `seed`, like the glitch tear.
+The bleed works because a corrupted string reports the *same* line height as a plain one
+(18.0pt either way on Monaco): the marks do not push the line box open, so on a fixed grid
+they overflow into the neighbouring rows instead of spacing them apart.
+
+**The window map is synthesised, never captured.** The engine opened those windows, so it
+knows their frames and ids; capturing would need Screen Recording, which macOS will not
+settle with an inline prompt and which `TimelineTests` fails a cut for needing. It is
+drawn in **pure ASCII** (`+ - | . : = # *`), not the Unicode box-drawing set: Monaco has
+no box-drawing glyphs, CoreText substitutes another face for them, and they come back
+7.83pt wide against ASCII's 7.80 — three hundredths of a point is three quarters of a
+character by column 193, and every box edge drifts out of true. Each window gets its own
+interior shade by depth so overlaps stay legible. Labels are the window **ids** (`w3`,
+`d1`, `sl7`): these wear drawn chrome, so `NSWindow.title` is empty on all of them, and a
+map captioned with the show's own internal handles is the machine looking at itself.
+
+> **Photosensitivity.** A strobe is **two** full-screen changes per cycle, so the band to
+> stay out of is halved. `AsciiLogTests` fails a plane whose `strobe × 2` reaches 15 Hz,
+> and the whole-cut measure is the other half of that check.
+
+Benched with `--bench-views` at full screen (`asciihex`, `asciiwin`) rather than in a
+card, because that is the size they run at: 59.4 and 60.0 probe-Hz of 60 against a 59.5
+baseline — free, on the thread that matters.
+
 ### `mandala` content
 
 Concentric rings of the macOS spinner, evenly spaced around the screen's centre, each

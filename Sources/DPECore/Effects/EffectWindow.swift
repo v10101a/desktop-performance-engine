@@ -572,6 +572,32 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         } else {
             renderAscii(asciiArtFromText(content.text ?? ""), into: tv, fg: fg)
         }
+    case "asciilog":
+        // The live text plane. NOT the `ascii` kind above: that converts a picture or a
+        // block of text to art and lays it out once in a card; this has a clock, scrolls,
+        // strobes, and is normally the whole screen with nothing behind it.
+        //
+        // No ground on the view. The plane paints its own only when `bg` is given, so the
+        // default really is transparent — everything under it shows through the gaps
+        // between the glyphs.
+        let src: AsciiLogView.Source
+        switch content.source ?? "hex" {
+        case "lines":   src = .lines(content.lines ?? [])
+        case "text":    src = .text(content.text ?? "")
+        case "windows": src = .windows
+        default:        src = .hex(seed: UInt64(abs(content.seed ?? 1)))
+        }
+        let plane = AsciiLogView(
+            size: body.size, source: src,
+            fg: NSColor(hex: content.hex ?? "#8CF2A6") ?? .green,
+            background: content.bg.flatMap { NSColor(hex: $0) },
+            hz: content.hz ?? 12,
+            fontSize: CGFloat(content.fontSize ?? 13),
+            zalgo: content.zalgo ?? 0,
+            strobe: content.strobe ?? 0,
+            seed: UInt64(abs(content.seed ?? 1)))
+        plane.autoresizingMask = [.width, .height]
+        view.addSubview(plane)
     default: // "color"
         view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#020AF5") ?? .systemBlue).cgColor
         view.layer?.cornerRadius = 6
@@ -827,6 +853,7 @@ final class EffectWindow: BaseEffectWindow {
         case "web":      return content.url ?? "Safari"
         case "image":    return "Preview"
         case "ascii":    return "art.txt"
+        case "asciilog": return "console"
         case "glitch":   return "recovered.jpg"
         case "automaton": return "automaton"
         case "shader":   return "shader.frag"
