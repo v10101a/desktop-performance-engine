@@ -454,10 +454,18 @@ than drawn wrong, because the window map rules its boxes by column arithmetic.
 | `"text"` | `text`, drawn once and left |
 | `"windows"` | the show's own windows as ASCII box art, redrawn as they come and go |
 
-`hex` is the type colour (default matrix-green). **`bg` absent means transparent**, which
+`hex` is the type colour — default the show's sky blue `#68BDF8`, **not** the `ascii`
+kind's matrix-green: the window map's ground is the signature `#020AF5`, so type in
+the same blue is type you cannot see. **`bg` absent means transparent**, which
 is the usual case — everything under the plane shows through the gaps between the glyphs.
 Set it and the plane covers what is under it. `strobe` (Hz) alternates the plane between
 drawn and **gone** — not dimmed — so the real screen is what shows on the off phase.
+
+The plane also turns its window's shadow **off**. `EffectWindow` enables one for
+everything, which is right for a card over the desktop and wrong here: on a
+transparent window AppKit derives the shadow from the alpha mask, so it is not one
+shadow behind a panel — every glyph casts its own, and a full screen of text comes up
+looking like botched drop-shadowed type.
 
 `zalgo` (0…1) stacks combining diacriticals over, under and through every glyph so the
 text bleeds into the rows above and below. Deterministic on `seed`, like the glitch tear.

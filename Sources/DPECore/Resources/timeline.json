@@ -25826,7 +25826,7 @@
     "content": {
      "kind": "asciilog",
      "chrome": "none",
-     "hex": "#8CF2A6",
+     "hex": "#FFFFFF",
      "source": "hex",
      "hz": 26,
      "seed": 4472,
@@ -26878,7 +26878,7 @@
     "content": {
      "kind": "asciilog",
      "chrome": "none",
-     "hex": "#8CF2A6",
+     "hex": "#FFFFFF",
      "source": "lines",
      "lines": [
       "WHAT I WANT",
@@ -27687,7 +27687,7 @@
     "content": {
      "kind": "asciilog",
      "chrome": "none",
-     "hex": "#8CF2A6",
+     "hex": "#FFFFFF",
      "source": "text",
      "text": "WHAT I WANT\nI TOLD YOU THAT I NEED YOUR LOVE SO GIVE IT TO ME\nRUNNING UP\nMY CURRENTS I CAN\u2019T GET ENOUGH OF THIS FEELING BABY\nALL I GOT\nI\u2019M GIVING THAT SO GIVE IT UP",
      "zalgo": 0.85,
@@ -28446,7 +28446,7 @@
     "content": {
      "kind": "asciilog",
      "chrome": "none",
-     "hex": "#8CF2A6",
+     "hex": "#FFFFFF",
      "source": "windows",
      "bg": "#020AF5",
      "strobe": 3.0,

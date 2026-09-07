@@ -120,6 +120,13 @@ final class AsciiLogView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        // NO WINDOW SHADOW. `EffectWindow` turns it on for everything, which is right for
+        // a card floating over the desktop and wrong here: on a TRANSPARENT window AppKit
+        // derives the shadow from the alpha mask, so it is not one shadow behind a panel —
+        // every single glyph casts its own. On a full screen of text that reads as a
+        // botched drop shadow on the type. Turned off from the view because the plane is
+        // the thing that knows it never wants one, wherever it is opened.
+        window?.hasShadow = false
         timer?.invalidate()
         guard window != nil else { timer = nil; return }
         // The plane advances on the faster of its two clocks: the line rate and the

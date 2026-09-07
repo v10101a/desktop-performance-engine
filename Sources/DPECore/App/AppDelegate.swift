@@ -615,10 +615,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             // at 26 lines a second, the window map twelve times a second — so they are
             // benched at the size they actually run at, not in a card like the others.
             case "asciihex":  return AsciiLogView(size: size, source: .hex(seed: 4472),
-                                                  fg: .green, background: nil, hz: 26,
+                                                  fg: .systemBlue, background: nil, hz: 26,
                                                   fontSize: 12, zalgo: 0, strobe: 0, seed: 4472)
             case "asciiwin":  return AsciiLogView(size: size, source: .windows,
-                                                  fg: .green, background: .blue, hz: 12,
+                                                  fg: .systemBlue, background: .blue, hz: 12,
                                                   fontSize: 13, zalgo: 0, strobe: 3, seed: 4475)
             default:          return nil
             }

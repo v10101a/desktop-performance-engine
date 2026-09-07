@@ -589,7 +589,10 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         }
         let plane = AsciiLogView(
             size: body.size, source: src,
-            fg: NSColor(hex: content.hex ?? "#8CF2A6") ?? .green,
+            // The show's sky blue, not the `ascii` kind's matrix-green: these planes run
+            // over the eruption and on the window map's own DJ-blue ground, and green on
+            // that is a different piece of work than the one this is in.
+            fg: NSColor(hex: content.hex ?? "#68BDF8") ?? .systemBlue,
             background: content.bg.flatMap { NSColor(hex: $0) },
             hz: content.hz ?? 12,
             fontSize: CGFloat(content.fontSize ?? 13),

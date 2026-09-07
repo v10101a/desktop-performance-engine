@@ -1712,7 +1712,15 @@ for i, kt in enumerate(kicks_between(sm, B["glitch"])):
 # The order is an escalation: unreadable machine state, then the machine saying the words,
 # then the words coming apart, then the machine drawing the screen it is on. Then it stops
 # and the segmenter is the only thing left.
-ASCII_GREEN = "#8CF2A6"
+# The planes are set in the show's SKY blue, not the signature `DJ_BLUE`.
+#
+# That is forced, not a preference: the window map's ground IS `DJ_BLUE` (the act is
+# "covering up everything" with it), so type in the same blue is type you cannot see.
+# `#68BDF8` is the show's own light blue — already the fourth kick flash and in the
+# palette — and it reads both on that ground and on the bare eruption underneath the
+# three transparent planes.
+# ASCII_BLUE = "#68BDF8"
+ASCII_BLUE = "#FFFFFF"
 al = B["spam"]
 ASCII_SPAN = (B["glitch"] - al) / 4          # 8 beats each, ending on the pickup
 ascii_ids = []
@@ -1722,7 +1730,7 @@ def ascii_plane(i, params, seconds_early=0.0):
     wid = f"asciilog{i}"
     ascii_ids.append(wid)
     b0 = al + ASCII_SPAN * i
-    content = {"kind": "asciilog", "chrome": "none", "hex": ASCII_GREEN}
+    content = {"kind": "asciilog", "chrome": "none", "hex": ASCII_BLUE}
     content.update(params)
     add(b0 - seconds_early / BEAT, "openWindow", {
         "id": wid, "frame": fullscreen(), "level": "floating",
