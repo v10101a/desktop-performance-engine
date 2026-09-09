@@ -408,30 +408,28 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         // screen going blue with the words on it; at 300pt it is a caption in a clock.
         view.layer?.backgroundColor = (NSColor(hex: content.hex ?? "#0078D7") ?? .systemBlue).cgColor
         view.layer?.cornerRadius = size.width > 600 ? 0 : 6
+        // `fontCycleHz` re-picks the face from the VIEWER's own font library on a clock.
+        // It needs its own view because the fit has to be redone on every change — see
+        // `CyclingLyricView`, which owns the timer and the pool.
+        if let cycle = content.fontCycleHz, cycle > 0 {
+            let cycling = CyclingLyricView(
+                size: size, text: content.text ?? "",
+                fg: NSColor(hex: content.fg ?? "#FFFFFF") ?? .white,
+                hz: cycle, seed: UInt64(abs(content.seed ?? 1)))
+            cycling.autoresizingMask = [.width, .height]
+            view.addSubview(cycling)
+            break
+        }
         let label = NSTextField(labelWithString: content.text ?? "")
         label.textColor = NSColor(hex: content.fg ?? "#FFFFFF") ?? .white
         label.alignment = .center
         label.maximumNumberOfLines = 0
         label.lineBreakMode = .byWordWrapping
-        let pad = max(8, min(size.width, size.height) * 0.07)
-        let room = NSSize(width: size.width - pad * 2, height: size.height - pad * 2)
-        // Shrink to fit: start at a fifth of the height and step down until the
-        // wrapped block fits both ways. A word wider than the window wraps mid-word,
-        // which reads as broken, so that counts as not fitting too.
-        var pt = max(12, size.height * 0.22)
-        var fit = NSSize.zero
-        while pt > 8 {
-            let font = LyricFont.font(ofSize: pt)
-            label.font = font
-            fit = label.sizeThatFits(NSSize(width: room.width, height: .greatestFiniteMagnitude))
-            let widest = (content.text ?? "").split(separator: " ")
-                .map { (String($0) as NSString).size(withAttributes: [.font: font]).width }
-                .max() ?? 0
-            if fit.height <= room.height && widest <= room.width { break }
-            pt -= max(1, pt * 0.06)
-        }
-        label.frame = NSRect(x: pad, y: (size.height - fit.height) / 2,
-                             width: room.width, height: fit.height)
+        // The same shrink-to-fit the cycling card uses, so the two cannot drift.
+        let fitted = CyclingLyricView.fit(label: label, text: content.text ?? "",
+                                          in: size, family: LyricFont.family)
+        label.frame = NSRect(x: fitted.pad, y: (size.height - fitted.size.height) / 2,
+                             width: size.width - fitted.pad * 2, height: fitted.size.height)
         label.autoresizingMask = [.width, .minYMargin, .maxYMargin]
         view.addSubview(label)
     case "code":
@@ -499,6 +497,7 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
         let cs = CursorSwarmView(size: body.size, seed: content.seed ?? 3,
                                  count: Int((content.intensity ?? 1.0) * 90),
                                  mode: CursorSwarmView.Mode(content.mode),
+                                 pattern: CursorSwarmView.Pattern(content.pattern),
                                  rampSeconds: content.spawnSeconds ?? 0)
         cs.autoresizingMask = [.width, .height]
         view.addSubview(cs)

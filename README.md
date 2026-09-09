@@ -39,12 +39,20 @@ open build/GiveIt2Me_DJ_Dave_malware.app
 open -a "$PWD/build/GiveIt2Me_DJ_Dave_malware.app" --args examples/timeline_cursor.json
 ```
 
-The bundle is **self-contained** — it carries the show, the backing track and its icon,
-so it runs from anywhere (Applications, a USB stick, another Mac). Verify a copy with:
-ppp
+The bundle is **self-contained** — it carries the show, the backing track, every asset the
+timeline names, the photo wall's fallback photographs and its icon, so it runs from
+anywhere (Applications, a USB stick, another Mac). Verify a copy with:
+
 ```bash
 /path/to/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware --check
 ```
+
+`--check` resolves every file the show names against **the .app alone**, and prints a ✓
+or a ✗ per asset before `SELF-CONTAINED = true/false`. That restriction is the whole
+point of it: the ordinary resolver also searches the working directory and seven levels
+above the bundle, so run from the checkout a bundle missing half its pictures looks
+perfect — the repo is one of the places it looks. Run it **from a copy of the .app
+somewhere else** and it cannot be fooled that way.
 
 ⚠️ Don't reach for SwiftPM's `Bundle.module` to find bundled resources here. It searches
 only the top level of the .app and an **absolute path into the build machine's `.build`
@@ -65,11 +73,39 @@ rebuild. For grants that persist, create a self-signed **Code Signing** certific
 once (Keychain Access ▸ Certificate Assistant) and run
 `SIGN_IDENTITY="Your Cert Name" ./bundle.sh`.
 
-Press **Play** to start; **PANIC / Stop** (or ⌃⌥⌘Esc anywhere) to stop and restore.
-The control window has a **scrubbable timeline** with a live playhead and a position
-readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to seek:
-while playing it jumps audio + visuals live; while stopped it sets where Play begins.
-Stop leaves the playhead where it is, so Play resumes from there.
+### The console is hidden
+
+**A normal launch shows no control window.** The gate is the whole visible surface: the
+viewer answers it, the machine appears to start restarting, and the piece runs. A window
+called "Desktop Performance Engine" with a Play button and a scrubber is the one object
+on the screen that explains what is happening, and the piece does not work if the room is
+told.
+
+| | |
+|---|---|
+| **⌃⌥⌘D** | reveal the transport window, or put it away again |
+| **⌃⌥⌘Esc** | panic — stop and restore, from anywhere |
+| `--console` | start with it already open |
+| `--no-gate` | the dev loop; keeps the console, since skipping the gate would otherwise leave a running app with nothing to press Play on |
+
+Both chords are Carbon `RegisterEventHotKey` registrations, so they fire with the app in
+the background and need no Accessibility grant — which matters, because during the show
+every effect window deliberately refuses key focus and nothing of ours is ever key. They
+share one event handler (`HotKeyCenter`) that dispatches on the hotkey id: Carbon gives
+every hotkey press to *every* handler installed on the target, so two handlers would each
+fire for both chords and ⌃⌥⌘D would stop the show.
+
+Closing the console does **not** quit any more
+(`applicationShouldTerminateAfterLastWindowClosed` is false). It used to, back when the
+window was always on screen; with the console coming and going mid-performance the same
+rule would kill the piece the first time it was closed during a passage with nothing else
+on screen. The piece ends when the outro ends, or on ⌘Q.
+
+Once it is open: press **Play** to start; **PANIC / Stop** (or ⌃⌥⌘Esc anywhere) to stop
+and restore. The control window has a **scrubbable timeline** with a live playhead and a
+position readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to
+seek: while playing it jumps audio + visuals live; while stopped it sets where Play
+begins. Stop leaves the playhead where it is, so Play resumes from there.
 
 ### Pausing
 
@@ -728,6 +764,34 @@ DPE_HOLD=1 swift run GiveIt2Me_DJ_Dave_malware --test-particles   # …and leave
 The preview reports how far each field moved in eight seconds, because "it built" and
 "it is running" look identical in a screenshot of a particle system.
 
+### Lyric cards in the viewer's own fonts
+
+`fontCycleHz` on a `lyric` card re-picks the FACE that many times a second, at random,
+from every font on the viewer's machine — their `~/Library/Fonts` included. Absent or 0
+keeps the show's Hack Bold. `seed` fixes the sequence, so a take is reproducible on one
+machine; across machines it cannot be, and should not — the act *is* the viewer's own
+library.
+
+The pool is enumerated once and **filtered**, which is not optional. Of 238 families on
+the machine this was built on, **73 cannot set the words**: Apple Braille, Apple Color
+Emoji and the Hebrew/Arabic faces have no Latin at all, and — less obviously — Webdings
+and Wingdings 1–3 *do* have glyphs for A–Z, pictograms, so a Latin-only probe keeps them
+and the card sets the lyric as a row of dingbats. The probe is the characters the lyric
+actually contains **including the curly apostrophe** (`I CAN’T`, `I’M GIVING THAT`);
+probing with a straight `'` instead passes nine families that have no U+2019 and puts a
+tofu box in the middle of the word. 165 survive.
+
+**The fit is redone on every change, not just the font.** A lyric card sets its line as
+large as the window allows by stepping the point size down until the wrapped block fits;
+families differ by about **6× in width at one point size** (117pt to 718pt for the same
+string at 40pt here). Swapping only `label.font` would leave half the faces overflowing
+and the other half a third of the size they should be. `CyclingLyricView` owns the timer
+and re-runs the same fit function the static card uses, so the two cannot drift.
+
+`LyricFontTests` runs that fit over **every face in the pool** against the real smallest
+card the eruption opens (293×207) and the real phrases, asserting none wraps mid-word —
+"MY CURRENT / S" being the failure it exists to catch.
+
 ### `cursors` content
 
 A swarm of Mac pointers, in one of two `mode`s: **`chase`** (the default) hunts the
@@ -739,6 +803,29 @@ population (1.0 = 90), `seed` fixes it.
 { "kind": "cursors", "seed": 3136, "intensity": 1.0,
   "chrome": "none", "title": "pointer" }
 ```
+
+**`pattern`** (school only) picks the scene — where the cursors spawn *and* the flock
+weights that then hold them there. The two are one choice, not two: a ring spawn under
+the spiral's weights just relaxes into a spiral, and a grid only reads as a grid while
+alignment is holding it together.
+
+| `pattern` | |
+|---|---|
+| `spiral` (default) | an Archimedean arm, vortex-driven, turning as a body |
+| `ring` | an annulus, vortex up and cohesion down — rotates and keeps its hole |
+| `grid` | a lattice held by alignment with the vortex almost off; marches, then frays |
+| `burst` | all at the centre thrown outward, separation high — an explosion that regathers |
+| `stream` | a line across the screen, alignment high and vortex off — a current |
+
+**Cut between scenes by re-opening the same window id** with a different `pattern`.
+`WindowManager.open`'s `existing` branch swaps the content view in place, so the flock is
+rebuilt on its new spawn shape on that frame — a cut, with no crossfade and nothing
+carried over. Re-opening with a new `seed` alone is the same picture shuffled.
+
+> Cutting faster than about a beat shows only the spawn shapes: Reynolds flocking needs a
+> second or two to pull one into a *body*, and below that the cursors stay a scatter of
+> arrows however they are weighted. Cue 12 mixes half-, one-, two- and three-beat holds
+> for that reason — rapid, with somewhere to arrive.
 
 Pair it with `[0, 0, 0, 0]` and `chrome: "none"` — like the fireworks it paints no
 background, so it chases across whatever is on screen. The target is
@@ -1219,6 +1306,50 @@ alpha, or showing/hiding it per flash, was the single biggest source of stalls);
 windows are **reused** on re-open rather than recreated; images decode as **downsampled
 thumbnails off the main thread**; dialogs avoid `NSVisualEffectView`/autolayout.
 
+#### The event clock (2026-09-06)
+
+Events used to fire from the display pump, and in the densest sections they fired **late**
+— measured through the eruption, mean 71–113 ms and peaks over half a second, which at
+128.5 BPM is more than a beat.
+
+Profiled (`DPE_PROFILE=1`), the handlers were not the problem: 324 ms of work over eight
+seconds, about **4%** of the wall clock. What was slow was the pump itself. It is
+vsync-driven and *coalesces* — right for drawing — and under the eruption's thirty-odd
+live windows the window server's compositing starved it to **13.3 Hz, a 75 ms gap between
+ticks**. An event can only fire on a tick, so half that gap became drift:
+
+| section | pump rate | mean gap | mean drift |
+|---|---|---|---|
+| lyric desktop (46 s) | 54.7 Hz | 18.3 ms | 20.8 ms |
+| eruption + strobe (115 s) | **13.3 Hz** | **75.1 ms** | 55.2 ms |
+| eruption + ascii (134 s) | 35.8 Hz | 27.9 ms | 32.5 ms |
+
+So **firing has its own clock now** — a 240 Hz `Timer` in `.common` mode, which the
+runloop services *between* AppKit's draw passes instead of behind them. Drawing and the
+UI stay on the pump; only `scheduler.tick` moved. It costs nothing when nothing is due
+(`tick` is a compare against the next event's time), and `step()` skips firing while the
+event clock is running so the two never both do it.
+
+Measured over three runs each at the worst section:
+
+| | mean drift | max drift |
+|---|---|---|
+| pump only | 71–113 ms | 326–571 ms |
+| event clock | **36–42 ms** | **156–162 ms** |
+
+About 2.5× on the mean and 3× on the peak — and much steadier run to run (36–42 vs
+71–113), which for a piece cut to a track matters as much as the average.
+
+`DPE_EVENT_CLOCK=0` puts firing back on the pump. `DPE_PROFILE=1` prints the pump rate,
+the playhead span and the per-event-type cost table at stop — that is how the numbers
+above were arrived at, and how to check a section that feels late rather than guessing at
+it.
+
+**It does not make the pump faster.** Drawing still runs at 13 Hz through the eruption;
+what changed is that being late to *draw* no longer makes the show late to *fire*. If the
+compositing load itself needs to come down, that is a cut decision — fewer simultaneous
+windows — not a scheduling one.
+
 ### `cursorPath`
 
 Choreographs the real system cursor. `points` are `[x, y]` global display points
@@ -1547,6 +1678,15 @@ and `Snapshot` are that app's code unchanged, under `Effects/GlassTorus/`.
 { "beat": 32, "type": "closeWindow", "params": { "id": "torus" } }
 ```
 
+**`environment`** points the refraction plane at a picture of your choosing instead of the
+viewer's desktop wallpaper — any path ImageIO can read, resolved like every other asset,
+falling back to the wallpaper (and then to the procedural studio) if it cannot be read.
+The default is right while the torus is a thing sitting on someone's desktop and wrong the
+moment a cue puts it somewhere else: cue 13 opens a cloud tunnel under it, and glass
+bending a stranger's Big Sur photograph inside a tunnel belongs to neither picture. The
+plane is loaded once per *picture* rather than once per process, so re-opening the same id
+costs nothing and a second torus asking for a different image gets it.
+
 Materials: `glass` (default), `crystal`, `chrome`, `gold`, `copper`, `titanium`. The two
 dielectrics refract the capture per channel at slightly different indices, which is
 where the coloured fringing comes from; the conductors weight an environment reflection
@@ -1780,6 +1920,13 @@ that is nearly-but-not-quite the system one reads as a bug rather than as the jo
 
 Both buttons on that alert do the same thing; then `glitchSeconds` of the screen dumping its
 memory (default 0.5), a boot bar for `bootSeconds` (default 5), and the app quits.
+
+**`bootSeconds: 0` skips the boot bar**, and the shipped cut asks for that. `BootView` is
+geometry-matched to the gate's stalled restart card on purpose, and the piece already opens
+on a machine restarting — a second Apple logo over a second progress bar at the end reads as
+the same beat played twice rather than as an ending. With it off the memory dump is the last
+picture and then the app is simply gone, which is the viewer's own desktop back: the quit
+routes through `applicationWillTerminate` → `stopAndRestore()` either way.
 
 The dump is **not** the `GlitchImage` engine the wallpaper uses — that one is analogue in
 character (sine warps, chroma bleed, scanlines) and reads as a broken CRT. This is
@@ -2033,6 +2180,48 @@ one blocks while macOS downloads it (measured at 21 seconds for a 3.5 KB file). 
 `includeCloud: true` to use them anyway. Nothing is copied, moved or modified — the
 scan is read-only, and the `.app` declares the Desktop/Documents/Downloads usage strings
 macOS prompts with.
+
+#### Where the photographs come from
+
+`dirs` is what the timeline *asks* for. What the wall actually shows is decided at scan
+time by `PhotoSource`, because it depends on two things a JSON file cannot know: whether
+this viewer granted Files and Folders access, and what is sitting on their Desktop.
+
+| | |
+|---|---|
+| **`~/Desktop/giveit2me`** | if that folder is there and readable, it **is** the wall and nothing else is |
+| the authored `dirs` | the ordinary case — their Desktop, Downloads, Documents, Pictures |
+| the bundle | photographs of broken computers, shipped inside the `.app` |
+
+**A folder called `giveit2me` on the Desktop wins outright.** Matched
+case-insensitively — nobody is going to be told the name has to be lowercase, and a
+`GiveIt2Me` that silently did nothing would be the worst kind of bug, one where the
+viewer did everything right. Their folder is *not* mixed back in with their Downloads:
+someone who curated it has said exactly what they want the piece to show. It is also
+scanned with the size floors dropped to 64 px / 1 KB, because "all of the photos in that
+folder" means all of them; the defaults exist to reject icons and video-scrubber
+thumbnails in a walk of a whole home folder, which this is not. `includeCloud` stays
+off — a wall that stalls for 20 seconds mid-cue is worse than one missing a picture.
+
+**The bundled photographs are what makes a refusal survivable.** `spawn` returns early
+when the index is empty, so before this a viewer who said no to Files and Folders got a
+`photoWall` cue that opened *nothing at all* — a hole in the middle of the show that read
+as a crash. Now the wall is always a wall; on a locked-down machine it is a wall of
+somebody else's broken screens. The pool is `assets/photo_fallback/` +
+`assets/broken_screens/`, resolved out of `Contents/Resources` at run time. It is also
+used when permission was *granted* and the folders turn out to hold fewer than
+`PhotoSource.minUserPhotos` (12) usable photographs — a fresh machine, a locked-down work
+laptop, an account with everything in iCloud and evicted. Four photographs recycled
+across forty windows is not a collage, it is the same picture forty times. A curated
+folder is never topped up this way, only replaced if it is literally empty.
+
+`assets/photo_fallback/` is built by `tools/generate_show.py:build_photo_fallback` from
+the gitignored `assets/broken_computer` drop — the same source → downsized-derived-copy
+arrangement as `broken_screens`, and disjoint from it so no photograph is in the pool
+twice. `IMG_0624.PNG` is deliberately excluded: it is a screenshot of a real person's
+Instagram DM, already kept out of the cut for that reason, and a pool that swept up
+"everything else in the folder" would have put it back into every copy of the app.
+`ProductionTests` pins that exclusion.
 
 Verify the ported math headlessly with `--test-photowall`: it asserts the fill
 terminates with exact coverage, that 2,000 churn placements retire ~1,980 windows

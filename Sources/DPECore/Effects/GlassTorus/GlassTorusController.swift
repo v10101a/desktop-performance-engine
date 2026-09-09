@@ -34,7 +34,14 @@ final class GlassTorusController {
     private var device: MTLDevice?
     private var scene: TorusScene?
     private var environment: ScreenEnvironment?
-    private var environmentLoaded = false
+    /// The plane already loaded, by path — nil until the first torus asks for one.
+    ///
+    /// This used to be a plain `environmentLoaded` flag, which was right while every
+    /// torus reflected the same thing (the viewer's desktop picture, read once). With
+    /// `environment` authorable per cue, a flag would mean the FIRST torus in a show
+    /// picked the plane for all of them. Keying on the path reloads only when the cue
+    /// actually asks for a different picture, and still costs nothing on a re-open.
+    private var loadedEnvironmentPath: String?
 
     var bpm: Double = 120
 
@@ -99,14 +106,18 @@ final class GlassTorusController {
                       speed: p.speed ?? 1.0, startTime: now,
                       endTime: duration.map { now + $0 })
 
-        // Once per run: the picture does not change, and a second torus reuses the
-        // texture the first one loaded. The load is async and non-blocking — the torus
-        // renders against the studio environment until it lands, and keeps rendering
-        // against it if there is no readable wallpaper file.
-        if !environmentLoaded {
-            environmentLoaded = true
-            environment.start(desktopPicture: desktopPictureURL?(window.screen),
-                              on: window.screen)
+        // Once per picture: a re-open, or a second torus asking for the same plane,
+        // reuses the texture already loaded. The load is async and non-blocking — the
+        // torus renders against the studio environment until it lands, and keeps
+        // rendering against it if the file cannot be read at all.
+        //
+        // An authored `environment` wins over the viewer's desktop picture; without one
+        // the behaviour is exactly what it was.
+        let url = p.environment.map { URL(fileURLWithPath: resolveResourcePath($0)) }
+            ?? desktopPictureURL?(window.screen)
+        if let url, loadedEnvironmentPath != url.path {
+            loadedEnvironmentPath = url.path
+            environment.start(desktopPicture: url, on: window.screen)
         }
     }
 

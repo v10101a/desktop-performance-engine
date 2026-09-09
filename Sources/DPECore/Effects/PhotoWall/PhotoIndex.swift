@@ -115,6 +115,17 @@ final class PhotoIndex: @unchecked Sendable {
         lock.unlock()
     }
 
+    /// Throw the index away. Loading a different show with different authored roots must
+    /// not inherit the last one's photographs — the scan is deliberately kept across
+    /// teardowns (re-walking a home folder on every replay would stall the show), so
+    /// something has to say when it is no longer the right index.
+    func reset() {
+        lock.lock(); defer { lock.unlock() }
+        urls.removeAll()
+        cursor = 0
+        stats = Stats()
+    }
+
     /// Next photo, reshuffling and recycling once every photo has been shown.
     func next() -> URL? {
         lock.lock(); defer { lock.unlock() }

@@ -110,21 +110,27 @@ enum AsciiLogTests {
                 }
             }
 
-            // They must all be done before the segmenter swarm takes the screen: it is the
-            // closing act and nothing is supposed to be over it.
-            let segStart = tl.events.compactMap { ev -> Double? in
-                if case .segSwarm = ev.action { return ev.fireTime }
+            // They belong to the ERUPTION, and they have to be gone before the end card.
+            //
+            // This used to pin them ahead of the segmenter swarm, which was the closing act
+            // and had nothing over it. The 2026-09-07 swap put the segmenter FIRST — it
+            // opens the second chorus and the eruption buries it — so the planes now run
+            // where the swarm used to and that ordering is inverted. What has not changed,
+            // and is the thing actually worth pinning, is that four full-screen planes must
+            // not still be up when the credits come in underneath them.
+            let cardAt = tl.events.compactMap { ev -> Double? in
+                if case .credits = ev.action { return ev.fireTime }
                 return nil
             }.min()
-            if let segStart {
+            if let cardAt {
                 let lastClose = tl.events.compactMap { ev -> Double? in
                     if case .closeWindow(let c) = ev.action, c.id.hasPrefix("asciilog") {
                         return ev.fireTime
                     }
                     return nil
                 }.max() ?? 0
-                t.expect(lastClose <= segStart,
-                         "the ascii planes are all gone before the segmenter (\(lastClose)s vs \(segStart)s)")
+                t.expect(lastClose <= cardAt,
+                         "the ascii planes are all gone before the end card (\(lastClose)s vs \(cardAt)s)")
             }
         }
     }

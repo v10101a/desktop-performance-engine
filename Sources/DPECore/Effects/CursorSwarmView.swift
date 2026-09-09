@@ -32,6 +32,8 @@ final class CursorSwarmView: NSView {
     }
 
     private let mode: Mode
+    /// School only: which scene this is. See `Pattern`.
+    private let pattern: Pattern
     private var swarm: [Pointer] = []
     private var layers: [CALayer] = []
     private var rng: SplitMix64
@@ -53,8 +55,10 @@ final class CursorSwarmView: NSView {
     /// wall and gives the section it arrives in a hard edge.
     private let ramp: Double
 
-    init(size: NSSize, seed: Int, count: Int, mode: Mode = .chase, rampSeconds: Double = 0) {
+    init(size: NSSize, seed: Int, count: Int, mode: Mode = .chase,
+         pattern: Pattern = .spiral, rampSeconds: Double = 0) {
         self.mode = mode
+        self.pattern = pattern
         self.ramp = max(0, rampSeconds)
         rng = SplitMix64(seed: UInt64(bitPattern: Int64(seed == 0 ? 3 : seed)))
         super.init(frame: NSRect(origin: .zero, size: size))
@@ -65,25 +69,58 @@ final class CursorSwarmView: NSView {
         target = CGPoint(x: size.width / 2, y: size.height / 2)
 
         let n = max(1, count)
-        // The spiral they arrive on: an Archimedean arm from the centre out, walked at a
-        // constant angular step so the cursors are evenly spaced ALONG it. It is a
-        // starting shape, not a path — the flocking below is what keeps it turning, and
-        // within a second or two it is a shoal that remembers it was a spiral.
-        let turns = 2.5, arm = 0.42 * Double(min(size.width, size.height))
+        // The shape they arrive on. It is a STARTING shape, not a path — the flocking
+        // below is what keeps it — but it is half of what makes a scene: the same
+        // weights over a different spawn is a different picture for the second or two
+        // that matters when the cuts are this fast.
+        let W = Double(size.width), H = Double(size.height)
+        let cx = W / 2, cy = H / 2
+        let arm = 0.42 * min(W, H)
         for i in 0..<n {
             var p = Pointer()
-            p.x = rand(0, Double(size.width))
-            p.y = rand(0, Double(size.height))
+            p.x = rand(0, W)
+            p.y = rand(0, H)
             if mode == .school {
                 let f = Double(i) / Double(max(1, n - 1))
-                let theta = f * turns * 2 * .pi
-                let r = arm * f
-                p.x = Double(size.width) / 2 + cos(theta) * r
-                p.y = Double(size.height) / 2 + sin(theta) * r
-                // Moving along the arm, not out of it: the shoal is already turning on
-                // the frame it appears.
-                p.vx = -sin(theta) * 180
-                p.vy = cos(theta) * 180
+                switch pattern {
+                case .spiral:
+                    // An Archimedean arm from the centre out, walked at a constant
+                    // angular step so they are evenly spaced ALONG it.
+                    let theta = f * 2.5 * 2 * .pi
+                    p.x = cx + cos(theta) * arm * f
+                    p.y = cy + sin(theta) * arm * f
+                    // Moving along the arm, not out of it: already turning on the frame
+                    // it appears.
+                    p.vx = -sin(theta) * 180
+                    p.vy = cos(theta) * 180
+                case .ring:
+                    let theta = f * 2 * .pi
+                    let r = arm * rand(0.78, 1.0)      // a band, not a wire
+                    p.x = cx + cos(theta) * r
+                    p.y = cy + sin(theta) * r
+                    p.vx = -sin(theta) * 240
+                    p.vy = cos(theta) * 240
+                case .grid:
+                    let cols = max(1, Int(Double(n).squareRoot().rounded()))
+                    let rows = max(1, (n + cols - 1) / cols)
+                    let gx = Double(i % cols) / Double(max(1, cols - 1))
+                    let gy = Double(i / cols) / Double(max(1, rows - 1))
+                    p.x = W * (0.15 + 0.7 * gx)
+                    p.y = H * (0.15 + 0.7 * gy)
+                    p.vx = 200; p.vy = 0                // marching, one heading
+                case .burst:
+                    // All at the centre, thrown out. A tiny radius rather than a point:
+                    // coincident particles have no separation direction to push along.
+                    let theta = rand(0, 2 * .pi)
+                    p.x = cx + cos(theta) * rand(2, 40)
+                    p.y = cy + sin(theta) * rand(2, 40)
+                    p.vx = cos(theta) * rand(320, 620)
+                    p.vy = sin(theta) * rand(320, 620)
+                case .stream:
+                    p.x = W * f
+                    p.y = cy + rand(-H * 0.18, H * 0.18)
+                    p.vx = 300; p.vy = rand(-40, 40)
+                }
             }
             // Any size. The spread is deliberately wide rather than a tight band: a
             // swarm of near-identical arrows reads as a texture, and the big ones
@@ -206,22 +243,61 @@ final class CursorSwarmView: NSView {
     /// subtract the one it has, and the difference is a force. Mixing raw position
     /// differences with velocity differences is the usual way boids end up needing
     /// magic weights that only hold at one screen size.
-    private enum School {
-        static let perception = 130.0     // how far a cursor looks for its neighbours
-        static let personal = 34.0        // closer than this and it peels away
-        static let separation = 1.9       // …weighted above the other two: fish don't touch
-        static let alignment = 1.0
-        static let cohesion = 0.85
-        static let vortex = 1.15
-        static let inward = 0.30          // holds the arm curved instead of flying out
-        static let margin = 80.0          // turn back this far from the edge
-        static let edge = 2.4
+    fileprivate struct School {
+        var perception = 130.0     // how far a cursor looks for its neighbours
+        var personal = 34.0        // closer than this and it peels away
+        var separation = 1.9       // …weighted above the other two: fish don't touch
+        var alignment = 1.0
+        var cohesion = 0.85
+        var vortex = 1.15
+        var inward = 0.30          // holds the arm curved instead of flying out
+        var margin = 80.0          // turn back this far from the edge
+        var edge = 2.4
+    }
+
+    /// A named scene: where the cursors start AND how they then behave. The two are one
+    /// choice, not two — a ring spawn under the spiral's weights just relaxes into the
+    /// spiral, and a grid spawn only reads as a grid while alignment is holding it
+    /// together. Cutting between these is cutting between pictures; cutting between
+    /// seeds alone is the same picture shuffled.
+    ///
+    /// Every one of them ignores the viewer's pointer. That is `Mode.school`'s whole
+    /// distinction from `.chase`, and it is what these are built on.
+    enum Pattern: String, CaseIterable {
+        /// The original: an Archimedean arm, vortex-driven, turning as a body.
+        case spiral
+        /// An annulus with the vortex up and cohesion down — a band that rotates and
+        /// keeps its hole instead of filling it in.
+        case ring
+        /// A lattice held by alignment with the vortex almost off: a block that marches
+        /// one way and comes apart at the edges.
+        case grid
+        /// Everything at the centre, thrown outward, separation high and cohesion low —
+        /// an explosion that drifts back together.
+        case burst
+        /// A line across the screen, alignment high and vortex off: a current.
+        case stream
+
+        init(_ name: String?) { self = Pattern(rawValue: name ?? "") ?? .spiral }
+
+        fileprivate var weights: School {
+            var s = School()
+            switch self {
+            case .spiral: break
+            case .ring:   s.vortex = 1.9;  s.cohesion = 0.30; s.inward = 0.10; s.separation = 2.2
+            case .grid:   s.vortex = 0.10; s.alignment = 2.2; s.cohesion = 0.55; s.personal = 46
+            case .burst:  s.vortex = 0.35; s.cohesion = 0.20; s.separation = 3.0; s.alignment = 0.5
+            case .stream: s.vortex = 0.0;  s.alignment = 2.6; s.cohesion = 0.40; s.margin = 30
+            }
+            return s
+        }
     }
 
     private func stepSchool() {
         let dt = CursorSwarmView.dt
         let w = Double(bounds.width), h = Double(bounds.height)
         let cx = w / 2, cy = h / 2
+        let School = pattern.weights          // the scene's weights, not one global set
         let p2 = School.perception * School.perception
         let s2 = School.personal * School.personal
 
@@ -340,7 +416,14 @@ final class CursorSwarmView: NSView {
         CGPoint(x: inset.x + poly[0].0, y: 1.0 - (inset.y + poly[0].1))
     }
 
+    /// The master arrow, rendered once. Every layer scales this one image down, and every
+    /// view asks for the same `master` side — so without the cache a section that CUTS
+    /// between patterns re-renders a 256pt bezier on the main thread on every cut. Cue 12
+    /// re-opens this view about thirty times in fifteen seconds.
+    private static var artCache: [CGFloat: NSImage] = [:]
+
     static func arrowImage(side: CGFloat) -> NSImage {
+        if let hit = artCache[side] { return hit }
         let image = NSImage(size: NSSize(width: side, height: side))
         image.lockFocus()
         let path = NSBezierPath()
@@ -356,6 +439,7 @@ final class CursorSwarmView: NSView {
         NSColor.black.setFill()
         path.fill()
         image.unlockFocus()
+        artCache[side] = image
         return image
     }
 

@@ -270,7 +270,16 @@ final class OutroController {
 
     /// Step 3: the boot bar — the same `BootView` the fake reboot uses, driven here by a
     /// timer rather than the (stopped) pump.
+    ///
+    /// **`bootSeconds <= 0` skips it entirely** (2026-09-07), and the shipped cut asks
+    /// for that. The piece already opens on a machine restarting — the gate's stalled
+    /// restart card — and `BootView` is geometry-matched to it on purpose, so a second
+    /// Apple logo over a second progress bar at the end reads as the same beat played
+    /// twice. Without it the dump is the last picture and the app simply goes, which
+    /// returns the viewer to their own desktop: `finish()` quits, and quitting routes
+    /// through `applicationWillTerminate` -> `stopAndRestore()`.
     private func runBoot(on screen: NSScreen) {
+        guard bootSeconds > 0 else { finish(); return }
         let sf = screen.frame
         let win = BaseEffectWindow(contentRect: sf)
         win.ignoresMouseEvents = true

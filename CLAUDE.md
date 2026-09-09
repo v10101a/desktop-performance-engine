@@ -49,6 +49,10 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
 
 ## Everything else
 
+- **Event timing.** Events fire from their own 240 Hz clock, not the display pump — the
+  pump is starved to ~13 Hz by compositing in the densest sections and events can only
+  fire on a tick. `DPE_PROFILE=1` prints pump rate + per-event cost at stop;
+  `DPE_EVENT_CLOCK=0` reverts. See "The event clock" in README.
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.
@@ -68,6 +72,27 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   pinned under the desktop icons (`DesktopLayer`) that looks the same and dies with the
   process. `TimelineTests` pairs the gate to `usesWallpaper`, so a cue that switches to
   `surface: "wallpaper"` without opening the gate fails the suite.
+- **The transport window is hidden.** A normal launch constructs `MainWindowController`
+  (it owns the engine callbacks) but does not show it — `AppDelegate.consoleVisibleAtLaunch`
+  is the one rule, and only `--console` and `--no-gate` turn it on. ⌃⌥⌘D toggles it at
+  run time. Both chords go through `HotKeyCenter`, which installs **one** Carbon handler
+  and dispatches on the hotkey id; a second handler would fire for both chords and ⌃⌥⌘D
+  would panic. `applicationShouldTerminateAfterLastWindowClosed` is false for the same
+  reason the console is hidden — closing it mid-performance must not end the piece.
+- **The photo wall always has photographs.** `PhotoSource` decides at scan time, not
+  config time: `~/Desktop/giveit2me` if it is there, else the authored roots, else the
+  pool bundled in the `.app` (`assets/photo_fallback` + `assets/broken_screens`). The
+  resolution runs **off the main thread** — deciding means trying to read `~/Desktop`,
+  and on a first run that blocks on the Files and Folders prompt. `PhotoWallController.spawn`
+  returns early on an empty index, so without the fallback a refused machine gets a cue
+  that opens nothing. `assets/photo_fallback/` is derived-and-committed from the
+  gitignored `broken_computer` drop by `generate_show.py`, minus `IMG_0624.PNG` (a real
+  person's DM — see the note there); regenerate it whenever the drop changes.
+- **`--check` is the USB test.** It resolves every asset the timeline names against the
+  `.app` alone (`TimelineAssets.audit`), because the ordinary resolver also searches the
+  repo — so a bundle missing half its pictures looks perfect until it leaves the machine.
+  Run it from a *copy* of the `.app`. A new asset-carrying param must be added to
+  `TimelineAssets.paths` or it silently stops travelling.
 - **Photosensitivity is a real constraint, not a style note.** Keep full-screen change
   rates out of the 15–20 Hz band and re-measure from the generated timeline if you
   change the cadence. The current cut is median 2.9 Hz, peak 12.0 Hz.

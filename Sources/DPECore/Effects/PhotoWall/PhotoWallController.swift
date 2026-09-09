@@ -31,7 +31,12 @@ final class PhotoWallController {
     /// of the disk, and re-walking a home folder on every replay would stall the show.
     private let index = PhotoIndex()
     private var scanning = false
+    /// What was actually walked — the viewer's folders, their curated folder, or the
+    /// bundle. Diagnostics only.
     private var scanRoots: [URL] = []
+    /// What the loaded timeline ASKED for, so a different show can be told apart from
+    /// the same show prewarming twice.
+    private var authoredRoots: [URL]?
 
     private let loadQueue = DispatchQueue(label: "dpe.photowall.load", qos: .userInitiated,
                                           attributes: .concurrent)
@@ -51,21 +56,70 @@ final class PhotoWallController {
     /// and a `photoWall` event fires on a beat — without a warm index the wall would
     /// come up empty and fill in late, off the music. Mirrors `WindowManager.prewarm`.
     func prewarm(for events: [ResolvedEvent]) {
-        let roots: [URL]? = events.lazy.compactMap { ev -> [URL]? in
-            if case .photoWall(let p) = ev.action { return PhotoWallConfig(p).roots }
-            return nil
-        }.first
-        guard let roots else { return }
-        guard !scanning || roots.map(\.path) != scanRoots.map(\.path) else { return }
-        scanning = true
-        scanRoots = roots
-        // `cfg` here only supplies the selection filters; the first photoWall event's
-        // settings stand in for any later one, which is right in practice (one wall).
+        // `cfg` here only supplies the selection filters and the authored roots; the
+        // first photoWall event's settings stand in for any later one, which is right in
+        // practice (one wall).
         let cfg = events.lazy.compactMap { ev -> PhotoWallConfig? in
             if case .photoWall(let p) = ev.action { return PhotoWallConfig(p) }
             return nil
-        }.first ?? PhotoWallConfig(PhotoWallParams(id: "prewarm"))
-        index.scan(roots: roots, cfg: cfg) { _, _ in }
+        }.first
+        guard let cfg else { return }
+        // A second timeline with different authored roots must not keep the first one's
+        // photographs. Compared on what was ASKED for, not on `scanRoots`, which is what
+        // was actually walked and may be the bundle.
+        if !scanning, let last = authoredRoots, last.map(\.path) != cfg.roots.map(\.path) {
+            index.reset()
+        }
+        authoredRoots = cfg.roots
+        startScan(cfg: cfg)
+    }
+
+    /// Resolve where the photographs come from, walk it, and top up from the bundle if
+    /// what came back is not a wall. See `PhotoSource` for the order of preference.
+    ///
+    /// The *resolution* runs off the main thread on purpose. Deciding between the
+    /// viewer's folders and the bundled photographs means trying to read `~/Desktop`,
+    /// and on a first run — prewarm happens at load, before the gate's preflight — that
+    /// read blocks until the Files and Folders prompt is answered. On the main thread
+    /// that is a frozen app behind its own dialog.
+    private func startScan(cfg: PhotoWallConfig) {
+        guard !scanning, index.count == 0 else { return }
+        scanning = true
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let source = PhotoSource.resolve(cfg)
+            NSLog("[DPE] photoWall: source = \(source.label)")
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.scanRoots = source.roots
+                self.index.scan(roots: source.roots, cfg: source.filters(cfg)) { count, finished in
+                    guard finished else { return }
+                    self.settle(source: source, count: count, cfg: cfg)
+                }
+            }
+        }
+    }
+
+    /// End of a scan: either we have a wall, or the bundled photographs go in behind it.
+    /// On the main queue — `PhotoIndex.scan` reports progress there.
+    private func settle(source: PhotoSource, count: Int, cfg: PhotoWallConfig) {
+        guard count < source.floor else {
+            scanning = false
+            NSLog("[DPE] photoWall: \(count) photo(s) from \(source.label)")
+            return
+        }
+        NSLog("[DPE] photoWall: \(count) photo(s) from \(source.label) — under \(source.floor), "
+            + "falling back to the bundled photographs")
+        let roots = PhotoSource.bundledRoots()
+        guard !roots.isEmpty else {
+            scanning = false
+            NSLog("[DPE] photoWall: no bundled photographs either — the wall will be empty")
+            return
+        }
+        index.scan(roots: roots, cfg: cfg) { [weak self] n, done in
+            guard done else { return }
+            self?.scanning = false
+            NSLog("[DPE] photoWall: \(n) photo(s) after the fallback")
+        }
     }
 
     // MARK: - Lifecycle
@@ -77,11 +131,7 @@ final class PhotoWallController {
 
         // The scan normally happened at load; start it here too so a wall still works
         // when an event was added after prewarm (editor insert, hand-edited JSON).
-        if index.count == 0 && !scanning {
-            scanning = true
-            scanRoots = cfg.roots
-            index.scan(roots: cfg.roots, cfg: cfg) { _, _ in }
-        }
+        startScan(cfg: cfg)
 
         rebuildCoverage(cell: cfg.cell)
         let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)

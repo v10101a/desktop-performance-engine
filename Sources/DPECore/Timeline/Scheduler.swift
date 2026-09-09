@@ -1,4 +1,5 @@
 import Foundation
+import QuartzCore
 
 /// Fires timeline events against the audio clock using a single advancing cursor.
 ///
@@ -42,9 +43,36 @@ final class Scheduler {
                 driftSum += d
                 driftCount += 1
             }
-            ctx.execute(ev.action, now: now)
+            if Scheduler.profiling {
+                let t0 = CACurrentMediaTime()
+                ctx.execute(ev.action, now: now)
+                Scheduler.record(ev.action.typeName, CACurrentMediaTime() - t0)
+            } else {
+                ctx.execute(ev.action, now: now)
+            }
             cursor += 1
         }
+    }
+
+    /// DPE_PROFILE=1: time every event's execute and total it by type. Drift is the
+    /// symptom — the pump tick landing late — and this is what says which handler is
+    /// holding the main thread long enough to cause it.
+    static let profiling = ProcessInfo.processInfo.environment["DPE_PROFILE"] == "1"
+    private static var cost: [String: (n: Int, total: Double, worst: Double)] = [:]
+
+    static func record(_ type: String, _ seconds: Double) {
+        var e = cost[type] ?? (0, 0, 0)
+        e.n += 1; e.total += seconds; e.worst = max(e.worst, seconds)
+        cost[type] = e
+    }
+
+    static var profileSummary: String {
+        cost.sorted { $0.value.total > $1.value.total }.prefix(10).map {
+            String(format: "  %-14s n=%4d  total %7.1fms  mean %6.2fms  worst %6.1fms",
+                   ($0.key as NSString).utf8String!, $0.value.n,
+                   $0.value.total * 1000, $0.value.total / Double($0.value.n) * 1000,
+                   $0.value.worst * 1000)
+        }.joined(separator: "\n")
     }
 
     var driftSummary: String {

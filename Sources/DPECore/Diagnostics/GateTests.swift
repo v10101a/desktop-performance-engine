@@ -83,6 +83,31 @@ enum GateTests {
             // file: `setColor` writes through to the backing store, and an `NSImage`
             // loaded from a path can be backed by the mapped file — it edited a
             // committed asset on disk once already.
+            // The gate is the only thing in the piece that makes a noise of its own, and
+            // it makes two: one when the alert LANDS and a different one when it is
+            // answered. Both are named .wav files under a blanket `assets/*.wav` ignore
+            // rule with individual exceptions, and both need their own line in bundle.sh
+            // (the audio loop there takes only compressed formats) — so "the file is
+            // there" is exactly the thing that silently stops being true.
+            for asset in [IntroGate.appearSound, IntroGate.dismissSound] {
+                let path = resolveResourcePath(asset)
+                t.expect(FileManager.default.fileExists(atPath: path),
+                         "gate sound \(asset) resolves — looked at \(path)")
+            }
+
+            // ONE BLINK, ONCE. The face used to blink eight times on an uneven pattern
+            // that repeated every 23 s; a single blink is worse to be looked at by. The
+            // table is sampled over two minutes rather than the card's ~4.6 s life so
+            // this also catches the wrap coming back — the old version would show its
+            // second cycle here even though the shipped card never lives that long.
+            var blinks = 0, wasShut = false
+            for step in 0...(120 * 120) {
+                let shut = RestartCardView.eyesAreShut(at: Double(step) / 120.0)
+                if shut && !wasShut { blinks += 1 }
+                wasShut = shut
+            }
+            t.equal(blinks, 1, "the face blinks exactly once, and never again")
+
             let facePath = resolveResourcePath(IntroGate.faceAsset)
             t.expect(FileManager.default.fileExists(atPath: facePath),
                      "the restart card's face asset resolves — looked at \(facePath)")

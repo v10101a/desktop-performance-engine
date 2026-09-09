@@ -177,6 +177,21 @@ struct ContentSpec: Decodable {
     ///   "lines"   — `lines`, pushed one at a time at `hz` as log records
     ///   "text"    — `text`, drawn once and left
     ///   "windows" — the show's own windows as box art, redrawn as they come and go
+    /// "cursors" + `mode: "school"` only: which scene the shoal is in — where the
+    /// cursors spawn AND the flock weights that then hold them there. "spiral"
+    /// (default) | "ring" | "grid" | "burst" | "stream". Re-open the same window id
+    /// with a different one and the screen CUTS between pictures; a new seed alone is
+    /// the same picture shuffled. Never reads the viewer's pointer in any of them —
+    /// that is `mode: "school"`, not the pattern.
+    var pattern: String? = nil
+    /// "lyric" only: re-pick the FACE this many times a second, at random, from every
+    /// font on the viewer's machine that can set the words — their own `~/Library/Fonts`
+    /// included. Absent or 0 keeps the show's Hack Bold. `seed` fixes the sequence.
+    ///
+    /// The fit is redone on every change, not just the font: families differ by ~6× in
+    /// width at one point size, so a card that only swapped the face would overflow the
+    /// window half the time and set the line a third too small the rest.
+    var fontCycleHz: Double? = nil
     var source: String? = nil
     /// `source: "lines"` only: the records to push, cycled.
     var lines: [String]? = nil
@@ -444,6 +459,15 @@ struct GlassTorusParams: Decodable {
     var size: Double? = nil           // square side, if `frame` is omitted
     /// "screenSaver" (default, above the menu bar) | "floating" | "normal"
     var level: String? = nil
+    /// An image the glass refracts INSTEAD of the viewer's own desktop picture.
+    ///
+    /// The plane behind the torus is the machine's wallpaper by default, which is right
+    /// when the torus is a thing sitting on the viewer's desktop and wrong the moment the
+    /// cue puts it somewhere else — cue 13 now opens a tunnel under it, and a torus
+    /// refracting a stranger's Big Sur wallpaper inside a tunnel belongs to neither
+    /// picture. Any path ImageIO can read; it is resolved like every other asset and
+    /// falls back to the desktop picture if it cannot be read.
+    var environment: String? = nil
 }
 
 struct WallpaperParams: Decodable {

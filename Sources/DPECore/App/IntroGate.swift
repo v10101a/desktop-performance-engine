@@ -100,7 +100,12 @@ enum IntroGate {
     /// own `sarah's assets/blink.jpg` by `build_face_blink` in the generator, registered
     /// to `faceAsset` on the MOUTH so only the eyes change between the two.
     static let faceBlinkAsset = "assets/pixelface_blink.jpg"
-    static let buttonSound = "assets/bubble_sound.wav"
+    /// The alert ARRIVING. A popup that only makes a noise on the way out is a popup you
+    /// were never startled by; the sound belongs on the thing appearing in front of you.
+    static let appearSound = "assets/bubble_sound.wav"
+    /// …and answering it is a different, drier sound, so the two ends of the exchange are
+    /// not the same event heard twice.
+    static let dismissSound = "assets/click_sound.wav"
 
     static let backdrop = "#050508"
 
@@ -652,6 +657,11 @@ final class IntroGateController {
             let view = makeIntroCardView(card, size: win.frame.size,
                                          onStart: { [weak self] in self?.proceed() },
                                          onExit: { [weak self] in self?.dismiss(then: self?.onExit) })
+            // The alert announces ITSELF. Fired here, at the top of the 0.35 s fade-in,
+            // rather than on the answer: the startling moment is the dialog appearing in
+            // front of you, and a sound that only arrives when you dismiss it marks the
+            // wrong instant. Only `.macAlert` — the restart card is meant to be silent.
+            if card.style == .macAlert { GateSound.appear() }
             if fade {
                 view.alphaValue = 0
                 win.contentView = view
@@ -815,10 +825,11 @@ final class GateAlertView: NSView {
             let isYes = button.title == yes
             // Either answer makes the sound; only then does the gate act on it. The
             // sound is short and the dismissal fades over 0.45 s, so they overlap rather
-            // than the click being swallowed.
+            // than the click being swallowed. This is the DISMISS sound — the alert made
+            // its own, drier one on the way in (see `show(cardAt:)`).
             let action = GateButtonAction {
                 NSLog("[DPE] gate: answered \(isYes ? "YES" : "no")")
-                GateSound.play()
+                GateSound.dismiss()
                 if isYes { onStart?() } else { onExit?() }
             }
             actions.append(action)                 // strong, for as long as the card lives
@@ -1000,26 +1011,28 @@ final class RestartCardView: NSView {
         setProgress(t)
         // The turn happens the moment the bar catches, not when it finishes.
         if t >= RestartCardView.risePortion { turn() }
-        // The timer used to stop itself here, when the bar filled. It runs on now: the
-        // card holds until the viewer answers the gate, and the face blinks the whole
-        // time it is up. It is a 30 Hz timer setting an image property — the cost of
-        // leaving it running is nothing next to a face that goes dead the moment the
-        // progress bar reaches the end.
+        // The timer used to stop itself here, when the bar filled. It runs on past that
+        // so the blink is not tied to the bar: the face turns up at `risePortion` and
+        // shuts its eyes once, 1.3 s later, which is after the bar has caught. It is a
+        // 30 Hz timer setting an image property, and `blink` returns immediately unless
+        // the state actually changes — the cost of leaving it running is nothing.
         blink(now)
     }
 
     /// Eye-shut moments, in seconds from the face arriving, and how long each lasts.
-    /// Deliberately uneven, with two doubles in it: a face that blinks on a metronome
-    /// reads as an animation loop, and this one has to read as something looking back
-    /// at the person deciding whether to run it. The pattern repeats after `blinkSpan`.
-    private static let blinkAt: [Double] = [1.3, 4.2, 4.9, 8.4, 12.0, 12.7, 16.1, 20.4]
+    ///
+    /// **One blink, once** (2026-09-07). It used to be eight uneven moments repeating
+    /// every 23 s — a face that keeps blinking at you while it waits. A single blink is
+    /// worse to be looked at by: the face arrives, shuts its eyes once, and then simply
+    /// does not do it again, and the viewer is left wondering whether it happened. The
+    /// list is not wrapped any more either, so the pattern stays finite however long the
+    /// card is up — raising `dwell` cannot bring the loop back.
+    private static let blinkAt: [Double] = [1.3]
     private static let blinkFor = 0.11
-    private static let blinkSpan = 23.0
 
     static func eyesAreShut(at since: Double) -> Bool {
         guard since >= 0 else { return false }
-        let t = since.truncatingRemainder(dividingBy: blinkSpan)
-        return blinkAt.contains { t >= $0 && t < $0 + blinkFor }
+        return blinkAt.contains { since >= $0 && since < $0 + blinkFor }
     }
 
     private func blink(_ now: Double) {
@@ -1077,24 +1090,34 @@ final class RestartCardView: NSView {
 
 // MARK: - Gate sound
 
-/// The click the gate's buttons make. One preloaded player, reused — building an
-/// `AVAudioPlayer` at press time costs enough to land after the window has already
-/// started fading out.
+/// The two noises the gate makes: one when the alert lands, one when it is answered.
+///
+/// Both players are built once and preloaded — building an `AVAudioPlayer` at the moment
+/// it is wanted costs enough to land after the window has already started fading out,
+/// which is exactly the frame the sound is meant to mark.
 enum GateSound {
-    private static var player: AVAudioPlayer? = {
-        let path = resolveResourcePath(IntroGate.buttonSound)
+    private static func load(_ asset: String) -> AVAudioPlayer? {
+        let path = resolveResourcePath(asset)
         guard FileManager.default.fileExists(atPath: path) else {
-            NSLog("[DPE] gate: button sound not found at \(path)")
+            NSLog("[DPE] gate: sound not found at \(path)")
             return nil
         }
         let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
         p?.prepareToPlay()
         return p
-    }()
+    }
 
-    static func play() {
+    private static var appearPlayer: AVAudioPlayer? = load(IntroGate.appearSound)
+    private static var dismissPlayer: AVAudioPlayer? = load(IntroGate.dismissSound)
+
+    private static func play(_ player: AVAudioPlayer?) {
         guard let player else { return }
         player.currentTime = 0
         player.play()
     }
+
+    /// The alert coming up.
+    static func appear() { play(appearPlayer) }
+    /// …and being clicked away.
+    static func dismiss() { play(dismissPlayer) }
 }

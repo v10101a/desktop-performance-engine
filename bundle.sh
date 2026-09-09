@@ -108,18 +108,32 @@ for audio in assets/*.mp3 assets/*.m4a; do
   [ -e "$audio" ] && cp "$audio" "$APP/Contents/Resources/"
 done
 
-# Image assets the timeline names by path (the end card's tiled backdrop). Same reason
-# as the audio: the resolver checks Contents/Resources, and without this the .app falls
-# back to a plain black card while the repo build looks correct.
+# Image assets the timeline names by path (the end card's tiled backdrop, the drop's
+# wallpaper, the gate's face, the plane the torus refracts). Same reason as the audio:
+# the resolver checks Contents/Resources, and without this the .app falls back to a plain
+# black card while the repo build looks correct.
+#
+# BOTH PLACES, and the second one is the one that works (2026-09-07). `resolveResourcePath`
+# tries `<base>/<name>` and `<base>/assets/<basename>` -- and never `<base>/<basename>` --
+# so a file the timeline names `assets/foo.jpg` is NOT found by a flat copy at
+# Contents/Resources/foo.jpg. It only ever resolved because the repo root is among the
+# bases the resolver walks up to, which is true when you run from the checkout and false
+# for an .app that has been moved anywhere else. The flat copy is kept because other
+# things (and `--check`) look for it there.
+mkdir -p "$APP/Contents/Resources/assets"
 for img in assets/credits_tile.png assets/pixelface.jpg assets/pixelface_desktop.jpg \
-           assets/pixelface_blink.jpg; do
-  [ -e "$img" ] && cp "$img" "$APP/Contents/Resources/"
+           assets/pixelface_blink.jpg assets/torus_dimension.jpg; do
+  [ -e "$img" ] || continue
+  cp "$img" "$APP/Contents/Resources/"
+  cp "$img" "$APP/Contents/Resources/assets/"
 done
 
-# The intro gate's button sound. Named explicitly rather than swept up by the audio
-# loop above, which deliberately takes only compressed formats — this one is a small
-# .wav and embedding it is the point.
-[ -e assets/bubble_sound.wav ] && cp assets/bubble_sound.wav "$APP/Contents/Resources/"
+# The intro gate's two sounds — the alert arriving, and the alert being answered. Named
+# explicitly rather than swept up by the audio loop above, which deliberately takes only
+# compressed formats; these are small .wavs and embedding them is the point.
+for snd in assets/bubble_sound.wav assets/click_sound.wav; do
+  [ -e "$snd" ] && cp "$snd" "$APP/Contents/Resources/"
+done
 
 # The lyric wallpapers, kept in their own folder because the timeline names them by that
 # path and the resolver checks Contents/Resources for it.
@@ -133,6 +147,27 @@ fi
 if [ -d assets/broken_screens ]; then
   mkdir -p "$APP/Contents/Resources/assets/broken_screens"
   cp assets/broken_screens/*.jpg "$APP/Contents/Resources/assets/broken_screens/"
+fi
+
+# The photo wall's fallback pool — what cue 22 shows when the viewer refuses Files and
+# Folders, or has nothing to show. NOT named by the timeline: `PhotoSource.bundledRoots`
+# resolves this folder at run time, which is why it has to travel inside the .app. On a
+# machine that says no to everything this is the only thing the wall has.
+# `|| true` is load-bearing: this script runs under `set -euo pipefail`, and with no
+# match `ls` exits non-zero, which pipefail promotes to the whole pipeline and `set -e`
+# turns into an aborted build. Counting nothing is not an error here.
+FALLBACK_N=$(ls assets/photo_fallback/*.jpg 2>/dev/null | wc -l | tr -d ' ' || true)
+SCREENS_N=$(ls assets/broken_screens/*.jpg 2>/dev/null | wc -l | tr -d ' ' || true)
+if [ "$FALLBACK_N" -gt 0 ]; then
+  mkdir -p "$APP/Contents/Resources/assets/photo_fallback"
+  cp assets/photo_fallback/*.jpg "$APP/Contents/Resources/assets/photo_fallback/"
+else
+  echo "note: assets/photo_fallback is empty — build it with tools/generate_show.py (needs the" >&2
+  echo "      gitignored assets/broken_computer drop and Pillow)." >&2
+fi
+echo "  photo fallback: $((FALLBACK_N + SCREENS_N)) photograph(s) for a machine that refuses Files and Folders"
+if [ "$((FALLBACK_N + SCREENS_N))" -eq 0 ]; then
+  echo "warning: NO fallback photographs — cue 22 will open an empty wall on a refused machine." >&2
 fi
 
 cat > "$APP/Contents/Info.plist" <<PLIST

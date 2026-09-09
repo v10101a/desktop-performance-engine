@@ -68,6 +68,7 @@ public enum UnitTests {
         GlitchEngineTests.run(t)
         DesktopLayerTests.run(t)
         AsciiLogTests.run(t)
+        LyricFontTests.run(t)
         ScreenGeometryTests.run(t)
         SystemProbeTests.run(t)
         RendererTests.run(t)
@@ -76,6 +77,7 @@ public enum UnitTests {
         CreditsTests.run(t)
         GateTests.run(t)
         PermissionsTests.run(t)
+        ProductionTests.run(t)
         SegCamTests.run(t)
         return t.report()
     }

@@ -249,6 +249,7 @@ final class PerformanceEngine {
         isPlaying = true
         isPaused = false
         pump.start { [weak self] in self?.step() }
+        startEventClock()
     }
 
     /// Hold the show exactly where it is. The playhead stops, the audio holds, and
@@ -259,6 +260,7 @@ final class PerformanceEngine {
         guard isPlaying, !isPaused else { return }
         isPaused = true
         pump.stop()
+        stopEventClock()
         clock.pause()
         windows.setAnimationsPaused(true)
         onTick?(startPosition)
@@ -271,9 +273,28 @@ final class PerformanceEngine {
         clock.resume()
         lastFxUpdate = -1.0       // don't skip the first frame's effect update
         pump.start { [weak self] in self?.step() }
+        startEventClock()
+    }
+
+    /// DPE_PROFILE=1: how often the pump actually gets to run. Drift is bounded below by
+    /// half the gap between ticks, so this is the number that says whether lateness is a
+    /// scheduling problem or a main-thread-is-busy-drawing problem.
+    private var pumpTicks = 0
+    private var pumpFirst = 0.0
+
+    var pumpRateSummary: String {
+        let secs = CACurrentMediaTime() - pumpFirst
+        guard pumpFirst > 0, secs > 0 else { return "pump: no ticks" }
+        return String(format: "pump: %.1f Hz (%d ticks over %.1fs, mean gap %.1fms)",
+                      Double(pumpTicks) / secs, pumpTicks, secs,
+                      secs / Double(max(1, pumpTicks)) * 1000)
     }
 
     private func step() {
+        if Scheduler.profiling {
+            if pumpFirst == 0 { pumpFirst = CACurrentMediaTime() }
+            pumpTicks += 1
+        }
         guard isPlaying, let raw = clock.currentTime() else { return }
         let now = raw + offsetCorrection
 
@@ -296,13 +317,51 @@ final class PerformanceEngine {
         // Fire events every tick (prompt), but throttle the per-frame effect updates
         // (window setFrame / cursor warp) to ~72 Hz so a 120 Hz ProMotion display
         // doesn't double the window-server traffic for no visible benefit.
-        scheduler.tick(now: now, ctx: context)
+        //
+        // When the event clock is running (see `startEventClock`) firing is ITS job and
+        // this must not also do it — two callers would still be correct, the cursor only
+        // advances, but the drift stats would be attributed to whichever got there first.
+        if eventClock == nil { scheduler.tick(now: now, ctx: context) }
         if now - lastFxUpdate >= 1.0 / 72.0 {
             for executor in executors { executor.update(now: now) }
             lastFxUpdate = now
         }
         startPosition = now       // playhead tracks; Stop leaves it here to resume
         onTick?(now)
+    }
+
+    /// A clock for FIRING EVENTS ONLY, independent of the display pump.
+    ///
+    /// The pump is vsync-driven and coalesced — it drops a tick while one is pending —
+    /// which is right for drawing and wrong for a scheduler. Measured through the
+    /// eruption, the pump falls to **13 Hz** (75 ms between ticks) because the window
+    /// server is compositing thirty-odd live windows, and since an event can only fire on
+    /// a tick, half that gap becomes drift. The events themselves are not the problem:
+    /// profiled over the same eight seconds they are 324 ms of work, about 4% of the wall
+    /// clock.
+    ///
+    /// So firing gets its own timer in `.common` mode, which the runloop services between
+    /// AppKit's draw passes rather than behind them. It costs nothing to run when there
+    /// is nothing due — `tick` is a compare against the next event's time.
+    ///
+    /// DPE_EVENT_CLOCK=0 turns it off and puts firing back on the pump.
+    private var eventClock: Timer?
+
+    private func startEventClock() {
+        stopEventClock()
+        guard ProcessInfo.processInfo.environment["DPE_EVENT_CLOCK"] != "0" else { return }
+        let t = Timer(timeInterval: 1.0 / 240.0, repeats: true) { [weak self] _ in
+            guard let self, self.isPlaying, !self.isPaused,
+                  let raw = self.clock.currentTime() else { return }
+            self.scheduler.tick(now: raw + self.offsetCorrection, ctx: self.context)
+        }
+        RunLoop.main.add(t, forMode: .common)
+        eventClock = t
+    }
+
+    private func stopEventClock() {
+        eventClock?.invalidate()
+        eventClock = nil
     }
 
     /// Move the playhead. While playing, seeks audio + visuals live (clean slate at
@@ -327,6 +386,7 @@ final class PerformanceEngine {
         isPlaying = false
         isPaused = false
         pump.stop()
+        stopEventClock()
         clock.stop()
         for executor in executors { executor.closeAll() }
         // The booth's photo is for the credits and nothing after them.
@@ -342,7 +402,14 @@ final class PerformanceEngine {
             wallpaper.restore()
             wallpaper.restoreAllSpaces()   // the other Spaces' desktops — final stop only
         }
-        if scheduler.logFiring { NSLog("[DPE] \(scheduler.driftSummary)") }
+        if scheduler.logFiring {
+            NSLog("[DPE] \(scheduler.driftSummary)")
+            if Scheduler.profiling {
+                NSLog("[DPE] \(pumpRateSummary)")
+                NSLog(String(format: "[DPE] playhead reached %.3fs", startPosition))
+                NSLog("[DPE] event cost by type:\n\(Scheduler.profileSummary)")
+            }
+        }
         NSLog("[DPE] stopAndRestore — windows remaining: \(windows.count)")
         if wasPlaying { onFinished?() }
     }

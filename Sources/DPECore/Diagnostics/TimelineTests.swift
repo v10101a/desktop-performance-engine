@@ -253,6 +253,21 @@ enum TimelineTests {
                     let size = CreditsController.rollSize(for: lines, font: font, in: small)
                     t.expect(CreditsController.naturalRollWidth(for: lines, font: font) <= size.width,
                              "…without the longest line wrapping")
+                    // THE CARD WAITS FOR THE SONG. It used to fire on the stop and roll
+                    // its credits over the last nine seconds of the track. It must also
+                    // not be pushed to the file's end: `PerformanceEngine.step` tests
+                    // `now >= duration` BEFORE ticking the scheduler, and `credits` has no
+                    // intrinsic duration, so a card AT the end makes `timeline.duration`
+                    // equal its own fire time and the end-of-piece branch trips first —
+                    // the card never comes up at all. This pins both edges of that window.
+                    let track = 169.85
+                    t.expect(ev.fireTime > track - 1.0 && ev.fireTime < track - 0.2,
+                             "the end card lands after the music and before the file ends "
+                             + "(\(ev.fireTime)s, track \(track)s)")
+                    // AND NO SECOND RESTART. The outro's Apple-logo boot bar is geometry-
+                    // matched to the gate's stalled restart card, and the piece opens on
+                    // that — a second one to close reads as the same beat played twice.
+                    t.equal(p.bootSeconds, 0, "the ending skips the boot bar")
                 }
                 // Every answer the torus can give fits the card the show opens for it.
                 let answerBox = NSSize(width: 460 - (20 + DialogIcon.side + 16) - 20, height: 186 - 100)
@@ -518,16 +533,46 @@ enum TimelineTests {
                 // would be 54 pointers converging on the viewer's mouse instead of a
                 // shoal, so the spelling is checked rather than assumed.
                 var modes: [String] = []
+                var patterns: Set<String> = []
+                // When each swarm is on screen, so the level rule below can be about what
+                // it actually has to outrank rather than about which cue it is.
+                // Paired with the id, because a swarm that CUTS re-opens its own id every
+                // beat and those are not windows burying it — they are it.
+                let opensAt = tl.events.compactMap { ev -> (Double, String)? in
+                    if case .openWindow(let o) = ev.action { return (ev.fireTime, o.id) }
+                    return nil
+                }
                 for ev in tl.events {
                     guard case .openWindow(let p) = ev.action,
                           p.content.kind == "cursors" else { continue }
                     modes.append(p.content.mode ?? "chase")
-                    // The shoal has to outrank the eruption it swims through: the show's
-                    // z-order is the order things opened in, and the eruption it rides
-                    // (cue 21 since the 2026-09-05 swap) opens a window every fifth of a
-                    // beat after it. Without the level it is buried.
-                    if p.content.mode == "school" {
-                        t.equal(p.level ?? "normal", "floating", "the shoal floats above the show")
+                    if let pat = p.content.pattern { patterns.insert(pat) }
+                    // A school has to outrank whatever it swims through, and the show's
+                    // z-order is just the order things opened in. So the rule is about
+                    // COMPANY, not about which cue it is: cue 21's shoal rides an eruption
+                    // that raises a window every fifth of a beat and is buried without
+                    // `floating`; cue 12's swarm has the lyric desktop to itself.
+                    //
+                    // This used to assert `floating` on every school, which held only
+                    // while cue 21's shoal was the only one in the piece.
+                    //
+                    // The threshold is 20 rather than 1 because "company" is not all the
+                    // same thing. An ERUPTION is hundreds of windows over tens of seconds
+                    // and buries anything below it. A SEAM is a burst of five to eight
+                    // (`sm…`) covering an act changeover for about a third of a second,
+                    // and the lyric swarm passes under two of them by design — the seam is
+                    // meant to cover the join, including this.
+                    let close = tl.events.compactMap { e -> Double? in
+                        if case .closeWindow(let c) = e.action, c.id == p.id,
+                           e.fireTime > ev.fireTime { return e.fireTime }
+                        return nil
+                    }.min() ?? tl.duration
+                    let company = opensAt.filter {
+                        $0.1 != p.id && $0.0 > ev.fireTime + 0.05 && $0.0 < close
+                    }.count
+                    if p.content.mode == "school", company > 20 {
+                        t.equal(p.level ?? "normal", "floating",
+                                "a shoal under an eruption (\(company) windows) floats")
                     }
                     t.equal(p.frame, [0, 0, 0, 0], "the cursor swarm fills the screen")
                     t.equal(p.content.chrome ?? "", "none", "the cursor swarm wears no chrome")
@@ -535,8 +580,19 @@ enum TimelineTests {
                     t.expect(["chase", "school"].contains(p.content.mode ?? "chase"),
                              "cursor swarm mode \(p.content.mode ?? "chase") is a real one")
                 }
-                t.equal(modes.sorted(), ["chase", "school"],
-                        "the show carries one pointer-chasing swarm (cue 24) and one shoal (cue 21)")
+                // EXACTLY ONE chase. That is the mode that reads `NSEvent.mouseLocation`
+                // and hunts the viewer's own pointer; every other swarm in the piece is a
+                // school, which never touches it. A second chase would be a cue quietly
+                // grabbing the one thing on screen the viewer still owns.
+                t.equal(modes.filter { $0 == "chase" }.count, 1,
+                        "exactly one pointer-chasing swarm in the show (cue 24)")
+                t.expect(modes.filter { $0 == "school" }.count > 1,
+                        "\(modes.filter { $0 == "school" }.count) schools — cue 21's shoal and cue 12's cuts")
+                // The cuts are only cuts if they cut to something else. All five patterns
+                // spawn differently AND flock differently; a run that collapsed to one
+                // would play as a single scene being reseeded.
+                t.expect(patterns.count >= 4,
+                         "the lyric-desktop swarm cuts between \(patterns.count) patterns \(patterns.sorted())")
 
                 // The mandala (cue 26): the third transparent full-screen overlay, and
                 // the same rule applies -- chrome would paint a ground over the piece.

@@ -7,6 +7,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     let engine = PerformanceEngine()
     var controller: MainWindowController?
     var gate: IntroGateController?
+    private var consoleHotKey: HotKeyCenter.Token?
+
+    /// Should the transport window be on screen at launch?
+    ///
+    /// **No, for anyone watching the piece.** A window called "Desktop Performance
+    /// Engine" with a Play button and a scrubber is the one object on the screen that
+    /// explains what is happening, and the piece does not work if the room is told. The
+    /// gate is the whole visible surface of a normal run; ⌃⌥⌘D brings the console back
+    /// for whoever is running it.
+    ///
+    /// Yes for the two paths that have no other way to drive the engine: `--console`
+    /// asks for it, and `--no-gate` is the dev loop, where skipping the gate would
+    /// otherwise leave a running app with no window and no way to press Play.
+    ///
+    /// Separated from `applicationDidFinishLaunching` so the rule can be tested without
+    /// launching an app.
+    static func consoleVisibleAtLaunch(_ args: [String]) -> Bool {
+        args.contains("--console") || args.contains("--no-gate")
+    }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Dev tools: render the intro gate's cards, or the Phase 6 scenes, to a PNG.
@@ -81,10 +100,23 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             if let url = bundled {
                 do {
                     try engine.loadTimeline(at: url)
+                    let tl = try TimelineLoader.load(from: url)
                     NSLog("[DPE] check: loaded      \(engine.loadedInfo)")
                     let audio = engine.resolvedAudioPath
                     NSLog("[DPE] check: audio       \(audio ?? "NOT FOUND — would fall back to a synth click track")")
-                    NSLog("[DPE] check: SELF-CONTAINED = \(audio != nil)")
+
+                    // Every asset the show names, resolved against the .app ALONE.
+                    // `resolveResourcePath` also searches the working directory and
+                    // seven levels above the bundle, so run from the repo it finds
+                    // everything whether or not the bundle carries it — which is how a
+                    // build that works here and shows black windows on a USB stick gets
+                    // shipped. This is the version that cannot be fooled that way.
+                    let (lines, assetsOK) = TimelineAssets.audit(tl)
+                    for line in lines { NSLog("[DPE] check: %@", line) }
+                    let pool = TimelineAssets.bundledPoolCount()
+                    NSLog("[DPE] check: photo pool  \(pool) bundled photograph(s) "
+                        + "— what the wall shows when Files and Folders is refused")
+                    NSLog("[DPE] check: SELF-CONTAINED = \(audio != nil && assetsOK && pool > 0)")
                 } catch {
                     NSLog("[DPE] check: load error  \(error)")
                 }
@@ -414,8 +446,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Always CONSTRUCTED — it wires the engine's onFinished / onOutroFinished
+        // callbacks and owns the transport state — but only SHOWN when asked for. See
+        // `consoleVisibleAtLaunch`.
         controller = MainWindowController(engine: engine)
-        controller?.showWindow(nil)
+        if AppDelegate.consoleVisibleAtLaunch(CommandLine.arguments) {
+            controller?.showWindow(nil)
+        } else {
+            NSLog("[DPE] console hidden — ⌃⌥⌘D reveals it")
+        }
+        installConsoleHotKey()
         NSApp.activate(ignoringOtherApps: true)
 
         // Timeline source: explicit CLI path, else the bundled sample.
@@ -1237,10 +1277,49 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         wm.closeAll()
     }
 
+    // MARK: - The console
+
+    /// ⌃⌥⌘D. Claimed once, for the life of the process, next to the panic key — same
+    /// Carbon mechanism, so it works with the app in the background and needs no
+    /// Accessibility grant. Both go through `HotKeyCenter`, which dispatches on the
+    /// hotkey id; without that, one chord would fire both actions.
+    private func installConsoleHotKey() {
+        guard consoleHotKey == nil else { return }
+        consoleHotKey = HotKeyCenter.shared.register(
+            key: HotKeys.console.key,
+            modifiers: HotKeys.console.modifiers,
+            signature: OSType(0x434F4E53)          // 'CONS'
+        ) { [weak self] in self?.toggleConsole() }
+    }
+
+    /// Reveal the transport window, or put it away again.
+    ///
+    /// `orderOut` rather than `close` so the same `MainWindowController` comes back with
+    /// its state intact — the playhead, the status line, the volume it was set to for
+    /// the room — instead of a fresh window each time the chord is pressed.
+    func toggleConsole() {
+        guard let win = controller?.window else { return }
+        if win.isVisible {
+            win.orderOut(nil)
+            NSLog("[DPE] console hidden")
+        } else {
+            controller?.showWindow(nil)
+            win.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            NSLog("[DPE] console revealed")
+        }
+    }
+
     public func applicationWillTerminate(_ notification: Notification) {
         // Reversibility gate: never leave the desktop altered.
         engine.stopAndRestore()
     }
 
-    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    /// No. This used to be true, back when the transport window was always on screen and
+    /// closing it was how you quit. Now that the console is hidden by default and comes
+    /// and goes on ⌃⌥⌘D, the same `true` would mean: reveal the console during a quiet
+    /// passage, close it, and the piece dies mid-performance because that happened to be
+    /// the only visible window. The piece ends when the piece ends — the outro calls
+    /// `NSApp.terminate` itself — or on ⌘Q.
+    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }

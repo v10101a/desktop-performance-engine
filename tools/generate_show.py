@@ -53,11 +53,16 @@ BLACK = "#000000"
 # NOT the lighter #0078D7 the lyric cards use.
 DJ_BLUE = "#020AF5"
 
-# The three images the piece tears, with the same displacement/chroma-split pass the
-# desktop gets. Up here rather than inside one act because four different parts of the
-# show put torn cards up now: both eruptions, the cue-16 wipe, and every seam.
-GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/muybridge_horse.gif",
-                  "assets/credits_tile.png"]
+# The images the piece tears, with the same displacement/chroma-split pass the desktop
+# gets. Up here rather than inside one act because four different parts of the show put
+# torn cards up now: both eruptions, the cue-16 wipe, and every seam.
+#
+# THE HORSE IS OUT (2026-09-06). `assets/muybridge_horse.gif` was the second source, so
+# a third of the torn cards were a smeared Muybridge frame — the last place the horse was
+# still on screen after its own act was cut (`HORSE_ACT = False`, cue 21). The asset and
+# `tools/generate_horse.py` stay: the act is kept behind that flag for when it comes back,
+# and this list is about what the show SHOWS, not what the repo carries.
+GLITCH_SOURCES = ["assets/pixelface.jpg", "assets/credits_tile.png"]
 
 # --- the tempo map, straight from the analysis ---
 with open(os.path.join(ROOT, "assets", "track_analysis.json")) as f:
@@ -154,7 +159,7 @@ CUES = {
     "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the eruption + the strobe, straight in
     "allglitch":  ("chorus2B",      4, 0),   # 29  PULLED — was the lyric desktop under the strobe; the slot keeps its number
     "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6 and closes on the silence
-    "ending":     ("break",         0, -1),  # 31  the stop IS the end card — no lyric section after the music
+    "ending":     ("break",         4, 2),   # 31  the end card, once the track has actually finished
 }
 # The recut's authored seconds, and the clock they were read on: a video with ~9 s of
 # boot-up before the music. `WAS - RECUT_SHIFT` is where each cue sits in the track.
@@ -253,14 +258,24 @@ def seam(beat, tag, n=SEAM_N, torn_every=4):
         add(beat + i * (SEAM_TAIL / n), "closeWindow", {"id": wid, "fadeSeconds": SEAM_FADE})
     return ids
 
-def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none", anchor=None):
-    """One lyric-video frame. `i` alternates the ground/type between blue and white."""
+def lyric_card(wid, beat, text, i, frame=None, chrome="none", animate="none", anchor=None,
+               font_cycle_hz=None):
+    """One lyric-video frame. `i` alternates the ground/type between blue and white.
+
+    `font_cycle_hz` re-picks the FACE that many times a second from whatever fonts the
+    viewer has installed — see the eruption, which is the only place it is used."""
     blue_ground = (i % 2 == 0)
+    content = {"kind": "lyric", "text": text,
+               "hex": BLUE if blue_ground else WHITE,
+               "fg": WHITE if blue_ground else BLUE,
+               "chrome": chrome, "title": "give it 2 me — lyrics"}
+    if font_cycle_hz:
+        content["fontCycleHz"] = font_cycle_hz
+        # Fixes the sequence of faces per card, so a take is reproducible on one machine.
+        # Across machines it cannot be: the pool IS the viewer's own library.
+        content["seed"] = 7700 + i
     params = {"id": wid, "frame": frame or fullscreen(),
-              "content": {"kind": "lyric", "text": text,
-                          "hex": BLUE if blue_ground else WHITE,
-                          "fg": WHITE if blue_ground else BLUE,
-                          "chrome": chrome, "title": "give it 2 me — lyrics"},
+              "content": content,
               "animate": {"kind": animate}}
     if anchor:
         params["anchor"] = anchor
@@ -387,9 +402,20 @@ for i, (section, title, fx, fy, fw, fh) in enumerate(PROBE_SECTIONS):
 # The probe's session is HALF what it was (2026-09-02): it used to type all the way to
 # cue 6, three bars from the drop, and the report had said what it had to say long
 # before that — the machine knows who you are, and reading it twice adds nothing. It
-# closes on cue 5 now and the game takes the rest of INTRO B.
+# stops talking on cue 5 and the game takes the rest of INTRO B.
+#
+# But only TWO of the five windows actually leave (2026-09-07). All five used to close
+# here, so the brick breaker racked up on a screen with literally nothing else on it —
+# measured, zero events between 20.94 s and 28.78 s — and the game read as a different
+# program starting rather than as something taking over the desktop that was already
+# there. `probe0`, `probe2` and `probe4` stay standing, on a diagonal under the rack, and
+# die with the bricks when cue 6 clears the screen for the drop. The scan is over either
+# way: a probe window that has finished typing is a report lying where it fell, which is
+# exactly what should be behind the game.
+PROBE_STAY = ["probe0", "probe2", "probe4"]
 for wid in probe_ids:
-    add(B["hydra"] - 0.3, "closeWindow", {"id": wid})
+    if wid not in PROBE_STAY:
+        add(B["hydra"] - 0.3, "closeWindow", {"id": wid})
 
 # =============================================================================
 # Cue 5 (0:30) — a hydra sketch is dragged onto the screen, pulled bigger by its
@@ -428,9 +454,60 @@ def hydra_window(wid, beat, frame, patch, running, animate="none", interactive=T
 #
 # The slot is the hydra act's; that act is still pulled, and this is what is in its
 # place. See `BrickBreakerController` for the physics.
-# =============================================================================
+#
+# IT ARRIVES ON A DESKTOP, NOT ON A BLANK (2026-09-07). Three of the probe's windows are
+# left standing (see cue 4) and the bar before the game fills in behind them: eight small
+# windows, one every half beat, thrown round the edges of the play area. Then the rack
+# comes up ON them. It used to cut from an empty screen straight to 32 bricks, which read
+# as a different program launching; now the game is something that takes over a desktop
+# that was already busy, which is what it is.
+#
+# NOTHING here sets a level, and nothing should. Brick-breaker windows are built directly
+# by `BrickBreakerController` rather than through `WindowManager`, so they keep
+# `BaseEffectWindow`'s default `.screenSaver` (1000), while everything the timeline opens
+# is explicitly demoted to `.normal` (0). The rack is on top for free; a `level` here
+# would only be a way to break that.
+#
+# Its own RNG, seeded by name through `zlib.crc32` — NOT `hash()`, which Python salts per
+# process and which made every seam in the piece lay out differently on every run (see
+# `seam`). Adding or moving a window in here leaves every other act's geometry alone.
+BRICK_RAMP_N = 8
+ramp_rng = random.Random(zlib.crc32(b"bricksramp"))
+ramp_ids = []
+# The play area, so the ramp can sit round it rather than under the middle of the rack
+# where it would never be seen through the bricks.
+BRICK_AREA = [round(W * 0.08), round(H * 0.10), round(W * 0.84), round(H * 0.78)]
+for i in range(BRICK_RAMP_N):
+    wid = f"br{i}"
+    ramp_ids.append(wid)
+    w = round(W * ramp_rng.uniform(0.11, 0.19))
+    h = round(w * ramp_rng.uniform(0.55, 0.80))
+    # Round the edges, like `seam` does and for the same reason: the middle is where the
+    # act is, and a card parked in it is in the way rather than behind.
+    if ramp_rng.random() < 0.5:
+        x = round(ramp_rng.choice([ramp_rng.uniform(0.0, 0.10), ramp_rng.uniform(0.72, 0.94)]) * W)
+        y = round(ramp_rng.uniform(0.04, 0.80) * H)
+    else:
+        x = round(ramp_rng.uniform(0.02, 0.80) * W)
+        y = round(ramp_rng.choice([ramp_rng.uniform(0.01, 0.10), ramp_rng.uniform(0.74, 0.90)]) * H)
+    x = max(6, min(x, W - w - 6))
+    y = max(6, min(y, H - h - 6))
+    # Half of them are terminals with the show's own source in them, half flat cards in
+    # the palette — the same two things `seam` throws, so the ramp reads as more of the
+    # machine rather than as a new idea arriving four seconds before the game.
+    if i % 2 == 0:
+        content = {"kind": "code", "text": lyrics.code(i // 2), "chrome": "terminal",
+                   "title": ["give_it_2_me.js", "haunt.sh", "swarm.js"][(i // 2) % 3],
+                   "hex": DJ_BLUE, "fg": WHITE}
+    else:
+        content = {"kind": "color", "hex": ramp_rng.choice(PALETTE), "chrome": "mixed",
+                   "title": f"untitled {i}"}
+    add(B["hydra"] - 4 + i * 0.5, "openWindow", {
+        "id": wid, "frame": [x, y, w, h], "content": content,
+        "animate": {"kind": "springIn" if i % 3 == 0 else "fadeIn"}})
+
 add(B["hydra"], "brickBreaker", {
-    "id": "bricks", "frame": [round(W * 0.08), round(H * 0.10), round(W * 0.84), round(H * 0.78)],
+    "id": "bricks", "frame": BRICK_AREA,
     "rows": 4, "cols": 8, "speed": 560, "ball": 46, "paddle": [200, 26], "seed": 44})
 
 # PULLED from the cut for now (2026-09-01) — kept behind HYDRA_ACT for when it returns.
@@ -519,7 +596,10 @@ if HYDRA_ACT:
 # No duration: cue 7 replaces it a beat later. An expiry would restore the viewer's
 # picture for the two frames before the face lands — a flicker of the wrong image.
 # =============================================================================
-for wid in ["bricks"]:
+# The game, the ramp that came up under it, and the three probe windows still standing
+# from cue 4 — the whole of INTRO B leaves together on one beat. Cue 7 is the drop and it
+# wants a bare desktop to land the face on.
+for wid in ["bricks"] + ramp_ids + PROBE_STAY:
     add(B["blue2"] - 0.2, "closeWindow", {"id": wid})
 add(B["blue2"], "deskWallpaper", {"id": "desk2", "mode": "solid", "hex": DJ_BLUE})
 add(B["blue2"], "screenFlash", {"color": WHITE, "durationBeats": 0.4})
@@ -671,6 +751,63 @@ def build_broken_screens():
     return paths
 
 BROKEN_SCREENS = build_broken_screens()
+
+# The photo wall's fallback pool — what cue 22 shows on a machine whose owner said no to
+# Files and Folders. Same source → derived arrangement as `broken_screens` above: the
+# drop is gitignored and whole, and what ships is a downsized copy under a name that says
+# what it is, committed.
+#
+# DISJOINT from broken_screens on purpose. Those six are already committed at the same
+# cap from the same source, and `PhotoSource.bundledFolders` scans both folders — putting
+# them in here as well would mean the fallback wall showed six of its photographs twice
+# as often as the rest.
+#
+# IMG_0624.PNG IS NOT IN HERE, and this is the one exclusion that is not about the cut.
+# It is a screenshot of an Instagram DM: a real handle, a real message, a real person who
+# did not agree to be in a piece that gets handed around on a USB stick. It was already
+# kept out of the timeline for that reason; a fallback pool that swept up "everything
+# else in the folder" would have quietly put it back in, and into every copy of the app.
+FALLBACK_DIR = "assets/photo_fallback"
+FALLBACK_MAX_EDGE = 1200
+FALLBACK_EXCLUDE = {"IMG_0624.PNG"}
+FALLBACK_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".tif", ".tiff"}
+
+
+def build_photo_fallback():
+    """Downsize the rest of the drop into the committed fallback folder.
+
+    Returns the paths in the order they were built. Silent no-op when the drop is not in
+    this checkout — it is gitignored, so a fresh clone keeps the committed copies."""
+    from PIL import Image
+    src_dir = os.path.join(ROOT, BROKEN_SRC)
+    out_dir = os.path.join(ROOT, FALLBACK_DIR)
+    already = {name for name, _ in BROKEN_PICK}
+    if not os.path.isdir(src_dir):
+        if not os.path.isdir(out_dir):
+            return []
+        return sorted(f"{FALLBACK_DIR}/{n}" for n in os.listdir(out_dir)
+                      if n.lower().endswith(".jpg"))
+    os.makedirs(out_dir, exist_ok=True)
+    picked = sorted(n for n in os.listdir(src_dir)
+                    if os.path.splitext(n)[1].lower() in FALLBACK_EXTS
+                    and n not in already and n not in FALLBACK_EXCLUDE)
+    paths = []
+    for i, name in enumerate(picked, 1):
+        out = f"fallback-{i:02d}.jpg"
+        im = Image.open(os.path.join(src_dir, name)).convert("RGB")
+        im.thumbnail((FALLBACK_MAX_EDGE, FALLBACK_MAX_EDGE), Image.LANCZOS)
+        im.save(os.path.join(out_dir, out), quality=88)
+        paths.append(f"{FALLBACK_DIR}/{out}")
+    # A rename or a deletion in the drop would otherwise leave a stale committed copy
+    # behind, and the pool would carry a photograph the drop no longer has.
+    keep = {os.path.basename(p) for p in paths}
+    for stale in os.listdir(out_dir):
+        if stale.endswith(".jpg") and stale not in keep:
+            os.remove(os.path.join(out_dir, stale))
+    return paths
+
+
+PHOTO_FALLBACK = build_photo_fallback()
 
 # The face with its eyes SHUT — the second frame of the gate's blink (cue 1). The artist
 # drew it as a full screen grab (`sarah's assets/blink.jpg`, 3024x1964, loading bar and
@@ -901,7 +1038,59 @@ for i, (when, text) in enumerate(spiral_phrases):
 # spiral and the traveller, and chorus 1A was carrying three moving pictures at once
 # with the drop's own wallpaper under them. The act is intact and it is not gone: it
 # opens at cue 25 instead, where the screen has just been cut back to the swarm and
-# there is room to watch a shell rise. The slot is empty again.
+# there is room to watch a shell rise.
+#
+# THE SLOT IS THE KICK NOW (2026-09-07). Chorus 1A is the half of the first chorus that
+# does not move to the beat: the traveller sweeps on its own 1.75-beat legs, the spiral
+# lands on sung lines, and the desktop under both is a still picture. Everything in it is
+# on the LYRIC's clock, and nothing is on the drum's. So a layer of pointers goes over the
+# whole phrase and is CUT ON EVERY KICK — the real onsets out of
+# `assets/track_analysis.json`, the same 333 the eruption's ground flashes use, not a beat
+# grid. Nothing in the app is audio-reactive (`AudioClock` is a position clock, no tap, no
+# FFT), so a pulse has to be authored; `kicks_between` is how cue 21 already does it.
+#
+# THIS IS DELIBERATELY THE OPPOSITE OF CUE 12, and the difference is the point. Cue 12
+# holds each scene half a beat to three beats precisely so the flock has time to gather
+# into a body — Reynolds flocking needs a second or two, and below that all you see is
+# the spawn shape. Cut on every kick (about one a beat) you only ever see spawn shapes,
+# and that IS the rhythm: 1A pulses, 1B breathes. The same particles, read two ways.
+#
+# 0.45 × 90 = ~40 arrows, well under cue 12's 63: this plays UNDER a 21-window traveller
+# and over a wallpaper that is the drop's picture, and it is the beat, not the act.
+#
+# No `screenFlash` on the kick here, though the machinery is right there. Cue 21 owns
+# flashing on the kick; giving the drop the same gesture flattens the difference between
+# the two loudest passages in the piece, and the face on the desktop is what this is
+# meant to be seen over rather than through.
+#
+# The run ends on the LYRIC's zero for chorus 1B, not on the phrase downbeat: cue 12
+# hands over one bar early (the desktop cards start on the pickup, and cue 12's own sweep
+# takes this window at `words_event_beat - 0.2`). Bounded at the downbeat instead, the
+# last few kicks would re-open the window AFTER that close and leave it standing through
+# the whole of chorus 1B on top of the shoal — which is exactly what `lint_show.py`
+# caught. Same expression cue 12 times itself from, so the two cannot drift.
+SWARM_PATTERNS = ["spiral", "ring", "grid", "burst", "stream"]
+kick_cuts = 0
+KICK_LAST = None
+# Half a beat of air before the bar the handover sits in: without it the last kick landed
+# a single frame before cue 12's sweep, so the flock was rebuilt on a new spawn shape and
+# taken away on the next frame — one frame of a scatter nobody can read, right on the
+# changeover. The pulse would rather stop a beat early than flicker into 1B.
+for i, kt in enumerate(kicks_between(B["face"], lyric_zero("chorus1B") - 0.5)):
+    KICK_LAST = kt
+    add_t(kt, "openWindow", {
+        "id": "kickswarm", "frame": fullscreen(),
+        # Over the traveller and the spiral, both `.normal`. It stays click-through
+        # whatever the level — `hitTest` returns nil — so the cards underneath are still
+        # the viewer's.
+        "level": "floating",
+        "content": {"kind": "cursors", "mode": "school",
+                    "pattern": SWARM_PATTERNS[i % len(SWARM_PATTERNS)],
+                    "intensity": 0.45, "seed": 6000 + i * 13,
+                    "chrome": "none", "title": "pointer"},
+        "animate": {"kind": "none"}})
+    kick_cuts += 1
+# …and it closes with the spiral on cue 12, where the shoal that DOES gather takes over.
 
 # =============================================================================
 # Cue 11 (0:48) — TBD. Deliberately empty again: the drain that was put here was one of
@@ -982,18 +1171,140 @@ words_event_beat = (words_event_at - OFFSET) / BEAT
 assert TRAIL_LAST_MOVE + LEG <= words_event_beat - 0.2, (
     f"traveller: last trail leg ends at beat {TRAIL_LAST_MOVE + LEG:.2f}, after the "
     f"close at {words_event_beat - 0.2:.2f}")
+# Same for cue 10's kick layer, and it matters more: that window is RE-OPENED on every
+# kick, so a kick landing after this close puts it back up and leaves it standing over
+# the whole of chorus 1B on top of the shoal. It is bounded by `lyric_zero("chorus1B")`,
+# which is a bar before the phrase and normally well clear — but the close is derived from
+# where the artist's first CARD actually falls, not from the bar line, so retuning a word
+# in `lyrics.CUES` could walk it back past the last kick. This is the guard for that.
+assert KICK_LAST is None or (KICK_LAST - OFFSET) / BEAT <= words_event_beat - 0.2, (
+    f"kickswarm: last kick cut at beat {(KICK_LAST - OFFSET) / BEAT:.2f}, after the "
+    f"close at {words_event_beat - 0.2:.2f} — it would re-open and never be swept")
 # The fireworks go too (no embers): a transparent full-screen window with live
 # particles keeps the compositor repainting the whole screen every frame, and under
 # the ~300 ms wallpaper swaps it dragged the words — and everything after them.
 # No "video" here any more: cue 10's fireworks owned that id and they have moved to
 # cue 25 (as "works"), and the video slot itself is the DooM window ("doomvid").
-for wid in spiral_ids + hydra_ids:
+for wid in spiral_ids + hydra_ids + ["kickswarm"]:
     add(words_event_beat - 0.2, "closeWindow", {"id": wid})
 add_t(words_event_at, "deskWallpaper", {
     "id": "words", "mode": "slides",
     "images": [img for _, img in word_slides],
     "at": [round(t - words_first, 3) for t, _ in word_slides],
     "durationSeconds": round(secs(B["torus1"]) - words_event_at, 3)})
+
+# A SHOAL OVER THE WORDS. Cursors flocking above the lyric desktop, cutting between
+# scenes on the beat.
+#
+# `mode: "school"` is the whole point and not a detail: `.chase` reads
+# `NSEvent.mouseLocation` and hunts the viewer's own pointer, and this must not. School
+# never touches the pointer at all — it is the same particles with the mouse taken away.
+#
+# THE CUTS ARE RE-OPENS. One window id, re-opened with a different `pattern`, which
+# swaps the content view in place (`WindowManager.open`, the `existing` branch) — the
+# same trick the pulled face-strobe used, and the reason it is a CUT rather than a
+# transition: the flock is rebuilt on its new spawn shape on that frame, with no
+# crossfade and nothing carried over. Cutting on `seed` alone would be the same picture
+# shuffled; `pattern` changes where they start AND the weights that then hold them, so
+# each one is a different picture.
+#
+# The order is seeded rather than a rotation — five patterns cycled in order reads as a
+# loop by the third pass — and no scene ever follows itself.
+#
+# THE CUT LENGTHS ARE NOT UNIFORM, and that is the whole difficulty of this cue. A cut
+# every beat is properly rapid, but Reynolds flocking needs a second or two to pull a
+# spawn shape into a BODY — so on a flat one-beat grid you only ever see the spawn, and
+# forty arrows scattered on a lattice read as specks rather than as a school. Measured on
+# the first pass: legible cuts, no schooling.
+#
+# So: mostly one beat, some half-beat stutters, and a 2–3 beat hold often enough that the
+# flock visibly gathers before it is cut again. Rapid, with somewhere to arrive.
+# `SWARM_PATTERNS` is shared with cue 10's kick layer, and is defined up there — the two
+# cues are the same five scenes read at two rates.
+SWARM_HOLDS = [0.5, 1.0, 1.0, 1.0, 2.0, 3.0]
+swarm_rng = random.Random(1206)
+sw_b, sw_end = words_event_beat, B["torus1"] - 0.3
+sw_cuts, sw_prev = 0, None
+while sw_b < sw_end:
+    choices = [p for p in SWARM_PATTERNS if p != sw_prev]
+    pat = swarm_rng.choice(choices)
+    sw_prev = pat
+    add(sw_b, "openWindow", {
+        "id": "wordswarm", "frame": fullscreen(),
+        "content": {"kind": "cursors", "mode": "school", "pattern": pat,
+                    # 0.7 × 90 = ~63 cursors. A school is a density before it is a
+                    # count — at forty they stayed a scatter of arrows however they were
+                    # flocked. Still under cue 21's shoal, because the words underneath
+                    # are the act and the lyric has to be readable through this.
+                    "intensity": 0.7, "seed": 5100 + sw_cuts * 7,
+                    "chrome": "none", "title": "pointer"},
+        "animate": {"kind": "none"}})
+    sw_cuts += 1
+    sw_b += swarm_rng.choice(SWARM_HOLDS)
+# Gone before the torus: cue 13 is vocals-out and a single window typing to itself.
+add(sw_end, "closeWindow", {"id": "wordswarm"})
+
+# The plane the GLASS refracts in cue 13.
+#
+# The torus reflects a picture, not a capture — by default the viewer's own desktop
+# wallpaper, read from the snapshot `WallpaperController` takes before the show swaps
+# anything. That is right while the torus is a thing sitting on their desktop and wrong
+# the moment cue 13 puts a tunnel underneath it: the glass would be bending a stranger's
+# Big Sur photograph inside a cloud tunnel, and belong to neither picture.
+#
+# So the cue authors its own plane (`environment` on the `glassTorus` event) and this
+# bakes it: the same cloud in the same three colours as `assets/shaders/tunnel.frag`,
+# with the same bright throat in the middle. It is a STILL, and it does not have to
+# match the tunnel frame for frame — it is a plane 2.0 units behind a tumbling torus,
+# read through per-channel refraction. What it has to be is the same weather.
+#
+# Built with successive `Image.blend` rather than a Python loop over pixels: the blend
+# weight `amp / (total + amp)` makes each pass the exact running weighted average of the
+# octaves so far, so the fbm falls out of five C-speed resizes instead of a million
+# interpreted iterations.
+TORUS_ENV = "assets/torus_dimension.jpg"
+
+def build_torus_dimension():
+    """Write the cue 13 refraction plane. 512x320 is deliberate: `ScreenEnvironment`
+    caps the decode at 1024 px on the long edge anyway, and this is a soft cloud field
+    with no detail a reflection could show."""
+    from PIL import Image, ImageOps
+    rng = random.Random(13)
+    w, h = 512, 320
+
+    acc, total, amp = None, 0.0, 1.0
+    for octave in range(5):
+        cells_x = 4 << octave
+        cells_y = max(2, round(cells_x * h / w))
+        cells = Image.new("L", (cells_x, cells_y))
+        cells.putdata([rng.randrange(256) for _ in range(cells_x * cells_y)])
+        layer = cells.resize((w, h), Image.BICUBIC)
+        acc = layer if acc is None else Image.blend(acc, layer, amp / (total + amp))
+        total += amp
+        amp *= 0.5
+
+    # Deep blue in the troughs, sky through the middle, near-white on the cloud tops —
+    # the shader's own ramp, done in one call.
+    cloud = ImageOps.colorize(ImageOps.autocontrast(acc),
+                              black=(2, 10, 245), white=(242, 244, 254),
+                              mid=(104, 189, 248))
+
+    # …and the throat. A radial ramp computed small and resized up: it is a gradient, so
+    # the interpolation IS the picture rather than a loss of one.
+    mw, mh = 96, 60
+    mask = Image.new("L", (mw, mh))
+    cx, cy = (mw - 1) / 2.0, (mh - 1) / 2.0
+    rmax = math.hypot(cx, cy)
+    mask.putdata([
+        round(255 * max(0.0, 1.0 - (math.hypot(x - cx, y - cy) / rmax) / 0.55) ** 1.6)
+        for y in range(mh) for x in range(mw)])
+    out = Image.composite(Image.new("RGB", (w, h), (242, 244, 254)), cloud,
+                          mask.resize((w, h), Image.BICUBIC))
+
+    out.save(os.path.join(ROOT, TORUS_ENV), quality=92)
+    return w, h
+
+TORUS_ENV_W, TORUS_ENV_H = build_torus_dimension()
 
 # =============================================================================
 # Cue 13 (1:09) — the magic torus introduces itself in typed text, then actually asks:
@@ -1003,9 +1314,31 @@ add_t(words_event_at, "deskWallpaper", {
 # =============================================================================
 t1 = B["torus1"]
 add(t1, "screenFlash", {"color": WHITE, "durationBeats": 0.5})
+
+# THE TORUS DIMENSION (2026-09-07). The torus used to hang transparently over the blue
+# desktop, which made it an ornament on the viewer's own machine; it is supposed to take
+# them somewhere. So the phrase opens a room: a full-screen cloud tunnel, flying, in the
+# show's own three colours, with the far throat washed out to white exactly where the
+# torus sits.
+#
+# NOTHING has to be said about z-order here, and nothing should be. Every window the
+# timeline opens is `.normal`; the torus is `.screenSaver` by default, so it floats
+# INSIDE the tunnel for free, and the greeting and the oracle open after this one so
+# they land on it. Giving the tunnel a level would only be a way to get that wrong.
+#
+# `drop: 0` runs the flight at its base rate — the same knob cue 17 turns, and the
+# breakdown runs that one at 0 too. This is the still passage before the map.
+add(t1, "openWindow", {"id": "tunnel", "frame": fullscreen(),
+    "content": {"kind": "shader", "path": "assets/shaders/tunnel.frag", "drop": 0.0,
+                "chrome": "none", "title": "tunnel"},
+    "animate": {"kind": "none"}})
+
 TORUS_SIZE = round(min(W, H) * 0.58)
 add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
-                       "size": TORUS_SIZE})
+                       "size": TORUS_SIZE,
+                       # …and the glass bends the tunnel's own weather rather than the
+                       # viewer's wallpaper. See `build_torus_dimension` above.
+                       "environment": TORUS_ENV})
 GREETING = ("I am the Magic Torus! I am shaped like a question that answers itself. A "
             "closed loop with no beginning, no end. My surface curves back into itself "
             "infinitely, doubly, along two independent paths that never meet and never "
@@ -1041,11 +1374,17 @@ add(ORACLE_AT, "oracle", {"id": "oracle",
     "title": "hey, i'm the magic torus", "body": "ask me a question",
     "placeholder": "will you give it 2 me?", "answerBeats": ORACLE_BEATS})
 
-# The desktop goes back to blue under the torus. This REPLACES the words event before
-# it expires — an expiry restores the viewer's own picture for a ~300 ms flicker — and
-# leads the cue by DESK_LATENCY so the blue lands with the flash, not a frame after it.
+# The desktop goes WHITE under the torus. This REPLACES the words event before it
+# expires — an expiry restores the viewer's own picture for a ~300 ms flicker — and leads
+# the cue by DESK_LATENCY so the ground lands with the flash, not a frame after it.
+#
+# White, not the signature blue (2026-09-07). The tunnel covers the screen, so this is
+# only ever seen at its edges and for the frame between the flash and the shader's first
+# paint — and blue there is the SHOW's colour, which is the one thing this phrase is
+# trying to leave behind. White reads as the tunnel's own light instead of as the desktop
+# coming back.
 add_t(secs(t1) - DESK_LATENCY, "deskWallpaper",
-      {"id": "desk3", "mode": "solid", "hex": DJ_BLUE})
+      {"id": "desk3", "mode": "solid", "hex": WHITE})
 
 # =============================================================================
 # Cue 14 (1:24) — Apple Maps, falling out of orbit onto the viewer's own location, and
@@ -1054,9 +1393,15 @@ add_t(secs(t1) - DESK_LATENCY, "deskWallpaper",
 # from that: it runs the full phrase and lands a second before the black.
 # =============================================================================
 mp = B["map"]
-for wid in ("torus", "greeting", "oracle"):
+for wid in ("torus", "greeting", "oracle", "tunnel"):
     add(mp - 0.3, "closeWindow", {"id": wid})
 add(mp, "screenFlash", {"color": WHITE, "durationBeats": 0.3})
+# …and the desktop comes back to the show's blue as the tunnel goes. The torus dimension
+# is one phrase long: cue 13 leaves the piece for it and cue 14 comes back, and the map
+# is framed by the same blue as everything either side of it. Led by DESK_LATENCY like
+# every other swap, so it lands with the flash rather than a frame after.
+add_t(secs(mp) - DESK_LATENCY, "deskWallpaper",
+      {"id": "desk3b", "mode": "solid", "hex": DJ_BLUE})
 # The fallback when Location Services gives nothing: downtown Los Angeles. `here=True`
 # overrides these whenever there IS a fix.
 FALL = dict(lat=34.0522, lon=-118.2437)
@@ -1100,6 +1445,54 @@ add(mp, "openWindow", {"id": "map0",
     "frame": [round(W * 0.10), round(H * 0.07), round(W * 0.80), round(H * 0.78)],
     "content": {"kind": "map", "chrome": "browser", "title": "maps://{ip}", "map": DESCENT},
     "animate": {"kind": "springIn"}, "interactive": True, "respawn": True})
+
+# …AND THE MACHINE SAYS WHAT IT IS DOING (2026-09-07). The map used to fall in silence,
+# which read as a shot rather than as an act: something is finding you, and nothing on
+# the screen said so. Two windows, timed to the two legs of the flight.
+#
+# This is the first time anything has addressed the viewer since the probe read their
+# machine back to them in INTRO B, and it is deliberately in the probe's voice — a
+# terminal typing a trace out, not a caption on a picture.
+#
+# The terminal runs THROUGH the fall and the dialog lands ON the landing, so the copy
+# arrives at the rate the camera does. Both sit low and left, clear of the map's own
+# title bar and inside the frame rather than beside it: the map is 80% of the width, so
+# there is no margin to stand a window in, and a popup over the picture is what Sarah
+# asked for anyway.
+#
+# `{city}` and `{ip}` are substituted by `LocationStore.fill` in window TITLES only —
+# not in a body — so the placeholders go in the title and the copy stays generic. A
+# machine that cannot get a fix still types the same lines and the map still flies to
+# the fallback, which is the whole arrangement `here: true` is built on.
+TRACE = ("$ ./locate --host $(hostname)\n"
+         "resolving route ........... ok\n"
+         "wifi bssid survey ......... 6 networks\n"
+         "triangulating .............\n"
+         "cross-checking ip lease ... match\n"
+         "narrowing ................. 2600 km\n"
+         "narrowing ................. 12 km\n"
+         "narrowing ................. 260 m\n"
+         "fix acquired.")
+# Sized to land its last line as the fall bottoms out: the fall is MAP_FALL seconds, the
+# terminal opens half a beat in, and the copy is paced to fill what is left.
+TRACE_BEATS = MAP_FALL / BEAT - 0.5
+add(mp + 0.5, "typeText", {"id": "maptrace",
+    "frame": [round(W * 0.06), round(H * 0.62), round(W * 0.34), round(H * 0.30)],
+    "text": TRACE, "charsPerBeat": round(len(TRACE) / TRACE_BEATS, 1),
+    "fontSize": 13, "chrome": "terminal", "title": "locate://{city}",
+    "hex": DJ_BLUE, "fg": WHITE})
+# The dialog lands a beat after the camera does, so the alert is the answer to the
+# descent rather than something racing it down.
+add(mp + MAP_FALL / BEAT + 1, "fakeDialog", {"id": "mapfound",
+    "frame": [round(W * 0.30), round(H * 0.64), 460, 190],
+    "title": "Location identified.",
+    "body": "This machine has been placed to within 260 metres. "
+            "Its position is now known and will be remembered.",
+    "buttons": ["Not Now", "OK"], "icon": "info"})
+# Both gone before cue 16's tiles come over the top — the wipe is the way out of the map
+# and nothing may still be standing on it when that starts.
+for wid in ("maptrace", "mapfound"):
+    add(B["black"] - 0.4, "closeWindow", {"id": wid, "fadeSeconds": 0.2})
 
 # =============================================================================
 # Cue 15 — PULLED (2026-08-31): the windows that filled the screen are out of the cut.
@@ -1368,10 +1761,11 @@ FLASH_W = round(W * 0.36)
 FLASH_H = round(FLASH_W * 320 / 425)            # pixelface.jpg's own aspect
 FACE_FRAME = {"kind": "image", "path": "assets/pixelface.jpg", "chrome": "none"}
 BLUE_FRAME = {"kind": "color", "hex": DJ_BLUE, "chrome": "none"}
-# THE SEGMENTER SWARM IS NOT HERE ANY MORE (2026-09-05). It has traded places with the
-# eruption + strobe splice that used to close the piece: the noise now runs in this slot
-# and the segmenter is the LAST act, from the chorus 2B pickup to the stop. Its code is
-# at cue 28, where it now plays; this comment is the signpost.
+# THE SEGMENTER SWARM IS NOT HERE ANY MORE (2026-09-05). It traded places with the
+# eruption + strobe splice that used to close the piece: the noise runs in this slot now.
+# The segmenter went to the chorus 2B pickup then, and to the chorus 2A pickup in the
+# 2026-09-07 swap, where it opens the second chorus and is buried by the eruption a bar
+# and a half in. Its code is up at cue 27, where it plays; this comment is the signpost.
 #
 # What it is, wherever it runs: `assets/giveit2meclip.mov` segmented for MOTION, every
 # region that moves becoming its own titled window holding the piece of frame it was cut
@@ -1561,8 +1955,34 @@ if MANDALA_ACT:
         "animate": {"kind": "none"}})
 
 # =============================================================================
-# Cue 27 (2:23) — a ton of crazy UI windows. The eruption: windows, terminals, alerts
-# and lyric cards bursting out of the middle, dense from the first beat.
+# Cues 27 and 28 — THE SECOND CHORUS, SWAPPED (2026-09-07).
+#
+# It used to be the eruption on the 2A pickup and the segmenter on the 2B pickup: a wall
+# of popups for fifteen seconds, then a hard cut to the video. The order is the other way
+# round now — **the clip first, the popups second** — and the join between them is a
+# dissolve rather than a cut. Two reasons, and the second is the interesting one:
+#
+#   - The eruption is the loudest picture in the piece and it was arriving on the FIRST
+#     bar of the last chorus, so the chorus had nowhere left to go. Now it lands on 2B and
+#     the piece gets louder into the stop instead of starting there.
+#   - The popups do not replace the video on a frame. They BURY it. The swarm opens at
+#     `level: "normal"` (it used to take the shielding level, since it had the screen to
+#     itself) so it shares the eruption's z-order, and z-order there is simply the order
+#     things opened in — every card the eruption raises after the pickup lands ON a video
+#     panel. Over about a bar and a half the picture is taken over rather than cut away
+#     from, and the close at the end sweeps what is left.
+#
+# The two acts keep their cue KEYS (`spam` on the 2A pickup, `glitch` on the 2B pickup) —
+# renaming them would ripple through `WAS`, `LABELS`, `KINDS` and every `B[...]` in the
+# file for no gain, and the piece already does this in two other places (cue 5's key is
+# `hydra` and it holds the brick breaker; cue 21's is `horse`). Only what runs at each
+# beat has moved.
+#
+# ONE KNOCK-ON, and it is expected rather than a regression: `chaos_rng` is a single
+# stream feeding BOTH eruptions in file order, so shortening this one's span from 32 beats
+# to 27 changes how many draws it takes and cue 21's eruption re-scatters. It is still
+# seeded, still byte-identical run to run, and still the same act — the windows land in
+# different places, which is what "the eruption" means.
 # =============================================================================
 body_colors = PALETTE + ["#0B0E16"]
 chaos_rng = random.Random(7)
@@ -1662,8 +2082,14 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
                 chaos["ui"] += 1
         elif roll < 0.58:
             text = phrase_texts[chaos["l"] % n_cue].upper()   # ALL CAPS, like the spiral
+            # THE FACE CHANGES THREE TIMES A SECOND, at random, out of the viewer's own
+            # font library — the machine rifling through their fonts while it sings at
+            # them. Only here: the chorus 1A spiral is the lyric being READ and stays in
+            # the show's Hack Bold, and cutting the face under it would make a legibility
+            # act into a texture one.
             lyric_card(f"w{chaos['w'] % 14}", b, text, chaos["l"],
-                       frame=[round(x), round(y), max(w, 260), h], chrome="mac")
+                       frame=[round(x), round(y), max(w, 260), h], chrome="mac",
+                       font_cycle_hz=3.0)
             chaos["w"] += 1; chaos["l"] += 1
         elif roll < 0.70:
             add(b, "openWindow", {"id": f"w{chaos['w'] % 14}",
@@ -1683,24 +2109,82 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
                 "amplitude": 18, "frequency": 9})
         b += max(0.15, rate * chaos_rng.uniform(0.7, 1.3))
 
-sm = B["spam"]
+sm = B["spam"]                  # the 2A pickup (bar 72) — the CLIP
+gl = B["glitch"]                # the 2B pickup (bar 80) — the ERUPTION
+lw = B["lastwords"]             # the stop
 if MANDALA_ACT:
     add(sm - 0.2, "closeWindow", {"id": "tbd3"})
 add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 
-erupt(sm, B["glitch"], W / 2, H / 2, ui_chaos=0.25, photos=True)
+# --- cue 27, the 2A pickup: THE SEGMENTER SWARM ---------------------------------
+# `assets/giveit2meclip.mov` segmented for MOTION: every region that moves becomes its
+# own titled window holding the piece of frame it was cut from, pinned where it was
+# found. Nothing is tracked between frames, so a thing that keeps moving mints a new
+# window every frame and the screen fills — up to 60, then the oldest panel is recycled.
+#
+# `level: "normal"` is the change that makes the crossfade possible, and it is the
+# opposite of what this act asked for when it closed the piece: it took the shielding
+# level then, because it WAS the screen and nothing else was open. Here it has to be
+# something the eruption can climb on top of.
+add(sm, "segSwarm", {
+    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
+    "intensity": 0.62, "maxWindows": 60, "mirror": False,
+    "level": "normal",
+    # No keyline. Upstream rings every panel green to mark it as a detection; here the
+    # panels ARE the picture, and sixty green rectangles read as a debug overlay laid
+    # over the show rather than as the show.
+    "border": "none"})
 
-# The ground flashes on every kick underneath it.
+# …AND CUE 21'S ERUPTION IS SWEPT OFF THE SCREEN BEHIND IT.
+#
+# `w0…w13` and `d0…d3` are a POOL shared by both eruptions, and cue 21 deliberately does
+# not close them: the next eruption used to open on this very frame and re-open the same
+# ids, so closing them here would have been a flicker between two acts using the same
+# fourteen windows. The 2026-09-07 swap put fifteen seconds of segmenter between the two,
+# and that turned "recycled on the next frame" into eighteen orphaned cards standing over
+# the whole of chorus 2A — measured on the generated timeline: all eighteen still up at
+# f 4437, the frame before the eruption finally reclaims them.
+#
+# A QUARTER BEAT AFTER the boundary, not before it, and this is the same trap cue 30's
+# sweep is written around: `erupt` walks its own cadence and can land a final `openWindow`
+# ON its end beat, so a close placed at −0.1 misses it and that card stands for the rest
+# of the act. A quarter beat is ~90 ms into a swarm that takes a second to build up, so
+# nothing is seen going.
+for wid in [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
+    add(sm + 0.25, "closeWindow", {"id": wid})
+
+# --- cue 28, the 2B pickup: THE ERUPTION, over it and then instead of it ---------
+add(gl, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
+erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True)
+
+# The swarm is not closed on the boundary. It is left running a bar and a half INTO the
+# eruption, being buried a card at a time, and only then swept — which is the whole
+# difference between the popups replacing the video and the popups cutting to it.
+#
+# It cannot be ramped down instead: `SegSwarmController.begin` calls `closeAll()` first,
+# so a second `segSwarm` on the same id would tear every panel down AND restart the clip
+# from the top. Burial is the mechanism available, and it is the better-looking one.
+SEG_BURY = 6.0                  # beats of overlap — 1.5 bars, about 2.8 s
+add(gl + SEG_BURY, "closeWindow", {"id": "segswarm"})
+
+# The ground flashes on every kick underneath the eruption.
 flash_colors = ["#FEFEFE", BLUE, "#020202", "#68BDF8"]
 n_kick = 0
-for i, kt in enumerate(kicks_between(sm, B["glitch"])):
+for i, kt in enumerate(kicks_between(gl, lw)):
     add_t(kt, "screenFlash", {"color": flash_colors[i % len(flash_colors)],
                               "durationSeconds": 0.09})
     n_kick += 1
 
 # =============================================================================
-# THE MACHINE'S OWN VOICE — four ASCII planes over the eruption, 8 beats each, running
-# out exactly where the segmenter swarm takes the screen (bar 80).
+# THE MACHINE'S OWN VOICE — four ASCII planes over the eruption, running out exactly on
+# the stop.
+#
+# They went WITH the eruption in the 2026-09-07 swap. They were written as its voice —
+# the machine talking over the noise it is making — so they belong to the act rather than
+# to the bar it used to start on. The phrase is shorter here (27 beats from the 2B pickup
+# to the stop, against the 32 they had), so the four slots are 6.75 beats each instead of
+# 8: the escalation is the same four steps, taken slightly faster into a stop rather than
+# into a changeover. `ASCII_SPAN` is derived, so nothing here needed retiming by hand.
 #
 # All four are the same object: `asciilog`, a full-screen monospaced plane set in Monaco,
 # TRANSPARENT unless it is given a ground, so the eruption goes on underneath and the
@@ -1711,7 +2195,7 @@ for i, kt in enumerate(kicks_between(sm, B["glitch"])):
 #
 # The order is an escalation: unreadable machine state, then the machine saying the words,
 # then the words coming apart, then the machine drawing the screen it is on. Then it stops
-# and the segmenter is the only thing left.
+# — and this time the thing it stops into is the silence, not the segmenter.
 # The planes are set in the show's SKY blue, not the signature `DJ_BLUE`.
 #
 # That is forced, not a preference: the window map's ground IS `DJ_BLUE` (the act is
@@ -1721,8 +2205,8 @@ for i, kt in enumerate(kicks_between(sm, B["glitch"])):
 # three transparent planes.
 # ASCII_BLUE = "#68BDF8"
 ASCII_BLUE = "#FFFFFF"
-al = B["spam"]
-ASCII_SPAN = (B["glitch"] - al) / 4          # 8 beats each, ending on the pickup
+al = gl
+ASCII_SPAN = (lw - al) / 4                   # 6.75 beats each, the last landing on the stop
 ascii_ids = []
 
 def ascii_plane(i, params, seconds_early=0.0):
@@ -1888,38 +2372,21 @@ for wid in sorted(strobe_ids) + ["school"] + slide_ids:
     add(ERUPT_END - 0.1, "closeWindow", {"id": wid})
 
 # =============================================================================
-# Cue 28 (2:28) — THE SEGMENTER SWARM, and it closes the piece.
+# Cue 28 (2:28) — the eruption, and it closes the piece. Both halves of the second chorus
+# are authored together up at cue 27; see the swap note there for why, and for how the
+# popups bury the clip rather than cutting to it.
 #
-# MOVED HERE (2026-09-05), trading places with the eruption + strobe that used to run
-# this stretch. `assets/giveit2meclip.mov` segmented for MOTION: every region that moves
-# becomes its own titled window holding the piece of frame it was cut from, pinned where
-# it was found, up to 60 before the oldest is recycled. Nothing is tracked between
-# frames, so a thing that keeps moving mints a new window every frame and the screen
-# fills.
+# Nothing to emit here. What used to be in this slot — the segmenter opening on the 2B
+# pickup and the eruption's pool closing a quarter-beat after it — has moved: the swarm
+# now opens on the 2A pickup and is swept `SEG_BURY` beats into the eruption, and the
+# pool (`w0…w13`, `d0…d3`) runs all the way to the stop, where cue 30 closes it with
+# everything else.
 #
-# No `level: below` any more. That was there because the torus, the video slot and the
-# pointer swarm all used to arrive ON the pile; here the swarm IS the screen — nothing
-# else is open from the pickup to the stop — so it takes the normal level, the way
-# segcam pins its panels upstream.
-#
-# The vocal pickup's eruption has to be OFF the screen first, or sixty panels build up
-# behind fourteen recycled cards.
-#
-# The close goes just AFTER the eruption's end beat, not just before it. `erupt` walks
-# its own cadence and can land a final `openWindow` ON the end beat — measured, `w8`
-# opened 42 ms past a close placed at −0.1 and stood there through the whole act, which
-# the stop's backstop would not have caught until the end card. A quarter beat past the
-# boundary is ~90 ms into a swarm that takes a second to build: nothing is seen.
+# The old note about the close landing a quarter-beat AFTER the boundary rather than
+# before it still applies, and is why cue 30's sweep sits at `lw + 0.05`: `erupt` walks
+# its own cadence and can land a final `openWindow` ON its end beat — measured, `w8`
+# opened 42 ms past a close placed at -0.1 and stood there for the whole act.
 # =============================================================================
-for wid in [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
-    add(B["glitch"] + 0.25, "closeWindow", {"id": wid})
-add(B["glitch"], "segSwarm", {
-    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
-    "intensity": 0.62, "maxWindows": 60, "mirror": False,
-    # No keyline. Upstream rings every panel green to mark it as a detection; here the
-    # panels ARE the picture, and sixty green rectangles read as a debug overlay laid
-    # over the show rather than as the show.
-    "border": "none"})
 
 # =============================================================================
 # Cue 29 — PULLED (2026-09-01): the lyric desktop under the strobe is out. The strobe
@@ -1934,20 +2401,42 @@ ag = B["allglitch"]
 # the desktop has been plain blue since the horse, so no swap is in flight — or even
 # possible — when the end card fires.
 # =============================================================================
-lw = B["lastwords"]
 add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
-# The segmenter is what is on screen now; the eruption's pools and the strobe's windows
-# were closed on their own cues. They are still named here as a backstop — a close aimed
-# at a window that is already shut is free, and a card left standing over the end card is
-# not.
+# THE ERUPTION is what is on screen now, since the 2026-09-07 swap — its pool (`w0…w13`,
+# `d0…d3`) and the four ASCII planes run right up to this beat, so this is where they are
+# actually taken away rather than a backstop for it. Everything else here IS a backstop —
+# the segmenter, the strobe's windows, the shoal and the sliders were closed on their own
+# cues, and a close aimed at a window that is already shut is free, while a card left
+# standing over the end card is not.
+#
+# A QUARTER BEAT LATE, not early. `erupt` walks its own cadence and can land a final
+# `openWindow` ON its end beat: measured, `w8` opened 42 ms past a close placed at −0.1
+# and stood there through the whole ending.
 for wid in (["segswarm"] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
-            + [f"d{i}" for i in range(4)] + ["school"] + slide_ids):
+            + [f"d{i}" for i in range(4)] + ascii_ids + ["school"] + slide_ids):
     add(lw + 0.05, "closeWindow", {"id": wid})
 
 # =============================================================================
-# Cue 31 (2:41) — the ending, ON the stop: the break IS the end card. The photo the
-# booth took, the machine's vitals and the credits typing themselves out, held while
-# the track's silent tail runs out underneath.
+# Cue 31 (2:49) — the ending, once the song has actually finished. The photo the booth
+# took, the machine's vitals and the credits typing themselves out.
+#
+# IT WAITS NOW (2026-09-07). The card used to come up ON the stop at 160.55 s and type
+# itself out over the last nine seconds of the track, so the credits were rolling while
+# the song was still playing. It comes up at 169.42 s instead — after the last of the
+# music — and the nine seconds cue 30 opens up are left as they are: everything has
+# closed, the desktop is plain blue, and nothing happens. That emptiness is the beat
+# before the ending rather than a gap in it.
+#
+# IT CANNOT GO ANY LATER, and this is a hard edge rather than a taste call.
+# `PerformanceEngine.step` tests `now >= duration` BEFORE it ticks the scheduler, and
+# `duration` is `max(timeline.duration, audioDuration)` — 169.85 s, the file. A `credits`
+# event has no intrinsic duration, so placing it AT the end of the file would make
+# `timeline.duration` equal its own fire time and the end-of-piece branch would trip on
+# the tick before it ever fired: the card would simply never come up. Beat 362 leaves
+# 0.43 s of margin. Do not close that up.
+#
+# The card is `hold: true`, so when the track does run out the engine pauses on it rather
+# than restoring, and the typing and the outro run on wall-clock timers from there.
 # =============================================================================
 en = B["ending"]
 add(en, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
@@ -1968,18 +2457,25 @@ CREDITS = [
     "",
     "Bye",
 ]
-# Typed by the LINE, one per beat — the probe's cadence. The card comes up ON the
-# stop, so the hold only has to clear its own typing before the outro plays.
+# Typed by the LINE, one per beat — the probe's cadence.
 CREDITS_LPS = round(1 / BEAT, 3)
 CARD_AT = secs(en)
 TYPED_AT = CARD_AT + len(CREDITS) / CREDITS_LPS
-# The song's credit block is four lines longer than what it replaced, and one line a
-# beat is the cadence, not a knob — so the hold gives the beats back. The quit still has
-# to land on the end of the file (the printout below checks it), not after it.
+# The card now comes up after the music, so everything from here runs PAST the end of the
+# file and the engine is paused on the held card while it does. That is the point of the
+# move, not a slip: the printout below still reports where the quit lands, but it is no
+# longer trying to land on the last sample.
 OUTRO_DELAY = 2.0
+# NO BOOT BAR (2026-09-07). The outro was force-quit alert -> memory dump -> a five-second
+# Apple-logo progress bar -> quit, and that bar is geometry-matched to the gate's stalled
+# restart card on purpose. The piece already OPENS on a machine restarting; doing it again
+# to close reads as the same beat played twice rather than as an ending. `bootSeconds: 0`
+# makes `OutroController.runBoot` skip straight to the quit, so the dump is the last
+# picture and then the app is simply gone — which is the viewer's own desktop back, since
+# quitting routes through `applicationWillTerminate` -> `stopAndRestore()`.
 add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
     "linesPerSecond": CREDITS_LPS, "fontSize": 22, "photoTilt": -4,
-    "outroDelay": OUTRO_DELAY,
+    "outroDelay": OUTRO_DELAY, "bootSeconds": 0,
     "backdrop": "#FFFFFF",
     "tile": "assets/credits_tile.png", "tileDriftSeconds": 4})
 
@@ -2001,14 +2497,20 @@ LABELS = {
     "blue": "blue desktop", "restore": "desktop back", "welcome": "welcome (typed)",
     "probe": "system probe", "hydra": "hydra (pulled)", "blue2": "blue again",
     "face": "pixelface desktop", "traveller": "traveller + trail",
-    "spiral": "lyric spiral", "video1": "video slot", "tbd_048": "TBD",
+    "spiral": "lyric spiral", "video1": "kick swarm", "tbd_048": "TBD",
     "words": "lyrics desktop", "torus1": "magic torus + greeting",
     "map": "maps: here", "fill": "fill (pulled)", "black": "to black",
     "tbd_099": "glsl + hydra", "booth": "photo booth", "wall": "photo wall",
-    "facestrobe": "pixelface strobe", "horse": "the horse",
+    # The slot KEYS are historical — a pulled cue keeps its key so the numbering holds,
+    # and a cue that swaps acts keeps its key too — but these LABELS are what the viewer
+    # reads on the scrubber, so they name what actually plays there. "horse" has run the
+    # eruption + strobe since the 2026-09-05 swap, and the horse itself is out of the
+    # piece entirely (2026-09-06); "spam" and "glitch" traded acts on 2026-09-07, so the
+    # names read backwards against the keys and the labels are what to trust.
+    "facestrobe": "pixelface strobe", "horse": "eruption + strobe",
     "torus2": "torus + face ring", "video2": "video on top", "video3": "video + swarm",
-    "tbd_136": "swarm alone", "spinner": "beach-ball mandala", "spam": "UI spam",
-    "glitch": "spam + strobe", "allglitch": "words (pulled)",
+    "tbd_136": "swarm alone", "spinner": "beach-ball mandala",
+    "spam": "segmenter swarm", "glitch": "UI spam + ascii", "allglitch": "words (pulled)",
     "lastwords": "the stop", "ending": "the end card",
 }
 KINDS = {"blue": "start", "words": "drop", "torus1": "drop", "horse": "drop",
@@ -2061,7 +2563,10 @@ for i, (name, (p, bars, beats)) in enumerate(CUES.items(), start=1):
 print()
 print(f"  face     {FACE_DESKTOP} {FACE_W}x{FACE_H} on 2560x1600 ({FACE_SHARE:.0%} of the height)")
 print(f"  bricks   4x8 windows, f {frame_at(secs(B['hydra']))} → f {frame_at(secs(B['blue2'] - 0.2))} "
-      f"({secs(B['blue2']) - secs(B['hydra']):.0f}s), probe closes f {frame_at(secs(B['hydra'] - 0.3))}")
+      f"({secs(B['blue2']) - secs(B['hydra']):.0f}s), on top of {len(ramp_ids)} ramp windows "
+      f"(f {frame_at(secs(B['hydra'] - 4))} → f {frame_at(secs(B['hydra'] - 0.5))}) "
+      f"and {len(PROBE_STAY)} probes still standing; the other "
+      f"{len(probe_ids) - len(PROBE_STAY)} close f {frame_at(secs(B['hydra'] - 0.3))}")
 print(f"  welcome  {len(WELCOME_LINES)} lines @{WELCOME_LPB:g}/beat in a {WELCOME_W}x{WELCOME_H} terminal, "
       f"last line lands f {frame_at(secs(B['welcome'] + len(WELCOME_LINES) / WELCOME_LPB))}, "
       f"closed f {frame_at(secs(B['probe']))}")
@@ -2073,6 +2578,13 @@ print(f"  trail    {len(trail_ids)} delayed copies over {len(legs)} legs, "
       f"{TRAIL_DX:.0f}px and {TRAIL_LAG:.3f} beats apart "
       f"(tail {TRAIL_LINKS * TRAIL_LAG * BEAT:.2f}s behind the leader, leg {LEG * BEAT:.2f}s)")
 print(f"  spiral   {len(spiral_ids)} lyric cards, r {r0:.0f}→{r1:.0f}px")
+print(f"  kickswarm {kick_cuts} cuts on the KICK over chorus 1A, f {frame_at(secs(B['face']))} → "
+      f"f {frame_at(KICK_LAST)}, swept f {frame_at(secs(words_event_beat - 0.2))}, "
+      f"~40 arrows, floating (spawn shapes only — cue 12 is the one that gathers)")
+print(f"  wordswarm {sw_cuts} cuts over the lyric desktop in "
+      f"{(sw_end - words_event_beat) * BEAT:.1f}s (~{(sw_end - words_event_beat) / sw_cuts:.1f} beats "
+      f"apart, holds {'/'.join(str(h) for h in sorted(set(SWARM_HOLDS)))}), "
+      f"{len(SWARM_PATTERNS)} patterns, school (never reads the pointer)")
 print(f"  words    {len(word_slides)} desktop cards over {len(word_stream)} sung words, "
       f"{words_first:.2f}s → {word_slides[-1][0]:.2f}s, last holds to {secs(B['torus1']):.1f}s "
       f"(applied {DESK_LATENCY * 1000:.0f} ms early; min gap "
@@ -2082,11 +2594,17 @@ print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.
       f"question at f {frame_at(secs(ORACLE_AT))} "
       f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
       f"(f {frame_at(secs(ORACLE_AT + ORACLE_BEATS))}), cut at f {frame_at(secs(mp)):d}")
+print(f"  tunnel   assets/shaders/tunnel.frag full screen under the torus, "
+      f"f {frame_at(secs(t1))} → f {frame_at(secs(mp - 0.3))}; glass refracts "
+      f"{TORUS_ENV} ({TORUS_ENV_W}x{TORUS_ENV_H}), ground white for the phrase")
 if FILL_ACT:
     print(f"  fill     {len(fill_ids)} windows, 4 beats apart → 0.25")
 else:
-    print(f"  fill     pulled from the cut (FILL_ACT = False) — the map has bridge B to "
-          f"itself, f {frame_at(secs(mp))} until cue 16's wipe covers it f {frame_at(secs(bk))}")
+    print(f"  fill     pulled from the cut (FILL_ACT = False) — the map is alone under its "
+          f"own two popups, f {frame_at(secs(mp))} until cue 16's wipe covers it f {frame_at(secs(bk))}")
+print(f"  maptrace terminal f {frame_at(secs(mp + 0.5))} typing {len(TRACE)} chars over "
+      f"{TRACE_BEATS * BEAT:.1f}s, dialog lands f {frame_at(secs(mp + MAP_FALL / BEAT + 1))}, "
+      f"both gone f {frame_at(secs(bk - 0.4))}")
 print(f"  map      f {frame_at(secs(mp))} → f {frame_at(secs(MAP_CLOSE))}: falls "
       f"{2_600_000:,}m → 260m in {MAP_FALL:g}s (f {frame_at(secs(mp) + MAP_FALL)}), then "
       f"{MAP_ORBIT:g}° round the fix over {MAP_SECONDS - MAP_FALL:g}s "
@@ -2109,8 +2627,10 @@ if HORSE_ACT:
           f"exits beat {horse_exit:.0f}")
 else:
     print(f"  segswarm assets/giveit2meclip.mov, motion, up to 60 windows, normal level, "
-          f"f {frame_at(secs(B['glitch']))} → f {frame_at(secs(B['lastwords']))} "
-          f"(the LAST act, no keyline; the horse is cut — HORSE_ACT = False)")
+          f"f {frame_at(secs(sm))} → f {frame_at(secs(gl + SEG_BURY))} "
+          f"(alone f {frame_at(secs(sm + 0.25))} to f {frame_at(secs(gl))}, then buried by "
+          f"the eruption over the last "
+          f"{SEG_BURY * BEAT:.1f}s; no keyline; the horse is cut — HORSE_ACT = False)")
 print(f"  hydra2   breakdown sketch over the raymarcher: cursor walks f {frame_at(secs(hb))}, "
       f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
 print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "

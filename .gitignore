@@ -13,10 +13,12 @@ Package.resolved
 # Keep the large raw master out of git; the compressed mp3 IS committed (licensed).
 song.wav
 assets/*.wav
-# …but the gate's button sound is a required runtime asset, not a master: 72 KB, named
-# by the intro gate and copied into the .app by bundle.sh. Without this exception a
-# fresh clone builds an app whose buttons are silent.
+# …but the gate's two sounds are required runtime assets, not masters: 72 KB and 132 KB,
+# named by the intro gate and copied into the .app by bundle.sh. Without these exceptions
+# a fresh clone builds an app whose gate is silent. `bubble` is the alert arriving,
+# `click` is it being answered.
 !assets/bubble_sound.wav
+!assets/click_sound.wav
 
 # Sarah's source material: 156 MB of screen recordings, layered PSDs and full-size
 # originals. The pieces the show actually loads are committed as derived copies under
