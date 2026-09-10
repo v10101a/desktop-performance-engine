@@ -264,7 +264,7 @@ enum StillRenderer {
         // finishes on. (The glitch between them is rendered from a live screen capture,
         // so it has no still to preview.)
         let quit = makeDialogContentView(
-            title: "\u{201C}GiveIt2Me_DJ_Dave_malware\u{201D} is not responding.",
+            title: "\u{201C}\(OutroController.defaultAppName)\u{201D} is not responding.",
             message: "The application is not responding. Do you want to force quit?",
             buttons: ["Wait", "Force Quit"], icon: .caution,
             size: NSSize(width: 560, height: 172))
@@ -472,6 +472,39 @@ enum StillRenderer {
                 label.font = .monospacedSystemFont(ofSize: CGFloat(p.fontSize ?? 11), weight: .regular)
                 TerminalTextSink(label: label).showTyped(p.text, caret: true)
             }
+            win.level = .normal
+            win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+            win.orderBack(nil)
+            win.displayIfNeeded()
+            if let frameView = win.contentView?.superview,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                let image = NSImage(size: frameView.bounds.size)
+                image.addRepresentation(rep)
+                shots.append(image)
+            }
+            win.orderOut(nil)
+            win.close()
+        }
+
+        // The torus's balloon (cue 13). Same arrangement as the welcome card above: the
+        // frame, the copy, the face size and the spike's side all come from the SHIPPED
+        // timeline, because the question this shot answers is whether the authored
+        // balloon holds the authored copy — which a stand-in cannot tell you. Typed to
+        // its full length, since what goes wrong is the LAST line running off the bottom.
+        if let url = Bundle.module.url(forResource: "timeline", withExtension: "json"),
+           let tl = try? TimelineLoader.load(from: url),
+           let p = tl.events.compactMap({ ev -> TypeTextParams? in
+               guard case .typeText(let p) = ev.action, p.chrome == "bubble" else { return nil }
+               return p
+           }).first, p.frame.count == 4 {
+            let size = NSSize(width: p.frame[2], height: p.frame[3])
+            let tail = SpeechBubbleView.Tail(rawValue: p.tail ?? "left") ?? .left
+            let bubble = SpeechBubbleView(size: size, tail: tail,
+                                          fontSize: CGFloat(p.fontSize ?? 13))
+            bubble.showTyped(p.text, caret: true)
+            let win = HostedEffectWindow(contentRect: NSRect(origin: .zero, size: size),
+                                         view: bubble, title: nil)
             win.level = .normal
             win.setFrameOrigin(NSPoint(x: -6000, y: -6000))
             win.orderBack(nil)

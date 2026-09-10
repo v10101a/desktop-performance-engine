@@ -390,8 +390,14 @@ struct TypeTextParams: Decodable {
     var fontSize: Double? = nil         // default 13 ("mac"), 11 ("terminal")
     /// Which surface writes itself out: `"mac"` (default) is a white document in real
     /// macOS chrome; `"terminal"` is Terminal.app's own window — the same surface the
-    /// credits type into, monospaced with a block cursor.
+    /// credits type into, monospaced with a block cursor; `"bubble"` is Clippy's balloon,
+    /// a pale yellow Office Assistant speech bubble with a spike pointing at whoever is
+    /// talking. A bubble has no title bar, so `title` is ignored for it.
     var chrome: String? = nil
+    /// `"bubble"` chrome only: which edge the spike comes off, and so where the speaker
+    /// is. `"left"` (default) points at something to the balloon's left; `"bottom"` is
+    /// the canonical Office Assistant arrangement, the balloon above the character.
+    var tail: String? = nil
     /// The surface's colours, `"terminal"` chrome only: `hex` the ground, `fg` the type.
     /// Absent, it is Terminal's own Basic profile — black on white.
     var hex: String? = nil

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Assemble GiveIt2Me_DJ_Dave_malware.app from the SwiftPM build and code-sign it.
+# Assemble give-it-2-me.app from the SwiftPM build and code-sign it.
 #
 #   ./bundle.sh                 # regenerate the show, lint it, release build, ad-hoc signed
 #   CONFIG=debug ./bundle.sh    # debug build
@@ -16,8 +16,27 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIG="${CONFIG:-release}"
+
+# THREE NAMES, and they are not the same name (2026-09-09).
+#
+#   PRODUCT       what SwiftPM builds. Package.swift's executable target, and therefore
+#                 the filename in .build — this is NOT renamed, so `swift run` and every
+#                 dev command in the README keep working.
+#   APP_NAME      what the bundle is called on disk, and the executable inside it. The
+#                 thing you hand someone.
+#   DISPLAY_NAME  what macOS shows the room: the menu bar during the show, Force Quit,
+#                 the Finder's Get Info. Was "Desktop Performance Engine".
+#
+# They used to be one variable doing all three jobs, which is why renaming the bundle
+# looked like it would mean renaming the SwiftPM target. It does not.
+PRODUCT="GiveIt2Me_DJ_Dave_malware"
+APP_NAME="give-it-2-me"
+DISPLAY_NAME="give-it-2-me"
+# NOT renamed, on purpose: TCC keys its grants on the identifier and the code signature,
+# never on the filename. Change this and macOS treats the piece as a stranger — camera,
+# Location Services and Files-and-Folders are all asked for again, on whatever machine
+# was already set up for the show.
 BUNDLE_ID="com.computerart.giveit2me"
-APP_NAME="GiveIt2Me_DJ_Dave_malware"
 IDENTITY="${SIGN_IDENTITY:--}"
 
 # The show first. The timeline the .app carries is GENERATED — from docs/CUES.md and the
@@ -41,7 +60,9 @@ APP="build/$APP_NAME.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp "$BINDIR/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
+# Built as PRODUCT, installed as APP_NAME — and `CFBundleExecutable` below has to name
+# the destination, not the source, or the bundle will not launch at all.
+cp "$BINDIR/$PRODUCT" "$APP/Contents/MacOS/$APP_NAME"
 
 # App icon — so it can just be double-clicked from the Finder like anything else.
 # (Regenerate with `python3 tools/make_icon.py`.)
@@ -190,7 +211,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>            <string>$APP_NAME</string>
-    <key>CFBundleDisplayName</key>     <string>Desktop Performance Engine</string>
+    <key>CFBundleDisplayName</key>     <string>$DISPLAY_NAME</string>
     <key>CFBundleIdentifier</key>      <string>$BUNDLE_ID</string>
     <key>CFBundleExecutable</key>      <string>$APP_NAME</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
@@ -223,6 +244,6 @@ echo "▸ codesign (identity: $IDENTITY)"
 codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" "$APP"
 codesign --verify --verbose "$APP" || true
 
-echo "✓ Built $APP"
-echo "  open \"$APP\"                        # run the control window"
+echo "✓ Built $APP  (\"$DISPLAY_NAME\" to macOS, $BUNDLE_ID)"
+echo "  open \"$APP\"                        # the gate; ⌃⌥⌘D for the console"
 echo "  open -a \"$PWD/$APP\" --args examples/timeline_cursor.json"

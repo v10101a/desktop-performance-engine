@@ -232,13 +232,24 @@ enum TimelineTests {
                     guard case .typeText(let p) = ev.action, p.chrome != "terminal",
                           p.frame.count == 4 else { continue }
                     let frame = NSSize(width: p.frame[2], height: p.frame[3])
-                    let page = BaseEffectWindow.contentSize(forFrame: NSRect(origin: .zero, size: frame),
-                                                            native: true)
                     let fontSize = CGFloat(p.fontSize ?? 13)
-                    let needs = TextEditorView.textHeight(p.text, in: page, fontSize: fontSize)
-                    t.expect(needs <= TextEditorView.textBox(in: page).height,
-                             "\"\(p.id)\" fits its page — needs \(Int(needs))pt of "
-                             + "\(Int(TextEditorView.textBox(in: page).height))")
+                    let needs: CGFloat, has: CGFloat
+                    if p.chrome == "bubble" {
+                        // The balloon is borderless, so the authored frame IS the
+                        // content — no title bar comes off it — and the spike takes a
+                        // bite out of the side the copy can use.
+                        let tail = SpeechBubbleView.Tail(rawValue: p.tail ?? "left") ?? .left
+                        needs = SpeechBubbleView.textHeight(p.text, in: frame, tail: tail,
+                                                            fontSize: fontSize)
+                        has = SpeechBubbleView.textBox(in: frame, tail: tail).height
+                    } else {
+                        let page = BaseEffectWindow.contentSize(
+                            forFrame: NSRect(origin: .zero, size: frame), native: true)
+                        needs = TextEditorView.textHeight(p.text, in: page, fontSize: fontSize)
+                        has = TextEditorView.textBox(in: page).height
+                    }
+                    t.expect(needs <= has,
+                             "\"\(p.id)\" fits its page — needs \(Int(needs))pt of \(Int(has))")
                 }
                 for ev in tl.events {
                     guard case .credits(let p) = ev.action, let lines = p.lines else { continue }
@@ -253,17 +264,30 @@ enum TimelineTests {
                     let size = CreditsController.rollSize(for: lines, font: font, in: small)
                     t.expect(CreditsController.naturalRollWidth(for: lines, font: font) <= size.width,
                              "…without the longest line wrapping")
-                    // THE CARD WAITS FOR THE SONG. It used to fire on the stop and roll
-                    // its credits over the last nine seconds of the track. It must also
-                    // not be pushed to the file's end: `PerformanceEngine.step` tests
-                    // `now >= duration` BEFORE ticking the scheduler, and `credits` has no
-                    // intrinsic duration, so a card AT the end makes `timeline.duration`
-                    // equal its own fire time and the end-of-piece branch trips first —
-                    // the card never comes up at all. This pins both edges of that window.
-                    let track = 169.85
-                    t.expect(ev.fireTime > track - 1.0 && ev.fireTime < track - 0.2,
-                             "the end card lands after the music and before the file ends "
-                             + "(\(ev.fireTime)s, track \(track)s)")
+                    // WHERE THE CARD MAY LAND. Two edges, and only one of them is taste.
+                    //
+                    // The late edge is a hard engine constraint: `PerformanceEngine.step`
+                    // tests `now >= duration` BEFORE ticking the scheduler, and `credits`
+                    // has no intrinsic duration, so a card AT the end of the file makes
+                    // `timeline.duration` equal its own fire time and the end-of-piece
+                    // branch trips on the tick before it ever fires — the card simply
+                    // never comes up. Do not close that margin up.
+                    //
+                    // The early edge is cue 30, the stop at 160.55 s where everything
+                    // closes. The card belongs in the silence after it, not over the
+                    // eruption.
+                    //
+                    // Between those the position is a judgement call and it has moved
+                    // twice: onto the stop, then to 169.42 s (after the last of the
+                    // music), and now to 164.29 s, pulled 5 s forward so the ending
+                    // arrives sooner. At that position the credits again begin over the
+                    // final ~5.6 s of the track, which the 2026-09-07 move had
+                    // deliberately stopped. That is a choice, so it is pinned loosely
+                    // here and argued in generate_show.py's cue 31 header.
+                    let track = 169.85, stop = 160.55
+                    t.expect(ev.fireTime > stop && ev.fireTime < track - 0.2,
+                             "the end card lands in the silence after the stop and before "
+                             + "the file ends (\(ev.fireTime)s, stop \(stop)s, track \(track)s)")
                     // AND NO SECOND RESTART. The outro's Apple-logo boot bar is geometry-
                     // matched to the gate's stalled restart card, and the piece opens on
                     // that — a second one to close reads as the same beat played twice.

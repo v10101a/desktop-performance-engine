@@ -1,4 +1,4 @@
-//  Imported from ~/segcam (2026-09-03), unchanged except for this header.
+//  Imported from ~/segcam (2026-09-10), unchanged except for this header.
 //
 //  segcam's second display: every detection becomes its own titled macOS window holding
 //  the frame it was cut from, positioned where it sat in the picture, so the desktop
@@ -9,16 +9,12 @@
 //  Driven here by `SegSwarmController` instead of segcam's app. Fixes belong upstream
 //  first; if this file and ~/segcam's copy drift, the one there is the original.
 //
-//  TWO DIVERGENCES, both marked below and both the same shape — a hard-coded look becomes
-//  a property whose default is upstream's value, so this file still behaves exactly as
-//  segcam does unless a cue says otherwise:
-//
-//    * the window LEVEL. Upstream pins every panel one level under the shielding window,
-//      because in segcam the swarm is the screen. Here it is one act among several and a
-//      cue has to be able to say what goes over it.
-//    * the green BORDER. Upstream rings every panel to mark it as a detection. In the
-//      piece the panels are the furniture rather than an annotation of it, and a green
-//      keyline on sixty windows reads as a debug overlay laid over the show.
+//  This copy used to carry two divergences — the window LEVEL and the green BORDER as
+//  properties whose defaults were upstream's hard-coded look, so a cue could say what goes
+//  over the pile and take the keyline off sixty windows that read as a debug overlay.
+//  Both are upstream's own properties now (`SegmentSwarm.level`, `SegmentSwarm.border`,
+//  with `SegmentPanel.defaultLevel` and `.defaultBorder` as the defaults), so the file is
+//  the original again and `SegSwarmController` sets them the same way it always did.
 
 import AppKit
 import QuartzCore
@@ -31,9 +27,11 @@ final class SegmentPanel: NSPanel {
     private let imageLayer = CALayer()
     private let borderLayer = CALayer()
     private static let green = NSColor(calibratedRed: 0.25, green: 1, blue: 0.4, alpha: 1)
-    /// DPE divergence: upstream hard-codes this at the shielding level (see the header).
+
+    /// One under the shielding window: above the Dock and the menu bar, because here the
+    /// swarm is the screen. A host that layers it among other things sets `SegmentSwarm.level`.
     static let defaultLevel = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()) - 1)
-    /// DPE divergence: upstream always draws this keyline. Nil takes it off.
+    /// The keyline that marks a panel as a detection. Nil takes it off.
     static let defaultBorder: NSColor? = SegmentPanel.green
 
     init() {
@@ -60,13 +58,13 @@ final class SegmentPanel: NSPanel {
         imageLayer.magnificationFilter = .linear
         borderLayer.borderWidth = 2
         borderLayer.borderColor = SegmentPanel.green.cgColor
-        setBorder(SegmentPanel.defaultBorder)
         borderLayer.backgroundColor = NSColor.clear.cgColor
         content.layer?.addSublayer(imageLayer)
         content.layer?.addSublayer(borderLayer)
+        setBorder(SegmentPanel.defaultBorder)
     }
 
-    /// DPE divergence: the keyline, or none at all.
+    /// The keyline, or none at all.
     func setBorder(_ color: NSColor?) {
         borderLayer.borderWidth = color == nil ? 0 : 2
         borderLayer.borderColor = color?.cgColor
@@ -103,11 +101,23 @@ final class SegmentSwarm {
     private var spawned: Set<SegmentID> = []
 
     var mirrored = true
-    /// How many windows the collage holds before the oldest is recycled.
-    var maxBlobs = 100
-    /// DPE divergence: what the pile sits at. Upstream is always `SegmentPanel.defaultLevel`.
+    /// How many windows the collage holds before the oldest is recycled. Lowering it takes
+    /// effect at once — the extra windows go now rather than waiting for new segments to
+    /// push them out, which on a paused clip would never happen.
+    var maxBlobs = 100 {
+        didSet {
+            if maxBlobs < 1 { maxBlobs = 1 }
+            while panels.count > maxBlobs {
+                let panel = panels.removeFirst()
+                panel.orderOut(nil)
+                panel.close()
+            }
+        }
+    }
+    /// What the pile sits at. `SegmentPanel.defaultLevel` is above everything.
     var level = SegmentPanel.defaultLevel
-    /// DPE divergence: the keyline round each panel, or nil for none. Upstream is green.
+    /// The keyline round each panel, or nil for none. Applied as panels are adopted, so a
+    /// change shows on the next window rather than repainting the pile.
     var border: NSColor? = SegmentPanel.defaultBorder
 
     private let minWidth: CGFloat = 120     // a titled window can't be narrower than its bar
@@ -131,8 +141,8 @@ final class SegmentSwarm {
             }
 
             let panel = panels.count >= maxBlobs ? panels.removeFirst() : SegmentPanel()
-            panel.level = level                 // DPE divergence — see the header
-            panel.setBorder(border)             // DPE divergence — see the header
+            panel.level = level
+            panel.setBorder(border)
             panel.adopt(title: segment.label, image: crops[segment.id],
                         contentRect: rect, mirrored: mirrored)
             panels.append(panel)

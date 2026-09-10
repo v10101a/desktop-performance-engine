@@ -34,17 +34,40 @@ wallpaper, on the artwork's own `#001FFD` field so there is no edge where it sit
 `python3 tools/make_icon.py`) and embeds the backing track, so it runs from anywhere:
 
 ```bash
-./bundle.sh                                         # → build/GiveIt2Me_DJ_Dave_malware.app (ad-hoc signed)
-open build/GiveIt2Me_DJ_Dave_malware.app
-open -a "$PWD/build/GiveIt2Me_DJ_Dave_malware.app" --args examples/timeline_cursor.json
+./bundle.sh                                         # → build/give-it-2-me.app (ad-hoc signed)
+open build/give-it-2-me.app
+open -a "$PWD/build/give-it-2-me.app" --args examples/timeline_cursor.json
 ```
+
+#### Three names, and they are not the same name
+
+Renaming the bundle to `give-it-2-me` did **not** rename the SwiftPM target, so every
+`swift run GiveIt2Me_DJ_Dave_malware …` command on this page still works. `bundle.sh`
+keeps the three apart:
+
+| | | |
+|---|---|---|
+| `PRODUCT` | `GiveIt2Me_DJ_Dave_malware` | what SwiftPM builds — the target in `Package.swift`, the filename in `.build`, the name `swift run` takes |
+| `APP_NAME` | `give-it-2-me` | the bundle on disk and the executable inside it (`CFBundleExecutable` names the *destination*, or it will not launch) |
+| `DISPLAY_NAME` | `give-it-2-me` | what macOS shows the room — the menu bar during the show, Force Quit, Get Info |
+
+`CFBundleIdentifier` is deliberately **not** in that list: it stays
+`com.computerart.giveit2me`. TCC keys its grants on the identifier and the code
+signature, never on the filename, so renaming the bundle costs you no permissions.
+Changing the identifier would — camera, Location Services and Files-and-Folders all get
+asked for again, on whatever machine was already set up for the show.
+
+The outro's fake force-quit alert (*"give-it-2-me" is not responding*) has to agree with
+`DISPLAY_NAME` or it is the one thing in the ending that does not match the machine it is
+pretending to belong to. It lives in `OutroController.defaultAppName`, which
+`StillRenderer`'s preview of the same alert reads too, so the two cannot drift.
 
 The bundle is **self-contained** — it carries the show, the backing track, every asset the
 timeline names, the photo wall's fallback photographs and its icon, so it runs from
 anywhere (Applications, a USB stick, another Mac). Verify a copy with:
 
 ```bash
-/path/to/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware --check
+/path/to/give-it-2-me.app/Contents/MacOS/give-it-2-me --check
 ```
 
 `--check` resolves every file the show names against **the .app alone**, and prints a ✓
@@ -152,8 +175,75 @@ xcrun notarytool store-credentials dpe --apple-id you@example.com \
 Test a build the way a recipient gets it, by faking the quarantine flag:
 
 ```bash
-xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/GiveIt2Me_DJ_Dave_malware.zip
+xattr -w com.apple.quarantine '0081;0;Safari;' build/dist/give-it-2-me.zip
 ```
+
+#### Do you need the $99 Developer Program?
+
+**Only for distribution by download.**
+
+| how you hand it over | what you need |
+|---|---|
+| USB stick, or running it on your own machine | nothing — `./ship.sh` ad-hoc is enough |
+| a link: browser, Mail, AirDrop, Slack, Drive | Developer ID + notarization, so **yes** |
+
+Files copied from removable media are never given `com.apple.quarantine`, so Gatekeeper
+lets an ad-hoc build run. Anything *delivered* is quarantined, and an app without a
+Developer ID is refused outright — the recipient has to go to System Settings ▸ Privacy
+& Security ▸ Open Anyway, and on macOS 15+ the old right-click ▸ Open shortcut no longer
+works.
+
+There is no free path to notarization. A free Apple ID issues *Apple Development*
+certificates only; `notarytool` accepts nothing but a **Developer ID Application**
+certificate, and that is paid-only. A self-signed Keychain Access certificate is worth
+having for the dev loop — it keeps TCC grants stable across rebuilds, see `bundle.sh` —
+but no other Mac trusts it, so it does nothing for distribution.
+
+#### Entitlements are needed either way
+
+⚠️ This part is **not** conditional on paying. `ship.sh` signs with `--options runtime`
+whatever the identity, and the hardened runtime denies resources on the *runtime flag*,
+not on who signed — so an ad-hoc USB build without entitlements loses the camera and
+Location Services for exactly the same reason a notarized one would. Verified: an ad-hoc
+signature does carry entitlements, and reads them back.
+
+The failure is completely silent — the app installs, launches, shows the prompts, the
+viewer says yes, and the calls fail anyway. `GiveIt2Me.entitlements` covers what the
+shipped cut needs:
+
+| entitlement | what loses it |
+|---|---|
+| `com.apple.security.device.camera` | cue 25's photo booth |
+| `com.apple.security.personal-information.location` | the probe's personal section, and cue 14's map (falls back to Los Angeles) |
+
+**`com.apple.security.automation.apple-events` is deliberately not in the list** — the
+current timeline has no `rearrangeIcons` and no `fileSwarm`, and `hideOtherApps` is
+`NSRunningApplication.hide()`, which needs nothing. Add either of those cues and the
+entitlement has to go in with them, or the gate's
+`AEDeterminePermissionToAutomateTarget` fails and the icons never move. You will not
+have to remember: `ProductionTests` pairs the file against `Permissions.plan(for:)`, so
+the cue that needs it fails the suite until the entitlement is there — and fails equally
+on an entitlement granted that nothing asks for.
+
+**A secure timestamp**, for the paid path only. `--timestamp`, not `--timestamp=none`.
+Ad-hoc signatures cannot be timestamped at all, which is why that flag was there — but
+with a real Developer ID `--timestamp=none` *succeeds*, so the fallback never ran and
+every signed build carried a signature notarization rejects with "The signature does not
+include a secure timestamp." `ship.sh` branches on the identity and prints the timestamp
+back.
+
+⚠️ **Comments in the entitlements file may not contain a double hyphen, and must stay
+ASCII.** XML forbids `--` inside a comment; `plutil -lint` passes the file anyway and
+`codesign` then fails the whole build with `AMFIUnserializeXML: syntax error near line N`
+and nothing about why. Naming a codesign flag in a comment is all it takes. Same lesson
+as the shaders, and pinned by the same kind of test.
+
+Notarization is an **automated malware scan, not a review** — nobody at Apple watches the
+piece, and the name on the binary is not what it looks at. A signed, hardened, timestamped
+build of this should pass. Two things worth knowing before you hand out a `.dmg`, though:
+the bundle carries **hydra-synth (AGPL-3.0)** and, if `tools/fetch_doom.sh` has been run,
+**a GPL DooM engine with a shareware IWAD baked in** — read that script's header first.
+Neither affects notarization; both affect what you owe people you give it to.
 
 **The prompts carry no explanation** (2026-09-03). The usage strings in both `Info.plist`
 files — the embedded one `swift run` uses and the one `bundle.sh` writes — are present but
@@ -691,7 +781,7 @@ display.
 
 ```jsonc
 { "beat": 237, "type": "segSwarm", "params": {
-    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
+    "id": "segswarm", "path": "assets/giveit2meclip.mp4", "mode": "motion",
     "intensity": 0.62, "maxWindows": 60, "mirror": false } }
 ```
 
@@ -1436,7 +1526,7 @@ line, numbers in pink.
 | renders in `--snapshot` | no | yes |
 
 ```bash
-DPE_HYDRA=fake      ./build/GiveIt2Me_DJ_Dave_malware.app/Contents/MacOS/GiveIt2Me_DJ_Dave_malware
+DPE_HYDRA=fake      ./build/give-it-2-me.app/Contents/MacOS/give-it-2-me
 DPE_HYDRA_MAX=3     # cap live canvases; sketches past the cap fall back to the impression
 ```
 

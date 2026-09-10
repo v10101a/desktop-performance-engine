@@ -274,8 +274,8 @@
     "kind": "break"
    },
    {
-    "t": 169.42,
-    "bar": 91,
+    "t": 164.29,
+    "bar": 88,
     "label": "the end card",
     "kind": "break"
    }
@@ -6962,12 +6962,13 @@
      1010,
      378,
      401,
-     414
+     144
     ],
     "text": "I am the Magic Torus! I am a torus, thus I am all knowing.\n\nAsk me one (1) yes or no question. I only speak in absolutes, and I would hate to disappoint you.",
-    "charsPerBeat": 28,
+    "charsPerBeat": 12,
     "fontSize": 15,
-    "title": "torus.txt \u2014 Edited",
+    "chrome": "bubble",
+    "tail": "left",
     "interactive": true
    }
   },
@@ -6980,7 +6981,7 @@
    }
   },
   {
-   "beat": 135.607,
+   "beat": 143.083,
    "type": "oracle",
    "params": {
     "id": "oracle",
@@ -8892,7 +8893,7 @@
     "id": "desk4",
     "mode": "solid",
     "hex": "#020AF5",
-    "durationSeconds": 59.3
+    "durationSeconds": 54.163
    }
   },
   {
@@ -27776,7 +27777,7 @@
    "type": "segSwarm",
    "params": {
     "id": "segswarm",
-    "path": "assets/giveit2meclip.mov",
+    "path": "assets/giveit2meclip.mp4",
     "mode": "motion",
     "intensity": 0.62,
     "maxWindows": 60,
@@ -31567,7 +31568,7 @@
    }
   },
   {
-   "beat": 362,
+   "beat": 351,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -31575,7 +31576,7 @@
    }
   },
   {
-   "beat": 362,
+   "beat": 351,
    "type": "credits",
    "params": {
     "id": "credits",

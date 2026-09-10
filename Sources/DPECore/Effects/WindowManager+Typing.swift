@@ -6,19 +6,28 @@ import AppKit
 extension WindowManager {
     /// Open a window that writes itself out.
     ///
-    /// Two surfaces, chosen by `chrome`. The default is the document: a white page in
+    /// Three surfaces, chosen by `chrome`. The default is the document: a white page in
     /// real macOS chrome, typed character by character. `"terminal"` is Terminal.app's
     /// own window — built through `applyContent` like every other terminal in the piece
     /// and typed into by fishing its label back out, so the welcome card and the end
     /// card's credits are literally the same surface rather than two approximations
-    /// of it.
+    /// of it. `"bubble"` is Clippy's balloon, for the one moment the machine speaks to
+    /// the viewer in the first person and asks them for something.
     func beginTyping(_ p: TypeTextParams, at now: Double, bpm: Double) {
         let scr = screen(p.screen)
         let frame = rect(from: p.frame, on: scr)
         close(id: p.id)
         let win: BaseEffectWindow
         let sink: TypedTextSink
-        if p.chrome == "terminal" {
+        if p.chrome == "bubble" {
+            // No chrome at all: the balloon IS the window, so the frame is its content
+            // rect and the corners outside the outline stay transparent.
+            let tail = SpeechBubbleView.Tail(rawValue: p.tail ?? "left") ?? .left
+            let view = SpeechBubbleView(size: frame.size, tail: tail,
+                                        fontSize: CGFloat(p.fontSize ?? 13))
+            win = HostedEffectWindow(contentRect: frame, view: view, title: nil)
+            sink = view
+        } else if p.chrome == "terminal" {
             let term = EffectWindow(contentRect: frame,
                                     content: ContentSpec(kind: "code", hex: p.hex, text: "",
                                                          fg: p.fg,

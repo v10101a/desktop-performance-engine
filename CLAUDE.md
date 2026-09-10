@@ -1,4 +1,4 @@
-# GiveIt2Me_DJ_Dave_malware
+# give-it-2-me (GiveIt2Me_DJ_Dave_malware)
 
 A music video that runs as software: a macOS app that plays the track and drives the
 desktop — windows, dialogs, the cursor, the wallpaper — in sync with it. Everything is
@@ -111,6 +111,29 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   that opens nothing. `assets/photo_fallback/` is derived-and-committed from the
   gitignored `broken_computer` drop by `generate_show.py`, minus `IMG_0624.PNG` (a real
   person's DM — see the note there); regenerate it whenever the drop changes.
+- **The bundle is `give-it-2-me.app`; the SwiftPM target is not renamed.** `bundle.sh`
+  keeps `PRODUCT` (what SwiftPM builds, still `GiveIt2Me_DJ_Dave_malware`, so every
+  `swift run` command works), `APP_NAME` (the `.app` and its executable) and
+  `DISPLAY_NAME` (menu bar, Force Quit) apart — they were one variable, which is why
+  renaming the bundle looked like it meant renaming the target. `CFBundleExecutable` must
+  name the *destination* of the `cp`, not the product, or the bundle will not launch.
+  `CFBundleIdentifier` stays `com.computerart.giveit2me`: TCC keys grants on the
+  identifier and signature, never the filename, so the rename costs no permissions and
+  changing the identifier would cost all of them. The outro's fake force-quit alert must
+  agree with `DISPLAY_NAME` — one string, `OutroController.defaultAppName`, which
+  `StillRenderer`'s preview reads too.
+- **Every `ship.sh` build needs `GiveIt2Me.entitlements` — ad-hoc included.** `ship.sh`
+  signs `--options runtime` whatever the identity, and the hardened runtime denies the
+  camera and Location Services on the *runtime flag*, before TCC is consulted, so the
+  Info.plist usage strings are not enough. The failure is silent: the app runs, prompts,
+  the viewer says yes, and the cues do nothing. (`bundle.sh` does not set the flag, so
+  the dev loop is unaffected.) `ProductionTests` pairs the file against
+  `Permissions.plan(for:)` in both directions, so a `rearrangeIcons`/`fileSwarm` cue
+  fails the suite until `com.apple.security.automation.apple-events` goes in with it.
+  **Comments in that file may not contain `--` and must stay ASCII** — XML forbids it,
+  `plutil -lint` passes anyway, and `codesign` then dies with `AMFIUnserializeXML:
+  syntax error`. Notarization additionally needs `--timestamp` (not `--timestamp=none`,
+  which *succeeds* with a real identity and gets the upload rejected later).
 - **`--check` is the USB test.** It resolves every asset the timeline names against the
   `.app` alone (`TimelineAssets.audit`), because the ordinary resolver also searches the
   repo — so a bundle missing half its pictures looks perfect until it leaves the machine.
@@ -123,3 +146,9 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   a ~3 Hz wall — but the desktop layer sustains 119 Hz, so the limit is now explicit:
   `WallpaperController.layerMaxHz` (12 Hz), clamped with a log line. Raising it means
   re-measuring the show, not editing a number.
+- **`tools/insta360pan/` is a separate app, not part of the SwiftPM package.** It pans and
+  zooms an Insta360's webcam-mode feed (front lens top half, rear lens bottom half, each a
+  fisheye cropped to a band) by rebuilding the sphere through a calibrated lens model with
+  a stitch distance for the lens parallax, and publishes the view over Syphon for Resolume.
+  It builds with its own `build.sh` the way `~/segcam` does, borrowing `Syphon.framework`
+  from TouchDesigner; its `README.md` covers the controls, calibration and the probe.

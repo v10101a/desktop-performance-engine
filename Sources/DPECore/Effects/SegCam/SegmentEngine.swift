@@ -1,4 +1,4 @@
-//  Imported from ~/segcam (2026-09-03), unchanged except for this header.
+//  Imported from ~/segcam (2026-09-10), unchanged except for this header.
 //
 //  segcam is a standalone macOS app: real-time webcam segmentation shown as green boxes
 //  over the video, or as a desktop full of windows. This is its ENGINE — the part with no
@@ -16,16 +16,17 @@ import CoreVideo
 import Foundation
 import QuartzCore
 
-/// Owns the three segmenters, decides which one runs, and publishes one result per
-/// frame to the main queue. Everything here runs on the capture queue except the
-/// setters, which are main-thread and lock-protected.
+/// Owns the three segmenters, decides which of them run, and publishes one result per
+/// frame to the main queue. Any combination can be on at once — the segments are simply
+/// concatenated, and their kinds keep the IDs distinct. Everything here runs on the
+/// capture queue except the setters, which are main-thread and lock-protected.
 final class SegmentEngine {
     enum Mode: Int, CaseIterable {
         case face = 1, threshold, motion
 
         var title: String {
             switch self {
-            case .face:      return "eyes + mouth"
+            case .face:      return "face"
             case .threshold: return "threshold"
             case .motion:    return "motion"
             }
@@ -53,14 +54,13 @@ final class SegmentEngine {
 
     private let lock = NSLock()
     private var _settings = SegmentSettings()
-    private var _mode = Mode.face
+    private var _enabled: Set<Mode> = [.face]
     private var _wantsImage = false
-    private var appliedMode = Mode.face
+    private var appliedEnabled: Set<Mode> = [.face]
     private var frameIndex = 0
-    /// Vision is the single most expensive thing here and a face does not move far in
-    /// 33 ms, so it runs every other frame and the tracked boxes are reused in between.
-    /// Vision is the most expensive thing here, so it runs every other frame; the swarm
-    /// treats a republished instance as the one it already has a window for.
+    /// Vision is the most expensive thing here and a face does not move far in 33 ms, so
+    /// it runs every other frame and the boxes are reused in between; the swarm treats a
+    /// republished instance as the one it already has a window for.
     private let visionStride = 2
     /// Matches the swarm's window cap — no point cropping for a window that won't exist.
     private static let maxCrops = 24
@@ -73,12 +73,20 @@ final class SegmentEngine {
         set { lock.withLock { _settings = newValue } }
     }
 
-    var mode: Mode {
-        get { lock.withLock { _mode } }
-        set { lock.withLock { _mode = newValue } }
+    /// The segmenters that run — any combination, including none.
+    var enabled: Set<Mode> {
+        get { lock.withLock { _enabled } }
+        set { lock.withLock { _enabled = newValue } }
     }
 
-    /// Mode 2 needs per-segment crops; mode 1 doesn't.
+    /// One segmenter, exclusively: the original API, kept for callers that pick one (a cue
+    /// does). Reading it gives the lowest-numbered one that is on, `.face` if none is.
+    var mode: Mode {
+        get { lock.withLock { _enabled.min(by: { $0.rawValue < $1.rawValue }) ?? .face } }
+        set { lock.withLock { _enabled = [newValue] } }
+    }
+
+    /// The swarm needs per-segment crops; the overlay doesn't.
     var wantsImage: Bool {
         get { lock.withLock { _wantsImage } }
         set { lock.withLock { _wantsImage = newValue } }
@@ -134,15 +142,23 @@ final class SegmentEngine {
         return crops
     }
 
+    private func reset(_ mode: Mode) {
+        switch mode {
+        case .face:      face.reset()
+        case .threshold: threshold.reset()
+        case .motion:    motion.reset()
+        }
+    }
+
     /// Capture queue.
     func ingest(_ pixelBuffer: CVPixelBuffer) {
-        let (settings, mode, wantsImage) = lock.withLock { (_settings, _mode, _wantsImage) }
+        let (settings, enabled, wantsImage) = lock.withLock { (_settings, _enabled, _wantsImage) }
 
-        if mode != appliedMode {
-            appliedMode = mode
-            face.reset()
-            threshold.reset()
-            motion.reset()
+        if enabled != appliedEnabled {
+            // A segmenter that just came on starts fresh: new numbers, and for motion a new
+            // background. The ones already running are left alone.
+            for mode in enabled.subtracting(appliedEnabled) { reset(mode) }
+            appliedEnabled = enabled
         }
 
         frameIndex += 1
@@ -150,20 +166,26 @@ final class SegmentEngine {
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
         // The luma grid is only worth building for the blob segmenters.
-        let luma = mode == .face ? LumaGrid(width: 0, height: 0, pixels: [])
-                                     : LumaGrid.downsample(pixelBuffer)
+        let needsLuma = enabled.contains(.threshold) || enabled.contains(.motion)
+        let luma = needsLuma ? LumaGrid.downsample(pixelBuffer)
+                             : LumaGrid(width: 0, height: 0, pixels: [])
         let frame = Frame(pixelBuffer: pixelBuffer, width: width, height: height,
                           luma: luma, index: frameIndex)
 
         var result = Result()
-        switch mode {
-        case .face:
+        if enabled.contains(.face) {
             if frameIndex % visionStride == 0 {
                 lastFaceSegments = face.segments(in: frame, settings: settings)
             }
-            result.segments = lastFaceSegments
-        case .threshold: result.segments = threshold.segments(in: frame, settings: settings)
-        case .motion:    result.segments = motion.segments(in: frame, settings: settings)
+            result.segments += lastFaceSegments
+        } else {
+            lastFaceSegments = []
+        }
+        if enabled.contains(.threshold) {
+            result.segments += threshold.segments(in: frame, settings: settings)
+        }
+        if enabled.contains(.motion) {
+            result.segments += motion.segments(in: frame, settings: settings)
         }
 
         if wantsImage {

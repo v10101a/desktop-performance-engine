@@ -1,4 +1,4 @@
-//  Imported from ~/segcam (2026-09-03), unchanged except for this header.
+//  Imported from ~/segcam (2026-09-10), unchanged except for this header.
 //
 //  segcam is a standalone macOS app: real-time webcam segmentation shown as green boxes
 //  over the video, or as a desktop full of windows. This is its ENGINE — the part with no
@@ -15,10 +15,12 @@ import CoreGraphics
 import Foundation
 
 enum SegmentKind: String, CaseIterable {
-    case eyeLeft, eyeRight, mouth, blob, motion
+    case face, body, eyeLeft, eyeRight, mouth, blob, motion
 
     var displayName: String {
         switch self {
+        case .face:     return "face"
+        case .body:     return "body"
         case .eyeLeft:  return "eye.L"
         case .eyeRight: return "eye.R"
         case .mouth:    return "mouth"
@@ -90,4 +92,19 @@ struct SegmentSettings {
     var motionAdaptation: Float = 0.06
     var minAreaFraction: CGFloat = 0.0025
     var maxSegments: Int = 16
+
+    /// Which of the Vision detector's parts become segments. The eyes and the mouth are the
+    /// original set; the face box and the body are off by default, so anything that runs the
+    /// engine without saying otherwise segments exactly as it always did.
+    var detectFace = false
+    var detectBody = false
+    var detectEyes = true
+    var detectMouth = true
+
+    /// The threshold level as a 0…1 sensitivity, the way the slider reads: right means more
+    /// of the frame passes. Same convention as `motionSensitivityFraction`.
+    var thresholdSensitivityFraction: Double {
+        get { 1 - Double(thresholdLevel - 1) / 253 }
+        set { thresholdLevel = 1 + Int(((1 - min(1, max(0, newValue))) * 253).rounded()) }
+    }
 }

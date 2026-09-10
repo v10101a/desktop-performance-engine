@@ -18,16 +18,35 @@
 #   notary credentials once with:
 #     xcrun notarytool store-credentials dpe --apple-id you@example.com \
 #           --team-id TEAMID --password <app-specific-password>
+#
+#   A Developer ID build is signed with the hardened runtime, a secure timestamp and
+#   GiveIt2Me.entitlements. All three are required: without the timestamp notarization
+#   rejects the upload outright, and without the entitlements the hardened runtime denies
+#   the camera and Location Services before TCC is ever asked — so the show installs,
+#   runs, prompts, and then has no photo booth and no fix. Nothing says so at run time;
+#   those cues just do nothing.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP_NAME="GiveIt2Me_DJ_Dave_malware"
-VOL_NAME="Desktop Performance Engine"
+# See the note in bundle.sh: PRODUCT is what SwiftPM builds (unchanged, so `swift run`
+# still works), APP_NAME is what the bundle is called. The lipo below reads PRODUCT out
+# of .build and writes APP_NAME into the bundle.
+PRODUCT="GiveIt2Me_DJ_Dave_malware"
+APP_NAME="give-it-2-me"
+VOL_NAME="give-it-2-me"
 IDENTITY="${SIGN_IDENTITY:--}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-}"
 APP="build/$APP_NAME.app"
 OUT="build/dist"
+ENTITLEMENTS="GiveIt2Me.entitlements"
+
+if [ ! -f "$ENTITLEMENTS" ]; then
+  echo "error: $ENTITLEMENTS is missing. Every build here is signed --options runtime," >&2
+  echo "       ad-hoc included, and the hardened runtime denies the camera and Location" >&2
+  echo "       Services without it — the app launches, prompts, and then does neither." >&2
+  exit 1
+fi
 
 echo "▸ regenerating the show"
 python3 tools/generate_show.py > /dev/null
@@ -46,18 +65,62 @@ SKIP_GENERATE=1 SIGN_IDENTITY="$IDENTITY" ./bundle.sh > /dev/null
 
 echo "▸ making the binary universal"
 lipo -create \
-  ".build/arm64-apple-macosx/release/$APP_NAME" \
-  ".build/x86_64-apple-macosx/release/$APP_NAME" \
+  ".build/arm64-apple-macosx/release/$PRODUCT" \
+  ".build/x86_64-apple-macosx/release/$PRODUCT" \
   -output "$APP/Contents/MacOS/$APP_NAME"
 echo "  architectures: $(lipo -archs "$APP/Contents/MacOS/$APP_NAME")"
 
 # Re-sign: replacing the binary invalidated bundle.sh's signature. Hardened runtime is
 # required for notarization and harmless without it.
+#
+# TWO THINGS NOTARIZATION WILL REJECT, both of which this used to do:
+#
+#   1. No secure timestamp. `--timestamp=none` was tried FIRST and, with a real
+#      Developer ID, it SUCCEEDS — so the fallback never ran and every signed build
+#      carried a signature notarization refuses ("The signature does not include a
+#      secure timestamp"). It is only correct for ad-hoc, which cannot be timestamped
+#      at all, so it is now used only there.
+#   2. No entitlements. Under the hardened runtime the camera and Location Services are
+#      denied before TCC is consulted — see GiveIt2Me.entitlements. An unentitled
+#      notarized build installs, launches, prompts, and then quietly has no photo booth
+#      and no fix.
+# THE ENTITLEMENTS GO IN BOTH BRANCHES, and the ad-hoc one is not belt-and-braces.
+# `--options runtime` is applied here whatever the identity, and the hardened runtime
+# denies the camera and Location Services on the *runtime flag*, not on who signed it —
+# so an ad-hoc USB build signed without them has no photo booth and no fix either, for
+# exactly the same silent reason a notarized one would not. Signing both the same way
+# also means the stick you rehearse from is the build you ship, differing only in trust.
 echo "▸ signing ($IDENTITY)"
-codesign --force --deep --options runtime --timestamp=none \
-         --sign "$IDENTITY" "$APP" 2>/dev/null || \
-codesign --force --deep --options runtime --sign "$IDENTITY" "$APP"
+if [ "$IDENTITY" = "-" ]; then
+  # Ad-hoc signatures cannot carry a secure timestamp at all, so this build can never be
+  # notarized. That is fine for a USB stick — see the header.
+  codesign --force --deep --options runtime --timestamp=none \
+           --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" "$APP"
+else
+  codesign --force --deep --options runtime --timestamp \
+           --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" "$APP"
+fi
 codesign --verify --deep --strict "$APP" && echo "  signature valid"
+
+# What actually got signed in, read back off the binary rather than assumed.
+#
+# This is worth the twelve lines because BOTH failure modes are silent. A malformed
+# entitlements file does not stop the build — codesign fails, `set -e` catches that one —
+# but an entitlement that never made it in produces an app that runs and simply has no
+# camera. And a signature without a secure timestamp only announces itself minutes later,
+# when notarytool rejects the upload.
+echo "  entitlements:"
+codesign -d --entitlements - "$APP" 2>/dev/null \
+  | grep -o 'com\.apple\.security\.[a-z.-]*' | sed 's/^/    /' \
+  || echo "    NONE — the camera and Location Services will be denied at run time" >&2
+
+if [ "$IDENTITY" != "-" ]; then
+  if codesign -dvv "$APP" 2>&1 | grep -qi "^Timestamp="; then
+    codesign -dvv "$APP" 2>&1 | grep -i "^Timestamp=" | sed 's/^/  /'
+  else
+    echo "  WARNING: no secure timestamp — notarization will reject this" >&2
+  fi
+fi
 
 rm -rf "$OUT"; mkdir -p "$OUT"
 

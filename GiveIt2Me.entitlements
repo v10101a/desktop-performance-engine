@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Hardened runtime resource access. See README "What a Developer ID build needs".
+
+      TWO THINGS ABOUT THE COMMENTS IN THIS FILE, both learned the hard way:
+
+      AMFI parses this, and its XML reader is stricter than plutil's. A comment may not
+      contain a double hyphen (XML forbids it inside a comment, and plutil lets it pass
+      while codesign fails with "AMFIUnserializeXML: syntax error"). So codesign flags
+      are named here without their leading dashes. Keep it plain ASCII too, for the same
+      reason the shaders are: a stray em dash in a comment costs an afternoon.
+
+      Signing without this file, or with a version AMFI cannot read, does not fail
+      loudly. The hardened runtime denies these resources BEFORE TCC is consulted, so
+      the app installs, launches, shows the prompts, the viewer says yes, and the calls
+      fail anyway. Those cues simply do nothing.
+
+      This list is the SHIPPED CUT's needs, not everything the engine can do:
+
+        camera    cue 25's photo booth (photoBooth). The segmenter can also take the
+                  camera, but the cut hands it assets/giveit2meclip.mp4 instead.
+        location  the probe's personal section (systemProbe, five of them) and cue 14's
+                  map, which is authored "here". Without it the probe prints "no fix"
+                  and the map falls back to Los Angeles: degradations the piece already
+                  handles, but not ones to ship by accident.
+
+      DELIBERATELY ABSENT, and the first one is a trap if the cut changes:
+
+        com.apple.security.automation.apple-events
+                  needed the moment a rearrangeIcons or fileSwarm cue is added. Both
+                  drive Finder, and while their scripts go out through an osascript
+                  subprocess, Permissions.finderAutomationGranted calls
+                  AEDeterminePermissionToAutomateTarget IN this process at the gate.
+                  Neither cue is in the current timeline. hideOtherApps is NOT Apple
+                  Events: it is NSRunningApplication.hide(), which needs nothing.
+
+        com.apple.security.device.audio-input
+                  nothing records. The backing track is playback only.
+
+        the App Sandbox file entitlements
+                  this app is not sandboxed, so ~/Desktop, ~/Documents and ~/Downloads
+                  are pure TCC: the Info.plist usage strings and the viewer's answer are
+                  the whole story.
+
+        com.apple.security.personal-information.photos-library
+                  the wall reads ~/Pictures as files, never through PhotoKit.
+    -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <key>com.apple.security.personal-information.location</key>
+    <true/>
+</dict>
+</plist>

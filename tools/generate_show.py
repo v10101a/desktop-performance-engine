@@ -206,7 +206,7 @@ CUES = {
     "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the eruption + the strobe, straight in
     "allglitch":  ("chorus2B",      4, 0),   # 29  PULLED — was the lyric desktop under the strobe; the slot keeps its number
     "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6 and closes on the silence
-    "ending":     ("break",         4, 2),   # 31  the end card, once the track has actually finished
+    "ending":     ("break",         1, 3),   # 31  the end card, over the last seconds of the track
 }
 # The recut's authored seconds, and the clock they were read on: a video with ~9 s of
 # boot-up before the music. `WAS - RECUT_SHIFT` is where each cue sits in the track.
@@ -1380,20 +1380,38 @@ add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
                        # viewer's wallpaper. See `build_torus_dimension` above.
                        "environment": TORUS_ENV})
 GREETING = copy_prose("torus_greeting")          # docs/copy/torus_greeting.txt
-# 28 chars a beat — the monologue is three times the length of the one it replaced and
-# the phrase is the same 32 beats, so it types at roughly a fast printer rather than a
-# person. Everything downstream is derived from the copy, so it can be rewritten again
-# and the invitation and the dialog move with it; only the phrase is fixed.
-GREETING_CPB = 28
-# The greeting sits fully to the RIGHT of the torus window, taking what is left of the
-# screen past its edge. It runs from mid-height to the same baseline the question sits
-# on, rather than the bottom quarter: the copy is ten wrapped lines now, and a box the
-# old height would have typed its last sentence past its own bottom edge.
+# 12 chars a beat, down from 28 (2026-09-09). The 28 was set for a monologue three times
+# this length, and reading it straight onto copy this short would have typed the whole
+# thing in six beats and then left the oracle sitting answered for half the phrase. This
+# is the rate that keeps the phrase's SHAPE: the greeting still lands around beat 15 of
+# 32, the invitation a beat after it, the answer inside the phrase. Everything downstream
+# is derived from the copy and this number, so the copy can be rewritten again and the
+# dialog moves with it — only the phrase is fixed.
+GREETING_CPB = 12
+# CLIPPY'S BALLOON (2026-09-09), where this used to be a TextEdit document in real macOS
+# chrome. The torus is the one thing in the piece that addresses the viewer directly and
+# asks them for something, and the Office Assistant is the register that belongs to: a
+# computer interrupting you to be helpful, in the same voice as "It looks like you're
+# writing a letter". A titled document window says the machine is working; a yellow
+# balloon says it is talking to YOU.
+#
+# It sits to the RIGHT of the torus and the spike points back at it, so the balloon is
+# something the torus is saying rather than a window that happens to be next to it. The
+# box is a third of the height it was, because the copy is a third of the length — a
+# balloon has to hug its words or it reads as an empty label.
 GREET_X = round((W + TORUS_SIZE) / 2 + W * 0.02)
+# Measured off `--snapshot-chrome`, not guessed: the copy sets in four lines at 15pt, so
+# it needs ~113pt including the balloon's padding. 144 hugs that with enough slack for
+# the face actually resolving differently on another machine (Tahoma ships with Office;
+# without it this falls back through Verdana to Geneva, which sets slightly wider).
+GREET_H = round(H * 0.16)
+# Centred on the torus, so the spike leaves the balloon's left edge pointing straight at
+# the middle of it.
+GREET_Y = round(H * 0.5 - GREET_H / 2)
 add(t1 + 1, "typeText", {"id": "greeting",
-    "frame": [GREET_X, round(H * 0.42), W - GREET_X - round(W * 0.02), round(H * 0.46)],
+    "frame": [GREET_X, GREET_Y, W - GREET_X - round(W * 0.02), GREET_H],
     "text": GREETING, "charsPerBeat": GREETING_CPB, "fontSize": 15,
-    "title": "torus.txt — Edited", "interactive": True})
+    "chrome": "bubble", "tail": "left", "interactive": True})
 
 # A beat after the greeting has finished typing — derived from the copy, so rewriting
 # the greeting moves the invitation with it.
@@ -1793,7 +1811,7 @@ BLUE_FRAME = {"kind": "color", "hex": DJ_BLUE, "chrome": "none"}
 # 2026-09-07 swap, where it opens the second chorus and is buried by the eruption a bar
 # and a half in. Its code is up at cue 27, where it plays; this comment is the signpost.
 #
-# What it is, wherever it runs: `assets/giveit2meclip.mov` segmented for MOTION, every
+# What it is, wherever it runs: `assets/giveit2meclip.mp4` segmented for MOTION, every
 # region that moves becoming its own titled window holding the piece of frame it was cut
 # from, pinned where it was found, up to 60 before the oldest is recycled. Nothing is
 # tracked between frames, so a thing that keeps moving mints a new window every frame and
@@ -2143,7 +2161,7 @@ if MANDALA_ACT:
 add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 
 # --- cue 27, the 2A pickup: THE SEGMENTER SWARM ---------------------------------
-# `assets/giveit2meclip.mov` segmented for MOTION: every region that moves becomes its
+# `assets/giveit2meclip.mp4` segmented for MOTION: every region that moves becomes its
 # own titled window holding the piece of frame it was cut from, pinned where it was
 # found. Nothing is tracked between frames, so a thing that keeps moving mints a new
 # window every frame and the screen fills — up to 60, then the oldest panel is recycled.
@@ -2153,7 +2171,7 @@ add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 # level then, because it WAS the screen and nothing else was open. Here it has to be
 # something the eruption can climb on top of.
 add(sm, "segSwarm", {
-    "id": "segswarm", "path": "assets/giveit2meclip.mov", "mode": "motion",
+    "id": "segswarm", "path": "assets/giveit2meclip.mp4", "mode": "motion",
     "intensity": 0.62, "maxWindows": 60, "mirror": False,
     "level": "normal",
     # No keyline. Upstream rings every panel green to mark it as a detection; here the
@@ -2636,7 +2654,7 @@ if HORSE_ACT:
     print(f"  horse    {gc}x{gr} grid, {max_lit} windows, {HORSE_SPAN:.0%} of the screen, "
           f"exits beat {horse_exit:.0f}")
 else:
-    print(f"  segswarm assets/giveit2meclip.mov, motion, up to 60 windows, normal level, "
+    print(f"  segswarm assets/giveit2meclip.mp4, motion, up to 60 windows, normal level, "
           f"f {frame_at(secs(sm))} → f {frame_at(secs(gl + SEG_BURY))} "
           f"(alone f {frame_at(secs(sm + 0.25))} to f {frame_at(secs(gl))}, then buried by "
           f"the eruption over the last "

@@ -30,7 +30,15 @@ final class OutroController {
 
     var glitchSeconds: Double = 0.5
     var bootSeconds: Double = 5.0
-    var appName: String = "GiveIt2Me_DJ_Dave_malware"
+    /// The name in the force-quit alert that opens the outro.
+    ///
+    /// It has to be the name macOS itself would use — `CFBundleDisplayName`, which
+    /// `bundle.sh` writes — or the alert is the one thing in the ending that does not
+    /// match the machine it is pretending to be part of. **Renaming the bundle means
+    /// renaming this**, and `StillRenderer` previews the same alert, so the string lives
+    /// here once rather than in both places.
+    static let defaultAppName = "give-it-2-me"
+    var appName: String = OutroController.defaultAppName
 
     // MARK: - Prewarm
 

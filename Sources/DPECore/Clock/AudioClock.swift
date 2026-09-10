@@ -138,7 +138,13 @@ final class AudioClock {
     /// Absolute playback position in seconds (start offset + rendered time). `nil`
     /// before the first render callback.
     func currentTime() -> Double? {
+        // `playerTime(forNodeTime:)` raises an ObjC exception — which Swift cannot catch,
+        // so it terminates the process — unless the node time carries a valid sample or
+        // host time. `lastRenderTime` returns non-nil with BOTH invalid while the engine
+        // is prepared but has never rendered, which is exactly the state a stopped clock
+        // is in. Checking the precondition is the only way to ask the question safely.
         guard let nodeTime = player.lastRenderTime,
+              nodeTime.isSampleTimeValid || nodeTime.isHostTimeValid,
               let pt = player.playerTime(forNodeTime: nodeTime),
               pt.sampleRate > 0 else { return nil }
         return baseOffset + Double(pt.sampleTime) / pt.sampleRate

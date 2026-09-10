@@ -1,0 +1,4 @@
+# Built by ./build.sh and ./probe.sh
+/insta360pan.app/
+/build/
+.DS_Store

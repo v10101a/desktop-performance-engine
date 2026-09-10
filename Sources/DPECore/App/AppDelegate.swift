@@ -307,7 +307,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // look like the act.
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--test-segswarm") }) {
             let clip = arg.contains("=") ? String(arg.split(separator: "=", maxSplits: 1)[1])
-                                         : "assets/giveit2meclip.mov"
+                                         : "assets/giveit2meclip.mp4"
             let swarm = SegSwarmController()
             NSLog("[DPE] segswarm: %@", clip)
             swarm.begin(SegSwarmParams(id: "t", path: clip, mode: "motion",

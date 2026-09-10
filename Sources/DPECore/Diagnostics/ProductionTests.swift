@@ -21,6 +21,83 @@ enum ProductionTests {
             hotKeys(t)
             photoSource(t)
             bundledAssets(t)
+            entitlements(t)
+        }
+    }
+
+    // MARK: - The entitlements match what the show asks for
+
+    /// `GiveIt2Me.entitlements`, checked against the shipped timeline.
+    ///
+    /// Notarization needs the hardened runtime, and the hardened runtime denies the
+    /// camera and Location Services *before* TCC is consulted — so an entitlement that
+    /// is missing, or a file `codesign` cannot parse, produces an app that installs,
+    /// launches, shows the prompts, gets a yes, and then quietly does nothing. There is
+    /// no run-time symptom to notice. Every check here is for a failure that is
+    /// otherwise silent.
+    private static func entitlements(_ t: TestHarness) {
+        let path = resolveResourcePath("GiveIt2Me.entitlements")
+        guard let raw = try? String(contentsOfFile: path, encoding: .utf8) else {
+            t.expect(false, "GiveIt2Me.entitlements is missing — ship.sh cannot sign without it")
+            return
+        }
+
+        // `plutil -lint` passes a file AMFI rejects, so this is not covered by linting.
+        // XML forbids a double hyphen inside a comment; codesign fails the whole build
+        // with "AMFIUnserializeXML: syntax error near line N" and nothing about why.
+        // Naming a codesign flag in a comment is all it takes.
+        var inComment = false, badComment = false
+        for line in raw.split(separator: "\n", omittingEmptySubsequences: false) {
+            var rest = Substring(line)
+            if let open = rest.range(of: "<!--") { inComment = true; rest = rest[open.upperBound...] }
+            if inComment {
+                let body = rest.range(of: "-->").map { rest[..<$0.lowerBound] } ?? rest
+                if body.contains("--") { badComment = true }
+                if rest.contains("-->") { inComment = false }
+            }
+        }
+        t.expect(!badComment,
+                 "no comment in the entitlements contains a double hyphen (AMFI rejects it)")
+        // Same lesson as the shaders: one em dash in a comment, one unexplained failure.
+        t.expect(raw.allSatisfy(\.isASCII), "the entitlements file is pure ASCII")
+
+        guard let data = raw.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(
+                from: data, options: [], format: nil) as? [String: Any] else {
+            t.expect(false, "the entitlements file is not a readable plist")
+            return
+        }
+
+        // The pairing that keeps this honest: what the entitlements grant must be what
+        // the timeline actually asks macOS for. `Permissions.plan` is already the single
+        // source of truth for that question, so a cue added to the cut moves this test
+        // on its own rather than waiting to be noticed on someone else's machine.
+        guard let url = Bundle.module.url(forResource: "timeline", withExtension: "json"),
+              let tl = try? TimelineLoader.load(from: url) else {
+            t.expect(false, "bundled timeline.json failed to load")
+            return
+        }
+        let plan = Permissions.plan(for: tl.events)
+        func granted(_ key: String) -> Bool { plist[key] as? Bool == true }
+
+        t.equal(granted("com.apple.security.device.camera"), plan.contains(.camera),
+                "the camera entitlement is present exactly when the show asks for the camera")
+        t.equal(granted("com.apple.security.personal-information.location"),
+                plan.contains(.location),
+                "the location entitlement is present exactly when the show asks for location")
+        // The trap this exists for: adding a `rearrangeIcons` or `fileSwarm` cue makes
+        // the gate call AEDeterminePermissionToAutomateTarget in-process, which the
+        // hardened runtime refuses without this. `hideOtherApps` is not Apple Events.
+        t.equal(granted("com.apple.security.automation.apple-events"),
+                plan.contains(.finderAutomation),
+                "the Apple Events entitlement is present exactly when the show drives Finder")
+
+        // Least privilege: nothing granted that nothing asks for.
+        let known = Set(["com.apple.security.device.camera",
+                         "com.apple.security.personal-information.location",
+                         "com.apple.security.automation.apple-events"])
+        for key in plist.keys where !known.contains(key) {
+            t.expect(false, "unexpected entitlement \(key) — grant only what the cut needs")
         }
     }
 
@@ -158,7 +235,7 @@ enum ProductionTests {
         t.expect(paths.contains { $0.hasPrefix("assets/broken_screens/") },
                  "…the broken screens")
         t.expect(paths.contains { $0.hasPrefix("assets/shaders/") }, "…the shaders")
-        t.expect(paths.contains { $0.hasSuffix(".mov") }, "…the segmenter's clip")
+        t.expect(paths.contains { $0.contains("giveit2meclip") }, "…the segmenter's clip")
         t.expect(paths.contains { $0.contains("credits_tile") }, "…the end card's tile")
         t.expect(paths.contains { $0.contains("torus_dimension") }, "…the torus environment")
         t.expect(Set(paths).count == paths.count, "no path is listed twice")
