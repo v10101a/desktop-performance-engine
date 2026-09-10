@@ -1,0 +1,11 @@
+$ ./giveit2me --install
+installing ......................... done
+
+DJ_DAVE *__* giveit2me
+runtime ..................... 2:49
+other apps ................ hidden
+restore point .............. saved
+
+⌘+Esc to quit.
+
+$ ./giveit2me --play

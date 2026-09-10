@@ -11,7 +11,7 @@
 #   tools/tune_lyrics.sh b        # the CLOCK   — cue 22, 1:56, ringing the glass torus
 #   SECS=10 tools/tune_lyrics.sh  # play only the first 10 s of it
 #
-# ⌃⌥⌘Esc panics out early. Both start times come from CUES in tools/generate_show.py
+# ⌘Esc panics out early. Both start times come from CUES in tools/generate_show.py
 # ("spiral" and "torus2"); the lead here is so the cut is seen, not joined.
 set -euo pipefail
 cd "$(dirname "$0")/.."

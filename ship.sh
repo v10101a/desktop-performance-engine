@@ -31,6 +31,7 @@ OUT="build/dist"
 
 echo "▸ regenerating the show"
 python3 tools/generate_show.py > /dev/null
+python3 tools/lint_show.py
 
 echo "▸ building both architectures"
 swift build -c release --triple arm64-apple-macosx13.0  > /dev/null
@@ -39,7 +40,9 @@ swift build -c release --triple x86_64-apple-macosx13.0 > /dev/null
 # bundle.sh lays out the .app (resources, track, icon, Info.plist) from the arm64 build;
 # we then replace its binary with a universal one so Intel Macs can run it too.
 echo "▸ assembling the .app"
-SIGN_IDENTITY="$IDENTITY" ./bundle.sh > /dev/null
+# SKIP_GENERATE: the show was regenerated and linted above, before either build, so the
+# SwiftPM resource bundle and the flat copy carry the same timeline.
+SKIP_GENERATE=1 SIGN_IDENTITY="$IDENTITY" ./bundle.sh > /dev/null
 
 echo "▸ making the binary universal"
 lipo -create \

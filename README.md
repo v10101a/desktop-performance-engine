@@ -7,7 +7,7 @@ flashing the screen, and (in later phases) moving the cursor and rearranging des
 icons. The running app *is* the piece; there's no video capture.
 
 Everything is **fully reversible**: state is snapshotted on launch and restored on
-quit or via a global **panic hotkey (⌃⌥⌘Esc)**. Your files are never touched.
+quit or via a global **panic hotkey (⌘Esc)**. Your files are never touched.
 
 One event is an exception worth stating plainly: `fileSwarm` draws patterns out of real
 file icons, so it *creates and deletes its own* throwaway files in `~/Desktop` — marked
@@ -29,8 +29,8 @@ swift run GiveIt2Me_DJ_Dave_malware path/to/timeline.json
 
 Packaged `.app` — **double-click it and the piece runs**, no terminal. Also what
 Phase 3's Finder Automation needs to prompt cleanly. It carries its own icon (the
-pixelface on the show's blue — the artwork the drop puts on the desktop at cue 7, on the
-artwork's own `#001FFD` field so there is no edge where it sits; redraw with
+pixelface on the show's blue — the same picture the generator bakes as the face
+wallpaper, on the artwork's own `#001FFD` field so there is no edge where it sits; redraw with
 `python3 tools/make_icon.py`) and embeds the backing track, so it runs from anywhere:
 
 ```bash
@@ -61,12 +61,18 @@ directory**, then calls `fatalError` — so an app that keeps its resources in t
 everywhere else. `AppDelegate.bundledTimelineURL()` checks `Contents/Resources` first and
 keeps `Bundle.module` as the last resort for `swift run`.
 
-**After changing anything the show depends on, both steps are needed** — nothing rebuilds
-the `.app` on its own:
+**Changed the cut or the words?** `bundle.sh` regenerates the timeline from `docs/CUES.md`
+and `docs/copy/` and lints it before it builds, so the `.app` always carries what is
+written — one command either way:
 
 ```bash
-python3 tools/generate_show.py && ./bundle.sh
+./bundle.sh                        # regenerate + lint + build the .app
+tools/run_show.sh                  # regenerate + lint + swift run, for the dev loop
+SKIP_GENERATE=1 ./bundle.sh        # package the committed timeline as it is (no Pillow needed)
 ```
+
+A bare `swift run` plays whatever was generated *last*, which is why the dev loop goes
+through `run_show.sh`.
 
 Ad-hoc signing works but macOS resets Accessibility/Automation grants on each
 rebuild. For grants that persist, create a self-signed **Code Signing** certificate
@@ -84,7 +90,7 @@ told.
 | | |
 |---|---|
 | **⌃⌥⌘D** | reveal the transport window, or put it away again |
-| **⌃⌥⌘Esc** | panic — stop and restore, from anywhere |
+| **⌘Esc** | panic — stop and restore, from anywhere |
 | `--console` | start with it already open |
 | `--no-gate` | the dev loop; keeps the console, since skipping the gate would otherwise leave a running app with nothing to press Play on |
 
@@ -101,7 +107,7 @@ window was always on screen; with the console coming and going mid-performance t
 rule would kill the piece the first time it was closed during a passage with nothing else
 on screen. The piece ends when the outro ends, or on ⌘Q.
 
-Once it is open: press **Play** to start; **PANIC / Stop** (or ⌃⌥⌘Esc anywhere) to stop
+Once it is open: press **Play** to start; **PANIC / Stop** (or ⌘Esc anywhere) to stop
 and restore. The control window has a **scrubbable timeline** with a live playhead and a
 position readout (`time / total · beat · frame` at a nominal 30 fps). Drag the bar to
 seek: while playing it jumps audio + visuals live; while stopped it sets where Play
@@ -203,9 +209,10 @@ they used to land at ~60 s and ~133 s. `Permissions.plan` is the list, and
 macOS kills a process that touches the camera without one. Note also that `hdiutil` needs real disk-image privileges, so
 `ship.sh` won't make a `.dmg` from inside a sandboxed shell.
 
-Two things travel inside the bundle that are worth a thought before handing it out: the
-**licensed backing track**, and `assets/letter.txt`, which is baked into the timeline and
-names real people.
+One thing travels inside the bundle that is worth a thought before handing it out: the
+**licensed backing track**. (The resignation letter in the `--snapshot-scenes` preview is a
+string in `StillRenderer.swift`, dev-only, and names real people; nothing in the show
+opens it.)
 
 ### Act 0 — the intro gate
 
@@ -376,6 +383,10 @@ NSApplication — Finder automation, MapKit, engine seek — not pure logic.
 ### Dev tools
 
 ```bash
+tools/run_show.sh                                      # regenerate + lint, then play the whole
+                                                       # show, gate and all, as a viewer sees it
+SECS=30 tools/run_show.sh 146                          # …or rehearse from 146 s, no gate, and
+                                                       # quit after 30 s (SECS optional)
 swift run GiveIt2Me_DJ_Dave_malware --autoplay          # play whole show, log per-event
                                                        # timing drift, then restore + quit
 DPE_AUTOPLAY_FROM=146 DPE_AUTOPLAY_SECS=30 swift run GiveIt2Me_DJ_Dave_malware --autoplay
@@ -422,13 +433,13 @@ things opened in — whatever opened last is on top — which is fine until a la
 normal window, including the `screenFlash` overlays (those are normal windows too, so a
 floating layer is not washed out by a flash); `"front"` is the shielding level, above
 even the menu bar; omit it for `"normal"`. Same vocabulary as `glassTorus` and
-`photoWall`. Cue 28's shoal is the one thing in the piece that uses it: it swims through
-an eruption that opens a window every fifth of a beat, and at the normal level it is
-buried by the second bar.
+`photoWall`. It is for a layer that has to swim through a passage opening a window every
+fifth of a beat: at the normal level such a layer is buried by the second bar.
 
 **`closeWindow` cuts by default and dissolves on request.** `{"id": "w1",
 "fadeSeconds": 0.25}` runs that window's alpha down over a quarter-second instead of
-ordering it out on the frame — which is how cue 16's tile wipe comes off the screen.
+ordering it out on the frame — which is how a wall of tiles comes off the screen as a
+dissolve rather than a cut.
 The window keeps its place in the manager for the length of the fade, so a stop, a quit
 or the panic key still sweeps it instantly: a dissolve in flight can never be the thing
 that outlives the show on someone's screen, and re-opening the id mid-fade cancels it
@@ -676,7 +687,7 @@ cannot tell them apart.
 The imported segmenter with the **desktop** as its canvas rather than a window: no
 picture at all, and every segment it finds becomes its own titled window holding the
 piece of frame it was cut from, pinned where it was found. This is segcam's second
-display, and cue 21 is it.
+display.
 
 ```jsonc
 { "beat": 237, "type": "segSwarm", "params": {
@@ -685,8 +696,8 @@ display, and cue 21 is it.
 ```
 
 **`window` is a third source, and it did not exist upstream.** Point it at the id of a
-window the show already has open and *that* is what gets segmented — cue 14 runs the map
-through it, so every part of the orbiting picture that moves is cut out and pinned to the
+window the show already has open and *that* is what gets segmented — run a `map` window
+through it and every part of the orbiting picture that moves is cut out and pinned to the
 desktop as its own window. The act is processed rather than accompanied.
 
 It needs **no Screen Recording**: it never captures the screen, it asks one view we own to
@@ -721,7 +732,7 @@ sweeps every panel — `TimelineTests` fails a `segSwarm` the timeline never clo
 ```bash
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm            # a clip filling the desktop
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm="assets/other.mov"
-swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # cue 14's arrangement, whole
+swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # a map window run through it, whole
 ```
 
 puts it up for six seconds against the show's own clip and reports the count as it fills
@@ -752,9 +763,8 @@ combination is legal — nine, not three.
 | `beachballs` | the real spinner, all fifteen frames, stepped at its own 30 fps |
 
 `intensity` scales the population (1.0 = 64), `seed` fixes it. Transparent, like the
-fireworks: pair it with `[0, 0, 0, 0]` and `chrome: "none"`. **Nothing in the show uses
-one yet** — the drain briefly had cue 11 and came back out, because a behaviour still
-being chosen between is not a cue. They are one line away from any slot that wants one.
+fireworks: pair it with `[0, 0, 0, 0]` and `chrome: "none"`. Unused by default — they
+are one line away from any slot that wants one.
 
 ```bash
 swift run GiveIt2Me_DJ_Dave_malware --test-particles     # all three, side by side
@@ -824,13 +834,13 @@ carried over. Re-opening with a new `seed` alone is the same picture shuffled.
 
 > Cutting faster than about a beat shows only the spawn shapes: Reynolds flocking needs a
 > second or two to pull one into a *body*, and below that the cursors stay a scatter of
-> arrows however they are weighted. Cue 12 mixes half-, one-, two- and three-beat holds
-> for that reason — rapid, with somewhere to arrive.
+> arrows however they are weighted. Mixing half-, one-, two- and three-beat holds gets
+> both — rapid, with somewhere to arrive.
 
 Pair it with `[0, 0, 0, 0]` and `chrome: "none"` — like the fireworks it paints no
 background, so it chases across whatever is on screen. The target is
 `NSEvent.mouseLocation`, so it follows the pointer whether the **viewer** is moving it or
-the show is (`cursorPath` drives it elsewhere in the piece).
+the show is (`cursorPath` can drive it).
 
 Speed and acceleration are tied to size — small ones quick and twitchy, big ones heavy
 and late — which is what makes it a swarm with weight rather than a cloud of identical
@@ -847,13 +857,13 @@ the window and reports how many are pointing the same way.
 population up on the frame the window opens, which lands as a wall and gives the section
 a hard edge. With it, arrivals are spread evenly across that many seconds — evenly and
 not randomly, because a random schedule clumps and what this is for is a section that
-*fills* rather than one that starts. Cue 22 opens the swarm a whole section early at
-~10.7 s of ramp, roughly one pointer every eighth of a second, so it bleeds through the
-torus act and is at full strength when cue 25 leaves it alone with the pointer. A pointer
+*fills* rather than one that starts. Open the swarm a section early with ~10.7 s of
+ramp — roughly one pointer every eighth of a second — and it bleeds through whatever is
+on screen and is at full strength by the time it is left alone with the pointer. A pointer
 that has not arrived yet is hidden rather than parked, so it cannot be seen sitting on
 its spawn point.
 
-**`mode: "school"`** is the same particles with the mouse taken away — cue 28's shoal:
+**`mode: "school"`** is the same particles with the mouse taken away — a shoal:
 
 ```jsonc
 { "kind": "cursors", "mode": "school", "seed": 4438, "intensity": 0.6,
@@ -965,7 +975,7 @@ is the only thing that says whether the menu walk landed. `DPE_DOOM_WAIT` moves 
 capture, which is how you check that it is in the level by the time the slot needs it.
 
 **`spin` turns the picture.** `{"kind": "shader", "path": "…", "spin": 8}` rotates it at
-that many degrees per second. Cue 17 runs at 8°/s — about 170° over the time it is up,
+that many degrees per second. At 8°/s a window up for twenty seconds turns about 170° —
 visibly moving without ever coming back round.
 
 It is done **in the shader, not on the view**, and the difference is the whole point.
@@ -1012,12 +1022,13 @@ For the probe the colours go through `Phosphor.use`, which also **re-derives the
 — ANSI's dark blue section headers and dark red alerts are close to invisible on a
 saturated blue ground, so on a themed surface they become light tints that keep their
 meaning. That palette is a set of statics, so every probe window in a show shares one
-look; cue 4 puts five on screen at once and they are one machine talking. `closeAll`
+look; put five on screen at once and they are one machine talking. `closeAll`
 puts it back to Terminal Basic so a colour a show set cannot leak into the still renderer
 or the next run.
 
 **`systemProbe` is one report per `id`.** It used to be one report full stop — opening a
-second window tore the first one down — which is why cue 4 could not be split until now.
+second window tore the first one down — which is why a probe act could not be split
+across windows until now.
 A window opened with `focus` reads out only the sections named (`identity`, `machine`,
 `network`, `geolocation`, `contacts`), so five windows running five focused scans is the
 same probe five times over rather than five different things.
@@ -1087,13 +1098,13 @@ artist's own scalar uniforms and are authored per event — in their rig those c
 audio and MIDI; here they are numbers the cut sets. Any `sampler2D` the shader declares
 is bound to a 1x1 black texture, so a shader that samples a feedback or capture buffer
 compiles and runs rather than reading undefined memory (it will not *look* right unless
-its use of them is inert, which is why cue 17 uses the one shader whose feedback line the
-artist had already commented out).
+its use of them is inert — the shipped `graphic.frag` is the one shader whose feedback
+line the artist had already commented out).
 
 The shipped `graphic.frag` is **recoloured**: as written its palette was a three-frequency
 cosine sweeping the entire hue circle (mostly landing on green), and its opaque material
 was neutral grey. Both now mix out of the show's own three colours, named at the top of
-the file, so cue 17 belongs to the same piece as the desktop it comes up on.
+the file, so it belongs to the same piece as the desktop it comes up on.
 
 Its output gamma is a named `GAMMA` constant used by both the opaque path and the blurred
 scene inside the glass -- it was `pow(C, 1.9)` written out twice, and at 1.9 it crushed
@@ -1131,9 +1142,8 @@ when a failed compile and a black shader look identical.
 ### `automaton` content
 
 A Wolfram elementary cellular automaton, running and scrolling in the window —
-Terminal's own black-on-white, because these sat in the fill (cue 15) beside real
-terminals. That act is pulled, so nothing in the current cut opens one — the kind is
-live and waits on `FILL_ACT`. `rule` is Wolfram's numbering (0…255, default 30), `hz` the generations per
+Terminal's own black-on-white, so one sits beside real terminals as one of them. Unused
+by default; the kind is live. `rule` is Wolfram's numbering (0…255, default 30), `hz` the generations per
 second (default 12), `fontSize` the cell size (default 9).
 
 ```jsonc
@@ -1168,8 +1178,8 @@ breaks the same way every take.
 
 **It is a still.** The image is torn once, off the main thread, when the window opens,
 then left alone — and it is cached by path *and* settings, so several windows asking for
-the same tear pay for it once. That is deliberate: the fill (cue 15, pulled) ramped to 26 windows
-on screen, and re-tearing each of them per frame is precisely the window-server load the
+the same tear pay for it once. That is deliberate: an act that ramps to 26 torn windows
+on screen, re-tearing each of them per frame, is precisely the window-server load the
 wallpaper glitch had to be dialled back from (2.5 Hz → 1.5) to stop the machine
 stuttering. The source is rendered at 512px on the long edge — the tear is coarse by
 design, and the wallpaper's own pass only runs at 1280 for a whole screen.
@@ -1208,58 +1218,18 @@ Gated off by default: `wallpaper`, `deskWallpaper` with `surface: "wallpaper"`
 default surface needs no gate — it draws on a window, not on your Mac.
 
 
-The bundled default demo (`Resources/timeline.json`) is **the show**
-(`examples/timeline_show.json`, regenerate with `python3 tools/generate_show.py`), cut to
-the cue list in **[docs/CUES.md](docs/CUES.md)** — which is the source document, written
-in frames at 30 fps (the rate the transport counts in, so its numbers are the ones on the
-scrubber). The generator mirrors it as the `CUES` table at the top of the file and builds
-everything from those numbers; nothing else in the repo hard-codes a time, and **the two
-are edited together — see CLAUDE.md**. The table below is the same cut in minutes and
-seconds, for reading.
-
-| time | cue | |
-|---|---|---|
-| 0:00 | **THE BLUE** | the intro gate; every other app is hidden (`hideOtherApps`) so the desktop is in view, and the desktop itself goes DJ Dave blue (`deskWallpaper` `solid`) — the real wallpaper, snapshotted before the swap |
-| 0:04 | **LET GO** | the blue expires and the viewer's own desktop is underneath it again |
-| 0:05 | **WELCOME** | a Terminal window types itself out, a line a beat with a block cursor — the same surface the credits use at the other end of the piece. It names what the show is about to borrow, and signs off on `$ ./giveit2me --play` |
-| 0:15 | **PROBE** | `system_probe` opens centre-screen and types out its disclosure report |
-| 0:28 | **BLUE / FACE** | the screen clears, the desktop goes blue, and a beat later the face is sitting in the middle of it — a wallpaper the generator bakes, the face 20% of the height on its own field colour, not the artwork stretched over the whole desktop |
-| 0:30 | **THE TRAVELLER** | one window runs up and down the screen dragging a **delay line** of 20 identical copies, each 1% of the screen further left and one frame further behind — link *k* is where the leader was *k* frames ago, so the tail is most of a leg behind the head and the chain snakes. The assembly straddles the screen's centre, and it keeps travelling for the whole 13.7 s it is up |
-| 0:30 | **THE SPIRAL** | the lyric, card by card, ALL CAPS in Hack Bold, winding out from the middle (`lyrics.CUES`, `anchor: center`) |
-| 0:38 | **THE FIREWORKS** | the desktop goes up in the air: a transparent full-screen overlay of shells rising and bursting, every spark a **macOS file icon with a filename** — `Resume FINAL v3.pdf`, `do not delete`, `passwords.txt`. The lyric spiral keeps going underneath; it closes with the spiral when the words take the desktop |
-| 0:45 | **THE WORDS** | the lyric on the desktop itself: from the hook, the desktop is replaced by a card carrying each word **as it is sung** (`deskWallpaper` `slides` with an `at` schedule off `tools/lyrics.py`, each change issued ~300 ms early so it is seen on the word). It runs on the desktop layer, so every word lands. Nothing else competes with the desktop — everything else has closed |
-| 1:00 | **THE TORUS** | the glass torus, and a window typing out *"I am the Magic Torus! I am shaped like a question that answers itself… Ask me one (1) question. Make it yes or no"* — and then, once it has, the `oracle`: an alert with a text field, the one window in the piece allowed to take the keyboard. Type and press Return, or it answers itself, in absolutes (*YES, BUT NOT LIKE YOU THINK*; *NO, THOUGH IT WILL FEEL LIKE YES*). The two flank the torus rather than sitting on it |
-| 1:15 | **MAPS** | Apple Maps **falling out of orbit onto the viewer's own location** (`map.here`), the window titled with their IP |
-| 1:17 | **THE FILL** | windows start opening and slowly fill the screen — one a bar at first, four a beat by the end, walking outward from the centre on a golden angle. Five of the flat cards come up broken: three **torn** — the piece's own images through the desktop's glitch pass — and two **Wolfram elementary automata** actually running, black on white, scrolling a generation at a time. The fill decays as it thickens |
-| 1:28 | **TO BLACK** | the desktop goes black and the windows close one by one, in the order they arrived — the last few still leaving as the raymarcher opens |
-| 1:30 | **THE GRAPHIC** | the screen is empty and black, and the artist's **GLSL raymarcher** comes up in the middle of it, running live in a WebGL canvas. Over it, unhurried, a **hydra sketch is set up by hand**: the cursor walks over, the sketch spawns under it, is hauled up, pulled bigger by its corner, and run — low on the left, clear of the booth |
-| 1:37 | **BOOTH** | Photo Booth opens on the viewer's camera a bar before the count, so the picture is live first; then **3 · 2 · 1**; the shutter lands exactly on the photo wall |
-| 1:43 | **THE WALL** | the viewer's own photos bury the screen (`photoWall`) |
-| 1:49 | **THE FACE** | `pixelface.jpg` strobes over the wall at 6 Hz, in a centred window rather than over the whole screen — one window re-opened, never shown and hidden (see the generator for why) |
-| 1:51 | **THE HORSE** | everything cuts to the bare desktop and the **Muybridge horse** (96% of the screen wide, 22 columns, 63 windows) gallops across it |
-| 1:56 | **THE CLOCK** | the horse is cut mid-stride; the glass torus takes the middle, ringed by **eight pixelfaces, one flashing in on each beat** |
-| 1:58 | **VIDEO** | all of it stays and the video slot lands on top |
-| 1:59 | **THE SWARM RISES** | torus and ring cut out from under it, leaving the slot alone on the blue desktop — and a transparent swarm of Mac cursors starts building over it while the video plays |
-| 2:06 | **THE POINTERS** | the video cuts and the swarm — building since 1:59 — is alone with the viewer's real pointer, every size of cursor after it, each one turning to face the way it is moving, the small ones darting ahead of the big ones |
-| 2:08 | **THE MANDALA** | five counter-rotating rings of macOS beach balls fill the screen, each one spinning on its own axis — the machine hung everywhere at once |
-| 2:13 | **THE SPAM** | the eruption: windows, terminals, lyric cards and alerts bursting from the centre, on kick flashes |
-| 2:28 | **ALL OF IT** | the spam again from the chorus 2B pickup, the **original strobe** (`examples/timeline_strobe.json`) spliced over the whole screen — straight in, no wait. A quarter of the flat cards come up packed with real macOS interface — icons, buttons, sliders, checkboxes, piled on top of each other |
-| 2:41 | **THE END CARD** | the music stops and the card is right there — the desktop has been plain blue since the horse: the photo the computer took, in a frame; the machine's vitals; the credits typing themselves out over a drifting tiled backdrop — and then the machine "stops responding", glitches, shows a boot bar and quits |
-
-The cue times were authored **in seconds, by ear**, so they do not land on bar lines. The
-generator puts each one on the **nearest beat** (`at()`), which moves it by at most
-0.23 s and keeps the cuts tight to the music; authoring them at their literal second
-would drift each one against the grid by a different amount, which is audible.
-
-**The last two cues are past the end of the track** (169.85 s). They play over silence —
-the end card is built to hold past the last note — so the piece now finishes about
-4.8 s after the audio rather than on it.
-
-**Four slots are marked TBD** by the author and hold labelled placeholder windows, so the
-timing is real and the content can be dropped in without re-cutting anything. One more
-placeholder stands in for the video window. `tools/lint_show.py`
-checks the generated document for dangling ids, windows left on screen at the end card,
-and missing asset files:
+The bundled default demo (`Resources/timeline.json`, mirrored at
+`examples/timeline_show.json`) is **the show**. It is not authored by hand: it is built by
+`tools/generate_show.py` from two things — the cue sheet, **[docs/CUES.md](docs/CUES.md)**,
+which is the source document for the cut and is written in frames at 30 fps (the rate the
+transport counts in, so its numbers are the ones on the scrubber), and the copy files in
+**`docs/copy/`**, which hold every word the show speaks. The generator mirrors the sheet
+as the `CUES` table at the top of the file and reads the copy at generation time; nothing
+else in the repo hard-codes a time or a line of copy. Sheet, copy and generator are
+edited together — CLAUDE.md carries that rule — and what the current cut does at each
+cue, with its measured flash rates, lives in the sheet rather than here.
+`tools/lint_show.py` checks the generated document for dangling ids, windows left on
+screen at the end card, and missing asset files:
 
 ```bash
 python3 tools/generate_show.py && python3 tools/lint_show.py
@@ -1286,15 +1256,13 @@ P_COLOR=0.06 P_ALERT=0.2 python3 tools/generate_strobe.py   # per-lane pacing ov
 The committed timeline is the sanitized one. `PERSONALIZE=1` pulls your hostname, specs,
 and desktop images into the show — great locally, but don't commit that output.
 
-⚠️ **Photosensitivity:** it flashes rapidly. Measured on the current cut, counting every
-full-screen change (`screenFlash` plus any window opened at full size): median **2.9 Hz**
-over the whole show, peaking at **12.0 Hz** — the busiest second is 13 changes at 1:58,
-where the face strobes over the photo wall. The spliced strobe at 2:47 runs a median
-6.7 Hz and peaks at 11.8 Hz. All of that is below the 15–20 Hz risk band, which is
-deliberate and worth keeping: the previous cut touched 20 Hz. The intro gate warns the
-viewer before anything plays; keep that card, and **re-measure if you push the cadence
-faster** — the numbers above come straight out of the generated timeline, so a short
-script over `Resources/timeline.json` reproduces them.
+⚠️ **Photosensitivity:** it flashes rapidly, and the rate is a constraint rather than a
+style note. Count every full-screen change — `screenFlash` plus any window opened at full
+size, and a strobing plane twice per cycle — straight out of the generated timeline, and
+keep the whole cut out of the **15–20 Hz** band; the measured numbers for the current cut
+are in `docs/CUES.md`. The intro gate warns the viewer before anything plays; keep that
+card, and **re-measure if you push the cadence faster** — a short script over
+`Resources/timeline.json` reproduces the measurement.
 
 ### Performance notes
 
@@ -1561,15 +1529,15 @@ window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
 | chrome | |
 |---|---|
 | `mac` (default) | a white document in real macOS chrome, system face, thin `▌` caret |
-| `terminal` | Terminal.app's own window — monospaced, block `█` cursor. Literally the surface the end card's credits type into, built through `applyContent` like every other terminal in the piece |
+| `terminal` | Terminal.app's own window — monospaced, block `█` cursor. Literally the surface `credits` types into, built through `applyContent` like every other terminal |
 
 `linesPerBeat` types whole **lines** instead of characters, the credits' cadence: the
 caret then waits at the start of the next line, the way a prompt does after a command
-has printed. Set it and `charsPerBeat` is ignored. The welcome card (cue 3) is both:
+has printed. Set it and `charsPerBeat` is ignored. A welcome card is both:
 
 ```jsonc
 { "beat": 18, "type": "typeText", "params": {
-    "id": "welcome", "frame": [438, 255, 564, 390], "text": "$ ./giveit2me --install\n…",
+    "id": "welcome", "frame": [438, 255, 564, 390], "text": "$ ./install\n…",
     "chrome": "terminal", "linesPerBeat": 1, "fontSize": 20, "interactive": true } }
 ```
 
@@ -1620,23 +1588,23 @@ top of the descent's own `heading` → `toHeading` sweep:
          "seconds": 14.1, "zoomSeconds": 3, "orbitDegrees": 180 }
 ```
 
-That is the show's own flight (cue 14): 2,600 km down to 260 m in **three seconds**, then
+That flight is 2,600 km down to 260 m in **three seconds**, then
 180° round the fix over the eleven that follow — about 16°/s. The two legs are eased
 differently on purpose. The fall is `easeInOut`, so it settles. The orbit is
 `easeInThenSteady` — eased in over its first sixth, picking the turn up out of the
 landing with no kink at the handover, and then **held at rate to the end**: an orbit that
 eased out would be sitting still by the time the window was taken away, and the point is
-that the camera is still going round the viewer's own roof when cue 16 buries it. Omit
+that the camera is still going round the viewer's own roof when the window is taken
+away. Omit
 both fields and the spec behaves as it always did — one eased move filling `seconds` —
-which is why nothing else in the piece had to change.
+which is why nothing else had to change.
 
 **`here: true`** replaces the authored coordinates (and `toLat`/`toLon`) with the
 viewer's own location — the most recent Location Services fix, from the probe or from
 the gate's warm-up. No fix (refused, off, still pending) and the authored coordinates
-are the fallback, so the show flies somewhere either way. The show's verse 2 falls from
-2,600 km up onto wherever the machine is and then circles it, in a window titled
-`maps://{ip}` — alone on the screen for the whole phrase (cue 15 is pulled), until cue
-16's tiles cover it over mid-orbit.
+are the fallback, so the show flies somewhere either way. Falling from 2,600 km up onto
+wherever the machine is and then circling it, in a window titled `maps://{ip}`, is the
+arrangement it is built for.
 
 Three things worth knowing before performing with it:
 
@@ -1682,8 +1650,9 @@ and `Snapshot` are that app's code unchanged, under `Effects/GlassTorus/`.
 viewer's desktop wallpaper — any path ImageIO can read, resolved like every other asset,
 falling back to the wallpaper (and then to the procedural studio) if it cannot be read.
 The default is right while the torus is a thing sitting on someone's desktop and wrong the
-moment a cue puts it somewhere else: cue 13 opens a cloud tunnel under it, and glass
-bending a stranger's Big Sur photograph inside a tunnel belongs to neither picture. The
+moment a cue puts it somewhere else: put a cloud tunnel under it and glass bending a
+stranger's Big Sur photograph inside a tunnel belongs to neither picture, so such a cue
+should author its own plane. The
 plane is loaded once per *picture* rather than once per process, so re-opening the same id
 costs nothing and a second torus asking for a different image gets it.
 
@@ -1805,12 +1774,13 @@ system font carries; `color` is the glyph + bar colour.
 
 The magic torus. An alert asks the viewer to type a question and answers it on OK (or
 Return) — or on its own after `answerBeats`, so a viewer who won't play can't stall the
-show. It is **the one window in the piece allowed to take the keyboard** (a text field
+show. It is **the one window kind allowed to take the keyboard** (a text field
 needs it); it is a non-activating panel, so typing into it never brings the app forward,
 and it hands key status back the moment it has answered. The same question always gets
 the same answer (a hash of the text picks from `answers`), so it feels like the torus
-knows. The answer is set at display size and **shrunk to fit** the card, so a long one
-(*YOU MUST ASK THE VERSION OF YOU FROM YESTERDAY*) does not run off the bottom of it.
+knows. The answer is set at display size and **shrunk to fit** the card, so a long one —
+eight or nine words — does not run off the bottom of it. The default list lives in
+`OracleController.defaultAnswers`; a cue overrides it with `answers`.
 
 ```jsonc
 { "beat": 248, "type": "oracle", "params": { "id": "oracle", "frame": [1000, 350, 460, 186],
@@ -2013,15 +1983,15 @@ into one event:
   not from the current wallpaper — compounding each pass would dissolve to noise in a
   second). `intensity` 0…1, `seed` for a reproducible tear.
 - **`recursive`** — the desktop set to a screenshot of the desktop, deepening each pass.
-  **The last thing in the engine that needs Screen Recording**, and nothing in the cut
-  uses it: authoring one puts a permission dialog in front of a viewer mid-performance,
+  **The last thing in the engine that needs Screen Recording**, and it should stay
+  unused: authoring one puts a permission dialog in front of a viewer mid-performance,
   and it is the one grant macOS will not settle with a prompt — it sends them to System
   Settings and wants a relaunch. `TimelineTests` fails a cut that contains one.
 - **`slides`** — a list of `images`, one per tick (or on an `at` schedule; see above).
 
 A `slides` run stretches each image over the whole desktop, so anything that should sit
-*within* the screen rather than fill it is baked that way in advance. Cue 7's face is a
-2560x1600 wallpaper written by the generator (`build_face_desktop`) -- a blue field with
+*within* the screen rather than fill it is baked that way in advance. The show's face
+wallpaper is a 2560x1600 image written by the generator (`build_face_desktop`) -- a blue field with
 the face 20% of the height in the middle -- rather than the artwork plus a placement
 instruction. The engine briefly had a `fit: "center"` that composed exactly that at run
 time; a picture the generator already made has one less thing to go wrong when the show
@@ -2126,10 +2096,11 @@ in time, the last image holds until the run ends, and `hz` is ignored:
     "at": [0, 0.233], "durationSeconds": 15 } }
 ```
 
-This is how the lyric lands on the desktop word by word (cue 12): the times come from
-`tools/lyrics.py`, and the generator issues the event ~300 ms before the first word so
-each change is *seen* on the word. On the layer every word lands — the tightest gap in
-the cue is 187 ms, comfortably clear of the ~12 ms a full-screen card costs, and the next
+This is how a lyric lands on the desktop word by word: the times come from
+`tools/lyrics.py`, and the generator issues the event a frame before the first word
+(`DESK_LATENCY`) so each change is *seen* on the word. On the layer every word lands —
+a gap of a couple of hundred milliseconds between words is comfortably clear of the
+~12 ms a full-screen card costs, and the next
 few cards are decoded ahead on a background queue (`SlideStore`) so no decode ever lands
 in the tick that shows it. On `surface: "wallpaper"` the ~3 Hz ceiling still applies and a
 word the window server cannot fit is skipped, never queued behind the one being sung.
@@ -2172,7 +2143,7 @@ Three things the port had to change, all of which would otherwise break the show
   index would come up empty and fill in late, off the music.
 - **`closeAll()` is wired into panic and restore.** The wall is only ever windows the
   app opened — no cursor warp, no icon moves — so tearing them down restores the desktop
-  exactly, and ⌃⌥⌘Esc works regardless of what is covering the screen.
+  exactly, and ⌘Esc works regardless of what is covering the screen.
 
 Photo selection is the standalone app's, unchanged: app caches and generated images are
 skipped by directory name and size, and iCloud-evicted files are skipped because reading

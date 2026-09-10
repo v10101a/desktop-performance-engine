@@ -1,0 +1,16 @@
+# The question card the torus puts up once the greeting has finished typing. The viewer
+# types into it and presses Return; if they don't, it answers itself. The same question
+# always gets the same answer, picked from the list below.
+
+title: hey, i'm the magic torus
+body: ask me a question
+placeholder: will you give it 2 me?
+answers:
+- NO
+- YES
+- MAYBE
+- YES FOR NOW
+- YES, BUT NOT LIKE YOU THINK
+- YOU MUST ASK THE VERSION OF YOU FROM YESTERDAY
+- NO, THOUGH IT WILL FEEL LIKE YES
+- NO, AND YOU WILL KNOW WHY

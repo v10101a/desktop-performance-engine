@@ -1,0 +1,9 @@
+$ ./locate --host $(hostname)
+resolving route ........... ok
+wifi bssid survey ......... 6 networks
+triangulating .............
+cross-checking ip lease ... match
+narrowing ................. 2600 km
+narrowing ................. 12 km
+narrowing ................. 260 m
+fix acquired.

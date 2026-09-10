@@ -23,6 +23,9 @@ The lyric is timed by `tools/lyrics.py` (the sung words, in beats from the lyric
 zero, which sits CHORUS_LEAD before the phrase's downbeat); the spiral (cue 9) and the
 desktop words (cue 12) both read that list, so tuning a word moves both.
 
+Everything the show SAYS — the welcome terminal, the torus, the locate trace and its
+alert, the credits — is read from docs/copy/ (see the README there), not held here.
+
 Seeded, so the show is identical take to take.
 """
 import json, math, os, random, sys
@@ -98,6 +101,50 @@ def frame_at(t):
     """The frame the transport shows at second `t`. NOT named `frame`: `lyric_card`
     and `placeholder` take a `frame` argument that would shadow it."""
     return int(t * FPS)
+
+# =============================================================================
+# THE COPY — everything the show SAYS lives in docs/copy/, one plain-text file per
+# passage (docs/copy/README.md lists them). The generator reads them here; nothing
+# below holds a line of copy as a literal, so the words can be rewritten without
+# touching this file. The lyric is the exception: the song's words and their timing are
+# `tools/lyrics.py`.
+# =============================================================================
+COPY_DIR = os.path.join(ROOT, "docs", "copy")
+
+def copy_lines(name):
+    """docs/copy/<name>.txt as the list of lines it contains — for anything typed a
+    line at a time (a terminal, the credits). Blank lines are kept; leading spaces are
+    kept; the file's trailing newline is not a line."""
+    with open(os.path.join(COPY_DIR, name + ".txt"), encoding="utf-8") as f:
+        return f.read().rstrip("\n").split("\n")
+
+def copy_prose(name):
+    """docs/copy/<name>.txt as running text: lines inside a paragraph are joined with a
+    space and a blank line is a paragraph break, so the file can be wrapped at any
+    width in any editor."""
+    paras, cur = [], []
+    for line in copy_lines(name) + [""]:
+        if line.strip():
+            cur.append(line.strip())
+        elif cur:
+            paras.append(" ".join(cur)); cur = []
+    return "\n\n".join(paras)
+
+def copy_fields(name):
+    """docs/copy/<name>.txt as `key: value` fields — a dialog's title, body and buttons.
+    A key with nothing after the colon takes the `- item` lines under it as a list.
+    Lines starting with # are comments."""
+    fields, key = {}, None
+    for line in copy_lines(name):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if line.startswith("- ") and isinstance(fields.get(key), list):
+            fields[key].append(line[2:].strip())
+            continue
+        k, _, v = line.partition(":")
+        key = k.strip()
+        fields[key] = v.strip() if v.strip() else []
+    return fields
 
 # =============================================================================
 # THE PHRASES — the track's twelve 8-bar phrases, each verified in the audio (per-bar
@@ -319,23 +366,10 @@ add(B["restore"], "screenFlash", {"color": WHITE, "durationBeats": 0.5})
 
 # =============================================================================
 # Cue 3 (beat 10) — the welcome. A Terminal window that types itself out, one line a
-# beat — the same surface and cadence as the end card's credits. `⌃⌥⌘Esc` stays the
+# beat — the same surface and cadence as the end card's credits. `⌘Esc` stays the
 # last line the viewer reads before anything starts moving.
 # =============================================================================
-WELCOME_LINES = [
-    "$ ./giveit2me --install",
-    "installing ......................... done",
-    "",
-    "DJ_Dave — GiveIt2Me, as software.",
-    "for one song this computer is the video:",
-    "its windows, its cursor, its wallpaper,",
-    "its photos, and one new photo of you.",
-    "all of it borrowed. all of it put back.",
-    "",
-    "⌃⌥⌘Esc gives the computer back early.",
-    "",
-    "$ ./giveit2me --play",
-]
+WELCOME_LINES = copy_lines("welcome")            # docs/copy/welcome.txt
 WELCOME = "\n".join(WELCOME_LINES)
 # One line a beat — CREDITS_LPS is the same rate in the other unit. The copy has to
 # FINISH before cue 4 takes the window away, so the fit is asserted rather than eyeballed:
@@ -510,9 +544,6 @@ add(B["hydra"], "brickBreaker", {
     "id": "bricks", "frame": BRICK_AREA,
     "rows": 4, "cols": 8, "speed": 560, "ball": 46, "paddle": [200, 26], "seed": 44})
 
-# PULLED from the cut for now (2026-09-01) — kept behind HYDRA_ACT for when it returns.
-# The hand-built hydra sketch itself lives on in the show: it moved to the breakdown,
-# where it is set up over the raymarcher (cue 17).
 # =============================================================================
 # Cue 11 (0:48) — THE HYDRA ACT, moved here (2026-09-03). Somebody sets a sketch up by
 # hand in the middle of the drop: it appears small with its code written but not
@@ -855,9 +886,18 @@ def mouth_box(im):
     return min(xs), min(ys), max(xs), max(ys)
 
 def build_face_blink():
+    """Cut the shut frame down to pixelface.jpg's framing; returns its size. When the
+    artist's grab is not in this checkout (it is gitignored) the committed frame is left
+    alone and measured instead — the same source → derived arrangement as the lyric
+    cards and the broken screens, so a fresh clone can regenerate the show."""
     from PIL import Image
     open_im = Image.open(os.path.join(ROOT, "assets/pixelface.jpg")).convert("RGB")
-    shut = Image.open(os.path.join(ROOT, FACE_BLINK_SRC)).convert("RGB")
+    src, out = os.path.join(ROOT, FACE_BLINK_SRC), os.path.join(ROOT, FACE_BLINK)
+    if not os.path.exists(src):
+        if not os.path.exists(out):
+            sys.exit(f"{FACE_BLINK} is missing and {FACE_BLINK_SRC} is not here to build it from")
+        return Image.open(out).size
+    shut = Image.open(src).convert("RGB")
     ox0, oy0, ox1, _ = mouth_box(open_im)
     sx0, sy0, sx1, _ = mouth_box(shut)
     k = (sx1 - sx0) / max(1, ox1 - ox0)          # source pixels per open-frame pixel
@@ -1339,14 +1379,7 @@ add(t1, "glassTorus", {"id": "torus", "material": "glass", "speed": 0.8,
                        # …and the glass bends the tunnel's own weather rather than the
                        # viewer's wallpaper. See `build_torus_dimension` above.
                        "environment": TORUS_ENV})
-GREETING = ("I am the Magic Torus! I am shaped like a question that answers itself. A "
-            "closed loop with no beginning, no end. My surface curves back into itself "
-            "infinitely, doubly, along two independent paths that never meet and never "
-            "stop. My Euler characteristic is zero: perfectly balanced between what "
-            "exists and what doesn’t."
-            "\n\n"
-            "Ask me one (1) question. Make it yes or no — I only speak in absolutes, "
-            "and I would hate to disappoint you.")
+GREETING = copy_prose("torus_greeting")          # docs/copy/torus_greeting.txt
 # 28 chars a beat — the monologue is three times the length of the one it replaced and
 # the phrase is the same 32 beats, so it types at roughly a fast printer rather than a
 # person. Everything downstream is derived from the copy, so it can be rewritten again
@@ -1369,10 +1402,12 @@ ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB + 1
 # stall the show: it answers itself. Four beats shorter than it was, because the longer
 # greeting takes the beats from this end of the phrase.
 ORACLE_BEATS = 10
+ORACLE = copy_fields("torus_oracle")             # docs/copy/torus_oracle.txt
 add(ORACLE_AT, "oracle", {"id": "oracle",
     "frame": [round(W * 0.04), round(H * 0.62), 460, 186],
-    "title": "hey, i'm the magic torus", "body": "ask me a question",
-    "placeholder": "will you give it 2 me?", "answerBeats": ORACLE_BEATS})
+    "title": ORACLE["title"], "body": ORACLE["body"],
+    "placeholder": ORACLE["placeholder"], "answers": ORACLE["answers"],
+    "answerBeats": ORACLE_BEATS})
 
 # The desktop goes WHITE under the torus. This REPLACES the words event before it
 # expires — an expiry restores the viewer's own picture for a ~300 ms flicker — and leads
@@ -1464,15 +1499,7 @@ add(mp, "openWindow", {"id": "map0",
 # not in a body — so the placeholders go in the title and the copy stays generic. A
 # machine that cannot get a fix still types the same lines and the map still flies to
 # the fallback, which is the whole arrangement `here: true` is built on.
-TRACE = ("$ ./locate --host $(hostname)\n"
-         "resolving route ........... ok\n"
-         "wifi bssid survey ......... 6 networks\n"
-         "triangulating .............\n"
-         "cross-checking ip lease ... match\n"
-         "narrowing ................. 2600 km\n"
-         "narrowing ................. 12 km\n"
-         "narrowing ................. 260 m\n"
-         "fix acquired.")
+TRACE = "\n".join(copy_lines("locate"))         # docs/copy/locate.txt
 # Sized to land its last line as the fall bottoms out: the fall is MAP_FALL seconds, the
 # terminal opens half a beat in, and the copy is paced to fill what is left.
 TRACE_BEATS = MAP_FALL / BEAT - 0.5
@@ -1483,12 +1510,11 @@ add(mp + 0.5, "typeText", {"id": "maptrace",
     "hex": DJ_BLUE, "fg": WHITE})
 # The dialog lands a beat after the camera does, so the alert is the answer to the
 # descent rather than something racing it down.
+FOUND = copy_fields("location_found")            # docs/copy/location_found.txt
 add(mp + MAP_FALL / BEAT + 1, "fakeDialog", {"id": "mapfound",
     "frame": [round(W * 0.30), round(H * 0.64), 460, 190],
-    "title": "Location identified.",
-    "body": "This machine has been placed to within 260 metres. "
-            "Its position is now known and will be remembered.",
-    "buttons": ["Not Now", "OK"], "icon": "info"})
+    "title": FOUND["title"], "body": FOUND["body"],
+    "buttons": FOUND["buttons"], "icon": "info"})
 # Both gone before cue 16's tiles come over the top — the wipe is the way out of the map
 # and nothing may still be standing on it when that starts.
 for wid in ("maptrace", "mapfound"):
@@ -2440,23 +2466,7 @@ for wid in (["segswarm"] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
 # =============================================================================
 en = B["ending"]
 add(en, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
-CREDITS = [
-    "Give it 2 me",
-    "by DJ_Dave",
-    "from DJ_Dave’s debut album Hardcore Software",
-    "",
-    "[ performed by DJ_Dave,",
-    "  produced by DJ_Dave + Ninajirachi,",
-    "  written by DJ_Dave + Ninajirachi,",
-    "  mixed and mastered by Patrick O’Halloran ]",
-    "",
-    "Malware and music video",
-    "by Computer Art, LLC",
-    "Viola He",
-    "Jame Coyne",
-    "",
-    "Bye",
-]
+CREDITS = copy_lines("credits")                  # docs/copy/credits.txt
 # Typed by the LINE, one per beat — the probe's cadence.
 CREDITS_LPS = round(1 / BEAT, 3)
 CARD_AT = secs(en)

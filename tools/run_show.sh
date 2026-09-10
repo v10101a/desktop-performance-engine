@@ -9,7 +9,7 @@
 #   tools/run_show.sh 146           # rehearse from 146 s: no gate, restores + quits at the end
 #   SECS=30 tools/run_show.sh 146   # …and quit after 30 s
 #
-# ⌃⌥⌘Esc panics out early. Cue times are the CUES table in generate_show.py (the source
+# ⌘Esc panics out early. Cue times are the CUES table in generate_show.py (the source
 # is docs/CUES.md); the generator prints every cue's frame. For the .app:
 # python3 tools/generate_show.py && ./bundle.sh
 set -euo pipefail

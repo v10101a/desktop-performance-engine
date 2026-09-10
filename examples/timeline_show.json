@@ -316,11 +316,11 @@
     "id": "welcome",
     "frame": [
      438,
-     255,
+     268,
      564,
-     390
+     365
     ],
-    "text": "$ ./giveit2me --install\ninstalling ......................... done\n\nDJ_Dave \u2014 GiveIt2Me, as software.\nfor one song this computer is the video:\nits windows, its cursor, its wallpaper,\nits photos, and one new photo of you.\nall of it borrowed. all of it put back.\n\n\u2303\u2325\u2318Esc gives the computer back early.\n\n$ ./giveit2me --play",
+    "text": "$ ./giveit2me --install\ninstalling ......................... done\n\nDJ_DAVE *__* giveit2me\nruntime ..................... 2:49\nother apps ................ hidden\nrestore point .............. saved\n\n\u2318+Esc to quit.\n\n$ ./giveit2me --play",
     "chrome": "terminal",
     "linesPerBeat": 1.0,
     "hex": "#020AF5",
@@ -6964,7 +6964,7 @@
      401,
      414
     ],
-    "text": "I am the Magic Torus! I am shaped like a question that answers itself. A closed loop with no beginning, no end. My surface curves back into itself infinitely, doubly, along two independent paths that never meet and never stop. My Euler characteristic is zero: perfectly balanced between what exists and what doesn\u2019t.\n\nAsk me one (1) question. Make it yes or no \u2014 I only speak in absolutes, and I would hate to disappoint you.",
+    "text": "I am the Magic Torus! I am a torus, thus I am all knowing.\n\nAsk me one (1) yes or no question. I only speak in absolutes, and I would hate to disappoint you.",
     "charsPerBeat": 28,
     "fontSize": 15,
     "title": "torus.txt \u2014 Edited",
@@ -6980,7 +6980,7 @@
    }
   },
   {
-   "beat": 145.179,
+   "beat": 135.607,
    "type": "oracle",
    "params": {
     "id": "oracle",
@@ -6993,6 +6993,16 @@
     "title": "hey, i'm the magic torus",
     "body": "ask me a question",
     "placeholder": "will you give it 2 me?",
+    "answers": [
+     "NO",
+     "YES",
+     "MAYBE",
+     "YES FOR NOW",
+     "YES, BUT NOT LIKE YOU THINK",
+     "YOU MUST ASK THE VERSION OF YOU FROM YESTERDAY",
+     "NO, THOUGH IT WILL FEEL LIKE YES",
+     "NO, AND YOU WILL KNOW WHY"
+    ],
     "answerBeats": 10
    }
   },

@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// The panic hotkey (⌃⌥⌘Esc): stop the show and put the desktop back, from anywhere,
+/// The panic hotkey (⌘Esc): stop the show and put the desktop back, from anywhere,
 /// at any point in the piece.
 ///
 /// The Carbon plumbing moved to `HotKeyCenter` when the console key (⌃⌥⌘D) was added —

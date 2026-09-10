@@ -1,0 +1,6 @@
+# The alert that lands a beat after the map has landed on the viewer.
+title: Location identified.
+body: This machine has been placed to within 260 metres. Its position is now known and will be remembered.
+buttons:
+- Not Now
+- OK

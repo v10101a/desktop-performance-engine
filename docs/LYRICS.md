@@ -43,8 +43,10 @@ In the cut (`docs/CUES.md`):
   Every phrase has a card; the generator lists any that does not. There are no times in
   `DESKTOP` — retune a word in `CUES` and its card follows, and the generator asserts the
   grouping still spells CUES exactly.
-- **cue 22, the clock** (INSTRUMENTAL A + 6 bars, 1:56) — the phrase texts round the
-  torus, spread evenly; nobody is singing there.
+- **the eruptions** (cues 21 and 28) — the lyric as ALL-CAPS cards and as alert text,
+  phrase by phrase (`lyrics.PHRASES`, timed off the word that starts each phrase in
+  `CUES`), and as the syslog and corruption planes (`lyrics.LINES`). The ring of phrase
+  texts round the second torus ("the clock") is pulled from the cut with that torus.
 
 To tune by ear: edit the numbers, then `tools/tune_lyrics.sh` (the spiral) or
 `tools/tune_lyrics.sh b` (the clock). It regenerates the show, prints when every card

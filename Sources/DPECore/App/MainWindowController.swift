@@ -172,7 +172,7 @@ final class MainWindowController: NSWindowController {
                                    target: self, action: #selector(toggleInspect))
         inspectCheckbox.state = .off
 
-        let hint = NSTextField(wrappingLabelWithString: "Global panic hotkey: ⌃⌥⌘Esc  ·  ⌃⌥⌘D hides this window again  ·  space = play/stop, P = pause  ·  drag the bar to scrub  ·  volume is output level only, never the clock")
+        let hint = NSTextField(wrappingLabelWithString: "Global panic hotkey: ⌘Esc  ·  ⌃⌥⌘D hides this window again  ·  space = play/stop, P = pause  ·  drag the bar to scrub  ·  volume is output level only, never the clock")
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
 

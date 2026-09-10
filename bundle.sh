@@ -1,8 +1,9 @@
 #!/bin/bash
 # Assemble GiveIt2Me_DJ_Dave_malware.app from the SwiftPM build and code-sign it.
 #
-#   ./bundle.sh                 # release build, ad-hoc signed
+#   ./bundle.sh                 # regenerate the show, lint it, release build, ad-hoc signed
 #   CONFIG=debug ./bundle.sh    # debug build
+#   SKIP_GENERATE=1 ./bundle.sh # package the committed timeline.json as it is (no Pillow needed)
 #   SIGN_IDENTITY="Apple Development: you@example.com" ./bundle.sh
 #
 # Ad-hoc signing (the default, "-") works but the code identity changes every build,
@@ -18,6 +19,19 @@ CONFIG="${CONFIG:-release}"
 BUNDLE_ID="com.computerart.giveit2me"
 APP_NAME="GiveIt2Me_DJ_Dave_malware"
 IDENTITY="${SIGN_IDENTITY:--}"
+
+# The show first. The timeline the .app carries is GENERATED — from docs/CUES.md and the
+# words in docs/copy/ — so a bundle built without regenerating ships whatever was
+# generated last: stale copy, silently. Regenerate and lint on every build. SKIP_GENERATE=1
+# is for a machine without Pillow (the generator's one dependency); it packages the
+# committed timeline.json as it is.
+if [ "${SKIP_GENERATE:-0}" = "1" ]; then
+  echo "▸ SKIP_GENERATE=1 — packaging the committed timeline.json as it is"
+else
+  echo "▸ python3 tools/generate_show.py && python3 tools/lint_show.py"
+  python3 tools/generate_show.py > /dev/null
+  python3 tools/lint_show.py
+fi
 
 echo "▸ swift build -c $CONFIG"
 swift build -c "$CONFIG"

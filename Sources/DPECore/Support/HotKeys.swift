@@ -83,8 +83,10 @@ final class HotKeyCenter {
 /// two-modifier chord collides with things people actually use, and macOS owns most of
 /// the ⌘⌥ space already.
 enum HotKeys {
-    /// ⌃⌥⌘Esc — stop everything and put the desktop back. Documented to the viewer.
-    static let panic = (key: kVK_Escape, modifiers: UInt32(controlKey | optionKey | cmdKey))
+    /// ⌘Esc — stop everything and put the desktop back. Documented to the viewer. Two keys,
+    /// not four: the viewer at the machine has to be able to hit it in a panic, and
+    /// ⌥⌘Esc (Force Quit) is the system's, so ⌃ and ⌥ both stay out of it.
+    static let panic = (key: kVK_Escape, modifiers: UInt32(cmdKey))
 
     /// ⌃⌥⌘D — reveal or hide the transport window. NOT documented to the viewer: the
     /// console is an instrument for whoever is running the piece, and a visible control

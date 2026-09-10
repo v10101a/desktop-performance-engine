@@ -2,17 +2,20 @@
 
 A music video that runs as software: a macOS app that plays the track and drives the
 desktop — windows, dialogs, the cursor, the wallpaper — in sync with it. Everything is
-reversible; the panic hotkey is ⌃⌥⌘Esc. `README.md` is the reference for the timeline
+reversible; the panic hotkey is ⌘Esc. `README.md` is the reference for the timeline
 format and every event type.
 
-## The cue sheet and the timeline are one thing
+## The cue sheet, the copy and the timeline are one thing
 
-`docs/CUES.md` is the **source document for the cut**. `tools/generate_show.py` mirrors
-it as the `CUES` table at the top of the file and derives every event time from those
-numbers; `Sources/DPECore/Resources/timeline.json` is generated output, never authored
-by hand.
+`docs/CUES.md` is the **source document for the cut**: one row per cue, present tense,
+what the show does today. `docs/copy/` holds **every word the show speaks** — the welcome
+terminal, the torus's greeting and question, the locate trace and its alert, the credits —
+one plain-text file per passage (the README there explains the three shapes).
+`tools/generate_show.py` mirrors the sheet as the `CUES` table at the top of the file,
+reads the copy files, and derives every event time from those numbers;
+`Sources/DPECore/Resources/timeline.json` is generated output, never authored by hand.
 
-**These must never drift apart. Both directions:**
+**These must never drift apart. All directions:**
 
 - **Changed the cut?** Whatever moved — a cue's position, what happens at it, which
   events it fires — update `docs/CUES.md` in the same change. A timeline the sheet does
@@ -20,6 +23,18 @@ by hand.
 - **Changed the sheet?** It is not done until the show plays that way. Update the `CUES`
   table and the act it belongs to in `tools/generate_show.py`, regenerate, and commit
   the regenerated `timeline.json` with it.
+- **Changed the words?** Edit the file in `docs/copy/`, regenerate, and check that the
+  row in `docs/CUES.md` pointing at it still describes what it says. Never put a line of
+  copy back into the generator as a literal — the generator reads copy, it does not hold
+  it. (The lyric is the exception: the song's words and their timing are `tools/lyrics.py`.)
+- **History goes in the changelog** at the bottom of `docs/CUES.md`, dated — not in the
+  rows. A row describes the cut as it plays; "used to be" and "(2026-09-07)" belong below.
+
+**`README.md` is the engine, not the cut.** One section per event or content kind: what
+it does, its params, its gotchas, how to test it. It must not narrate the show, name a
+cue number, or quote show copy — every one of those went stale within a week of being
+written. If a README sentence needs a cue to make sense, the sentence belongs in the cue
+sheet.
 
 Either way, finish with:
 
@@ -27,12 +42,19 @@ Either way, finish with:
 python3 tools/generate_show.py && python3 tools/lint_show.py
 ```
 
+`./bundle.sh` and `tools/run_show.sh` both run exactly that before they build or play, so a
+bundle or a rehearsal can never carry stale words; `SKIP_GENERATE=1 ./bundle.sh` is the
+escape hatch for a machine without Pillow.
+
 The generator prints every cue's authored and actual frame; those numbers must match the
 table in `docs/CUES.md`. The lint catches closes aimed at ids the show never opens,
 windows still on screen when the end card comes up, and asset paths that do not resolve.
 
 Note that `generate_show.py` needs Pillow (for the horse's GIF quantisation) — there is
-no committed venv, so create one if the import fails.
+no committed venv, so create one if the import fails. Every derived asset it builds
+(the face wallpaper, the blink frame, the lyric cards, the broken screens, the photo
+fallback) comes from a gitignored source drop; when the drop is not in the checkout the
+step skips and the committed copy is kept, so a clean clone regenerates the show.
 
 ### Units
 
@@ -60,10 +82,11 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   meant to stay identical to that repo's — fix there first, then re-import. The `segcam`
   content kind takes the camera or a video file; the Syphon input, the HUD and the keys
   did not come across, and a cue is the only thing that configures it.
-- `tools/fetch_doom.sh` installs the wasm DooM cue 27 runs (`assets/doom.wasm`,
-  gitignored — GPL engine, shareware IWAD baked in; read the script header before
-  shipping a build with it). Without it that window comes up saying so, and everything
-  else works. `--test-doom` proves it is drawing.
+- `tools/fetch_doom.sh` installs the wasm DooM the `doom` content kind runs
+  (`assets/doom.wasm`, gitignored — GPL engine, shareware IWAD baked in; read the script
+  header before shipping a build with it). No cue in the current cut opens one; a cue
+  that does comes up saying so without it, and everything else works. `--test-doom`
+  proves it is drawing.
 - The show must stay **reversible**: no event may leave the machine changed after stop,
   panic or quit. `fileSwarm` is the only thing that touches disk and is gated off
   (`meta.allowDesktopFiles`). Changing the machine's REAL desktop picture is gated on

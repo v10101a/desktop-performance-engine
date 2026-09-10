@@ -49,6 +49,10 @@ enum ProductionTests {
         t.equal(HotKeys.console.modifiers, UInt32(controlKey | optionKey | cmdKey),
                 "the console chord is ⌃⌥⌘")
         t.equal(HotKeys.console.key, kVK_ANSI_D, "…D")
+        // Two keys, not four: the viewer at the machine has to be able to hit it in a
+        // panic (2026-09-11). ⌥⌘Esc is Force Quit, so neither ⌥ nor ⌃ may creep back in.
+        t.equal(HotKeys.panic.modifiers, UInt32(cmdKey), "the panic chord is ⌘ alone")
+        t.equal(HotKeys.panic.key, kVK_Escape, "…Esc")
 
         // The regression this exists for. Carbon delivers every hotkey press to every
         // handler installed on the event target, so two controllers each installing
