@@ -40,6 +40,10 @@ assets/*.aif
 assets/*.aiff
 *.mov
 *.mp4
+# ...except the clip cue 27's segmenter swarm takes the screen with: 9.7 MB, the one
+# video the show loads, LFS-tracked like the mp3 (see .gitattributes). Without this
+# exception a fresh clone's segSwarm cue opens on nothing.
+!assets/giveit2meclip.mov
 
 # Python (tools/)
 __pycache__/
