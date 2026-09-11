@@ -553,6 +553,8 @@ for i in range(BRICK_RAMP_N):
         "id": wid, "frame": [x, y, w, h], "content": content,
         "animate": {"kind": "springIn" if i % 3 == 0 else "fadeIn"}})
 
+# The rack lands on one frame, on purpose: racking it up across the bar before was tried
+# (2026-09-12) and measured far worse — see `BrickBreakerController.rack`.
 add(B["hydra"], "brickBreaker", {
     "id": "bricks", "frame": BRICK_AREA,
     "rows": 4, "cols": 8, "speed": 560, "ball": 46, "paddle": [200, 26], "seed": 44})
@@ -2683,7 +2685,14 @@ ERUPT_END = B["spam"]              # the vocal pickup takes the screen back for 
 # walk goes on muted, so cue 28's scatter is untouched — and through that bar its windows
 # LEAVE one at a time (below), so the screen drains into the pickup instead of cutting.
 LEAVE_FROM = ERUPT_END - 4         # bar 71, the last before the vocal pickup
-erupt(gl2, ERUPT_END, W / 2, H / 2, rate=0.18, ui_chaos=0.25, mute_from=LEAVE_FROM)
+# ITS FIRST BAR DOES A LITTLE LESS (2026-09-12): a card every `CUT_RATE` beats and no
+# packed-UI cards until `CUT_UNTIL`, because that bar is already the strobe's twenty
+# windows being born on the cut and the photo wall's forty coming down — measured as the
+# worst second in the show, 5 Hz. From the second bar on it is the eruption as before.
+CUT_UNTIL = gl2 + 4
+CUT_RATE = 0.36
+erupt(gl2, ERUPT_END, W / 2, H / 2, rate=0.18, ui_chaos=0.25, mute_from=LEAVE_FROM,
+      until=CUT_UNTIL, rate_before=CUT_RATE, ui_chaos_before=0.0)
 ERUPT_P0 = phrase_beat("instrumentalA") + 12       # bar 60: INSTRUMENTAL A + 3.0, the cut's bar
 ERUPT_PHRASE = 8                                    # two bars
 ERUPT_PHRASES = 4                                   # to bar 68

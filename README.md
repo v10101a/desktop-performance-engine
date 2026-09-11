@@ -796,6 +796,17 @@ reports whether frames arrived **and** how many segments were found — a black 
 a window full of picture with no boxes on it are different failures, and one number
 cannot tell them apart.
 
+### Closing many windows at once
+
+Acts that own dozens of windows take them down a few per run-loop pass on their cue —
+`PhotoWallController` (forty photographs), `SegSwarmController` (sixty panels), and the
+generator staggers the eruption's departures the same way — because forty `orderOut`s in
+one call measured as a 200 ms stall on the main thread. Panic and stop still close
+everything at once. The reverse does not hold for opening: a window's first appearance
+is paid per commit, not per window, so windows that must appear together should be
+ordered in on the same pass rather than spread (measured 2026-09-12 on the brick rack:
+32 at once cost a 38 Hz second, 32 across a bar cost a 3 Hz one).
+
 ### `segSwarm`
 
 The imported segmenter with the **desktop** as its canvas rather than a window: no

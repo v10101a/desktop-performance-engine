@@ -146,7 +146,30 @@ final class PhotoWallController {
     /// an open-ended `sprite` or `cursorTrail` is ended.
     func stop(id: String) {
         guard wall?.id == id else { return }
-        teardown()
+        teardownGradually()
+    }
+
+    /// The cue's close: stop placing now, and take the windows down a few per run-loop
+    /// pass rather than all forty in one call — measured (2026-09-12) as the worst
+    /// second in the show, 5 Hz, when the wall's forty closes landed on the same beat as
+    /// the next act's thirty-odd first appearances. Panic and stop still use `closeAll`,
+    /// which is immediate; a new wall in the meantime ends the run.
+    private var teardownGeneration = 0
+    private func teardownGradually(perPass: Int = 4) {
+        wall = nil
+        screens.removeAll()
+        teardownGeneration += 1
+        let mine = teardownGeneration
+        func pass() {
+            guard mine == teardownGeneration, !windows.isEmpty else { return }
+            for w in windows.prefix(perPass) {
+                w.orderOut(nil)
+                w.close()
+            }
+            windows.removeFirst(min(perPass, windows.count))
+            DispatchQueue.main.async(execute: pass)
+        }
+        pass()
     }
 
     /// Every window closed, every grid cleared. Idempotent.
@@ -155,6 +178,7 @@ final class PhotoWallController {
     }
 
     private func teardown() {
+        teardownGeneration += 1
         for w in windows {
             w.orderOut(nil)
             w.close()

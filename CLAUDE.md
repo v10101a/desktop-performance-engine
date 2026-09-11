@@ -87,8 +87,11 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   windows are `close()`d, not just ordered out** — AppKit keeps an un-closed window alive,
   and idle windows double what a new one costs to bring up — and a play from partway in
   prunes what it will never reach. When something is laggy, `sample <pid>` the main
-  thread before touching a cue; ramping a cue in or out spreads a cost, it does not
-  remove one (measured on the segmenter's pickup, three ramp lengths).
+  thread before touching a cue. **Births batch:** a window's first appearance costs one
+  run-loop commit however many windows share it, so many windows born on one frame cost
+  one bad second and the same windows born one per frame cost one bad second each —
+  measured on the segmenter's pickup (three ramp lengths) and the brick rack (38 Hz at
+  once, 3 Hz spread). Closes are the opposite: pace them a few per pass.
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.

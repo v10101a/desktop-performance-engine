@@ -91,7 +91,7 @@ final class BrickBreakerController {
     func closeAll() {
         timer?.invalidate()
         timer = nil
-        for b in bricks { b.window.orderOut(nil) }
+        for b in bricks { b.window.orderOut(nil); b.window.close() }
         bricks.removeAll()
         ballWindow?.orderOut(nil)
         ballWindow = nil
@@ -109,8 +109,13 @@ final class BrickBreakerController {
     /// The wall of bricks. Windows, with the drawn chrome and the palette the rest of
     /// the piece uses, so the wall reads as the machine's own clutter racked up rather
     /// than as game furniture that wandered in.
+    /// ALL THIRTY-TWO ON ONE FRAME, on purpose. Racking them up one at a time over the
+    /// bar before was tried (2026-09-12) and measured far WORSE — the second before the
+    /// cue fell from over 60 Hz to 3 — because what a window's first appearance costs is
+    /// paid per run-loop commit, not per window: thirty-two in one pass is one commit,
+    /// thirty-two across a bar is thirty-two. Born together they cost one 38 Hz second.
     private func rack() {
-        for b in bricks { b.window.orderOut(nil) }
+        for b in bricks { b.window.orderOut(nil); b.window.close() }
         bricks.removeAll()
         let palette = ["#020AF5", "#68BDF8", "#F2F4FE", "#0078D7", "#0B0E16"]
         let titles = ["look://again", "haunt.sh", "recovered.jpg", "Untitled", "brick.app"]

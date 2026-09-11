@@ -201,7 +201,16 @@ Newest first. A row above describes the cut as it plays; this is how it got ther
   every quarter (`OVERLAP_RATE`). Measured against the baseline three times in alternation:
   the overlap's worst second from ~60 Hz to ~85. Fewer packed-UI cards, a slower hex
   plane and no kick flashes over the video were each measured and did not help, so they
-  stay.
+  stay. **Then the whole show was profiled:** 98% of its seconds at or above 60 Hz, three
+  under. The real one, the cut into the instrumental at cue 21 (5 Hz: the photo wall's
+  forty windows closing on the frame the strobe's furniture is born), is 60 Hz now — the
+  wall comes down a few windows per run-loop pass and the eruption's first bar is
+  sparser with no packed-UI cards (`CUT_RATE`). The brick breaker's start (38 Hz) and
+  the drop (43 Hz) stay: racking the bricks up one at a time over the bar before was
+  tried and measured far worse (3 Hz), because a window's first appearance costs one
+  run-loop commit however many windows share it — born together, thirty-two cost one
+  bad second; born one at a time, thirty-two bad ones. Which is also why every ramp on
+  the segmenter lost.
 - **2026-09-11 — the second chorus builds (pulled the same night), and the chase is
   seen.** Chorus 2A had gone back to the segmenter alone (the fourth pass, below) and
   the centre box was put back over it, with a build **on the grid** under it instead of
