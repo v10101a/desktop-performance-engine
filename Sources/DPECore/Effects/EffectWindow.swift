@@ -842,6 +842,21 @@ class BaseEffectWindow: NSPanel, NSWindowDelegate {
         isMovableByWindowBackground = true
     }
 
+    /// Where this window stands in the show's own z-order: every order-in takes the
+    /// next number, so the newest is the highest. `WindowManager.asciiSnapshot` sorts on
+    /// this (with the level) instead of `NSWindow.orderedIndex`, which is a synchronous
+    /// window-server query per read — thousands per sort, a dozen sorts a second, and
+    /// measured as most of the main thread (2026-09-12). Clicks that bring a card
+    /// forward come through here too, so the map follows them.
+    private(set) var orderStamp = 0
+    private static var orderCounter = 0
+
+    override func orderFrontRegardless() {
+        BaseEffectWindow.orderCounter += 1
+        orderStamp = BaseEffectWindow.orderCounter
+        super.orderFrontRegardless()
+    }
+
     func present(animate kind: String) {
         orderFrontRegardless()
         switch kind {

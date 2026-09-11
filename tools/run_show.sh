@@ -9,6 +9,12 @@
 #   tools/run_show.sh 146           # rehearse from 146 s: no gate, restores + quits at the end
 #   SECS=30 tools/run_show.sh 146   # …and quit after 30 s
 #
+# A RELEASE build, always (2026-09-12): `swift run` on its own is a debug build, and
+# Swift without the optimiser is several times slower in exactly the loops the segmenter
+# lives in — the pixel downsample, the motion diff, the crops — which read as the show
+# lagging in chorus 2. A rehearsal has to be what the audience gets. The first release
+# build takes a few minutes; after that it is incremental like the other.
+#
 # ⌘Esc panics out early. Cue times are the CUES table in generate_show.py (the source
 # is docs/CUES.md); the generator prints every cue's frame. For the .app:
 # python3 tools/generate_show.py && ./bundle.sh
@@ -21,8 +27,8 @@ echo
 
 if [ $# -eq 0 ]; then
   echo "▸ playing the whole show"
-  swift run GiveIt2Me_DJ_Dave_malware
+  swift run -c release GiveIt2Me_DJ_Dave_malware
 else
   echo "▸ rehearsing from ${1}s${SECS:+ for ${SECS}s}"
-  DPE_AUTOPLAY_FROM="$1" DPE_AUTOPLAY_SECS="${SECS:-}" swift run GiveIt2Me_DJ_Dave_malware --autoplay
+  DPE_AUTOPLAY_FROM="$1" DPE_AUTOPLAY_SECS="${SECS:-}" swift run -c release GiveIt2Me_DJ_Dave_malware --autoplay
 fi

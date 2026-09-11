@@ -221,7 +221,7 @@ final class PerformanceEngine {
         restore.snapshotNow()
         // Rebuild any pools a previous run consumed (no-op on first play; a panic
         // wipe clears them). Still before the clock starts, so no mid-show stall.
-        windows.prewarm(for: tl.events)
+        windows.prewarm(for: tl.events, from: startPosition)
         photos.prewarm(for: tl.events)
         segSwarm.prewarm(for: tl.events)
         // Only touch (and prompt for) desktop icons if the show actually uses them.
@@ -285,6 +285,17 @@ final class PerformanceEngine {
     /// scheduling problem or a main-thread-is-busy-drawing problem.
     private var pumpTicks = 0
     private var pumpFirst = 0.0
+    /// DPE_PROFILE=1: ticks per SHOW second, so a starved stretch reads against the cue
+    /// sheet rather than the wall clock — "13 Hz at 148–152 s" is a cue, not a mood.
+    private var pumpBySecond: [Int: Int] = [:]
+
+    var pumpTraceSummary: String {
+        let keys = pumpBySecond.keys.sorted()
+        guard keys.count > 2 else { return "pump trace: too short" }
+        // The first and last seconds are partial; drop them.
+        return "pump Hz by show second: "
+            + keys.dropFirst().dropLast().map { "\($0):\(pumpBySecond[$0] ?? 0)" }.joined(separator: " ")
+    }
 
     var pumpRateSummary: String {
         let secs = CACurrentMediaTime() - pumpFirst
@@ -301,6 +312,7 @@ final class PerformanceEngine {
         }
         guard isPlaying, let raw = clock.currentTime() else { return }
         let now = raw + offsetCorrection
+        if Scheduler.profiling { pumpBySecond[Int(now), default: 0] += 1 }
 
         // End of the piece: stop, restore, rewind the playhead to the top — unless the
         // end card asked to hold, in which case the show pauses on it and stays there
@@ -376,7 +388,7 @@ final class PerformanceEngine {
         startPosition = t
         if isPlaying {
             for executor in executors { executor.closeAll() }
-            windows.prewarm(for: tl.events)
+            windows.prewarm(for: tl.events, from: t)
             segSwarm.prewarm(for: tl.events)
             scheduler.seek(to: t)
             clock.seek(to: t, playing: !isPaused)   // scrubbing while paused stays paused
@@ -411,6 +423,7 @@ final class PerformanceEngine {
             NSLog("[DPE] \(scheduler.driftSummary)")
             if Scheduler.profiling {
                 NSLog("[DPE] \(pumpRateSummary)")
+                NSLog("[DPE] \(pumpTraceSummary)")
                 NSLog(String(format: "[DPE] playhead reached %.3fs", startPosition))
                 NSLog("[DPE] event cost by type:\n\(Scheduler.profileSummary)")
             }

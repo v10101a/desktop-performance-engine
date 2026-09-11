@@ -90,7 +90,7 @@ written — one command either way:
 
 ```bash
 ./bundle.sh                        # regenerate + lint + build the .app
-tools/run_show.sh                  # regenerate + lint + swift run, for the dev loop
+tools/run_show.sh                  # regenerate + lint + swift run -c release (a debug build lags in the segmenter)
 SKIP_GENERATE=1 ./bundle.sh        # package the committed timeline as it is (no Pillow needed)
 ```
 
@@ -833,6 +833,12 @@ pile instead of being buried by it. `maxWindows` is how deep the pile goes befor
 oldest panel is recycled; panels are
 re-dressed rather than closed and rebuilt, because at thirty frames a second of new
 instances, churning real windows costs far more than changing what one shows.
+`clearSeconds` takes the pile down over that long on its close, oldest panel first, at
+the display's pace — the act leaving rather than being switched off; absent, it comes
+down a few panels per run-loop pass, which is quick but never one stall. `rampSeconds`
+grows the pile's cap in from a handful over that long; measured (2026-09-12), it does not
+make the first second cheaper — the same first appearances just land later — so it is a
+look, not a fix, and the show does not set it.
 
 **Nothing is tracked between frames**, which is the whole effect: a thing that simply
 keeps moving mints a new instance — and a new window — every frame, so the screen fills
@@ -858,7 +864,15 @@ that a cue after it still leaves nothing on the desktop.
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm            # a clip filling the desktop
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm="assets/other.mov"
 swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # a map window run through it, whole
+DPE_SEG_HZ=15 DPE_SEG_RAMP=2 DPE_SEG_CLEAR=1 DPE_SEG_DUMMY=240 …   # pull rate, the two ramps,
+                                                                  # and N idle windows alive first
 ```
+
+Each second it reports the count, the frames segmented, segments per frame, panels
+re-dressed, the main-thread time that took, and how many of a 60 Hz main-loop timer's
+ticks actually ran — the show's pump in miniature, and the number that says what the act
+leaves for everything else. `DPE_SEG_DUMMY` is how it was shown that idle windows
+elsewhere in the app are what makes a new window expensive to bring up.
 
 puts it up for six seconds against the show's own clip — prewarmed first, the way the
 show does it — and reports the count at two and five seconds as it fills, and zero
@@ -977,6 +991,13 @@ rotation subtracts `artAngle` — the bisector of the two edges meeting at the t
 rather than guessed. It pivots about its **tip**, because a cursor does; about its centre
 it swings like a compass needle. `--test-cursors=out.png` warps the real pointer across
 the window and reports how many are pointing the same way.
+
+**It steps only while its window is on screen.** Every `openWindow` in the timeline is
+built at load (`WindowManager.prewarm`), content view included, so a view that started its
+clock on joining a window ran from load; the swarm, the cycling lyric cards and the ASCII
+planes now follow `WindowVisibility` — the window's occlusion state — and idle until they
+are actually shown. For the swarm that is also correctness: the spawn ramp counts from the
+first step, and a ramp that began at load had every pointer born before the cue.
 
 **`spawnSeconds` lets the swarm arrive one at a time.** Absent or 0 puts the whole
 population up on the frame the window opens, which lands as a wall and gives the section
@@ -1435,7 +1456,20 @@ alpha, or showing/hiding it per flash, was the single biggest source of stalls);
 windows are **reused** on re-open rather than recreated; images decode as **downsampled
 thumbnails off the main thread**; dialogs avoid `NSVisualEffectView`/autolayout.
 
-#### The event clock (2026-09-06)
+#### Windows are released, and a rehearsal builds only what it will reach
+
+Every window the timeline names is built at load (`WindowManager.prewarm`), and until
+2026-09-12 a window the show was done with was only ordered out: AppKit keeps any window
+that has not been `close()`d, so a finished effect window stayed alive with its layer
+tree for the rest of the run — 156 of them by the last chorus. Idle windows are not free:
+240 of them measured as doubling what a new window costs to bring up, which is exactly
+the segmenter's sixty on the vocal pickup. `close(id:)` now closes what it releases
+(dialogs stay parked, as before), and `closeAll` closes everything. `prewarm(for:from:)`
+takes the start position: a play from partway in builds only the ids the show will still
+reach and prunes the rest, so `tools/run_show.sh 146` rehearses with the windows a real
+run would have at 146 s, not the whole show's.
+
+### The event clock (2026-09-06)
 
 Events used to fire from the display pump, and in the densest sections they fired **late**
 — measured through the eruption, mean 71–113 ms and peaks over half a second, which at

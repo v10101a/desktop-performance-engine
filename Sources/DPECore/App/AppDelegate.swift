@@ -310,15 +310,41 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                                          : "assets/giveit2meclip.mp4"
             let swarm = SegSwarmController()
             NSLog("[DPE] segswarm: %@", clip)
+            let env = ProcessInfo.processInfo.environment
             let params = SegSwarmParams(id: "t", path: clip, mode: "motion",
-                                        intensity: 0.62, mirror: false, maxWindows: 60)
+                                        intensity: 0.62, mirror: false, maxWindows: 60,
+                                        hz: env["DPE_SEG_HZ"].flatMap(Double.init),
+                                        rampSeconds: env["DPE_SEG_RAMP"].flatMap(Double.init),
+                                        clearSeconds: env["DPE_SEG_CLEAR"].flatMap(Double.init))
+            // DPE_SEG_DUMMY=<n>: that many hidden windows alive first, the way the show
+            // keeps its prewarmed pools — to see whether they tax the pile's first second.
+            var dummies: [NSPanel] = []
+            for _ in 0..<(Int(env["DPE_SEG_DUMMY"] ?? "") ?? 0) {
+                dummies.append(NSPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 200),
+                                       styleMask: [.titled, .nonactivatingPanel], backing: .buffered, defer: false))
+            }
+            if !dummies.isEmpty { NSLog("[DPE] segswarm: %d dummy windows alive", dummies.count) }
+            // A 60 Hz timer on the main run loop, counted per second: the show's pump,
+            // in miniature. What it actually achieves is what the act leaves the show.
+            var ticks = 0
+            let pump = Timer(timeInterval: 1.0 / 60, repeats: true) { _ in ticks += 1 }
+            RunLoop.main.add(pump, forMode: .common)
             // Prewarmed first, the way the show does it at load: the player readied and
             // the sixty panels built before the cue, so this measures the real path.
             swarm.prewarm(params)
             swarm.begin(params)
-            for wait in [2.0, 5.0] {
+            // Every second: how many windows are up, and what the act is costing — frames
+            // segmented, segments per frame, panels re-dressed, and the main-thread time
+            // the re-dressing took. The last is the number that starves the show's pump.
+            for wait in stride(from: 1.0, through: 5.0, by: 1.0) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
-                    NSLog("[DPE] segswarm: %.0fs — %d window(s)", wait, swarm.windowCountForTesting)
+                    let s = swarm.stats
+                    NSLog("[DPE] segswarm: %.0fs — %d window(s); %d frames @%.0f fps, %.1f segments/frame (max %d), %d panels re-dressed, %.0f ms on main; main loop %d of 60 ticks",
+                          wait, swarm.windowCountForTesting, s.results, s.fps,
+                          s.results > 0 ? Double(s.segments) / Double(s.results) : 0,
+                          s.maxSegments, s.adopted, s.mainMs, ticks)
+                    swarm.resetStats()
+                    ticks = 0
                 }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {

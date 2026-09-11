@@ -162,20 +162,34 @@ final class CursorSwarmView: NSView {
             layers.append(l)
         }
 
-        let t = Timer(timeInterval: CursorSwarmView.dt, repeats: true) { [weak self] _ in
-            self?.tick()
-        }
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
 
     deinit { timer?.invalidate() }
 
+    /// The swarm steps only while its window is on screen (`WindowVisibility`). The
+    /// window is built at load, prewarmed, and a flock stepping from then is both a
+    /// cost through the whole show and wrong: `spawnSeconds` counts from the first
+    /// step, so a ramp that began at load had every pointer born before the cue.
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window == nil { timer?.invalidate(); timer = nil }
+        visibility.follow(window)
+    }
+
+    private lazy var visibility = WindowVisibility { [weak self] visible in
+        self?.setRunning(visible)
+    }
+
+    private func setRunning(_ running: Bool) {
+        timer?.invalidate()
+        timer = nil
+        guard running else { return }
+        let t = Timer(timeInterval: CursorSwarmView.dt, repeats: true) { [weak self] _ in
+            self?.tick()
+        }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
     }
 
     /// Scenery. It reads the pointer's position; it must never take its clicks.

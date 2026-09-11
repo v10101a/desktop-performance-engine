@@ -2107,7 +2107,7 @@ chaos = {"w": 0, "d": 0, "l": 0, "ui": 0, "p": 0, "a": 0, "gone": 0, "muted": 0}
 
 def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, alerts=True,
           rate_to=None, spread=0.65, evanesce=None, vanish_to=0.0, at=None, rng=None,
-          mute_from=None):
+          mute_from=None, until=None, rate_before=None, ui_chaos_before=None):
     """~8 events/sec out of (cx, cy) — the explosion, not a ramp.
 
     …unless `rate_to` is given: then the beats between cards slide from `rate` at `b0`
@@ -2167,6 +2167,12 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
     geometry is drawn from; the default is `chaos_rng`, and a build with its OWN stream
     leaves every eruption after it byte-identical, which is why 2A's has one.
 
+    `until` / `rate_before` / `ui_chaos_before` (2026-09-12): before the beat `until`
+    the walk steps `rate_before` and packs `ui_chaos_before` of its flat cards instead —
+    the eruption doing a little less while something else still has the screen. The
+    draws per card are the same either way; fewer cards before `until` means the walk
+    after it takes different draws, so the scatter there moves. It is the same act.
+
     `mute_from` (2026-09-12) is a beat past which the walk goes on — every draw, every
     counter, so the next eruption's scatter does not move — but nothing is emitted: the
     act stops putting windows up while the rng stream stays exactly as long as it was.
@@ -2204,13 +2210,15 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
                 r = max(r, (kh + h) / 2 / abs(math.sin(ang)))
         x = max(10, min(cx + r * math.cos(ang) - w / 2, W - w - 10))
         y = max(10, min(cy + r * math.sin(ang) - h / 2, H - h - 10))
+        before = until is not None and b < until
+        ui_here = ui_chaos_before if before and ui_chaos_before is not None else ui_chaos
         roll = rng.random() * (0.70 if slots is not None else 1.0)   # a grid has no rests
         if roll < 0.42:
             # Both draws happen either way — see the note in cue 15. `chaos_rng` seeds
             # the whole eruption's geometry, so a draw taken on one branch and not the
             # other would re-scatter every window after it.
             hexc = rng.choice(body_colors)
-            packed = rng.random() < ui_chaos
+            packed = rng.random() < ui_here
             animate = {"kind": "none" if rng.random() < 0.8 else "springIn"}
             # Every ninth flat card comes up TORN instead of blank — the same
             # displacement/chroma-split pass the piece uses at the end, run once over one
@@ -2310,6 +2318,8 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
             b = next(slots, b1)
             continue
         step = rate if rate_to is None else rate + (rate_to - rate) * prog
+        if before and rate_before is not None:
+            step = rate_before
         b += max(0.15, step * rng.uniform(0.7, 1.3))
     MUTE = False
 
@@ -2330,9 +2340,20 @@ add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 # opposite of what this act asked for when it closed the piece: it took the shielding
 # level then, because it WAS the screen and nothing else was open. Here it has to be
 # something the eruption can climb on top of.
+# THE PILE LEAVES OVER A SECOND (2026-09-12): `clearSeconds` takes it down oldest-first
+# on the close, so the video goes panel by panel under the box rather than on a frame.
+# It does NOT ramp in. `rampSeconds` exists and was measured at 1, 2 and 3 s: the pile
+# fills in about a second on its own, and a ramp only moved the same sixty first
+# appearances into the seconds after the pickup, where more is going on — the pump was
+# worse with every ramp than without. What made the pickup cheap was the engine
+# releasing finished windows (see the changelog); the sixty births now cost a beat at
+# ~25 Hz instead of a second at 2.
+SEG_RAMP = 0.0
+SEG_CLEAR = 1.0
 add(sm, "segSwarm", {
     "id": "segswarm", "path": "assets/giveit2meclip.mp4", "mode": "motion",
     "intensity": 0.62, "maxWindows": 60, "mirror": False,
+    "rampSeconds": SEG_RAMP, "clearSeconds": SEG_CLEAR,
     "level": "normal",
     # No keyline. Upstream rings every panel green to mark it as a detection; here the
     # panels ARE the picture, and sixty green rectangles read as a debug overlay laid
@@ -2495,8 +2516,21 @@ if CENTRE_2A_ACT:
 n_build, n_gone = chaos["w"] - w_before, chaos["gone"] - gone_before
 
 # --- cue 28, the 2B pickup: THE ERUPTION, over it and then instead of it ---------
+# WHILE THE VIDEO IS STILL UP (the pickup to `SEG_HANDOVER`, two bars) the eruption does
+# a little less: a card every `OVERLAP_RATE` beats instead of every quarter. Sixty video
+# panels, the ring, the kick flashes and the hex plane share the compositor here, and it
+# was the one stretch still well under the display rate once everything else was fixed.
+# Measured (2026-09-12, three alternated pairs of runs): halving the cards over those two
+# bars lifts the stretch's worst second from ~60 Hz to ~85 and its mean from 87 to 94;
+# dropping the packed-UI cards, halving the hex plane's rate or muting the kick flashes
+# over the video did not measure better than the baseline, so they stay as they were.
+# The ring reaches the same density by the handover; the flashes, the video and the box
+# are untouched.
+OVERLAP_RATE = 0.5
+OVERLAP_UI = 0.25
 add(gl, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
-erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True, keep_out=LYRIC_HOLE, alerts=False)
+erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True, keep_out=LYRIC_HOLE, alerts=False,
+      until=SEG_HANDOVER, rate_before=OVERLAP_RATE, ui_chaos_before=OVERLAP_UI)
 
 # The swarm is not closed on the boundary. It is left running INTO the eruption — ringed
 # by its cards, the middle kept clear, buried a panel at a time at the edges — and swept
@@ -2570,7 +2604,8 @@ def ascii_plane(i, params, seconds_early=0.0):
 # 1. THE DUMP. Hex spam, filling the screen top to bottom — the machine's memory going
 #    past faster than anyone reads it. 26 lines a second fills a ~60-row screen in about
 #    two seconds, which is the point: it is a wall before it is a list.
-ascii_plane(0, {"source": "hex", "hz": 26, "seed": 4472, "fontSize": 12,
+HEX_HZ = 26
+ascii_plane(0, {"source": "hex", "hz": HEX_HZ, "seed": 4472, "fontSize": 12,
                 "title": "kernel: memory"})
 
 # 2. THE LOG. The same lyric that has been sung all the way through, coming out of the
@@ -2856,8 +2891,9 @@ for wid in (["segswarm", LYRIC_BOX] + sorted(strobe_ids) + [f"w{i}" for i in ran
 # docs/copy/last_words.txt — a title and buttons; a `body:` line there adds small text.
 LAST = copy_fields("last_words")
 LAST_AT = lw + 1
+LAST_W, LAST_H = 460, 190          # a real alert's size, the one cue 14's uses — not the centre box's
 add(LAST_AT, "fakeDialog", {"id": "lastwords", "anchor": "center", "animate": "none",
-    "frame": [0, 0, LYRIC_BOX_W, LYRIC_BOX_H],
+    "frame": [0, 0, LAST_W, LAST_H],
     "title": LAST["title"], "body": LAST.get("body") or "",
     "buttons": LAST["buttons"], "icon": "caution"})
 add(B["ending"] - 0.05, "closeWindow", {"id": "lastwords"})
@@ -3103,8 +3139,8 @@ if CENTRE_2A_ACT:
           f"the rest stay")
 else:
     print("  buildup  pulled (CENTRE_2A_ACT = False) — chorus 2A is the segmenter alone; the centre starts where the clip runs out")
-print(f"  lastword one alert on the blue, \"{LAST['title']}\", f {frame_at(secs(LAST_AT))} → "
-      f"f {frame_at(secs(B['ending'] - 0.05))}, {LYRIC_BOX_W}x{LYRIC_BOX_H} centred, no spring")
+print(f"  lastword one alert on the blue, \"{LAST['title']}\" / \"{LAST.get('body', '')}\", f {frame_at(secs(LAST_AT))} → "
+      f"f {frame_at(secs(B['ending'] - 0.05))}, {LAST_W}x{LAST_H} centred, no spring")
 print(f"  photos   {chaos['p']} broken-screen photographs, bar 72 only, "
       f"{min(chaos['p'], len(BROKEN_SCREENS))} of {len(BROKEN_SCREENS)} pictures seen "
       f"(every 10th card; {BROKEN_SRC} → {BROKEN_DIR})")

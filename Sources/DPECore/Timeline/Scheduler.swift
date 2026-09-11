@@ -46,7 +46,11 @@ final class Scheduler {
             if Scheduler.profiling {
                 let t0 = CACurrentMediaTime()
                 ctx.execute(ev.action, now: now)
-                Scheduler.record(ev.action.typeName, CACurrentMediaTime() - t0)
+                // Opens are recorded per content kind: "openWindow" alone hid a 185 ms
+                // worst case behind a 10 ms mean (2026-09-12).
+                var name = ev.action.typeName
+                if case .openWindow(let p) = ev.action { name += "/" + p.content.kind }
+                Scheduler.record(name, CACurrentMediaTime() - t0)
             } else {
                 ctx.execute(ev.action, now: now)
             }

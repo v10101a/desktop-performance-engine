@@ -21,7 +21,15 @@
 //  one before creating one; `clear` hides the pile and keeps it as spares instead of
 //  closing it; `SegmentPanel.blank()` drops a spare's picture. Everything else is as
 //  imported. The first second of a pile used to be sixty real windows being created on
-//  the main thread as the motion appeared, and on a cue that is a visible stall.
+//  the main thread as the motion appeared, and on a cue that is a visible stall. With it:
+//  `clearGradually` (the cue's close takes the pile down a few panels per run-loop pass —
+//  sixty `orderOut`s in one call measured as a 200 ms stall) and `clearOver(seconds:)`
+//  (the same, paced over a given time, oldest first); `rampSeconds` (the cap grows in
+//  over that long — measured not to help the pickup, kept as a dial); and `adopted`, a
+//  counter the controller reads for its stats. Tried and dropped, each measured: parking
+//  the spares ordered in at zero alpha, borderless panels, no shadow, pre-displaying the
+//  title bars — none of them is what a new window costs. Idle windows elsewhere in the
+//  app were (240 of them doubled it), and that is fixed in `WindowManager.close`.
 
 import AppKit
 import QuartzCore
@@ -79,6 +87,7 @@ final class SegmentPanel: NSPanel {
         CATransaction.commit()
     }
 
+
     /// The keyline, or none at all.
     func setBorder(_ color: NSColor?) {
         borderLayer.borderWidth = color == nil ? 0 : 2
@@ -135,6 +144,11 @@ final class SegmentSwarm {
             }
         }
     }
+    /// The pile fills over this many seconds: the cap it may grow to rises from
+    /// `rampFloor` to `maxBlobs` across them. 0 is the full cap at once.
+    var rampSeconds = 0.0
+    private let rampFloor = 6
+    private var rampStart: CFTimeInterval?
     /// What the pile sits at. `SegmentPanel.defaultLevel` is above everything.
     var level = SegmentPanel.defaultLevel
     /// The keyline round each panel, or nil for none. Applied as panels are adopted, so a
@@ -146,14 +160,35 @@ final class SegmentSwarm {
 
     var panelCount: Int { panels.count }
     var spareCount: Int { spares.count }
+    /// Panels re-dressed since the counter was last zeroed — the churn, which is the cost.
+    var adopted = 0
+    private var generation = 0
 
     /// Build panels now, hidden, until `count` exist between the pile and the spares.
+    ///
+    /// Hidden means ordered OUT. Keeping the spares ordered in at zero alpha was tried
+    /// (2026-09-12), so that a spare's first appearance would be a re-order rather than
+    /// the server creating the window: it made the act slower — a parked window still
+    /// takes part in every re-order of the pile — and the first second no better.
     func prewarm(count: Int) {
         while spares.count + panels.count < count { spares.append(SegmentPanel()) }
     }
 
     func update(segments: [Segment], crops: [SegmentID: CGImage], screenFrame: CGRect) {
+        // The cap this frame: the whole pile, or — on a ramp — the part of it reached.
+        // A segment that finds the pile at its cap while the cap is still growing is
+        // simply not spawned; nothing is tracked, so the motion mints a new one next
+        // frame and the pile catches up as the cap rises.
+        var cap = maxBlobs
+        if rampSeconds > 0 {
+            let now = CACurrentMediaTime()
+            let start = rampStart ?? now
+            rampStart = start
+            let u = min(1.0, (now - start) / rampSeconds)
+            cap = min(maxBlobs, max(rampFloor, Int(Double(maxBlobs) * u)))
+        }
         for segment in segments where !spawned.contains(segment.id) {
+            if panels.count >= cap && cap < maxBlobs { continue }
             spawned.insert(segment.id)
             if spawned.count > 8192 { spawned = [segment.id] }
 
@@ -167,20 +202,73 @@ final class SegmentSwarm {
                 rect.size.height = minHeight
             }
 
-            let panel = panels.count >= maxBlobs ? panels.removeFirst()
+            let panel = panels.count >= cap ? panels.removeFirst()
                       : (spares.popLast() ?? SegmentPanel())
             panel.level = level
             panel.setBorder(border)
             panel.adopt(title: segment.label, image: crops[segment.id],
                         contentRect: rect, mirrored: mirrored)
             panels.append(panel)
+            adopted += 1
         }
+    }
+
+    /// Take the pile down `perPass` panels per run-loop pass, oldest first, instead of
+    /// all of them in one call: sixty `orderOut`s back to back measured as a 200 ms stall
+    /// on the main thread, and a cue's close is not a panic. A `clear()` (or a new pile)
+    /// in the meantime ends the run; the generation guards a stale pass.
+    func clearGradually(perPass: Int = 4) {
+        spawned.removeAll()
+        generation += 1
+        let mine = generation
+        func pass() {
+            guard mine == generation, !panels.isEmpty else { return }
+            retire(panels.prefix(perPass).count)
+            DispatchQueue.main.async(execute: pass)
+        }
+        pass()
+    }
+
+    /// Take the pile down over `seconds`, oldest panel first, at the display's pace: the
+    /// act LEAVING rather than being switched off — and never more than a few panels on
+    /// any one frame. Ends early, harmlessly, if a `clear()` or a new pile comes first.
+    func clearOver(seconds: Double) {
+        guard seconds > 0, !panels.isEmpty else { clearGradually(); return }
+        spawned.removeAll()
+        generation += 1
+        let mine = generation
+        rampStart = nil
+        let total = panels.count
+        let t0 = CACurrentMediaTime()
+        var gone = 0
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] t in
+            guard let self, mine == self.generation, !self.panels.isEmpty else { t.invalidate(); return }
+            let due = min(total, Int(Double(total) * (CACurrentMediaTime() - t0) / seconds))
+            if due > gone {
+                self.retire(due - gone)
+                gone = due
+            }
+            if self.panels.isEmpty { t.invalidate() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func retire(_ n: Int) {
+        let batch = panels.prefix(n)
+        for panel in batch {
+            panel.orderOut(nil)
+            panel.blank()
+        }
+        spares += batch
+        panels.removeFirst(batch.count)
     }
 
     /// Take the pile off the screen. The panels are hidden and kept as spares rather
     /// than closed, so the next pile — a second run, a seek back over the cue — starts
     /// with its windows already built; nothing about them is visible in between.
     func clear() {
+        generation += 1
+        rampStart = nil
         for panel in panels {
             panel.orderOut(nil)
             panel.blank()

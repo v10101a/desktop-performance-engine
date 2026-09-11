@@ -73,9 +73,22 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
 ## Everything else
 
 - **Event timing.** Events fire from their own 240 Hz clock, not the display pump — the
-  pump is starved to ~13 Hz by compositing in the densest sections and events can only
-  fire on a tick. `DPE_PROFILE=1` prints pump rate + per-event cost at stop;
-  `DPE_EVENT_CLOCK=0` reverts. See "The event clock" in README.
+  pump is starved by compositing in the densest sections and events can only fire on a
+  tick. `DPE_PROFILE=1` prints pump rate, a **pump-Hz-per-show-second trace** and per-event
+  cost (opens by content kind) at stop; `DPE_EVENT_CLOCK=0` reverts. See "The event
+  clock" in README. **Rehearse with a release build** — `tools/run_show.sh` does — a debug
+  build is several times slower in the segmenter's pixel loops.
+- **Nothing runs before it is on screen.** `WindowManager.prewarm` builds every
+  `openWindow` at load, content views included, so a timer a view starts on joining its
+  window starts at load. The ASCII window map doing that — and sorting the app's windows
+  with a window-server query per comparison, twelve times a second, for the whole show —
+  was 61% of the main thread and the pump at 5 Hz under the segmenter (2026-09-12).
+  Timer-driven views follow `WindowVisibility` (occlusion); a new one must too. **Closed
+  windows are `close()`d, not just ordered out** — AppKit keeps an un-closed window alive,
+  and idle windows double what a new one costs to bring up — and a play from partway in
+  prunes what it will never reach. When something is laggy, `sample <pid>` the main
+  thread before touching a cue; ramping a cue in or out spreads a cost, it does not
+  remove one (measured on the segmenter's pickup, three ramp lengths).
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.

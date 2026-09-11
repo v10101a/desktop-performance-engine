@@ -37,7 +37,7 @@ final class WindowManager {
     /// capturing the screen — the engine opened them, so it already knows where they are,
     /// and capturing would need Screen Recording that the cut is not allowed to ask for.
     ///
-    /// Ordered back to front by `NSWindow.orderedIndex` (0 is frontmost), because the map
+    /// Ordered back to front by level and `BaseEffectWindow.orderStamp`, because the map
     /// draws later boxes over earlier ones and the overlaps only read correctly in the
     /// order the window server composites in.
     ///
@@ -47,7 +47,7 @@ final class WindowManager {
     /// screen. `orderedWindows` does not list these: they are borderless, non-activating
     /// panels ordered in with `orderFrontRegardless`, and the app's window list is not
     /// where they live. The manager's own dictionary is the authority on what the show
-    /// has open; `orderedIndex` is only used to sort it.
+    /// has open; the stamp is only used to sort it.
     ///
     /// The label is the window's ID — `w3`, `d1`, `sl7`. Not a shortcut: these wear DRAWN
     /// chrome, so `NSWindow.title` is empty on all of them, and the id is what the machine
@@ -62,9 +62,19 @@ final class WindowManager {
         //
         // `alphaValue` is the one real filter: windows mid-fade on their way out are
         // still tracked for a moment after they stop being anything to look at.
-        windows
+        //
+        // Sorted on the show's OWN z-order — level, then `BaseEffectWindow.orderStamp`,
+        // the number each window took when it was last ordered in — never on
+        // `NSWindow.orderedIndex`. That property is a synchronous window-server query
+        // per read, the comparator read it twice, and a sort of ~240 windows made
+        // thousands of round trips a dozen times a second: a stack sample put 61% of the
+        // main thread here (2026-09-12), with the pump at 5 Hz under the segmenter.
+        func key(_ w: NSWindow) -> (Int, Int) {
+            (w.level.rawValue, (w as? BaseEffectWindow)?.orderStamp ?? 0)
+        }
+        return windows
             .filter { $0.value.alphaValue > 0.01 && $0.value !== asking }
-            .sorted { $0.value.orderedIndex > $1.value.orderedIndex }   // back → front
+            .sorted { key($0.value) < key($1.value) }                    // back → front
             .map { ($0.value.frame, $0.key) }
     }
 
@@ -266,7 +276,41 @@ final class WindowManager {
     /// while the clock isn't running yet: sprite/follow-trail pools, effect and
     /// dialog window shells (reused by id at open), and flash overlays. Creating
     /// any of these inside a pump tick makes every later event fire late.
-    func prewarm(for events: [ResolvedEvent]) {
+    ///
+    /// `from` is the position the show will play from: an id whose every event lands
+    /// before it is never opened, so it is not built (2026-09-12). A rehearsal from
+    /// two minutes in used to build the whole show's windows and then carry the first
+    /// two minutes' worth, idle, for the rest of the run — 160-odd of them — and idle
+    /// windows are not free: 240 of them measured as doubling what a new window costs
+    /// to bring up. A play from the top builds everything, as before.
+    func prewarm(for events: [ResolvedEvent], from start: Double = 0) {
+        var lastUse: [String: Double] = [:]
+        if start > 0 {
+            for ev in events {
+                let id: String?
+                switch ev.action {
+                case .openWindow(let p):  id = p.id
+                case .fakeDialog(let p):  id = p.id
+                case .closeWindow(let p): id = p.id
+                case .moveWindow(let p):  id = p.id
+                case .jiggle(let p):      id = p.id
+                case .sprite(let p):      id = p.id
+                case .cursorTrail(let p): id = p.id
+                case .typeText(let p):    id = p.id
+                default:                  id = nil
+                }
+                if let id { lastUse[id] = max(lastUse[id] ?? 0, ev.fireTime) }
+            }
+        }
+        func stillNeeded(_ id: String) -> Bool { start <= 0 || (lastUse[id] ?? .infinity) >= start }
+        // Built at load for a play from the top, then the playhead moved: what the show
+        // will never reach from here goes now, closed so AppKit lets it go.
+        if start > 0 {
+            for (id, win) in windows where !stillNeeded(id) && !win.isVisible {
+                win.close()
+                windows[id] = nil
+            }
+        }
         // Every sketch that ever runs needs a live canvas, and a WKWebView carrying a
         // 205KB library is nowhere near cheap enough to build inside a tick. Count them
         // from the timeline and stand them all up now, with a couple spare for the
@@ -279,17 +323,23 @@ final class WindowManager {
             }
         }
         HydraWeb.prewarm(count: liveSketches + 2)
+        if events.contains(where: {
+            if case .openWindow(let p) = $0.action, (p.content.fontCycleHz ?? 0) > 0 { return true }
+            return false
+        }) {
+            LyricFontPool.warm()
+        }
 
         for ev in events {
             switch ev.action {
             case .openWindow(let p):
-                guard windows[p.id] == nil else { continue }
+                guard windows[p.id] == nil, stillNeeded(p.id) else { continue }
                 let win = EffectWindow(contentRect: rect(from: p.frame, on: screen(p.screen),
                                                          anchor: p.anchor),
                                        content: p.content)
                 windows[p.id] = win   // not ordered front; open() presents it
             case .fakeDialog(let p):
-                guard windows[p.id] == nil else { continue }
+                guard windows[p.id] == nil, stillNeeded(p.id) else { continue }
                 let frame = p.frame.flatMap { $0.count == 4 ? rect(from: $0, on: screen(p.screen),
                                                                    anchor: p.anchor) : nil }
                     ?? NSRect(x: 0, y: 0, width: 440, height: 180)
@@ -650,11 +700,11 @@ final class WindowManager {
         let token = (fadeToken[id] ?? 0) &+ 1     // orphans any fade already running
         fadeToken[id] = token
         if let s = sprites.removeValue(forKey: id) {
-            for w in s.pool { w.orderOut(nil) }
+            for w in s.pool { w.orderOut(nil); w.close() }
         }
         if let t = trails.removeValue(forKey: id) {
-            for w in t.stamps { w.orderOut(nil) }
-            for w in t.pool { w.orderOut(nil) }
+            for w in t.stamps { w.orderOut(nil); w.close() }
+            for w in t.pool { w.orderOut(nil); w.close() }
         }
         guard let win = windows[id] else { return }
         guard fadeSeconds > 0 else {
@@ -665,7 +715,17 @@ final class WindowManager {
             // measurably late against the beat. Kept, it comes back through the
             // `existing` branch of `openDialog`: content swapped, ordered front, on the
             // frame. Every other window kind is still released here.
-            if !(win is FakeDialogWindow) { windows[id] = nil }
+            //
+            // RELEASED means `close()`, not just dropping our reference (2026-09-12).
+            // AppKit keeps every window that has not been closed, so an ordered-out
+            // window we forgot was still alive: 156 finished effect windows were still
+            // in the app at chorus 2A, each with its layer tree, and 240 idle windows
+            // measured as doubling what a new one costs to bring up. With
+            // `isReleasedWhenClosed` false, `close()` is exactly "AppKit lets go".
+            if !(win is FakeDialogWindow) {
+                windows[id] = nil
+                win.close()
+            }
             return
         }
         NSAnimationContext.runAnimationGroup({ ctx in
@@ -675,7 +735,10 @@ final class WindowManager {
             guard let self = self, let win = win, self.fadeToken[id] == token else { return }
             win.orderOut(nil)
             win.alphaValue = 1                   // a reused id gets a clean window back
-            if self.windows[id] === win { self.windows[id] = nil }
+            if self.windows[id] === win {
+                self.windows[id] = nil
+                if !(win is FakeDialogWindow) { win.close() }
+            }
         })
     }
 
@@ -687,16 +750,18 @@ final class WindowManager {
         openedAt.removeAll()
         respawns.removeAll()
         respawnGeneration &+= 1     // cancels any respawn still in flight
-        for (_, s) in sprites { for w in s.pool { w.orderOut(nil) } }
+        // Everything goes, and goes for real: `close()`, so AppKit releases it (see
+        // `close(id:)`). `prewarm` rebuilds what the next play needs.
+        for (_, s) in sprites { for w in s.pool { w.orderOut(nil); w.close() } }
         sprites.removeAll()
         for (_, t) in trails {
-            for w in t.stamps { w.orderOut(nil) }
-            for w in t.pool { w.orderOut(nil) }
+            for w in t.stamps { w.orderOut(nil); w.close() }
+            for w in t.pool { w.orderOut(nil); w.close() }
         }
         trails.removeAll()
-        for (_, pool) in preparedPools { for w in pool { w.orderOut(nil) } }
+        for (_, pool) in preparedPools { for w in pool { w.orderOut(nil); w.close() } }
         preparedPools.removeAll()
-        for (_, win) in windows { win.orderOut(nil) }
+        for (_, win) in windows { win.orderOut(nil); win.close() }
         windows.removeAll()
         for (_, overlay) in flashOverlays { overlay.orderOut(nil) }
         flashOverlays.removeAll()

@@ -8,7 +8,7 @@ installing ......................... done
 
 DJ_DAVE ............................ giveit2me
 runtime ............................ 2:49
-restore point ..................... saved
+restore point ...................... saved
 computer ........................... ready
 
 to force quit, press ⌘+Esc

@@ -127,8 +127,25 @@ final class AsciiLogView: NSView {
         // botched drop shadow on the type. Turned off from the view because the plane is
         // the thing that knows it never wants one, wherever it is opened.
         window?.hasShadow = false
+        if window == nil, Scheduler.profiling, draws > 0 {
+            NSLog("[DPE] asciilog \(source): \(draws) draws, mean %.1f ms, worst %.1f ms on main",
+                  drawMs / Double(draws), drawWorstMs)
+        }
+        // The clock runs only while the plane is ON SCREEN (`WindowVisibility`): the
+        // window exists from load, prewarmed, and the map rebuilding a dozen times a
+        // second in a window nobody could see was most of the main thread for the
+        // whole show. It also means the strobe's phase starts on the cue, as authored.
+        visibility.follow(window)
+    }
+
+    private lazy var visibility = WindowVisibility { [weak self] visible in
+        self?.setRunning(visible)
+    }
+
+    private func setRunning(_ running: Bool) {
         timer?.invalidate()
-        guard window != nil else { timer = nil; return }
+        timer = nil
+        guard running else { return }
         // The plane advances on the faster of its two clocks: the line rate and the
         // strobe. One timer either way — two would drift against each other and the
         // strobe phase would slide off the beat it was authored on.
@@ -301,11 +318,23 @@ final class AsciiLogView: NSView {
 
     // MARK: - Drawing
 
+    // DPE_PROFILE=1: what each redraw of the plane costs the main thread.
+    private var draws = 0
+    private var drawMs = 0.0
+    private var drawWorstMs = 0.0
+
     override func draw(_ dirtyRect: NSRect) {
         // The off phase of a strobe is genuinely nothing — not a dimmed plane, not a
         // cleared one. The window under it is transparent, so the real screen is what
         // shows, which is what "strobe between the windows and the ASCII" means.
         if strobe > 0 && !strobeOn { return }
+        let t0 = CACurrentMediaTime()
+        defer {
+            if Scheduler.profiling {
+                let ms = (CACurrentMediaTime() - t0) * 1000
+                draws += 1; drawMs += ms; drawWorstMs = max(drawWorstMs, ms)
+            }
+        }
 
         if let background {
             background.setFill()
