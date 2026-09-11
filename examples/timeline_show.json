@@ -274,8 +274,8 @@
     "kind": "break"
    },
    {
-    "t": 164.29,
-    "bar": 88,
+    "t": 162.42,
+    "bar": 87,
     "label": "the end card",
     "kind": "break"
    }
@@ -315,12 +315,12 @@
    "params": {
     "id": "welcome",
     "frame": [
-     438,
-     268,
-     564,
-     365
+     408,
+     205,
+     624,
+     490
     ],
-    "text": "$ ./giveit2me --install\ninstalling ......................... done\n\nDJ_DAVE *__* giveit2me\nruntime ..................... 2:49\nother apps ................ hidden\nrestore point .............. saved\n\n\u2318+Esc to quit.\n\n$ ./giveit2me --play",
+    "text": "$ ./giveit2me --install\n\n*__*\n\ninstalling ......................... done\n\n*__*\n\nDJ_DAVE ............................ giveit2me\nruntime ............................ 2:49\nrestore point ..................... saved\ncomputer ........................... ready\n\nto force quit, press \u2318+Esc\n\n$ ./giveit2me --play",
     "chrome": "terminal",
     "linesPerBeat": 1.0,
     "hex": "#020AF5",
@@ -1164,6 +1164,18 @@
    }
   },
   {
+   "t": 30.118,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "face",
+    "mode": "slides",
+    "hz": 0.1,
+    "images": [
+     "assets/pixelface_desktop.jpg"
+    ]
+   }
+  },
+  {
    "beat": 63.719,
    "type": "openWindow",
    "params": {
@@ -1207,18 +1219,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 30.218,
-   "type": "deskWallpaper",
-   "params": {
-    "id": "face",
-    "mode": "slides",
-    "hz": 0.1,
-    "images": [
-     "assets/pixelface_desktop.jpg"
-    ]
    }
   },
   {
@@ -5576,147 +5576,147 @@
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp0"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp1"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp2"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp3"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp4"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp5"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp6"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp7"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp8"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp9"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp10"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp11"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp12"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp13"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp14"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "sp15"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "hy0"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "hy1"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "hy2"
    }
   },
   {
-   "beat": 93.594,
+   "beat": 93.487,
    "type": "closeWindow",
    "params": {
     "id": "kickswarm"
    }
   },
   {
-   "beat": 93.794,
+   "beat": 93.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -5741,7 +5741,7 @@
    }
   },
   {
-   "t": 44.19,
+   "t": 44.14,
    "type": "deskWallpaper",
    "params": {
     "id": "words",
@@ -5812,11 +5812,11 @@
      13.774,
      14.241
     ],
-    "durationSeconds": 15.972
+    "durationSeconds": 16.022
    }
   },
   {
-   "beat": 94.794,
+   "beat": 94.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -5953,29 +5953,7 @@
    }
   },
   {
-   "beat": 95.719,
-   "type": "openWindow",
-   "params": {
-    "id": "smchorus1B5",
-    "frame": [
-     69,
-     253,
-     130,
-     100
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    }
-   }
-  },
-  {
-   "beat": 95.794,
+   "beat": 95.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -5993,6 +5971,28 @@
      "seed": 5114,
      "chrome": "none",
      "title": "pointer"
+    },
+    "animate": {
+     "kind": "none"
+    }
+   }
+  },
+  {
+   "beat": 95.719,
+   "type": "openWindow",
+   "params": {
+    "id": "smchorus1B5",
+    "frame": [
+     69,
+     253,
+     130,
+     100
+    ],
+    "content": {
+     "kind": "color",
+     "hex": "#68BDF8",
+     "chrome": "mixed",
+     "title": "look://again"
     },
     "animate": {
      "kind": "none"
@@ -6110,7 +6110,7 @@
    }
   },
   {
-   "beat": 97.794,
+   "beat": 97.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6135,7 +6135,7 @@
    }
   },
   {
-   "beat": 98.794,
+   "beat": 98.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6160,7 +6160,7 @@
    }
   },
   {
-   "beat": 99.794,
+   "beat": 99.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6185,7 +6185,7 @@
    }
   },
   {
-   "beat": 100.794,
+   "beat": 100.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6210,7 +6210,7 @@
    }
   },
   {
-   "beat": 101.794,
+   "beat": 101.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6235,7 +6235,7 @@
    }
   },
   {
-   "beat": 102.794,
+   "beat": 102.687,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6260,7 +6260,7 @@
    }
   },
   {
-   "beat": 103.294,
+   "beat": 103.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6285,7 +6285,7 @@
    }
   },
   {
-   "beat": 106.294,
+   "beat": 106.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6310,7 +6310,7 @@
    }
   },
   {
-   "beat": 107.294,
+   "beat": 107.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6335,7 +6335,7 @@
    }
   },
   {
-   "beat": 110.294,
+   "beat": 110.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6360,7 +6360,7 @@
    }
   },
   {
-   "beat": 111.294,
+   "beat": 111.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6385,7 +6385,7 @@
    }
   },
   {
-   "beat": 112.294,
+   "beat": 112.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6410,7 +6410,7 @@
    }
   },
   {
-   "beat": 114.294,
+   "beat": 114.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6435,7 +6435,7 @@
    }
   },
   {
-   "beat": 115.294,
+   "beat": 115.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6460,7 +6460,7 @@
    }
   },
   {
-   "beat": 116.294,
+   "beat": 116.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6485,7 +6485,7 @@
    }
   },
   {
-   "beat": 117.294,
+   "beat": 117.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6510,7 +6510,7 @@
    }
   },
   {
-   "beat": 118.294,
+   "beat": 118.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6535,7 +6535,7 @@
    }
   },
   {
-   "beat": 119.294,
+   "beat": 119.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6560,7 +6560,7 @@
    }
   },
   {
-   "beat": 121.294,
+   "beat": 121.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6585,7 +6585,7 @@
    }
   },
   {
-   "beat": 122.294,
+   "beat": 122.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6610,7 +6610,7 @@
    }
   },
   {
-   "beat": 125.294,
+   "beat": 125.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6635,7 +6635,7 @@
    }
   },
   {
-   "beat": 126.294,
+   "beat": 126.187,
    "type": "openWindow",
    "params": {
     "id": "wordswarm",
@@ -6825,6 +6825,15 @@
    }
   },
   {
+   "t": 60.082,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "desk3",
+    "mode": "solid",
+    "hex": "#F2F4FE"
+   }
+  },
+  {
    "beat": 127.906,
    "type": "openWindow",
    "params": {
@@ -6844,15 +6853,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 60.132,
-   "type": "deskWallpaper",
-   "params": {
-    "id": "desk3",
-    "mode": "solid",
-    "hex": "#F2F4FE"
    }
   },
   {
@@ -6981,7 +6981,7 @@
    }
   },
   {
-   "beat": 143.083,
+   "beat": 142.083,
    "type": "oracle",
    "params": {
     "id": "oracle",
@@ -7004,7 +7004,7 @@
      "NO, THOUGH IT WILL FEEL LIKE YES",
      "NO, AND YOU WILL KNOW WHY"
     ],
-    "answerBeats": 10
+    "answerBeats": 13.5
    }
   },
   {
@@ -7194,6 +7194,15 @@
    }
   },
   {
+   "t": 75.023,
+   "type": "deskWallpaper",
+   "params": {
+    "id": "desk3b",
+    "mode": "solid",
+    "hex": "#020AF5"
+   }
+  },
+  {
    "beat": 159.906,
    "type": "openWindow",
    "params": {
@@ -7213,15 +7222,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 75.073,
-   "type": "deskWallpaper",
-   "params": {
-    "id": "desk3b",
-    "mode": "solid",
-    "hex": "#020AF5"
    }
   },
   {
@@ -8977,7 +8977,7 @@
     "id": "desk4",
     "mode": "solid",
     "hex": "#020AF5",
-    "durationSeconds": 54.163
+    "durationSeconds": 52.296
    }
   },
   {
@@ -9027,14 +9027,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 111.106,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -9108,14 +9100,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 111.256,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -9222,14 +9206,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 111.406,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -9420,14 +9396,6 @@
    }
   },
   {
-   "t": 111.556,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 111.616,
    "type": "openWindow",
    "params": {
@@ -9535,14 +9503,6 @@
    }
   },
   {
-   "t": 111.706,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 238.407,
    "type": "openWindow",
    "params": {
@@ -9639,14 +9599,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 111.856,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -9753,14 +9705,6 @@
     "durationBeats": 1.5,
     "amplitude": 18,
     "frequency": 9
-   }
-  },
-  {
-   "t": 112.006,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -9877,14 +9821,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 112.156,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -10045,14 +9981,6 @@
    }
   },
   {
-   "t": 112.306,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 112.336,
    "type": "openWindow",
    "params": {
@@ -10070,26 +9998,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 112.336,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -10189,34 +10097,6 @@
     "durationSeconds": 0.4,
     "amplitude": 26,
     "frequency": 15
-   }
-  },
-  {
-   "t": 112.456,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 112.476,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -10321,26 +10201,6 @@
    "params": {
     "color": "#C1C7D6",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 112.616,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -10494,26 +10354,6 @@
    }
   },
   {
-   "t": 112.756,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 240.743,
    "type": "openWindow",
    "params": {
@@ -10616,26 +10456,6 @@
    }
   },
   {
-   "t": 112.896,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 112.906,
    "type": "screenFlash",
    "params": {
@@ -10720,26 +10540,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 113.036,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -10844,26 +10644,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 113.176,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11008,26 +10788,6 @@
    }
   },
   {
-   "t": 113.316,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 241.843,
    "type": "openWindow",
    "params": {
@@ -11132,26 +10892,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 113.456,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11261,26 +11001,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 113.596,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11398,26 +11118,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 113.736,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11542,26 +11242,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 113.876,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11719,26 +11399,6 @@
    }
   },
   {
-   "t": 114.016,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 243.409,
    "type": "openWindow",
    "params": {
@@ -11829,26 +11489,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 114.156,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -11976,26 +11616,6 @@
    }
   },
   {
-   "t": 114.296,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 114.306,
    "type": "openWindow",
    "params": {
@@ -12069,14 +11689,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 114.406,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -12240,14 +11852,6 @@
    }
   },
   {
-   "t": 114.556,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 114.576,
    "type": "openWindow",
    "params": {
@@ -12341,14 +11945,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 114.706,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -12517,14 +12113,6 @@
   },
   {
    "t": 114.856,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 114.856,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -12663,14 +12251,6 @@
    }
   },
   {
-   "t": 115.006,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 115.036,
    "type": "moveWindow",
    "params": {
@@ -12804,14 +12384,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 115.156,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -12974,14 +12546,6 @@
    }
   },
   {
-   "t": 115.306,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 115.376,
    "type": "openWindow",
    "params": {
@@ -13095,14 +12659,6 @@
    }
   },
   {
-   "t": 115.456,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 246.424,
    "type": "fakeDialog",
    "params": {
@@ -13212,14 +12768,6 @@
     "durationSeconds": 0.4,
     "amplitude": 26,
     "frequency": 15
-   }
-  },
-  {
-   "t": 115.606,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -13342,14 +12890,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 115.756,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -13483,14 +13023,6 @@
     "animate": {
      "kind": "fadeIn"
     }
-   }
-  },
-  {
-   "t": 115.906,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -13634,14 +13166,6 @@
    }
   },
   {
-   "t": 116.056,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 116.076,
    "type": "moveWindow",
    "params": {
@@ -13710,26 +13234,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 116.116,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -13848,26 +13352,6 @@
    }
   },
   {
-   "t": 116.256,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 248.294,
    "type": "openWindow",
    "params": {
@@ -13961,26 +13445,6 @@
    "params": {
     "color": "#6C86E2",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 116.396,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -14142,26 +13606,6 @@
    }
   },
   {
-   "t": 116.536,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 248.766,
    "type": "openWindow",
    "params": {
@@ -14291,26 +13735,6 @@
    }
   },
   {
-   "t": 116.676,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 116.726,
    "type": "moveWindow",
    "params": {
@@ -14392,26 +13816,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 116.816,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -14507,26 +13911,6 @@
    "params": {
     "color": "#669DF6",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 116.956,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -14646,26 +14030,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 117.096,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -14826,26 +14190,6 @@
    }
   },
   {
-   "t": 117.236,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 117.246,
    "type": "moveWindow",
    "params": {
@@ -14964,26 +14308,6 @@
    }
   },
   {
-   "t": 117.376,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 117.386,
    "type": "fakeDialog",
    "params": {
@@ -15064,26 +14388,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 117.516,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -15231,26 +14535,6 @@
    }
   },
   {
-   "t": 117.656,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 251.214,
    "type": "jiggle",
    "params": {
@@ -15342,26 +14626,6 @@
      "kind": "springIn"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 117.796,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -15495,26 +14759,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 117.936,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -15691,14 +14935,6 @@
    }
   },
   {
-   "t": 118.156,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 118.166,
    "type": "fakeDialog",
    "params": {
@@ -15839,14 +15075,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 118.306,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -16012,14 +15240,6 @@
    }
   },
   {
-   "t": 118.456,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 118.496,
    "type": "openWindow",
    "params": {
@@ -16116,14 +15336,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 118.606,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -16294,14 +15506,6 @@
    }
   },
   {
-   "t": 118.756,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 118.776,
    "type": "cursorPath",
    "params": {
@@ -16406,14 +15610,6 @@
     "durationBeats": 1.5,
     "amplitude": 18,
     "frequency": 9
-   }
-  },
-  {
-   "t": 118.906,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -16530,14 +15726,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 119.056,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -16715,14 +15903,6 @@
    }
   },
   {
-   "t": 119.206,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 119.216,
    "type": "openWindow",
    "params": {
@@ -16862,14 +16042,6 @@
     "durationSeconds": 0.16,
     "easing": "easeInOut",
     "mode": "warp"
-   }
-  },
-  {
-   "t": 119.356,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -17025,14 +16197,6 @@
    }
   },
   {
-   "t": 119.506,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 119.536,
    "type": "openWindow",
    "params": {
@@ -17136,14 +16300,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 119.656,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -17313,14 +16469,6 @@
    }
   },
   {
-   "t": 119.806,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 119.846,
    "type": "moveWindow",
    "params": {
@@ -17377,26 +16525,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 119.896,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -17487,26 +16615,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 120.036,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -17618,26 +16726,6 @@
    }
   },
   {
-   "t": 120.176,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 256.647,
    "type": "fakeDialog",
    "params": {
@@ -17726,26 +16814,6 @@
    "params": {
     "color": "#F2F4FE",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 120.316,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -17899,26 +16967,6 @@
    }
   },
   {
-   "t": 120.456,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 120.496,
    "type": "openWindow",
    "params": {
@@ -18006,26 +17054,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 120.596,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -18123,26 +17151,6 @@
    }
   },
   {
-   "t": 120.736,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 120.756,
    "type": "moveWindow",
    "params": {
@@ -18211,26 +17219,6 @@
    "params": {
     "color": "#6C86E2",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 120.876,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -18376,26 +17364,6 @@
    }
   },
   {
-   "t": 121.016,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 121.026,
    "type": "fakeDialog",
    "params": {
@@ -18514,26 +17482,6 @@
    "params": {
     "color": "#F2F4FE",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 121.156,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -18658,26 +17606,6 @@
    }
   },
   {
-   "t": 121.296,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 121.306,
    "type": "screenFlash",
    "params": {
@@ -18762,26 +17690,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 121.436,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -18933,26 +17841,6 @@
    }
   },
   {
-   "t": 121.576,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 121.606,
    "type": "screenFlash",
    "params": {
@@ -19076,26 +17964,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 121.716,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -19230,14 +18098,6 @@
     "durationSeconds": 0.16,
     "easing": "easeInOut",
     "mode": "warp"
-   }
-  },
-  {
-   "t": 121.906,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -19415,14 +18275,6 @@
    }
   },
   {
-   "t": 122.056,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 122.066,
    "type": "fakeDialog",
    "params": {
@@ -19591,14 +18443,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 122.206,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -19831,14 +18675,6 @@
    }
   },
   {
-   "t": 122.356,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "t": 122.416,
    "type": "openWindow",
    "params": {
@@ -19967,14 +18803,6 @@
    }
   },
   {
-   "t": 122.506,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 261.542,
    "type": "fakeDialog",
    "params": {
@@ -20011,14 +18839,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 122.556,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.07
    }
   },
   {
@@ -20182,14 +19002,6 @@
    }
   },
   {
-   "t": 122.656,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 261.902,
    "type": "openWindow",
    "params": {
@@ -20269,14 +19081,6 @@
    }
   },
   {
-   "t": 122.736,
-   "type": "screenFlash",
-   "params": {
-    "color": "#091724",
-    "durationSeconds": 0.07
-   }
-  },
-  {
    "beat": 262.048,
    "type": "openWindow",
    "params": {
@@ -20332,14 +19136,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 122.806,
-   "type": "screenFlash",
-   "params": {
-    "color": "#020AF5",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -20494,14 +19290,6 @@
    }
   },
   {
-   "t": 122.916,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.07
-   }
-  },
-  {
    "beat": 262.453,
    "type": "openWindow",
    "params": {
@@ -20523,14 +19311,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 122.956,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -20710,14 +19490,6 @@
    }
   },
   {
-   "t": 123.096,
-   "type": "screenFlash",
-   "params": {
-    "color": "#091724",
-    "durationSeconds": 0.07
-   }
-  },
-  {
    "beat": 262.803,
    "type": "moveWindow",
    "params": {
@@ -20767,14 +19539,6 @@
      460,
      190
     ]
-   }
-  },
-  {
-   "t": 123.106,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -20933,14 +19697,6 @@
   },
   {
    "t": 123.256,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 123.256,
    "type": "cursorPath",
    "params": {
     "path": "linear",
@@ -20957,14 +19713,6 @@
     "durationSeconds": 0.16,
     "easing": "easeInOut",
     "mode": "warp"
-   }
-  },
-  {
-   "t": 123.276,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.07
    }
   },
   {
@@ -21142,14 +19890,6 @@
    }
   },
   {
-   "t": 123.406,
-   "type": "screenFlash",
-   "params": {
-    "color": "#C1C7D6",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 263.462,
    "type": "openWindow",
    "params": {
@@ -21202,14 +19942,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 123.456,
-   "type": "screenFlash",
-   "params": {
-    "color": "#091724",
-    "durationSeconds": 0.07
    }
   },
   {
@@ -21294,26 +20026,6 @@
    }
   },
   {
-   "t": 123.536,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 263.754,
    "type": "openWindow",
    "params": {
@@ -21334,14 +20046,6 @@
      "kind": "springIn"
     },
     "interactive": true
-   }
-  },
-  {
-   "t": 123.556,
-   "type": "screenFlash",
-   "params": {
-    "color": "#6C86E2",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -21458,14 +20162,6 @@
    }
   },
   {
-   "t": 123.636,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.07
-   }
-  },
-  {
    "beat": 263.942,
    "type": "openWindow",
    "params": {
@@ -21529,26 +20225,6 @@
     "animate": {
      "kind": "fadeIn"
     }
-   }
-  },
-  {
-   "t": 123.676,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -21692,26 +20368,6 @@
    }
   },
   {
-   "t": 123.816,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 264.396,
    "type": "openWindow",
    "params": {
@@ -21838,26 +20494,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 123.956,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -22001,26 +20637,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 124.096,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -22196,26 +20812,6 @@
    }
   },
   {
-   "t": 124.236,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 124.256,
    "type": "openWindow",
    "params": {
@@ -22380,26 +20976,6 @@
    }
   },
   {
-   "t": 124.376,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 124.396,
    "type": "moveWindow",
    "params": {
@@ -22526,26 +21102,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 124.516,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      250
-     ],
-     [
-      300,
-      800
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -22688,26 +21244,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 124.656,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      300,
-      800
-     ],
-     [
-      1250,
-      780
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -22855,26 +21391,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 124.796,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1250,
-      780
-     ],
-     [
-      700,
-      150
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -23053,26 +21569,6 @@
    }
   },
   {
-   "t": 124.936,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      700,
-      150
-     ],
-     [
-      150,
-      700
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 124.956,
    "type": "openWindow",
    "params": {
@@ -23184,26 +21680,6 @@
    "params": {
     "color": "#669DF6",
     "durationSeconds": 0.08
-   }
-  },
-  {
-   "t": 125.076,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      150,
-      700
-     ],
-     [
-      1300,
-      520
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
    }
   },
   {
@@ -23383,26 +21859,6 @@
    }
   },
   {
-   "t": 125.216,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      1300,
-      520
-     ],
-     [
-      600,
-      820
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "beat": 267.389,
    "type": "moveWindow",
    "params": {
@@ -23537,26 +21993,6 @@
    }
   },
   {
-   "t": 125.356,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      600,
-      820
-     ],
-     [
-      200,
-      200
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 125.376,
    "type": "openWindow",
    "params": {
@@ -23685,26 +22121,6 @@
    }
   },
   {
-   "t": 125.496,
-   "type": "cursorPath",
-   "params": {
-    "path": "linear",
-    "points": [
-     [
-      200,
-      200
-     ],
-     [
-      1300,
-      250
-     ]
-    ],
-    "durationSeconds": 0.16,
-    "easing": "easeInOut",
-    "mode": "warp"
-   }
-  },
-  {
    "t": 125.506,
    "type": "screenFlash",
    "params": {
@@ -23809,14 +22225,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "t": 125.656,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -24001,14 +22409,6 @@
    }
   },
   {
-   "t": 125.806,
-   "type": "screenFlash",
-   "params": {
-    "color": "#68BDF8",
-    "durationSeconds": 0.08
-   }
-  },
-  {
    "beat": 268.619,
    "type": "moveWindow",
    "params": {
@@ -24189,14 +22589,6 @@
     ],
     "durationSeconds": 0.2,
     "easing": "easeInOut"
-   }
-  },
-  {
-   "t": 125.956,
-   "type": "screenFlash",
-   "params": {
-    "color": "#669DF6",
-    "durationSeconds": 0.08
    }
   },
   {
@@ -24403,14 +22795,6 @@
    }
   },
   {
-   "t": 126.106,
-   "type": "screenFlash",
-   "params": {
-    "color": "#F2F4FE",
-    "durationSeconds": 0.2
-   }
-  },
-  {
    "beat": 269.233,
    "type": "openWindow",
    "params": {
@@ -24568,14 +22952,6 @@
     ],
     "durationBeats": 2.795,
     "easing": "linear"
-   }
-  },
-  {
-   "t": 126.456,
-   "type": "screenFlash",
-   "params": {
-    "color": "#091724",
-    "durationSeconds": 0.6
    }
   },
   {
@@ -28241,6 +26617,28 @@
    }
   },
   {
+   "t": 147.807,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "what I want",
+    "body": "what I want\nI told you that i need your love so give it to me",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "critical"
+   }
+  },
+  {
    "beat": 316,
    "type": "screenFlash",
    "params": {
@@ -28307,8 +26705,8 @@
    "params": {
     "id": "w1",
     "frame": [
-     236,
-     334,
+     139,
+     330,
      281,
      199
     ],
@@ -28353,6 +26751,13 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 148.274,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -28413,6 +26818,29 @@
    }
   },
   {
+   "t": 148.508,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "I told you that I",
+    "body": "what I want\nI told you that i need your love so give it to me",
+    "buttons": [
+     "ok",
+     "more"
+    ],
+    "icon": "critical"
+   }
+  },
+  {
    "beat": 317.269,
    "type": "jiggle",
    "params": {
@@ -28451,7 +26879,7 @@
    "params": {
     "id": "w6",
     "frame": [
-     1015,
+     1020,
      616,
      347,
      274
@@ -28500,22 +26928,10 @@
    }
   },
   {
-   "beat": 318.204,
-   "type": "fakeDialog",
+   "t": 149.092,
+   "type": "closeWindow",
    "params": {
-    "id": "d0",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     10,
-     433,
-     460,
-     190
-    ]
+    "id": "lyricbox"
    }
   },
   {
@@ -28547,8 +26963,8 @@
    "params": {
     "id": "w9",
     "frame": [
-     190,
-     40,
+     55,
+     10,
      365,
      239
     ],
@@ -28578,8 +26994,8 @@
    "params": {
     "id": "w10",
     "frame": [
-     232,
-     574,
+     89,
+     676,
      331,
      210
     ],
@@ -28696,8 +27112,8 @@
    "params": {
     "id": "w12",
     "frame": [
-     131,
-     85,
+     89,
+     59,
      331,
      199
     ],
@@ -28789,6 +27205,29 @@
     "animate": {
      "kind": "none"
     }
+   }
+  },
+  {
+   "t": 149.675,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "need your love",
+    "body": "what I want\nI told you that i need your love so give it to me",
+    "buttons": [
+     "not now",
+     "ok"
+    ],
+    "icon": "critical"
    }
   },
   {
@@ -28964,12 +27403,19 @@
    }
   },
   {
+   "t": 150.142,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
+   }
+  },
+  {
    "beat": 320.727,
    "type": "openWindow",
    "params": {
     "id": "w2",
     "frame": [
-     912,
+     1020,
      574,
      374,
      316
@@ -29068,6 +27514,28 @@
    }
   },
   {
+   "t": 150.376,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "so give it to me",
+    "body": "what I want\nI told you that i need your love so give it to me",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "critical"
+   }
+  },
+  {
    "beat": 321.406,
    "type": "openWindow",
    "params": {
@@ -29091,26 +27559,6 @@
     "animate": {
      "kind": "none"
     }
-   }
-  },
-  {
-   "beat": 321.698,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     582,
-     524,
-     460,
-     190
-    ]
    }
   },
   {
@@ -29152,23 +27600,10 @@
    }
   },
   {
-   "beat": 322.24,
-   "type": "fakeDialog",
+   "t": 150.959,
+   "type": "closeWindow",
    "params": {
-    "id": "d2",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     204,
-     45,
-     460,
-     190
-    ]
+    "id": "lyricbox"
    }
   },
   {
@@ -29299,8 +27734,8 @@
    "params": {
     "id": "w10",
     "frame": [
-     988,
-     317,
+     1020,
+     315,
      308,
      230
     ],
@@ -29325,7 +27760,7 @@
    "params": {
     "id": "w11",
     "frame": [
-     50,
+     34,
      10,
      386,
      322
@@ -29349,6 +27784,29 @@
    "params": {
     "color": "#0078D7",
     "durationSeconds": 0.09
+   }
+  },
+  {
+   "t": 151.543,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "running up",
+    "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
+    "buttons": [
+     "more",
+     "ok"
+    ],
+    "icon": "caution"
    }
   },
   {
@@ -29382,9 +27840,9 @@
     "id": "w13",
     "frame": [
      227,
-     566,
+     590,
      401,
-     324
+     300
     ],
     "content": {
      "kind": "image",
@@ -29458,9 +27916,9 @@
    "params": {
     "id": "w2",
     "frame": [
-     1022,
+     1030,
      620,
-     408,
+     400,
      270
     ],
     "content": {
@@ -29473,6 +27931,13 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 152.127,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -29491,7 +27956,7 @@
     "frame": [
      10,
      543,
-     419,
+     400,
      304
     ],
     "content": {
@@ -29533,6 +27998,28 @@
    }
   },
   {
+   "t": 152.477,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "my currents",
+    "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "caution"
+   }
+  },
+  {
    "beat": 325.759,
    "type": "openWindow",
    "params": {
@@ -29557,30 +28044,18 @@
    }
   },
   {
-   "beat": 325.945,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     615,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
    "t": 152.634,
    "type": "screenFlash",
    "params": {
     "color": "#FEFEFE",
     "durationSeconds": 0.09
+   }
+  },
+  {
+   "t": 152.71,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -29599,9 +28074,9 @@
    "params": {
     "id": "w6",
     "frame": [
-     964,
+     1030,
      265,
-     466,
+     400,
      298
     ],
     "content": {
@@ -29643,23 +28118,26 @@
    }
   },
   {
-   "beat": 326.931,
+   "t": 152.944,
    "type": "fakeDialog",
    "params": {
-    "id": "d0",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
     "frame": [
-     10,
-     262,
-     460,
-     190
-    ]
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "I can\u2019t get enough",
+    "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
+    "buttons": [
+     "ok",
+     "more"
+    ],
+    "icon": "caution"
    }
   },
   {
@@ -29701,7 +28179,7 @@
     "frame": [
      10,
      585,
-     419,
+     400,
      305
     ],
     "content": {
@@ -29748,9 +28226,9 @@
    "params": {
     "id": "w11",
     "frame": [
-     949,
+     1030,
      547,
-     481,
+     400,
      343
     ],
     "content": {
@@ -29763,6 +28241,13 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 153.527,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -29799,33 +28284,14 @@
    }
   },
   {
-   "beat": 328.389,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     46,
-     460,
-     460,
-     190
-    ]
-   }
-  },
-  {
    "beat": 328.713,
    "type": "openWindow",
    "params": {
     "id": "w13",
     "frame": [
-     924,
-     321,
-     420,
+     1020,
+     331,
+     400,
      355
     ],
     "content": {
@@ -29852,7 +28318,7 @@
      185,
      10,
      448,
-     342
+     300
     ],
     "content": {
      "kind": "lyric",
@@ -29875,6 +28341,29 @@
    "params": {
     "color": "#68BDF8",
     "durationSeconds": 0.09
+   }
+  },
+  {
+   "t": 154.111,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "of this feeling baby",
+    "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
+    "buttons": [
+     "not now",
+     "ok"
+    ],
+    "icon": "caution"
    }
   },
   {
@@ -29906,9 +28395,9 @@
    "params": {
     "id": "w2",
     "frame": [
-     899,
-     491,
-     467,
+     1020,
+     533,
+     400,
      310
     ],
     "content": {
@@ -29966,7 +28455,7 @@
     "frame": [
      10,
      10,
-     460,
+     400,
      281
     ],
     "content": {
@@ -30022,7 +28511,7 @@
      241,
      10,
      380,
-     302
+     300
     ],
     "content": {
      "kind": "image",
@@ -30037,43 +28526,10 @@
    }
   },
   {
-   "beat": 330.408,
-   "type": "fakeDialog",
+   "t": 154.695,
+   "type": "closeWindow",
    "params": {
-    "id": "d2",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     182,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 330.606,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     657,
-     10,
-     460,
-     190
-    ]
+    "id": "lyricbox"
    }
   },
   {
@@ -30082,64 +28538,6 @@
    "params": {
     "color": "#0078D7",
     "durationSeconds": 0.09
-   }
-  },
-  {
-   "beat": 330.856,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     151,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 331.108,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
-    "frame": [
-     326,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 331.368,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d2",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     961,
-     337,
-     460,
-     190
-    ]
    }
   },
   {
@@ -30158,6 +28556,28 @@
     "durationBeats": 1.5,
     "amplitude": 18,
     "frequency": 9
+   }
+  },
+  {
+   "t": 155.278,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "all I got",
+    "body": "all i got\ni\u2019m giving that so give it up",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "info"
    }
   },
   {
@@ -30185,62 +28605,10 @@
    }
   },
   {
-   "beat": 332.205,
-   "type": "fakeDialog",
+   "t": 155.745,
+   "type": "closeWindow",
    "params": {
-    "id": "d3",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     10,
-     169,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 332.418,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     433,
-     575,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 332.739,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     38,
-     553,
-     460,
-     190
-    ]
+    "id": "lyricbox"
    }
   },
   {
@@ -30252,23 +28620,26 @@
    }
   },
   {
-   "beat": 333.007,
+   "t": 155.979,
    "type": "fakeDialog",
    "params": {
-    "id": "d2",
-    "title": "need your love",
-    "body": "so give it to me",
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "I\u2019m giving that",
+    "body": "all i got\ni\u2019m giving that so give it up",
     "buttons": [
      "more",
      "ok"
     ],
-    "icon": "caution",
-    "frame": [
-     1056,
-     642,
-     460,
-     190
-    ]
+    "icon": "info"
    }
   },
   {
@@ -30302,7 +28673,7 @@
     "frame": [
      10,
      235,
-     439,
+     400,
      315
     ],
     "content": {
@@ -30336,33 +28707,14 @@
    }
   },
   {
-   "beat": 333.983,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     1065,
-     10,
-     460,
-     190
-    ]
-   }
-  },
-  {
    "beat": 334.197,
    "type": "openWindow",
    "params": {
     "id": "w9",
     "frame": [
-     16,
+     20,
      10,
-     476,
+     400,
      319
     ],
     "content": {
@@ -30384,9 +28736,9 @@
    "params": {
     "id": "w10",
     "frame": [
-     945,
-     300,
-     450,
+     1020,
+     301,
+     400,
      321
     ],
     "content": {
@@ -30399,6 +28751,13 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 156.562,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -30445,6 +28804,28 @@
    }
   },
   {
+   "t": 156.913,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "so give it up",
+    "body": "all i got\ni\u2019m giving that so give it up",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "info"
+   }
+  },
+  {
    "t": 156.914,
    "type": "screenFlash",
    "params": {
@@ -30471,7 +28852,7 @@
      10,
      10,
      541,
-     452
+     300
     ],
     "content": {
      "kind": "lyric",
@@ -30497,7 +28878,7 @@
      443,
      10,
      450,
-     355
+     300
     ],
     "content": {
      "kind": "code",
@@ -30585,9 +28966,9 @@
     "id": "w1",
     "frame": [
      254,
-     559,
+     590,
      474,
-     331
+     300
     ],
     "content": {
      "kind": "image",
@@ -30602,6 +28983,13 @@
    }
   },
   {
+   "t": 157.496,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
+   }
+  },
+  {
    "beat": 336.62,
    "type": "openWindow",
    "params": {
@@ -30609,7 +28997,7 @@
     "frame": [
      10,
      480,
-     430,
+     400,
      340
     ],
     "content": {
@@ -30634,9 +29022,9 @@
     "id": "w3",
     "frame": [
      737,
-     566,
+     590,
      477,
-     324
+     300
     ],
     "content": {
      "kind": "color",
@@ -30666,7 +29054,7 @@
     "frame": [
      10,
      202,
-     442,
+     400,
      303
     ],
     "content": {
@@ -30679,6 +29067,29 @@
      "kind": "none"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 157.846,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "I told you that I",
+    "body": "i told you that I\nneed your love\nso give it to me",
+    "buttons": [
+     "ok",
+     "more"
+    ],
+    "icon": "critical"
    }
   },
   {
@@ -30710,7 +29121,7 @@
      509,
      10,
      534,
-     450
+     300
     ],
     "content": {
      "kind": "lyric",
@@ -30741,9 +29152,9 @@
    "params": {
     "id": "w6",
     "frame": [
-     952,
+     1030,
      10,
-     478,
+     400,
      343
     ],
     "content": {
@@ -30762,23 +29173,10 @@
    }
   },
   {
-   "beat": 338.298,
-   "type": "fakeDialog",
+   "t": 158.43,
+   "type": "closeWindow",
    "params": {
-    "id": "d0",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     759,
-     531,
-     460,
-     190
-    ]
+    "id": "lyricbox"
    }
   },
   {
@@ -30820,9 +29218,9 @@
     "id": "w8",
     "frame": [
      926,
-     567,
+     590,
      425,
-     323
+     300
     ],
     "content": {
      "kind": "code",
@@ -30834,45 +29232,6 @@
      "kind": "none"
     },
     "interactive": true
-   }
-  },
-  {
-   "beat": 339.039,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d1",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     1016,
-     103,
-     460,
-     190
-    ]
-   }
-  },
-  {
-   "beat": 339.215,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d2",
-    "title": "i told you that I",
-    "body": "need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     997,
-     287,
-     460,
-     190
-    ]
    }
   },
   {
@@ -30915,7 +29274,7 @@
      169,
      10,
      465,
-     309
+     300
     ],
     "content": {
      "kind": "code",
@@ -30930,15 +29289,38 @@
    }
   },
   {
+   "t": 159.014,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "need your love",
+    "body": "i told you that I\nneed your love\nso give it to me",
+    "buttons": [
+     "not now",
+     "ok"
+    ],
+    "icon": "critical"
+   }
+  },
+  {
    "beat": 339.813,
    "type": "openWindow",
    "params": {
     "id": "w11",
     "frame": [
      229,
-     531,
+     590,
      466,
-     359
+     300
     ],
     "content": {
      "kind": "image",
@@ -30959,9 +29341,9 @@
     "id": "w12",
     "frame": [
      99,
-     527,
+     590,
      552,
-     363
+     300
     ],
     "content": {
      "kind": "uichaos",
@@ -30992,7 +29374,7 @@
     "frame": [
      10,
      357,
-     573,
+     400,
      352
     ],
     "content": {
@@ -31013,9 +29395,9 @@
    "params": {
     "id": "w0",
     "frame": [
-     81,
+     20,
      10,
-     469,
+     400,
      365
     ],
     "content": {
@@ -31028,6 +29410,13 @@
      "kind": "springIn"
     },
     "interactive": true
+   }
+  },
+  {
+   "t": 159.481,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -31057,7 +29446,7 @@
      232,
      10,
      464,
-     322
+     300
     ],
     "content": {
      "kind": "uichaos",
@@ -31073,14 +29462,36 @@
    }
   },
   {
+   "t": 159.714,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lyricbox",
+    "anchor": "center",
+    "level": "floating",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "so give it to me",
+    "body": "i told you that I\nneed your love\nso give it to me",
+    "buttons": [
+     "ok"
+    ],
+    "icon": "critical"
+   }
+  },
+  {
    "beat": 341.228,
    "type": "openWindow",
    "params": {
     "id": "w2",
     "frame": [
-     925,
+     1029,
      10,
-     505,
+     400,
      399
     ],
     "content": {
@@ -31102,9 +29513,9 @@
     "id": "w3",
     "frame": [
      10,
-     512,
+     590,
      583,
-     378
+     300
     ],
     "content": {
      "kind": "uichaos",
@@ -31156,7 +29567,7 @@
      364,
      10,
      457,
-     306
+     300
     ],
     "content": {
      "kind": "uichaos",
@@ -31172,14 +29583,21 @@
    }
   },
   {
+   "t": 160.247,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
+   }
+  },
+  {
    "beat": 342.434,
    "type": "openWindow",
    "params": {
     "id": "w5",
     "frame": [
-     956,
+     1030,
      25,
-     474,
+     400,
      314
     ],
     "content": {
@@ -31198,26 +29616,6 @@
    }
   },
   {
-   "beat": 342.683,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d3",
-    "title": "need your love",
-    "body": "so give it to me",
-    "buttons": [
-     "more",
-     "ok"
-    ],
-    "icon": "caution",
-    "frame": [
-     816,
-     445,
-     460,
-     190
-    ]
-   }
-  },
-  {
    "t": 160.481,
    "type": "screenFlash",
    "params": {
@@ -31233,25 +29631,6 @@
    }
   },
   {
-   "beat": 342.974,
-   "type": "fakeDialog",
-   "params": {
-    "id": "d0",
-    "title": "what I want",
-    "body": "I told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical",
-    "frame": [
-     122,
-     571,
-     460,
-     190
-    ]
-   }
-  },
-  {
    "beat": 343,
    "type": "screenFlash",
    "params": {
@@ -31264,6 +29643,13 @@
    "type": "closeWindow",
    "params": {
     "id": "segswarm"
+   }
+  },
+  {
+   "beat": 343.05,
+   "type": "closeWindow",
+   "params": {
+    "id": "lyricbox"
    }
   },
   {
@@ -31652,7 +30038,7 @@
    }
   },
   {
-   "beat": 351,
+   "beat": 347,
    "type": "screenFlash",
    "params": {
     "color": "#F2F4FE",
@@ -31660,7 +30046,7 @@
    }
   },
   {
-   "beat": 351,
+   "beat": 347,
    "type": "credits",
    "params": {
     "id": "credits",
@@ -31687,7 +30073,8 @@
     "photoTilt": -4,
     "outroDelay": 2.0,
     "bootSeconds": 0,
-    "backdrop": "#FFFFFF",
+    "filter": "dither",
+    "backdrop": "#020AF5",
     "tile": "assets/credits_tile.png",
     "tileDriftSeconds": 4
    }

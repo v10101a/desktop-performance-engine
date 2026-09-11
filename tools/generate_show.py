@@ -86,7 +86,13 @@ DURATION = analysis["duration"]        # 169.85 — the last two cues are past t
 # on the desktop two thirds of a beat BEFORE it is sung.
 #
 # Raise it back toward 0.30 for any cue moved to `surface: "wallpaper"`.
-DESK_LATENCY = 0.03
+#
+# 0.08 since 2026-09-11: at 0.03 the artist heard every desktop word land "a hair" after
+# it was sung. The layer's assignment is a frame, but the commit that carries it waits on
+# whatever the main thread is doing on that frame, and in the passages the words play in
+# that is a window opening. Two more frames of lead cover it; it is still a quarter of
+# what the real wallpaper needed.
+DESK_LATENCY = 0.08
 
 def secs(beat):
     """Absolute seconds for a timeline beat (matches the loader's beat→time math)."""
@@ -206,7 +212,7 @@ CUES = {
     "glitch":     ("chorus2B",     -1, 0),   # 28  the vocal pickup bar (80): the eruption + the strobe, straight in
     "allglitch":  ("chorus2B",      4, 0),   # 29  PULLED — was the lyric desktop under the strobe; the slot keeps its number
     "lastwords":  ("break",         0, -1),  # 30  everything stops at 160.6 and closes on the silence
-    "ending":     ("break",         1, 3),   # 31  the end card, over the last seconds of the track
+    "ending":     ("break",         0, 3),   # 31  the end card, on the release of the last note (162.42 s, measured)
 }
 # The recut's authored seconds, and the clock they were read on: a video with ~9 s of
 # boot-up before the music. `WAS - RECUT_SHIFT` is where each cue sits in the track.
@@ -921,10 +927,14 @@ def build_face_blink():
 
 FACE_BLINK_W, FACE_BLINK_H = build_face_blink()
 
-# The end card's tiling face (2026-09-03). The card's backdrop is white and this drifts
-# across it, so the face is inked in the signature blue ON white — the app icon's
-# artwork with the two colours the other way round, which is what a blue-on-white
-# surface wants.
+# The end card's tiling face. The card's backdrop is the signature blue and this drifts
+# across it, so the face is inked WHITE on that blue — the app icon's own two colours,
+# the same way round as the icon, the desktop and the ring. (The card's terminals and
+# the polaroid are white windows, so the ground under them is the blue the whole piece
+# has been sitting on since the instrumental, not a white sheet arriving at the end.)
+# `CREDITS_TILE_FIELD` is the field, `DJ_BLUE`; the card's `backdrop` is set from the
+# same name below, and the engine fills the tile's padding from the artwork's own corner
+# pixel, so the three cannot disagree.
 #
 # Built from `pixelface.jpg` rather than drawn, so it is the same face as the icon, the
 # desktop and the ring, pixel for pixel: the old tile was a soft rounded rendition of it
@@ -933,13 +943,16 @@ FACE_BLINK_W, FACE_BLINK_H = build_face_blink()
 CREDITS_TILE = "assets/credits_tile.png"
 CREDITS_TILE_SIZE = (432, 331)      # unchanged: the drift is written around this size
 CREDITS_TILE_SHARE = 0.82           # margin enough that the repeats read as separate
+CREDITS_TILE_FIELD = DJ_BLUE        # the ground: the tile's field AND the card's backdrop
+CREDITS_TILE_INK = WHITE            # the face
 
 def build_credits_tile():
     from PIL import Image
     src_im = Image.open(os.path.join(ROOT, "assets/pixelface.jpg")).convert("RGB")
     tw, th = CREDITS_TILE_SIZE
-    ink = tuple(int(DJ_BLUE[i:i + 2], 16) for i in (1, 3, 5))
-    tile = Image.new("RGB", (tw, th), (255, 255, 255))
+    ink = tuple(int(CREDITS_TILE_INK[i:i + 2], 16) for i in (1, 3, 5))
+    field = tuple(int(CREDITS_TILE_FIELD[i:i + 2], 16) for i in (1, 3, 5))
+    tile = Image.new("RGB", (tw, th), field)
     w = round(tw * CREDITS_TILE_SHARE)
     h = round(src_im.height * w / src_im.width)
     face = src_im.resize((w, h), Image.NEAREST)
@@ -948,7 +961,7 @@ def build_credits_tile():
         for x in range(face.width):
             r, g, b = px[x, y]
             # The artwork is white ink on its own blue field: bright is the face.
-            px[x, y] = ink if (r + g + b) / 3 > 140 else (255, 255, 255)
+            px[x, y] = ink if (r + g + b) / 3 > 140 else field
     tile.paste(face, ((tw - w) // 2, (th - h) // 2))
     tile.save(os.path.join(ROOT, CREDITS_TILE))
     return w, h
@@ -1087,7 +1100,7 @@ for i, (when, text) in enumerate(spiral_phrases):
 # whole phrase and is CUT ON EVERY KICK — the real onsets out of
 # `assets/track_analysis.json`, the same 333 the eruption's ground flashes use, not a beat
 # grid. Nothing in the app is audio-reactive (`AudioClock` is a position clock, no tap, no
-# FFT), so a pulse has to be authored; `kicks_between` is how cue 21 already does it.
+# FFT), so a pulse has to be authored; `kicks_between` is how cue 28 already does it.
 #
 # THIS IS DELIBERATELY THE OPPOSITE OF CUE 12, and the difference is the point. Cue 12
 # holds each scene half a beat to three beats precisely so the flock has time to gather
@@ -1098,10 +1111,11 @@ for i, (when, text) in enumerate(spiral_phrases):
 # 0.45 × 90 = ~40 arrows, well under cue 12's 63: this plays UNDER a 21-window traveller
 # and over a wallpaper that is the drop's picture, and it is the beat, not the act.
 #
-# No `screenFlash` on the kick here, though the machinery is right there. Cue 21 owns
-# flashing on the kick; giving the drop the same gesture flattens the difference between
-# the two loudest passages in the piece, and the face on the desktop is what this is
-# meant to be seen over rather than through.
+# No `screenFlash` on the kick here, though the machinery is right there. Cue 28 owns
+# flashing on the kick (and cue 21 flashes on the strobe's grid, a bar at a time); giving
+# the drop the same gesture flattens the difference between the loudest passages in the
+# piece, and the face on the desktop is what this is meant to be seen over rather than
+# through.
 #
 # The run ends on the LYRIC's zero for chorus 1B, not on the phrase downbeat: cue 12
 # hands over one bar early (the desktop cards start on the pickup, and cue 12's own sweep
@@ -1413,13 +1427,17 @@ add(t1 + 1, "typeText", {"id": "greeting",
     "text": GREETING, "charsPerBeat": GREETING_CPB, "fontSize": 15,
     "chrome": "bubble", "tail": "left", "interactive": True})
 
-# A beat after the greeting has finished typing — derived from the copy, so rewriting
-# the greeting moves the invitation with it.
-ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB + 1
+# ON the beat the greeting finishes typing — derived from the copy, so rewriting the
+# greeting moves the invitation with it. It used to wait a beat more; the artist wanted
+# the torus to have more time (2026-09-11), and the question arriving as the last word
+# lands, balloon still up, is the first half of that.
+ORACLE_AT = t1 + 1 + len(GREETING) / GREETING_CPB
 # Answered and read before the map cuts in at cue 14. A viewer who won't play cannot
-# stall the show: it answers itself. Four beats shorter than it was, because the longer
-# greeting takes the beats from this end of the phrase.
-ORACLE_BEATS = 10
+# stall the show: it answers itself. 13.5 beats (2026-09-11), from 10: with the question a
+# beat earlier that is 1.6 s more to type in, and the answer lands 2.5 beats later than it
+# did — just over a second — with two seconds left to read it before the cut. The beat the
+# question moved buys only half a second, so most of the time has to come from here.
+ORACLE_BEATS = 13.5
 ORACLE = copy_fields("torus_oracle")             # docs/copy/torus_oracle.txt
 add(ORACLE_AT, "oracle", {"id": "oracle",
     "frame": [round(W * 0.04), round(H * 0.62), 460, 186],
@@ -2047,10 +2065,44 @@ if MANDALA_ACT:
 # =============================================================================
 body_colors = PALETTE + ["#0B0E16"]
 chaos_rng = random.Random(7)
-chaos = {"w": 0, "d": 0, "l": 0, "ui": 0, "p": 0}
+chaos = {"w": 0, "d": 0, "l": 0, "ui": 0, "p": 0, "a": 0, "gone": 0}
 
-def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
+def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, alerts=True,
+          rate_to=None, spread=0.65, evanesce=None):
     """~8 events/sec out of (cx, cy) — the explosion, not a ramp.
+
+    …unless `rate_to` is given: then the beats between cards slide from `rate` at `b0`
+    to `rate_to` at `b1`. Same draws per card either way.
+
+    `spread` is how far out the cards go, as a fraction of the screen width at full
+    size; 0.65 is the eruption, smaller keeps them close round the centre.
+
+    `evanesce=(life0, life1)` is how chorus 2A BUILDS (2026-09-11): every card it opens
+    is taken away again after a lifetime that grows from `life0` beats at `b0` to
+    `life1` at `b1`, and the SHARE of cards that go at all falls from all of them to
+    none — so at first the screen is a few cards popping round the middle and vanishing,
+    and by the end they all stay, which is the eruption proper arriving. The decision is
+    drawn from its own RNG, not `chaos_rng`, so the geometry is exactly what it would be
+    without it. A lifetime must stay under the pool's recycle period (fourteen ids), or a
+    close would take a NEWER card under the same id; and no close is scheduled past `b1`,
+    where the next act owns the pool.
+
+    `keep_out` is `(w, h)`: a hole that size, centred on (cx, cy), that no card may
+    land in — the centre alert's ground at cue 28 (2026-09-11). It is enforced by
+    PUSHING a card outward along the angle it already drew, never by re-rolling: a
+    rejected draw would shift every window after it in BOTH eruptions, whereas a push
+    is a pure function of the values already in hand, so with `keep_out=None` the
+    geometry is byte-identical to before it existed. A card is pushed along whichever
+    axis it is nearer (the sign of its angle), and its size on that axis is capped to
+    the room beside the hole, so the screen-edge clamp below can never slide it back
+    in: `room = (W - hole) / 2 - 20`, and the clamp leaves a near edge of at least `hole / 2`
+    from the centre exactly when the card is no wider than that room.
+
+    `alerts=False` leaves the dialog slot EMPTY rather than opening one of the
+    scattered lyric alerts: when the centre is a warning box carrying the sung line,
+    a second warning box in the ring with a different line is the one thing that
+    would undo it. The slot stays in the roll (no draw is added or removed) so this,
+    too, leaves the other eruption's scatter alone.
 
     `ui_chaos` is the fraction of the flat colour cards that come up packed with real
     macOS interface instead (`uichaos`, drawn by the engine). It is set on BOTH
@@ -2060,19 +2112,38 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
     windows" means a quarter on both.
 
     `photos` turns on the broken-screen photographs, and unlike `ui_chaos` it is set on
-    ONE eruption: bar 72 only. They are the one un-synthetic thing in the piece and they
-    read as that because they are rare and because they arrive once — spread over both
-    eruptions they would be another texture. Cue 21 keeps the machine-made noise it has
-    always had. The gate costs no `chaos_rng` draw, so both eruptions still scatter
-    identically; cue 21 simply shows a colour card where cue 27 shows a photograph.
+    ONE eruption: the one that closes the piece (cue 28). They are the one un-synthetic
+    thing in the piece and they read as that because they are rare and because they
+    arrive once — spread over every eruption they would be another texture. The gate
+    costs no `chaos_rng` draw, so the others scatter exactly as they would; they simply
+    show a colour card where cue 28 shows a photograph.
     """
+    fade_rng = random.Random(zlib.crc32(b"evanesce"))
+    def evanesce_close(wid, b, prog):
+        if evanesce is None:
+            return
+        life0, life1 = evanesce
+        life = life0 + (life1 - life0) * prog
+        if fade_rng.random() < 1.0 - prog and b + life < b1 - 0.1:
+            add(b + life, "closeWindow", {"id": wid})
+            chaos["gone"] += 1
     b = b0
     while b < b1:
-        u = 0.75 + 0.25 * (b - b0) / max(1e-6, b1 - b0)
-        r = 30 + (u ** 1.6) * 0.65 * W * chaos_rng.uniform(0.5, 1.0)
+        prog = (b - b0) / max(1e-6, b1 - b0)
+        u = 0.75 + 0.25 * prog
+        r = 30 + (u ** 1.6) * spread * W * chaos_rng.uniform(0.5, 1.0)
         ang = chaos_rng.uniform(0, 6.28318)
         w = round((110 + (u ** 1.7) * 380) * chaos_rng.uniform(0.8, 1.25))
         h = round(w * chaos_rng.uniform(0.6, 0.85))
+        if keep_out:
+            # Out of the hole, along the ray it drew — no new draws (see the docstring).
+            kw, kh = keep_out
+            if abs(math.cos(ang)) >= abs(math.sin(ang)):
+                w = min(w, round((W - kw) / 2 - 20))
+                r = max(r, (kw + w) / 2 / abs(math.cos(ang)))
+            else:
+                h = min(h, round((H - kh) / 2 - 20))
+                r = max(r, (kh + h) / 2 / abs(math.sin(ang)))
         x = max(10, min(cx + r * math.cos(ang) - w / 2, W - w - 10))
         y = max(10, min(cy + r * math.sin(ang) - h / 2, H - h - 10))
         roll = chaos_rng.random()
@@ -2136,6 +2207,7 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
                 chaos["p"] += 1
             add(b, "openWindow", {"id": f"w{chaos['w'] % 14}", "frame": [round(x), round(y), w, h],
                 "content": content, "animate": animate, "interactive": True})
+            evanesce_close(f"w{chaos['w'] % 14}", b, prog)
             chaos["w"] += 1
             # `packed` is still drawn on a photo card (the rng must not diverge), but it
             # did not render, so it does not count.
@@ -2151,6 +2223,7 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
             lyric_card(f"w{chaos['w'] % 14}", b, text, chaos["l"],
                        frame=[round(x), round(y), max(w, 260), h], chrome="mac",
                        font_cycle_hz=3.0)
+            evanesce_close(f"w{chaos['w'] % 14}", b, prog)
             chaos["w"] += 1; chaos["l"] += 1
         elif roll < 0.70:
             add(b, "openWindow", {"id": f"w{chaos['w'] % 14}",
@@ -2158,17 +2231,25 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False):
                 "content": {"kind": "code", "text": chaos_rng.choice(codes),
                             "chrome": "terminal", "title": "haunt.sh"},
                 "animate": {"kind": "none"}, "interactive": True})
+            evanesce_close(f"w{chaos['w'] % 14}", b, prog)
             chaos["w"] += 1
         elif roll < 0.86:
-            title, body, icon = lyrics.alert(chaos["d"])
-            add(b, "fakeDialog", {"id": f"d{chaos['d'] % 4}", "title": title, "body": body,
-                "buttons": lyrics.buttons(chaos["d"]), "icon": icon,
-                "frame": [round(x), round(y), 460, 190]})
+            # The slot is taken either way; with `alerts=False` nothing opens in it.
+            if alerts:
+                title, body, icon = lyrics.alert(chaos["d"])
+                add(b, "fakeDialog", {"id": f"d{chaos['d'] % 4}", "title": title, "body": body,
+                    "buttons": lyrics.buttons(chaos["d"]), "icon": icon,
+                    "frame": [round(x), round(y), 460, 190]})
+                chaos["a"] += 1
+            # ...and the counter advances either way. It is the only state this branch
+            # owns, and the other eruption reads its copy and its ids off it: skipping
+            # it here re-lettered every alert in cue 21 (measured: 32 events).
             chaos["d"] += 1
         elif chaos["w"] > 0:
             add(b, "jiggle", {"id": f"w{(chaos['w'] - 1) % 14}", "durationBeats": 1.5,
                 "amplitude": 18, "frequency": 9})
-        b += max(0.15, rate * chaos_rng.uniform(0.7, 1.3))
+        step = rate if rate_to is None else rate + (rate_to - rate) * prog
+        b += max(0.15, step * chaos_rng.uniform(0.7, 1.3))
 
 sm = B["spam"]                  # the 2A pickup (bar 72) — the CLIP
 gl = B["glitch"]                # the 2B pickup (bar 80) — the ERUPTION
@@ -2214,9 +2295,112 @@ add(sm, "segSwarm", {
 for wid in [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
     add(sm + 0.25, "closeWindow", {"id": wid})
 
+# --- THE CENTRE (2026-09-11): one warning box, the sung line, over both halves ---
+# The second chorus had no middle. The segmenter pins its panels wherever the clip
+# moves and the eruption throws cards out of the centre in every direction, so the
+# only lyric on screen was whichever scattered alert happened to be up, carrying
+# whichever line the counter had reached — never the one being sung. So: ONE alert,
+# dead centre, floating over all of it, whose message is the phrase being sung right
+# now and whose informative text is the sentence it comes from (`lyrics.SENTENCES`).
+# It comes up on each sung line and is taken away a hair before the next one lands,
+# so every line POPS rather than swapping in place — the same `lyrics.phrase_cues()`
+# the chorus 1A spiral is timed from, transposed onto each chorus's own zero, so a
+# word retuned in `lyrics.CUES` moves here as well.
+#
+# The eruption is kept OUT of a hole round it (`keep_out`, below), so the clutter is a
+# ring with the words in the middle, and its scattered lyric alerts are off
+# (`alerts=False`): a second warning box in the ring with a different line would be
+# the one thing that undid the centre. Over the segmenter nothing can be kept out —
+# panels land where the motion is — so there the box simply floats over them.
+#
+# FLOATING, for the reason the ASCII planes are: at the normal level it would be under
+# the eruption by the second bar. The planes are floating too and open later, but each
+# re-open of the box brings it back to the front of that level, so it is above them
+# from its next line on; the flashes are normal windows and never wash it out.
+LYRIC_BOX = "lyricbox"
+LYRIC_BOX_W, LYRIC_BOX_H = 540, 200               # a size up from the ring's 460x190
+LYRIC_HOLE = (LYRIC_BOX_W + 60, LYRIC_BOX_H + 60) # the box plus a 30 pt moat
+# EACH LINE IS ITS OWN POP-UP (2026-09-11). The first pass took each box away a hair
+# before the next landed, and the artist read that as one window scaling up and down,
+# not a series of alerts. So a box stays up HOLD beats and is cut, and there is at least
+# GAP beats of nothing before the next one lands — up on its frame with no spring
+# (`animate: none`), the way a real alert arrives. Lines are 1–2.5 beats apart, so a box
+# is up for half a beat to a beat and a quarter, and the middle is empty between them.
+LYRIC_BOX_HOLD = 1.25
+LYRIC_BOX_GAP = 0.5
+# A HAIR EARLY (2026-09-11). Even parked and swapped rather than rebuilt, an alert is
+# a content view laid out and a window ordered front on a main thread that is opening
+# other windows; the artist heard every box land a hair after its line. Two frames of
+# lead, in seconds because it is latency, not music. Open and close move together.
+LYRIC_BOX_LEAD = 0.07
+# THE SECOND CHORUS COMES IN TWO BEATS EARLY (2026-09-11, measured). `lyrics.CUES` is
+# tuned by ear against chorus 1, where the vocal band steps up two beats into the pickup
+# bar (bar 16.5, and again 24.5); in the second chorus it steps up ON the downbeat of
+# bars 72 and 80. Timed off chorus 1's zero the boxes ran a line behind the singing —
+# the artist's "one late" — so both halves' zeros sit this much earlier.
+CHORUS2_PICKUP_LEAD = 2                           # beats
+LYRIC_ICONS = ["critical", "caution", "info", "critical"]   # ALERTS' icons, by sentence
+lyric_box_at = []                                 # (beat, text), for the printout
+
+def lyric_box_run(zero, until):
+    """The centre alert on every sung phrase from `zero`, each replaced by the next.
+
+    Phrases landing at or after `until` are dropped: chorus 2B's lyric is cut off by
+    the stop, and its last sung words are "need your love" — cue 30 is `lastwords`."""
+    beats_here = [lyric_beat(zero, when) for when, _, _ in phrases]
+    for i, (when, text, line) in enumerate(phrases):
+        b = beats_here[i]
+        if b >= until - 0.5:
+            break
+        k = len(lyric_box_at)
+        sentence = lyrics.sentence_of(line)
+        add_t(secs(b) - LYRIC_BOX_LEAD, "fakeDialog", {
+            "id": LYRIC_BOX, "anchor": "center", "level": "floating", "animate": "none",
+            "frame": [0, 0, LYRIC_BOX_W, LYRIC_BOX_H],
+            "title": text, "body": "\n".join(lyrics.LINES[i] for i in sentence),
+            "buttons": lyrics.buttons(k), "icon": LYRIC_ICONS[lyrics.SENTENCES.index(sentence)]})
+        # Cut after HOLD, or GAP before the next line if that comes first. The last line
+        # of a half measures its gap against the next half's zero, or the stop.
+        nxt = beats_here[i + 1] if i + 1 < len(beats_here) else until
+        add_t(secs(min(b + LYRIC_BOX_HOLD, min(nxt, until) - LYRIC_BOX_GAP)) - LYRIC_BOX_LEAD,
+              "closeWindow", {"id": LYRIC_BOX})
+        lyric_box_at.append((b, text))
+
+zero_2A = lyric_zero("chorus2A") - CHORUS2_PICKUP_LEAD
+zero_2B = lyric_zero("chorus2B") - CHORUS2_PICKUP_LEAD
+# CHORUS 2A IS THE SEGMENTER'S (2026-09-11, later the same day). The box and the build-up
+# below were put over 2A while the clip was missing from this machine and the half read
+# as empty. With the clip in, the artist wants the segmenter alone there and the centre
+# to START at 2B. Kept behind CENTRE_2A_ACT, one line to bring back.
+CENTRE_2A_ACT = False
+if CENTRE_2A_ACT:
+    lyric_box_run(zero_2A, zero_2B)  # over the segmenter; the last line holds into 2B
+lyric_box_run(zero_2B, lw)           # over the eruption; the last line holds to the stop
+
+# --- cue 27's BUILD-UP (2026-09-11): cards pop round the box and vanish, then less and less
+# The box alone over 2A read as dry, and the segmenter is not a given (a machine without
+# the clip shows nothing there). The first pass thickened the RATE from a card every beat
+# and a half — too slow, too even. Now the pops are lively from the first bar, a card
+# every third to half a beat close round the hole, and the build is in what STAYS: at the
+# pickup every card is taken away again half a beat after it lands, so the middle is a
+# few things popping and going round the words; across the eight bars the share that goes
+# falls to none and the ones that go last longer (to three beats), so the ring fills in
+# by itself and cue 28 arrives on a screen that is already the eruption. Same pool, same
+# hole, no alerts (the centre is the alert); it starts half a beat in, behind the
+# quarter-beat sweep of cue 21's cards above, so the sweep never eats its first one.
+BUILD_FROM = sm + 0.5
+BUILD_RATE = (0.45, 0.3)          # beats between cards: at the pickup → at the 2B pickup
+BUILD_SPREAD = 0.45               # closer in than the eruption's 0.65: round the box
+BUILD_LIFE = (0.5, 3.0)           # beats a vanishing card stays, at the pickup → at 2B
+w_before, gone_before = chaos["w"], chaos["gone"]
+if CENTRE_2A_ACT:
+    erupt(BUILD_FROM, gl, W / 2, H / 2, rate=BUILD_RATE[0], rate_to=BUILD_RATE[1],
+          ui_chaos=0.25, keep_out=LYRIC_HOLE, alerts=False, spread=BUILD_SPREAD, evanesce=BUILD_LIFE)
+n_build, n_gone = chaos["w"] - w_before, chaos["gone"] - gone_before
+
 # --- cue 28, the 2B pickup: THE ERUPTION, over it and then instead of it ---------
 add(gl, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
-erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True)
+erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True, keep_out=LYRIC_HOLE, alerts=False)
 
 # The swarm is not closed on the boundary. It is left running a bar and a half INTO the
 # eruption, being buried a card at a time, and only then swept — which is the whole
@@ -2319,28 +2503,68 @@ ascii_plane(3, {"source": "windows", "bg": DJ_BLUE, "strobe": 3.0, "hz": 12,
                 "seed": 4475, "fontSize": 13, "title": "wm: dump"})
 
 # =============================================================================
-# Cue 21 (2:00) — the eruption again, with the original strobe spliced in verbatim over
-# the top, STRAIGHT IN — no four-bar wait.
+# Cue 21 (2:00) — the eruption again, with the original strobe spliced in over the top,
+# STRAIGHT IN — no four-bar wait — and its flashing PHRASED, a bar on and a bar off.
 #
 # MOVED HERE (2026-09-05), trading places with the segmenter swarm that used to hold this
 # stretch: the noise now lands on the instrumental, where the screen has just been cut
 # back to the bare blue desktop, and the segmenter closes the piece instead. The act is
-# unchanged — same eruption, same splice, same shoal, same current — it is 47 beats long
-# here instead of 27, so MORE of the strobe fits before the cut.
+# the same eruption, the same splice, the same shoal, the same current — it is 47 beats
+# long here instead of 27, so the whole of the strobe fits before the cut.
 #
 # The strobe is authored in absolute seconds, which survive the splice with a plain
 # offset; everything past the end of the window is dropped, and the vocal pickup closes
 # what it left. The desktop stays blue underneath: the old glitch ⇄ lyric alternation is
 # out of the cut — every glitch pass was a bitmap render AND a ~300 ms desktop swap every
 # window on screen pays for, and the section was extremely laggy live.
+#
+# THE FLASHING IS A RHYTHM NOW (2026-09-11). The strobe used to run from the cut for its
+# whole 15.4 s — a full-screen colour every 0.15 s, over an eruption that already raises
+# a window every fifth of a beat — and the section read as one flat wall of flicker. So
+# the act is phrased: FOUR two-bar phrases from bar 60, the bar the cut lands in, to bar
+# 68, and in each the first bar is windows popping up and the second bar is the strobe.
+# Only the strobe's full-screen `screenFlash` events are gated. Its furniture — the
+# colour cards, the four movers, the alerts — runs through all eight bars as it always
+# did, so a window bar is not an empty one, and every open the strobe makes still meets
+# its close (`lint_show.py` checks that pairing).
+#
+# THE PHRASE STARTS ON THE CUT'S BAR, not on the next bar line. The first pass put the
+# grid on bar 61 so the strobe file would cover four whole flash bars, and the artist
+# heard every phrase the other way round — flash first, windows second — because the
+# ear groups this passage in twos from where the eruption starts, bar 60, not from bar
+# 61. So the grid is bars 60/62/64/66 windows, 61/63/65/67 the strobe, and the splice
+# starts on the cue again: 15.4 s from a beat into bar 60 reaches bar 68.4, past the last
+# flash bar. The three beats between the cut and bar 61 are the first window half.
+#
+# THE CURSOR TAKES THE OTHER HALF. The strobe warps the pointer along a path every
+# 0.14 s; that now happens only in the window bars, and the pointer holds still through a
+# flash bar — so the two halves are opposites in every way that moves: windows pop and
+# the cursor runs, then the screen flashes and nothing travels. A path is kept only if
+# the whole of it fits inside its bar, so none spills into the flash.
 # =============================================================================
 gl2 = B["horse"]
 ERUPT_END = B["spam"]              # the vocal pickup takes the screen back for cue 27
 erupt(gl2, ERUPT_END, W / 2, H / 2, rate=0.18, ui_chaos=0.25)
+ERUPT_P0 = phrase_beat("instrumentalA") + 12       # bar 60: INSTRUMENTAL A + 3.0, the cut's bar
+ERUPT_PHRASE = 8                                    # two bars
+ERUPT_PHRASES = 4                                   # to bar 68
+WINDOW_BARS = [(ERUPT_P0 + k * ERUPT_PHRASE, ERUPT_P0 + k * ERUPT_PHRASE + ERUPT_PHRASE // 2)
+               for k in range(ERUPT_PHRASES)]      # the first bar of each phrase
+FLASH_BARS = [(ERUPT_P0 + k * ERUPT_PHRASE + ERUPT_PHRASE // 2, ERUPT_P0 + (k + 1) * ERUPT_PHRASE)
+              for k in range(ERUPT_PHRASES)]       # the second bar of each phrase
+assert WINDOW_BARS[0][0] <= gl2 < WINDOW_BARS[0][1], "the cut must land in the first window half"
+assert ERUPT_P0 + ERUPT_PHRASES * ERUPT_PHRASE <= ERUPT_END, "the phrasing reaches outside the act"
+def in_flash_bar(t):
+    return any(secs(b0) <= t < secs(b1) for b0, b1 in FLASH_BARS)
+def in_window_bar(t0, t1):
+    """True when [t0, t1) sits wholly inside one window bar."""
+    return any(secs(b0) <= t0 and t1 <= secs(b1) for b0, b1 in WINDOW_BARS)
 with open(os.path.join(ROOT, "examples", "timeline_strobe.json")) as f:
     strobe = json.load(f)
 strobe_at = secs(gl2)
 strobe_cut = secs(ERUPT_END) - 0.05
+assert strobe_at + max(ev["t"] for ev in strobe["events"] if ev["type"] == "screenFlash") >= secs(FLASH_BARS[-1][1]) - 0.2, \
+    "the strobe file runs out before the last flash bar"
 # Two passes, because a splice can inherit a close with nothing behind it. The strobe
 # file carries `closeWindow im0…im2` with no `openWindow` anywhere — harmless in the
 # strobe itself, which is played whole, but spliced in here it is a close aimed at a
@@ -2350,11 +2574,28 @@ strobe_cut = secs(ERUPT_END) - 0.05
 spliced = [ev for ev in strobe["events"] if ev["t"] + strobe_at < strobe_cut]
 strobe_opens = {ev["params"]["id"] for ev in spliced
                 if ev["type"] == "openWindow" and "id" in ev["params"]}
-strobe_ids, n_strobe, n_orphan = set(), 0, 0
+strobe_ids, n_strobe, n_orphan, n_muted, n_flash = set(), 0, 0, 0, 0
+n_cursor, n_cursor_muted = 0, 0
 for ev in spliced:
     if ev["type"] == "closeWindow" and ev["params"].get("id") not in strobe_opens:
         n_orphan += 1
         continue
+    # A flash in a window bar is dropped, not moved: the strobe's grid is its own
+    # (0.15 s, authored at 150 BPM) and sliding a flash onto the next bar would put it
+    # off that grid and on top of another.
+    if ev["type"] == "screenFlash":
+        if not in_flash_bar(ev["t"] + strobe_at):
+            n_muted += 1
+            continue
+        n_flash += 1
+    # …and the pointer only travels in the window bars — the whole path, so the last one
+    # before a flash bar has finished before the flash.
+    if ev["type"] == "cursorPath":
+        t0 = ev["t"] + strobe_at
+        if not in_window_bar(t0, t0 + ev["params"].get("durationSeconds", 0)):
+            n_cursor_muted += 1
+            continue
+        n_cursor += 1
     add_t(ev["t"] + strobe_at, ev["type"], ev["params"])
     n_strobe += 1
     if "id" in ev["params"]:
@@ -2473,7 +2714,7 @@ add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
 # A QUARTER BEAT LATE, not early. `erupt` walks its own cadence and can land a final
 # `openWindow` ON its end beat: measured, `w8` opened 42 ms past a close placed at −0.1
 # and stood there through the whole ending.
-for wid in (["segswarm"] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
+for wid in (["segswarm", LYRIC_BOX] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
             + [f"d{i}" for i in range(4)] + ascii_ids + ["school"] + slide_ids):
     add(lw + 0.05, "closeWindow", {"id": wid})
 
@@ -2481,23 +2722,33 @@ for wid in (["segswarm"] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
 # Cue 31 (2:49) — the ending, once the song has actually finished. The photo the booth
 # took, the machine's vitals and the credits typing themselves out.
 #
-# IT WAITS NOW (2026-09-07). The card used to come up ON the stop at 160.55 s and type
-# itself out over the last nine seconds of the track, so the credits were rolling while
-# the song was still playing. It comes up at 169.42 s instead — after the last of the
-# music — and the nine seconds cue 30 opens up are left as they are: everything has
-# closed, the desktop is plain blue, and nothing happens. That emptiness is the beat
-# before the ending rather than a gap in it.
+# IT LANDS ON THE END OF THE SONG — the release of the last held note, not the end of
+# the file. Measured on the track (mono RMS, 20 ms windows): the note holds at about
+# -16 dB from the stop until 162.40 s and drops 13 dB in the next 40 ms, right on beat 347
+# (162.418 s); everything after that is reverb tail, already under -28 dB and gone under
+# -40 dB by 165 s. So the card comes up on beat 347, `(break, 0, 3)`, four beats after
+# cue 30's stop, and the blue those four beats hold is the beat before the ending. The
+# credits then type out over the tail (15 lines, one a beat, done ~7 s later) and the
+# outro runs on wall-clock from there — the printout at the bottom says where the quit
+# lands against the end of the file.
 #
-# IT CANNOT GO ANY LATER, and this is a hard edge rather than a taste call.
+# IT CANNOT GO PAST THE FILE, and this is a hard edge rather than a taste call.
 # `PerformanceEngine.step` tests `now >= duration` BEFORE it ticks the scheduler, and
 # `duration` is `max(timeline.duration, audioDuration)` — 169.85 s, the file. A `credits`
 # event has no intrinsic duration, so placing it AT the end of the file would make
 # `timeline.duration` equal its own fire time and the end-of-piece branch would trip on
-# the tick before it ever fired: the card would simply never come up. Beat 362 leaves
-# 0.43 s of margin. Do not close that up.
+# the tick before it ever fired: the card would simply never come up. Beat 362 is the
+# latest that leaves a margin (0.43 s). Earlier is always safe.
 #
 # The card is `hold: true`, so when the track does run out the engine pauses on it rather
 # than restoring, and the typing and the outro run on wall-clock timers from there.
+#
+# THE CARD IS BLUE. Its ground is the signature blue with the face tiled white on it —
+# the icon's own colours — and the terminals and the polaroid sit on it as white windows.
+# The desktop under it has been that blue since cue 21, so the card's fade-in is a
+# surface arriving on its own colour rather than a white sheet. The polaroid's photo is
+# a `dither`: a coarse ordered dither and nothing else (see `DitherLook` in the engine) —
+# the booth-print texture without the film pass's vignette and cast.
 # =============================================================================
 en = B["ending"]
 add(en, "screenFlash", {"color": WHITE, "durationBeats": 1.5})
@@ -2506,10 +2757,9 @@ CREDITS = copy_lines("credits")                  # docs/copy/credits.txt
 CREDITS_LPS = round(1 / BEAT, 3)
 CARD_AT = secs(en)
 TYPED_AT = CARD_AT + len(CREDITS) / CREDITS_LPS
-# The card now comes up after the music, so everything from here runs PAST the end of the
-# file and the engine is paused on the held card while it does. That is the point of the
-# move, not a slip: the printout below still reports where the quit lands, but it is no
-# longer trying to land on the last sample.
+# The typing runs over the reverb tail and the outro past the end of the file, with the
+# engine paused on the held card; the printout below reports where the quit lands
+# against the end of the file, but nothing here is trying to land on the last sample.
 OUTRO_DELAY = 2.0
 # NO BOOT BAR (2026-09-07). The outro was force-quit alert -> memory dump -> a five-second
 # Apple-logo progress bar -> quit, and that bar is geometry-matched to the gate's stalled
@@ -2521,8 +2771,9 @@ OUTRO_DELAY = 2.0
 add(en, "credits", {"id": "credits", "lines": CREDITS, "hold": True,
     "linesPerSecond": CREDITS_LPS, "fontSize": 22, "photoTilt": -4,
     "outroDelay": OUTRO_DELAY, "bootSeconds": 0,
-    "backdrop": "#FFFFFF",
-    "tile": "assets/credits_tile.png", "tileDriftSeconds": 4})
+    "filter": "dither",
+    "backdrop": CREDITS_TILE_FIELD,
+    "tile": CREDITS_TILE, "tileDriftSeconds": 4})
 
 # =============================================================================
 # THE SEAMS — every phrase changeover in the piece, stitched (see `seam`). Two are
@@ -2637,7 +2888,7 @@ print(f"  words    {len(word_slides)} desktop cards over {len(word_stream)} sung
       + (f"\n           no card yet for: {', '.join(words_missing)}" if words_missing else ""))
 print(f"  torus    greeting types {secs(t1 + 1):.2f}s → {secs(ORACLE_AT - 1):.2f}s, "
       f"question at f {frame_at(secs(ORACLE_AT))} "
-      f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:.0f} beats "
+      f"({secs(ORACLE_AT):.2f}s), answers itself after {ORACLE_BEATS:g} beats "
       f"(f {frame_at(secs(ORACLE_AT + ORACLE_BEATS))}), cut at f {frame_at(secs(mp)):d}")
 print(f"  tunnel   assets/shaders/tunnel.frag full screen under the torus, "
       f"f {frame_at(secs(t1))} → f {frame_at(secs(mp - 0.3))}; glass refracts "
@@ -2662,7 +2913,7 @@ else:
 print(f"  wipe     {len(tx_ids)} tiles {tw}x{th} on a {TX_COLS}x{TX_ROWS} grid, one a frame "
       f"f {frame_at(secs(bk))} → f {frame_at(secs(TX_COVERED))}, dissolve {TX_PER_FRAME}/frame "
       f"f {frame_at(secs(tx_first))} → f {frame_at(secs(tx_last) + TX_FADE)} "
-      f"({TX_FADE:g}s each), shader lands f {frame_at(secs(B['tbd_099']))}")
+      f"({TX_FADE:g}s each), the picture lands f {frame_at(secs(B['tbd_099']))}")
 if FACESTROBE_ACT:
     print(f"  face     {k} strobe frames @{face_hz:.0f} Hz")
 else:
@@ -2676,7 +2927,10 @@ else:
           f"(alone f {frame_at(secs(sm + 0.25))} to f {frame_at(secs(gl))}, then buried by "
           f"the eruption over the last "
           f"{SEG_BURY * BEAT:.1f}s; no keyline; the horse is cut — HORSE_ACT = False)")
-print(f"  hydra2   breakdown sketch over the raymarcher: cursor walks f {frame_at(secs(hb))}, "
+print(f"  deskanim {1 + len(sat_ids)} clips: the centre f {frame_at(secs(B['tbd_099']))}, corners f "
+      + ", ".join(str(frame_at(secs(B['tbd_099'] + 0.4 * i))) for i in range(len(sat_ids)))
+      + f", all gone for the camera at f {frame_at(secs(bo - BOOTH_WARMUP - 0.3))}")
+print(f"  hydra2   breakdown sketch over the picture: cursor walks f {frame_at(secs(hb))}, "
       f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
 print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "
       f"count starts f {frame_at(secs(bo))}, shutter f {frame_at(secs(B['wall']))}")
@@ -2688,8 +2942,18 @@ if TORUS2_ACT:
           f"f {frame_at(secs(t2))} → f {frame_at(secs(t2 + FACE_RING - 1))}")
 else:
     print("  ring     pulled (TORUS2_ACT = False) — no torus, no ring at cue 22")
-print(f"  spam     {chaos['w']} windows, {chaos['d']} alerts, {n_kick} kick flashes, "
+print(f"  spam     {chaos['w']} windows, {chaos['a']} alerts, {n_kick} kick flashes, "
       f"{chaos['ui']} packed with macOS UI (both eruptions)")
+print(f"  lyricbox {len(lyric_box_at)} centre alerts, {LYRIC_BOX_W}x{LYRIC_BOX_H} floating, "
+      f"f {frame_at(secs(lyric_box_at[0][0]))} → f {frame_at(secs(lw + 0.05))}, each up {LYRIC_BOX_HOLD:g} beats "
+      f"or to {LYRIC_BOX_GAP:g} before the next, no spring; zeros {CHORUS2_PICKUP_LEAD:g} beats ahead of chorus 1's "
+      f"tuning; cue 28's ring keeps a {LYRIC_HOLE[0]}x{LYRIC_HOLE[1]} hole round it, no scattered alerts")
+if CENTRE_2A_ACT:
+    print(f"  buildup  {n_build} cards over chorus 2A, f {frame_at(secs(BUILD_FROM))} → f {frame_at(secs(gl))}, "
+          f"{BUILD_RATE[0]:g} → {BUILD_RATE[1]:g} beats apart within {BUILD_SPREAD:.0%} of the width; "
+          f"{n_gone} of them vanish again after {BUILD_LIFE[0]:g} → {BUILD_LIFE[1]:g} beats, the rest stay")
+else:
+    print("  buildup  pulled (CENTRE_2A_ACT = False) — chorus 2A is the segmenter alone; the centre starts at 2B")
 print(f"  photos   {chaos['p']} broken-screen photographs, bar 72 only, "
       f"{min(chaos['p'], len(BROKEN_SCREENS))} of {len(BROKEN_SCREENS)} pictures seen "
       f"(every 10th card; {BROKEN_SRC} → {BROKEN_DIR})")
@@ -2703,10 +2967,13 @@ print(f"  slide    {SLIDE_N} windows crossing f {frame_at(secs(SLIDE_FROM))} →
       f"f {frame_at(secs(B['lastwords']))}, laps 2.4-3.6 beats, both directions, looping")
 print(f"  school   54 pointers on a {2.5:g}-turn spiral, flocking behind the eruption "
       f"f {frame_at(secs(gl2))} → f {frame_at(secs(ERUPT_END - 0.1))}")
-print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events over "
-      f"{secs(ERUPT_END) - secs(gl2):.1f}s from cue 21"
-      + (f" ({n_orphan} orphan close(s) dropped)" if n_orphan else "")
-      + "; the desktop stays blue to the card")
+print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events from the cut (f {frame_at(strobe_at)}), "
+      f"{ERUPT_PHRASES} two-bar phrases from bar 60: windows + {n_cursor} cursor paths in the first bars, "
+      f"{n_flash} flashes in the second bars "
+      + " ".join(f"f {frame_at(secs(b0))}→{frame_at(secs(b1))}" for b0, b1 in FLASH_BARS)
+      + f" ({n_muted} flashes and {n_cursor_muted} cursor paths muted in the other half"
+      + (f", {n_orphan} orphan close(s) dropped" if n_orphan else "")
+      + "); the desktop stays blue to the card")
 print(f"  outro    copy lands {TYPED_AT:.2f}s, holds {OUTRO_DELAY:.1f}s → quit at "
       f"{TYPED_AT + OUTRO_DELAY:.2f}s ({TYPED_AT + OUTRO_DELAY - DURATION:+.2f}s vs track end)")
 print()

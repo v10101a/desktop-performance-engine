@@ -143,6 +143,7 @@ struct ContentSpec: Decodable {
     /// Drawn by us at any size — never a pixel-accurate imitation of real system UI.
     var chrome: String? = nil
     var title: String? = nil    // chrome bar text (browser shows it as the URL pill)
+    var loop: Bool? = nil       // video: play round again (default true)
     /// Camera flight for `kind == "map"`.
     var map: MapSpec? = nil
     /// Page to load for `kind == "web"`.
@@ -269,6 +270,19 @@ struct FakeDialogParams: Decodable {
     /// "none". These are the system's own images, so they match every other alert on
     /// the machine. Dropped automatically on panels too small to carry one.
     var icon: String? = nil
+    /// Same vocabulary as `openWindow`: `"center"` reads `frame` as `[dx, dy, w, h]`
+    /// about the screen's centre, so a dialog meant to sit in the middle is authored
+    /// from the middle rather than from a top-left corner that moves with the display.
+    var anchor: String? = nil
+    /// Window level, same vocabulary as `openWindow`: `"floating"` keeps the dialog
+    /// above everything opened after it, including the `screenFlash` overlays. Omit
+    /// for `"normal"`, where it stacks in open order like every other window.
+    var level: String? = nil
+    /// How a FRESH id comes up: `"springIn"` (the default — scales in from 60%),
+    /// `"fadeIn"`, or `"none"` — on its frame, the way a real alert lands. Re-opening
+    /// an id that is already up swaps its content in place with no animation whatever
+    /// this says.
+    var animate: String? = nil
 
     /// Authored `icon` resolved to a known illustration; an unrecognised value falls
     /// back to the caution triangle rather than silently rendering nothing.
@@ -404,6 +418,10 @@ struct TypeTextParams: Decodable {
     var fg: String? = nil
     /// Let the viewer pick the window up and move it around while it types.
     var interactive: Bool? = nil
+    /// Window level, same vocabulary as `openWindow` and `fakeDialog`; omit for
+    /// `"normal"`. Typed windows used to be left at the base window's screen-saver
+    /// level, which put a terminal over every alert the timeline opened after it.
+    var level: String? = nil
 }
 
 /// Fills every screen with randomly sized, randomly placed photo windows scanned from

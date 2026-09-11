@@ -277,13 +277,13 @@ enum TimelineTests {
                     // closes. The card belongs in the silence after it, not over the
                     // eruption.
                     //
-                    // Between those the position is a judgement call and it has moved
-                    // twice: onto the stop, then to 169.42 s (after the last of the
-                    // music), and now to 164.29 s, pulled 5 s forward so the ending
-                    // arrives sooner. At that position the credits again begin over the
-                    // final ~5.6 s of the track, which the 2026-09-07 move had
-                    // deliberately stopped. That is a choice, so it is pinned loosely
-                    // here and argued in generate_show.py's cue 31 header.
+                    // Between those the position is a judgement call, and it now sits
+                    // on the release of the last held note — 162.42 s, beat 347,
+                    // measured on the track — with the credits typing out over the
+                    // reverb tail; it has been on the stop, after the file's last
+                    // second, and at 164.29 s before that. The exact beat is the cut's
+                    // to choose, so it is pinned loosely here and argued (with the
+                    // measurement) in generate_show.py's cue 31 header.
                     let track = 169.85, stop = 160.55
                     t.expect(ev.fireTime > stop && ev.fireTime < track - 0.2,
                              "the end card lands in the silence after the stop and before "

@@ -179,6 +179,19 @@ LINES = [
     "so give it to me",
 ]
 
+# The lines grouped into SENTENCES — the units the song's alerts read in. `ALERTS` above
+# pairs a short line with the long one that completes it; this is the same grouping by
+# line index, for anything that wants the whole sentence a phrase is being sung from
+# (the centre alert over the second chorus shows the sung phrase as its message and the
+# sentence as the informative text). A grouping, not a second copy of the words.
+SENTENCES = [(0, 1), (2, 3), (4, 5), (6, 7, 8)]
+
+
+def sentence_of(line):
+    """The tuple of LINES indices for the sentence `line` belongs to."""
+    return next(s for s in SENTENCES if line in s)
+
+
 PHRASES = [
     ("what I want",          0),
     ("I told you that I",    1),

@@ -538,6 +538,22 @@ enum SystemProbeTests {
             t.expect(loaded != nil,
                      "an image window finds its file with the working directory elsewhere")
 
+            // A `video` window builds its player view and takes no hits — the content
+            // kind the breakdown's clips ride on. The clips themselves are a drop, so
+            // this points at a file that is always in the checkout; a missing movie is
+            // a black frame and a log line, not a crash, and that is what is pinned.
+            let videoView = MainActor.assumeIsolated {
+                makeEffectContentView(ContentSpec(kind: "video", path: "assets/no-such-clip.mp4",
+                                                  chrome: "none"),
+                                      size: NSSize(width: 320, height: 180))
+            }
+            let player = MainActor.assumeIsolated {
+                videoView.subviews.compactMap { $0 as? VideoContentView }.first
+            }
+            t.expect(player != nil, "a video window hosts a VideoContentView")
+            t.expect(MainActor.assumeIsolated { player?.hitTest(NSPoint(x: 10, y: 10)) } == nil,
+                     "a video view refuses hits so the window can be dragged by its picture")
+
             // BRICK BREAKER. Four things have to hold for this to be a game rather
             // than a screensaver, and each is a way it is known to break: the ball has
             // to stay on the table, it has to keep its speed (a bounce that scales the

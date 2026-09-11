@@ -129,7 +129,6 @@ for clip in assets/*.mov assets/*.mp4; do
   mkdir -p "$APP/Contents/Resources/assets"
   cp "$clip" "$APP/Contents/Resources/assets/"
 done
-
 # The lyric face (EffectWindow's LyricFont registers it from this path at run time).
 if [ -d assets/fonts/hack ]; then
   mkdir -p "$APP/Contents/Resources/assets/fonts"

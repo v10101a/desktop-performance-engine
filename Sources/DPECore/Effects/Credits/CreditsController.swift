@@ -423,7 +423,7 @@ final class CreditsController {
 
     /// The artwork's own field colour, read from its top-left pixel. Read-only — nothing
     /// here writes to the bitmap, which is what makes it safe on a file-backed image.
-    private static func cornerColor(of image: NSImage) -> NSColor? {
+    static func cornerColor(of image: NSImage) -> NSColor? {
         var rect = NSRect(origin: .zero, size: image.size)
         guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return nil }
         return NSBitmapImageRep(cgImage: cg).colorAt(x: 0, y: 0)
@@ -664,11 +664,16 @@ final class CreditsController {
     /// So `savePressed` can find the button again and report back on it.
     static let savePhotoButtonID = NSUserInterfaceItemIdentifier("dpe.credits.savePhoto")
 
-    /// The flattering pass: a warm instant-film look with a soft vignette, or one of
-    /// the others by name. `none` is the photo as taken.
+    /// The photo's treatment, by name. `dither` is the booth print — a coarse ordered
+    /// dither and nothing else (`DitherLook`); `instant`, `chrome` and `fade` are Core
+    /// Image's film looks, each under a soft vignette; `none` is the photo as taken.
     static func filtered(_ image: NSImage, filter: String) -> NSImage {
-        guard filter != "none", let tiff = image.tiffRepresentation,
-              let ci = CIImage(data: tiff) else { return image }
+        switch filter {
+        case "none": return image
+        case "dither": return DitherLook.apply(to: image) ?? image
+        default: break
+        }
+        guard let tiff = image.tiffRepresentation, let ci = CIImage(data: tiff) else { return image }
         let name: String
         switch filter {
         case "chrome": name = "CIPhotoEffectChrome"
@@ -694,9 +699,13 @@ final class CreditsController {
     /// on first use, which is why `prewarm` touches it before the clock runs.
     private static let ciContext = CIContext()
 
-    /// Warm the filter pipeline at load if the show has an end card.
+    /// Warm the filter pipeline at load if the show has an end card on a Core Image look.
+    /// `dither` and `none` never touch Core Image, so there is nothing to warm for them.
     func prewarm(for events: [ResolvedEvent]) {
-        guard events.contains(where: { if case .credits = $0.action { return true }; return false }) else { return }
+        guard events.contains(where: {
+            if case .credits(let p) = $0.action { return !["dither", "none"].contains(p.filter ?? "instant") }
+            return false
+        }) else { return }
         DispatchQueue.global(qos: .utility).async { _ = CreditsController.ciContext }
     }
 

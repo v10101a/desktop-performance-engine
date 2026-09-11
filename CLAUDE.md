@@ -47,7 +47,8 @@ bundle or a rehearsal can never carry stale words; `SKIP_GENERATE=1 ./bundle.sh`
 escape hatch for a machine without Pillow.
 
 The generator prints every cue's authored and actual frame; those numbers must match the
-table in `docs/CUES.md`. The lint catches closes aimed at ids the show never opens,
+table in `docs/CUES.md`. The lint catches closes aimed at ids the show never opens, assets that are git-lfs
+pointers rather than the file (a warning — that cue plays empty on that machine),
 windows still on screen when the end card comes up, and asset paths that do not resolve.
 
 Note that `generate_show.py` needs Pillow (for the horse's GIF quantisation) — there is

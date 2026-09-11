@@ -50,6 +50,10 @@ extension WindowManager {
         // Draggable, but with no close zone armed: the copy can be shoved around while
         // it writes itself, and can't be dismissed by accident.
         if p.interactive == true { win.makeInteractive(size: frame.size) }
+        // Demoted to the normal level like everything else the timeline opens. Left at
+        // the base window's screen-saver level (2026-09-11 bug), a typed terminal sat
+        // over every alert opened after it — the locate trace over "Location identified".
+        win.level = WindowManager.level(p.level)
         windows[p.id] = win
         win.present(animate: "fadeIn")
         // By the line, a "stop" is the end of a line and the rate is lines per beat; by

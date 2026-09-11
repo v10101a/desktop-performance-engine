@@ -88,8 +88,22 @@ for wid, (t0, typ) in sorted(open_at.items(), key=lambda kv: kv[1][0]):
 
 # --- files ---------------------------------------------------------------------
 def check(rel, why):
-    if not os.path.exists(os.path.join(ROOT, rel)):
+    full = os.path.join(ROOT, rel)
+    if not os.path.exists(full):
         errors.append(f"missing file: {rel}  ({why})")
+        return
+    # A git-lfs POINTER resolves and is not the asset: a few lines of text where a video
+    # should be. The cue that needs it plays empty on this machine, silently, and a
+    # bundle built here carries the pointer. A warning, not an error — the show is
+    # otherwise whole and a rehearsal should still run — but it must be said.
+    try:
+        if os.path.getsize(full) < 400:
+            with open(full, "rb") as fh:
+                if fh.read(64).startswith(b"version https://git-lfs.github.com/spec"):
+                    warnings.append(f"git-lfs pointer, not the asset: {rel}  ({why}) — "
+                                    f"the real file has not been pulled onto this machine")
+    except OSError:
+        pass
 
 seen_files = set()
 for e in events:
@@ -102,6 +116,10 @@ for e in events:
     c = p.get("content") or {}
     if isinstance(c.get("path"), str):
         seen_files.add((c["path"], f"{e['type']} content.path"))
+    # `segSwarm` carries its clip as a bare `path` — the one event kind where that IS a
+    # file. Unchecked, a missing or unpulled clip was a cue that silently played empty.
+    if e.get("type") == "segSwarm" and isinstance(p.get("path"), str):
+        seen_files.add((p["path"], "segSwarm.path"))
 if isinstance(meta.get("audioFile"), str):
     seen_files.add((meta["audioFile"], "meta.audioFile"))
 for rel, why in sorted(seen_files):

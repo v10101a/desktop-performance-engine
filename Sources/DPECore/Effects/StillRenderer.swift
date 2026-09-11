@@ -130,13 +130,25 @@ enum StillRenderer {
         }
         params.outro = false          // the outro quits the process
 
-        let stand = NSImage(size: NSSize(width: 400, height: 300))
-        stand.lockFocus()
-        NSGradient(starting: NSColor(hex: "#FF2D95")!, ending: NSColor(hex: "#0078D7")!)?
-            .draw(in: NSRect(x: 0, y: 0, width: 400, height: 300), angle: 35)
-        NSColor(white: 1, alpha: 0.85).setFill()
-        NSBezierPath(ovalIn: NSRect(x: 150, y: 90, width: 100, height: 130)).fill()
-        stand.unlockFocus()
+        // Two seams for judging the photo card without a camera: `DPE_SNAPSHOT_PHOTO=path`
+        // stands a real picture in for the booth's (the default below is a gradient with
+        // an oval on it, which says nothing about how a treatment handles a face), and
+        // `DPE_SNAPSHOT_FILTER=name` overrides the show's `filter`, so two renders put two
+        // treatments on the same picture.
+        let env = ProcessInfo.processInfo.environment
+        if let f = env["DPE_SNAPSHOT_FILTER"], !f.isEmpty { params.filter = f }
+        let stand: NSImage
+        if let path = env["DPE_SNAPSHOT_PHOTO"], let real = NSImage(contentsOfFile: path) {
+            stand = real
+        } else {
+            stand = NSImage(size: NSSize(width: 400, height: 300))
+            stand.lockFocus()
+            NSGradient(starting: NSColor(hex: "#FF2D95")!, ending: NSColor(hex: "#0078D7")!)?
+                .draw(in: NSRect(x: 0, y: 0, width: 400, height: 300), angle: 35)
+            NSColor(white: 1, alpha: 0.85).setFill()
+            NSBezierPath(ovalIn: NSRect(x: 150, y: 90, width: 100, height: 130)).fill()
+            stand.unlockFocus()
+        }
         let hadPhoto = PhotoBoothStore.shared.image
         PhotoBoothStore.shared.keep(stand)
         defer { if let hadPhoto { PhotoBoothStore.shared.keep(hadPhoto) } else { PhotoBoothStore.shared.discard() } }
@@ -241,7 +253,7 @@ enum StillRenderer {
         let photo = CreditsController.makePhotoCard(
             size: NSSize(width: 412, height: 415), photo: stand,
             photoRect: NSRect(x: 16, y: 100, width: 380, height: 285),
-            caption: CreditsController.defaultCaption(), filter: "instant", showsSave: true)
+            caption: CreditsController.defaultCaption(), filter: "dither", showsSave: true)
         put(photo, 20, 24)
         let info = makeEffectContentView(
             ContentSpec(kind: "code", text: CreditsController.machineSummary(), chrome: "terminal",
@@ -278,7 +290,11 @@ enum StillRenderer {
         // live card lays it out, so the spacing is checkable without running the show.
         let tileBack = NSView(frame: NSRect(x: 0, y: 0, width: 760, height: 580))
         tileBack.wantsLayer = true
-        tileBack.layer?.backgroundColor = NSColor.white.cgColor
+        // The ground is the tile's own field, read off the artwork the way the card's
+        // padding is, so this stays right whichever way round the two colours are inked.
+        let tileField = NSImage(contentsOfFile: resolveResourcePath("assets/credits_tile.png"))
+            .flatMap(CreditsController.cornerColor) ?? .white
+        tileBack.layer?.backgroundColor = tileField.cgColor
         CreditsController.addDriftingTile("assets/credits_tile.png", to: tileBack,
                                           secondsPerTile: 4, padding: 1.0, scale: 0.05)
         put(tileBack, 1110, 1470)

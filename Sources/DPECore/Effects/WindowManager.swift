@@ -290,10 +290,13 @@ final class WindowManager {
                 windows[p.id] = win   // not ordered front; open() presents it
             case .fakeDialog(let p):
                 guard windows[p.id] == nil else { continue }
-                let frame = p.frame.flatMap { $0.count == 4 ? rect(from: $0, on: screen(p.screen)) : nil }
+                let frame = p.frame.flatMap { $0.count == 4 ? rect(from: $0, on: screen(p.screen),
+                                                                   anchor: p.anchor) : nil }
                     ?? NSRect(x: 0, y: 0, width: 440, height: 180)
-                windows[p.id] = FakeDialogWindow(contentRect: frame, title: p.title,
-                                                 message: p.body, buttons: p.buttons ?? ["OK"])
+                let win = FakeDialogWindow(contentRect: frame, title: p.title,
+                                           message: p.body, buttons: p.buttons ?? ["OK"])
+                win.level = WindowManager.level(p.level)
+                windows[p.id] = win
             case .screenFlash(let p):
                 let idx = p.screen ?? 0
                 if flashOverlays[idx] == nil {
@@ -539,7 +542,7 @@ final class WindowManager {
         let scr = screen(p.screen)
         let frame: NSRect
         if let f = p.frame, f.count == 4 {
-            frame = rect(from: f, on: scr)
+            frame = rect(from: f, on: scr, anchor: p.anchor)
         } else {
             let size = NSSize(width: 440, height: 180)
             let sf = scr.frame
@@ -552,12 +555,15 @@ final class WindowManager {
         // Any button dismisses the dialog — OK, Cancel, or whatever the cue named.
         let dismiss: (String) -> Void = { [weak self] _ in self?.close(id: p.id) }
         if let existing = windows[p.id] as? FakeDialogWindow {
+            existing.level = WindowManager.level(p.level)
             existing.setFrame(frame, display: false)
             existing.contentView = makeDialogContentView(title: p.title, message: p.body,
                                                          buttons: p.buttons ?? ["OK"],
                                                          icon: p.dialogIcon, size: frame.size,
                                                          onButton: dismiss)
-            existing.present(animate: "none")
+            // Up already: swap in place, no animation. Parked by a close: it is a fresh
+            // appearance to the viewer, so it comes up the way the event asks.
+            existing.present(animate: existing.isVisible ? "none" : (p.animate ?? "springIn"))
             return
         }
         close(id: p.id)
@@ -567,8 +573,9 @@ final class WindowManager {
                                    buttons: p.buttons ?? ["OK"],
                                    icon: p.dialogIcon,
                                    onButton: dismiss)
+        win.level = WindowManager.level(p.level)
         windows[p.id] = win
-        win.present(animate: "springIn")
+        win.present(animate: p.animate ?? "springIn")
     }
 
     func screenFlash(_ p: ScreenFlashParams) {
@@ -652,7 +659,13 @@ final class WindowManager {
         guard let win = windows[id] else { return }
         guard fadeSeconds > 0 else {
             win.orderOut(nil)
-            windows[id] = nil
+            // A dialog is PARKED, not discarded (2026-09-11). Building a FakeDialogWindow
+            // is an NSWindow plus a content view on the main thread, and a run of alerts
+            // that are each closed and re-opened under one id paid that on every open —
+            // measurably late against the beat. Kept, it comes back through the
+            // `existing` branch of `openDialog`: content swapped, ordered front, on the
+            // frame. Every other window kind is still released here.
+            if !(win is FakeDialogWindow) { windows[id] = nil }
             return
         }
         NSAnimationContext.runAnimationGroup({ ctx in

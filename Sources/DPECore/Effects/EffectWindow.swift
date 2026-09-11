@@ -531,7 +531,8 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
             }
         }
     case "video":
-        // A looping, muted clip — a desktop animation as scenery. `path` is the file.
+        // A looping, muted clip — a desktop animation as scenery. `path` is the file; it
+        // decodes only while the window is on screen (see `VideoContentView`).
         let vv = VideoContentView(size: body.size, content: content)
         vv.autoresizingMask = [.width, .height]
         view.addSubview(vv)
@@ -658,6 +659,17 @@ enum DialogIcon: String {
     }
 }
 
+/// The alert's two type sizes, one point over `NSAlert`'s own (13 bold / 11) — see the
+/// note in `makeDialogContentView`. The buttons keep the system size: they are controls,
+/// not the message, and a control drawn a point too big is what gives a fake away.
+enum DialogType {
+    // Raised again (2026-09-11, second pass): one point over the system was still "TOO
+    // small" next to everything else the show puts up. 16 bold / 13 now — three and two
+    // over NSAlert. The frames still fit: the title row is 22 pt high and the body wraps.
+    static let title: CGFloat = NSFont.systemFontSize + 3
+    static let body: CGFloat = NSFont.smallSystemFontSize + 2
+}
+
 /// Relays a dialog button click to a closure. `NSControl.target` is weak, so the relay
 /// is added as a zero-size subview of the dialog's root — retained by the view hierarchy
 /// for the window's life, and (being an `NSView`, not an `NSButton`) invisible to the
@@ -680,7 +692,7 @@ func makeDialogContentView(title: String, message: String, buttons: [String],
                            onButton: ((String) -> Void)? = nil) -> NSView {
     // Solid, manual-frame panel — no NSVisualEffectView blur or autolayout, both of
     // which are far too expensive when dozens of dialogs spawn during a show.
-    let root = NSView(frame: NSRect(origin: .zero, size: size))
+    let root = DialogRootView(frame: NSRect(origin: .zero, size: size))
     root.wantsLayer = true
     // Semantic colours, not fixed greys: these track the viewer's light/dark setting
     // and accent colour, which is most of what makes a panel read as system-drawn.
@@ -704,14 +716,21 @@ func makeDialogContentView(title: String, message: String, buttons: [String],
     }
     let textW = size.width - textX - 20
 
+    // ONE POINT OVER the system alert's sizes (2026-09-11): 14/12 where NSAlert sets
+    // 13/11. A real alert is read from arm's length by the person who provoked it; these
+    // are read across a room, over a screen that is doing forty other things, and at
+    // the system size the words were the first thing to go. One point is the whole
+    // difference — two and they stop reading as system-drawn. `DialogType` is the one
+    // place the sizes live, so every dialog in the piece (the gate, the oracle, the
+    // eruption's alerts, the outro's force-quit) moves together.
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
+    titleLabel.font = .boldSystemFont(ofSize: DialogType.title)
     titleLabel.textColor = .labelColor
     titleLabel.frame = NSRect(x: textX, y: size.height - 40, width: textW, height: 22)
     titleLabel.autoresizingMask = [.width, .minYMargin]
 
     let body = NSTextField(wrappingLabelWithString: message)
-    body.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+    body.font = .systemFont(ofSize: DialogType.body)
     body.textColor = .secondaryLabelColor
     body.frame = NSRect(x: textX, y: 48, width: textW, height: size.height - 96)
     body.autoresizingMask = [.width, .height]
@@ -1139,16 +1158,36 @@ final class HostedEffectWindow: BaseEffectWindow {
     }
 }
 
+/// The alert's root view. It takes the first click even though its window can never be
+/// key, so a click on an alert reaches the window — which raises itself on it.
+final class DialogRootView: NSView {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
 /// A deliberately comedic fake dialog window.
+///
+/// LIVE (2026-09-11): a real alert can be clicked to the front, dragged by its body and
+/// dismissed by its buttons, and this one does all three. The window cannot become key
+/// (`BaseEffectWindow`), so the content view takes the first click (`DialogRootView`);
+/// the buttons go through `onButton` (`DialogButtonRelay`), which `WindowManager` points
+/// at `close(id:)` — the window is parked, and the timeline can re-open it, and does.
 final class FakeDialogWindow: BaseEffectWindow {
     init(contentRect: NSRect, title: String, message: String, buttons: [String],
          icon: DialogIcon = .caution, onButton: ((String) -> Void)? = nil) {
         // Borderless on purpose: a real macOS alert has no title bar either.
         super.init(contentRect: contentRect)
         ignoresMouseEvents = false
+        isMovableByWindowBackground = true
         contentView = makeDialogContentView(title: title, message: message,
                                             buttons: buttons, icon: icon,
                                             size: contentRect.size, onButton: onButton)
+    }
+
+    /// A click anywhere on it brings it to the front of its level; the drag then
+    /// proceeds as the base window's background drag.
+    override func mouseDown(with event: NSEvent) {
+        orderFrontRegardless()
+        super.mouseDown(with: event)
     }
 }
 

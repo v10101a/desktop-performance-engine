@@ -526,6 +526,30 @@ even the menu bar; omit it for `"normal"`. Same vocabulary as `glassTorus` and
 `photoWall`. It is for a layer that has to swim through a passage opening a window every
 fifth of a beat: at the normal level such a layer is buried by the second bar.
 
+**`fakeDialog` is the plain macOS alert.** `title` is the bold message, `body` the
+informative text under it, `buttons` the row along the bottom (the rightmost is the
+default and draws in the accent colour), and `icon` the illustration: `"caution"` (the
+default, the yellow triangle), `"critical"` (the app icon badged with it, as `NSAlert`
+does), `"info"`, `"app"` or `"none"` — the system's own images, dropped automatically on
+a panel too small to carry one. `frame` and `screen` work as they do for a window; omit
+`frame` for 440×180 in the middle of the screen. `anchor: "center"` and `level` take the
+same vocabulary as `openWindow`, so a dialog that has to hold the centre through a
+passage opening a window every fifth of a beat is authored from the centre and stays on
+top of it. `animate` is how a fresh id comes up: `"springIn"` (the default, scaling in
+from 60%), `"fadeIn"`, or `"none"` — on its frame, the way a real alert lands, which is
+what a run of separate alerts wants. Re-opening an id that is already up swaps the
+content in place with no animation regardless — close it first if a pop is wanted. A
+closed dialog is parked rather than released, so a close-and-reopen under one id costs a
+content swap, not a new window, and lands on its frame. Every alert is **live**: a click
+brings it to the front of its level, it drags by its body, and any of its buttons
+dismisses it — parking the window the way `closeWindow` does, so the timeline can bring
+it back. The type is set **over
+`NSAlert`'s** (16 pt bold title, 13 pt body against the system's 13/11 — `DialogType`,
+the one place the sizes live, shared by the gate, the oracle and the outro's force-quit);
+these are read across a room, over a screen where everything else is large, not from
+arm's length. The buttons keep the system size: a control drawn a point too big is what
+gives a fake away.
+
 **`closeWindow` cuts by default and dissolves on request.** `{"id": "w1",
 "fadeSeconds": 0.25}` runs that window's alpha down over a quarter-second instead of
 ordering it out on the frame — which is how a wall of tiles comes off the screen as a
@@ -1240,20 +1264,30 @@ A video file at `path`, looping and muted, playing in the window as scenery.
 
 `VideoContentView` is an `AVPlayerLayer` fed by an `AVQueuePlayer` + `AVPlayerLooper`, so
 the loop is seamless (seeking to zero on the end notification drops a frame at the seam).
-It is **muted** — the show has its own soundtrack, the same rule the segmenter's file
-source follows — and the picture is `resizeAspectFill`, so it covers the window edge to
-edge rather than letterboxing. Like every other live surface here it is scenery: clicks
-fall through (`hitTest` returns nil), and the player pauses when the window closes so a
-gone window is not still decoding.
+`loop` defaults to true; `false` plays the clip once and holds its last frame. It is
+**muted** — the show has its own soundtrack, the same rule the segmenter's file source
+follows — and the picture is `resizeAspectFill`, so it covers the window edge to edge
+rather than letterboxing. Like every other live surface here it is scenery: clicks fall
+through (`hitTest` returns nil), so an `interactive` window is still dragged by its
+picture.
+
+It only decodes **while the window is on screen**. Every window the timeline names is
+built at prewarm, before the clock starts, so a player running from creation would cost a
+decoder per clip for the whole show; instead the view watches its window's occlusion
+state — it starts from the first frame when the window becomes visible, pauses when it is
+ordered out or completely buried, and resumes when uncovered. A missing file is a black
+window with the file's name written on it and a log line, not a crash.
 
 This is **not** segcam — `segcam` also takes a file, but it *segments* it into boxes;
 `video` just plays it. And it is not the WebGL host either: it is native `AVFoundation`,
 so any container/codec macOS plays works, and there is nothing to compile.
 
-The one place it runs is **cue 17**, the breakdown: `desktop_animation3.mp4` at 52% of the
-screen with `desktop_animation1/2/3.mp4` scattered around three of its corners. The clips
-are LFS-tracked (see `.gitattributes`) and travel in the `.app` the way every other
-`assets/*.mp4` does (`bundle.sh` copies them; `--check` audits them).
+The clips the show names are LFS-tracked (see `.gitattributes`) and travel in the `.app`
+the way every other `assets/*.mp4` does (`bundle.sh` copies them; `--check` audits them).
+A checkout made without git-lfs holds the pointer text where the movie should be: the
+window plays black, and `tools/lint_show.py` warns about it. Test: `swift run dpe-tests`
+builds the view on the show's first clip and on a missing path; to see one, put a clip in
+a one-event timeline and `swift run GiveIt2Me_DJ_Dave_malware that.json`.
 
 ### `automaton` content
 
@@ -1640,6 +1674,9 @@ window stays up with its caret blinking at 2 Hz until `closeWindow` by `id`.
     "charsPerBeat": 16, "fontSize": 14, "title": "resignation.txt — Edited" } }
 ```
 
+`level` takes the same vocabulary as `openWindow`; typed windows sit at the normal level
+like everything else the timeline opens, so an alert opened after one lands on top of it.
+
 `chrome` picks the surface it writes into:
 
 | chrome | |
@@ -1930,8 +1967,8 @@ preview says so and the countdown runs anyway.
 
 The end card, laid out as one collage centred on the screen: on the left the booth's
 photo in a white frame — pinned on at a tilt (`photoTilt` degrees, default −4, positive
-anticlockwise), lapping over the credits' edge — with a flattering filter (`filter`:
-`instant` default, `chrome`, `fade`, `none`), `caption` under it in Apple Garamond
+anticlockwise), lapping over the credits' edge — under a treatment (`filter`: `instant`
+default, `chrome`, `fade`, `dither`, `none`), `caption` under it in Apple Garamond
 (default *I SURVIVED THE GIVE IT 2 ME MALWARE EXPERIENCE!*; Hoefler Text where Garamond
 isn't installed, and shrunk to fit the card on one line rather than truncated),
 and a **save photo** button under that unless `allowSave` is false; beside it the
@@ -1950,7 +1987,20 @@ the authored size a long credit would wrap in the middle of a name rather than w
 window. The song's own block runs to 44 characters and lands at 20.5pt on a 1440-wide
 screen. Preview the whole card without running the show:
 `--snapshot-credits=out.png`, which reads the bundled show's `credits` event and lays
-the real windows out off-screen at your display's size.
+the real windows out off-screen at your display's size. Two environment seams go with
+it: `DPE_SNAPSHOT_PHOTO=path` stands a real picture in for the booth's (the default is a
+gradient with an oval on it, which says nothing about how a treatment handles a face),
+and `DPE_SNAPSHOT_FILTER=name` overrides the show's `filter`, so two renders put two
+treatments on the same picture.
+
+The photo treatments are two kinds of thing. `instant`, `chrome` and `fade` are Core
+Image's film looks, each under a soft vignette. `dither` is a booth print: the picture is
+reduced to a coarse grid (`DitherLook.gridWidth`, 400 cells across — a cell is a little
+over a point at the size the card shows it), given a hair of contrast, and put through a
+4×4 ordered (Bayer) dither to `DitherLook.levels` tones per channel (6), then blown back
+up with no interpolation so the cells stay square. Nothing else is on it — no vignette,
+no grain, no cast — and it never touches Core Image, so there is nothing to prewarm. The
+three constants are the dials; the matrix is the classic one.
 
 The button writes a PNG to `~/Pictures/GiveIt2Me-<timestamp>.png` and then reports back
 on itself (*saved to Pictures*, *couldn't save*), which is the only status surface the
@@ -1969,10 +2019,10 @@ through like any other line. Leading and trailing blanks are trimmed.
     "tile": "assets/credits_tile.png", "tileDriftSeconds": 4 } }
 ```
 
-`backdrop` is the card's ground — white, matching the tile artwork's own field. The tile
-fills its padding with that same colour (read from the artwork's top-left pixel), so the
-gaps between motifs are indistinguishable from the field inside them and the card reads
-as one continuous ground.
+`backdrop` is the card's ground (default black); give it the tile artwork's own field
+colour. The tile fills its padding with that colour (read from the artwork's top-left
+pixel), so the gaps between motifs are indistinguishable from the field inside them and
+the card reads as one continuous ground — whichever way round the artwork is inked.
 
 Nothing in the end card writes to the tile asset. An earlier version keyed the artwork's
 white out with `NSBitmapImageRep.setColor`, which writes through to the backing store —
