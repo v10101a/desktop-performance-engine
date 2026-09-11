@@ -1,0 +1,6 @@
+# The one warning box on the blue after the stop, a beat after everything closes and
+# gone as the end card lands — the line the song stops on, spelt the way the title is.
+# `body:` may be added under it for small text; there is none.
+title: need your love so give it 2 me
+buttons:
+- OK

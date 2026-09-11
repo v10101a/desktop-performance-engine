@@ -13488,6 +13488,7 @@
      0,
      0
     ],
+    "level": "floating",
     "content": {
      "kind": "cursors",
      "seed": 3136,
@@ -23143,6 +23144,13 @@
    }
   },
   {
+   "beat": 271,
+   "type": "closeWindow",
+   "params": {
+    "id": "school"
+   }
+  },
+  {
    "beat": 271.129,
    "type": "openWindow",
    "params": {
@@ -23421,6 +23429,26 @@
      32
     ],
     "durationSeconds": 0.001
+   }
+  },
+  {
+   "beat": 272,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 3.5,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      173,
+      135
+     ],
+     [
+      1267,
+      720
+     ]
+    ]
    }
   },
   {
@@ -24032,13 +24060,6 @@
    }
   },
   {
-   "beat": 274.8,
-   "type": "closeWindow",
-   "params": {
-    "id": "tbd2"
-   }
-  },
-  {
    "beat": 274.886,
    "type": "openWindow",
    "params": {
@@ -24280,6 +24301,26 @@
     ],
     "durationBeats": 3.282,
     "easing": "linear"
+   }
+  },
+  {
+   "beat": 276,
+   "type": "cursorPath",
+   "params": {
+    "path": "linear",
+    "durationBeats": 3.5,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      1267,
+      720
+     ],
+     [
+      173,
+      738
+     ]
+    ]
    }
   },
   {
@@ -25242,74 +25283,51 @@
    }
   },
   {
-   "beat": 280.152,
-   "type": "openWindow",
+   "beat": 280,
+   "type": "cursorPath",
    "params": {
-    "id": "w3",
-    "frame": [
-     596,
-     537,
-     480,
-     353
-    ],
-    "content": {
-     "kind": "code",
-     "text": "export default async function () {\n  await need(\"your love\");\n  return \"so give it to me\";\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "path": "linear",
+    "durationBeats": 3.5,
+    "easing": "easeInOut",
+    "mode": "warp",
+    "points": [
+     [
+      173,
+      738
+     ],
+     [
+      1224,
+      162
+     ]
+    ]
    }
   },
   {
-   "beat": 280.376,
-   "type": "openWindow",
+   "beat": 280,
+   "type": "closeWindow",
    "params": {
-    "id": "w4",
-    "frame": [
-     897,
-     10,
-     528,
-     422
-    ],
-    "content": {
-     "kind": "glitch",
-     "path": "assets/pixelface.jpg",
-     "intensity": 0.45,
-     "seed": 8452,
-     "chrome": "mixed",
-     "title": "recovered.jpg"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
+    "id": "sl11"
    }
   },
   {
-   "beat": 280.558,
-   "type": "openWindow",
+   "beat": 280.17,
+   "type": "closeWindow",
    "params": {
-    "id": "w5",
-    "frame": [
-     198,
-     10,
-     500,
-     421
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "d1"
+   }
+  },
+  {
+   "beat": 280.334,
+   "type": "closeWindow",
+   "params": {
+    "id": "c4"
+   }
+  },
+  {
+   "beat": 280.492,
+   "type": "closeWindow",
+   "params": {
+    "id": "al2"
    }
   },
   {
@@ -25338,36 +25356,24 @@
    }
   },
   {
-   "beat": 280.768,
-   "type": "openWindow",
+   "beat": 280.644,
+   "type": "closeWindow",
    "params": {
-    "id": "w6",
-    "frame": [
-     531,
-     610,
-     463,
-     280
-    ],
-    "content": {
-     "kind": "code",
-     "text": "let currents = [];\ncurrents.running = \"up\";\n// i can\u2019t get enough\nwhile (feeling) currents.push(this);",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "sl2"
    }
   },
   {
-   "beat": 280.943,
-   "type": "jiggle",
+   "beat": 280.791,
+   "type": "closeWindow",
    "params": {
-    "id": "w6",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
+    "id": "sl5"
+   }
+  },
+  {
+   "beat": 280.932,
+   "type": "closeWindow",
+   "params": {
+    "id": "sl0"
    }
   },
   {
@@ -25396,23 +25402,10 @@
    }
   },
   {
-   "beat": 281.093,
-   "type": "fakeDialog",
+   "beat": 281.068,
+   "type": "closeWindow",
    "params": {
-    "id": "d3",
-    "title": "running up",
-    "body": "my currents i can\u2019t get enough of this feeling baby",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "caution",
-    "frame": [
-     416,
-     10,
-     460,
-     190
-    ]
+    "id": "w4"
    }
   },
   {
@@ -25438,6 +25431,13 @@
     ],
     "durationBeats": 2.795,
     "easing": "linear"
+   }
+  },
+  {
+   "beat": 281.199,
+   "type": "closeWindow",
+   "params": {
+    "id": "c3"
    }
   },
   {
@@ -25491,29 +25491,17 @@
    }
   },
   {
-   "beat": 281.306,
-   "type": "openWindow",
+   "beat": 281.326,
+   "type": "closeWindow",
    "params": {
-    "id": "w7",
-    "frame": [
-     990,
-     365,
-     440,
-     290
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "NEED YOUR LOVE",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics",
-     "fontCycleHz": 3.0,
-     "seed": 7766
-    },
-    "animate": {
-     "kind": "none"
-    }
+    "id": "kd0"
+   }
+  },
+  {
+   "beat": 281.447,
+   "type": "closeWindow",
+   "params": {
+    "id": "kd1"
    }
   },
   {
@@ -25542,26 +25530,10 @@
    }
   },
   {
-   "beat": 281.489,
-   "type": "openWindow",
+   "beat": 281.565,
+   "type": "closeWindow",
    "params": {
-    "id": "w8",
-    "frame": [
-     10,
-     302,
-     562,
-     387
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "w6"
    }
   },
   {
@@ -25590,46 +25562,31 @@
    }
   },
   {
-   "beat": 281.715,
-   "type": "fakeDialog",
+   "beat": 281.677,
+   "type": "closeWindow",
    "params": {
-    "id": "d0",
-    "title": "all i got",
-    "body": "i\u2019m giving that so give it up",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "info",
-    "frame": [
-     483,
-     585,
-     460,
-     190
-    ]
+    "id": "d0"
    }
   },
   {
-   "beat": 281.903,
-   "type": "openWindow",
+   "beat": 281.786,
+   "type": "closeWindow",
    "params": {
-    "id": "w9",
-    "frame": [
-     1020,
-     357,
-     410,
-     328
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#68BDF8",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "sl10"
+   }
+  },
+  {
+   "beat": 281.891,
+   "type": "closeWindow",
+   "params": {
+    "id": "al1"
+   }
+  },
+  {
+   "beat": 281.992,
+   "type": "closeWindow",
+   "params": {
+    "id": "m2"
    }
   },
   {
@@ -25642,6 +25599,13 @@
      163
     ],
     "durationSeconds": 0.001
+   }
+  },
+  {
+   "beat": 282.089,
+   "type": "closeWindow",
+   "params": {
+    "id": "c5"
    }
   },
   {
@@ -25658,50 +25622,24 @@
    }
   },
   {
-   "beat": 282.12,
-   "type": "openWindow",
+   "beat": 282.183,
+   "type": "closeWindow",
    "params": {
-    "id": "w10",
-    "frame": [
-     417,
-     413,
-     604,
-     477
-    ],
-    "content": {
-     "kind": "uichaos",
-     "seed": 1162,
-     "intensity": 1.15,
-     "chrome": "mixed",
-     "title": "Finder"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "w1"
    }
   },
   {
-   "beat": 282.27,
-   "type": "openWindow",
+   "beat": 282.273,
+   "type": "closeWindow",
    "params": {
-    "id": "w11",
-    "frame": [
-     868,
-     10,
-     562,
-     342
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#0B0E16",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "springIn"
-    },
-    "interactive": true
+    "id": "sl3"
+   }
+  },
+  {
+   "beat": 282.36,
+   "type": "closeWindow",
+   "params": {
+    "id": "sl9"
    }
   },
   {
@@ -25730,26 +25668,10 @@
    }
   },
   {
-   "beat": 282.471,
-   "type": "openWindow",
+   "beat": 282.444,
+   "type": "closeWindow",
    "params": {
-    "id": "w12",
-    "frame": [
-     513,
-     455,
-     597,
-     435
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "c2"
    }
   },
   {
@@ -25778,6 +25700,13 @@
    }
   },
   {
+   "beat": 282.524,
+   "type": "closeWindow",
+   "params": {
+    "id": "ss0"
+   }
+  },
+  {
    "beat": 282.585,
    "type": "moveWindow",
    "params": {
@@ -25787,6 +25716,13 @@
      213
     ],
     "durationSeconds": 0.001
+   }
+  },
+  {
+   "beat": 282.602,
+   "type": "closeWindow",
+   "params": {
+    "id": "w13"
    }
   },
   {
@@ -25803,29 +25739,17 @@
    }
   },
   {
-   "beat": 282.664,
-   "type": "openWindow",
+   "beat": 282.677,
+   "type": "closeWindow",
    "params": {
-    "id": "w13",
-    "frame": [
-     695,
-     10,
-     547,
-     374
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "SO GIVE IT TO ME",
-     "hex": "#F2F4FE",
-     "fg": "#0078D7",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics",
-     "fontCycleHz": 3.0,
-     "seed": 7767
-    },
-    "animate": {
-     "kind": "none"
-    }
+    "id": "w2"
+   }
+  },
+  {
+   "beat": 282.749,
+   "type": "closeWindow",
+   "params": {
+    "id": "al0"
    }
   },
   {
@@ -25854,85 +25778,94 @@
    }
   },
   {
-   "beat": 282.891,
-   "type": "openWindow",
+   "beat": 282.819,
+   "type": "closeWindow",
    "params": {
-    "id": "w0",
-    "frame": [
-     145,
-     565,
-     495,
-     325
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#F2F4FE",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "w10"
    }
   },
   {
-   "beat": 283.041,
-   "type": "openWindow",
+   "beat": 282.886,
+   "type": "closeWindow",
    "params": {
-    "id": "w1",
-    "frame": [
-     824,
-     472,
-     606,
-     418
-    ],
-    "content": {
-     "kind": "lyric",
-     "text": "RUNNING UP",
-     "hex": "#0078D7",
-     "fg": "#F2F4FE",
-     "chrome": "mac",
-     "title": "give it 2 me \u2014 lyrics",
-     "fontCycleHz": 3.0,
-     "seed": 7768
-    },
-    "animate": {
-     "kind": "none"
-    }
+    "id": "w3"
    }
   },
   {
-   "beat": 283.23,
-   "type": "openWindow",
+   "beat": 282.95,
+   "type": "closeWindow",
    "params": {
-    "id": "w2",
-    "frame": [
-     247,
-     10,
-     591,
-     488
-    ],
-    "content": {
-     "kind": "color",
-     "hex": "#020AF5",
-     "chrome": "mixed",
-     "title": "look://again"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
+    "id": "c6"
    }
   },
   {
-   "beat": 283.425,
-   "type": "jiggle",
+   "beat": 283.012,
+   "type": "closeWindow",
    "params": {
-    "id": "w2",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
+    "id": "w7"
+   }
+  },
+  {
+   "beat": 283.072,
+   "type": "closeWindow",
+   "params": {
+    "id": "w5"
+   }
+  },
+  {
+   "beat": 283.13,
+   "type": "closeWindow",
+   "params": {
+    "id": "ss1"
+   }
+  },
+  {
+   "beat": 283.185,
+   "type": "closeWindow",
+   "params": {
+    "id": "m3"
+   }
+  },
+  {
+   "beat": 283.239,
+   "type": "closeWindow",
+   "params": {
+    "id": "w0"
+   }
+  },
+  {
+   "beat": 283.29,
+   "type": "closeWindow",
+   "params": {
+    "id": "w8"
+   }
+  },
+  {
+   "beat": 283.34,
+   "type": "closeWindow",
+   "params": {
+    "id": "sl4"
+   }
+  },
+  {
+   "beat": 283.388,
+   "type": "closeWindow",
+   "params": {
+    "id": "d3"
+   }
+  },
+  {
+   "beat": 283.434,
+   "type": "closeWindow",
+   "params": {
+    "id": "c1"
+   }
+  },
+  {
+   "beat": 283.478,
+   "type": "closeWindow",
+   "params": {
+    "id": "c7"
    }
   },
   {
@@ -25945,6 +25878,13 @@
      32
     ],
     "durationSeconds": 0.001
+   }
+  },
+  {
+   "beat": 283.521,
+   "type": "closeWindow",
+   "params": {
+    "id": "w9"
    }
   },
   {
@@ -25961,61 +25901,70 @@
    }
   },
   {
-   "beat": 283.625,
-   "type": "openWindow",
-   "params": {
-    "id": "w3",
-    "frame": [
-     496,
-     10,
-     554,
-     403
-    ],
-    "content": {
-     "kind": "code",
-     "text": "function giveItUp() {\n  return all.i.got;   // i\u2019m giving that\n}",
-     "chrome": "terminal",
-     "title": "haunt.sh"
-    },
-    "animate": {
-     "kind": "none"
-    },
-    "interactive": true
-   }
-  },
-  {
-   "beat": 283.845,
-   "type": "jiggle",
-   "params": {
-    "id": "w3",
-    "durationBeats": 1.5,
-    "amplitude": 18,
-    "frequency": 9
-   }
-  },
-  {
-   "beat": 283.9,
+   "beat": 283.562,
    "type": "closeWindow",
    "params": {
-    "id": "al0"
+    "id": "sl7"
    }
   },
   {
-   "beat": 283.9,
+   "beat": 283.602,
    "type": "closeWindow",
    "params": {
-    "id": "al1"
+    "id": "d2"
    }
   },
   {
-   "beat": 283.9,
+   "beat": 283.64,
    "type": "closeWindow",
    "params": {
-    "id": "al2"
+    "id": "sl6"
    }
   },
   {
-   "beat": 283.9,
+   "beat": 283.677,
+   "type": "closeWindow",
+   "params": {
+    "id": "sl8"
+   }
+  },
+  {
+   "beat": 283.713,
+   "type": "closeWindow",
+   "params": {
+    "id": "m1"
+   }
+  },
+  {
+   "beat": 283.747,
+   "type": "closeWindow",
+   "params": {
+    "id": "w11"
+   }
+  },
+  {
+   "beat": 283.78,
+   "type": "closeWindow",
+   "params": {
+    "id": "sl1"
+   }
+  },
+  {
+   "beat": 283.812,
+   "type": "closeWindow",
+   "params": {
+    "id": "m0"
+   }
+  },
+  {
+   "beat": 283.842,
+   "type": "closeWindow",
+   "params": {
+    "id": "w12"
+   }
+  },
+  {
+   "beat": 283.872,
    "type": "closeWindow",
    "params": {
     "id": "al3"
@@ -26032,111 +25981,6 @@
    "beat": 283.9,
    "type": "closeWindow",
    "params": {
-    "id": "c1"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c2"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c3"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c4"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c5"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c6"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "c7"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "kd0"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "kd1"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "m0"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "m1"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "m2"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "m3"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "ss0"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "ss1"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
     "id": "school"
    }
   },
@@ -26144,84 +25988,7 @@
    "beat": 283.9,
    "type": "closeWindow",
    "params": {
-    "id": "sl0"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl1"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl2"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl3"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl4"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl5"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl6"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl7"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl8"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl9"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl10"
-   }
-  },
-  {
-   "beat": 283.9,
-   "type": "closeWindow",
-   "params": {
-    "id": "sl11"
+    "id": "tbd2"
    }
   },
   {
@@ -26617,28 +26384,6 @@
    }
   },
   {
-   "t": 147.807,
-   "type": "fakeDialog",
-   "params": {
-    "id": "lyricbox",
-    "anchor": "center",
-    "level": "floating",
-    "animate": "none",
-    "frame": [
-     0,
-     0,
-     540,
-     200
-    ],
-    "title": "what I want",
-    "body": "what I want\nI told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical"
-   }
-  },
-  {
    "beat": 316,
    "type": "screenFlash",
    "params": {
@@ -26754,13 +26499,6 @@
    }
   },
   {
-   "t": 148.274,
-   "type": "closeWindow",
-   "params": {
-    "id": "lyricbox"
-   }
-  },
-  {
    "beat": 316.811,
    "type": "openWindow",
    "params": {
@@ -26815,29 +26553,6 @@
    "params": {
     "color": "#0078D7",
     "durationSeconds": 0.09
-   }
-  },
-  {
-   "t": 148.508,
-   "type": "fakeDialog",
-   "params": {
-    "id": "lyricbox",
-    "anchor": "center",
-    "level": "floating",
-    "animate": "none",
-    "frame": [
-     0,
-     0,
-     540,
-     200
-    ],
-    "title": "I told you that I",
-    "body": "what I want\nI told you that i need your love so give it to me",
-    "buttons": [
-     "ok",
-     "more"
-    ],
-    "icon": "critical"
    }
   },
   {
@@ -26925,13 +26640,6 @@
    "params": {
     "color": "#020202",
     "durationSeconds": 0.09
-   }
-  },
-  {
-   "t": 149.092,
-   "type": "closeWindow",
-   "params": {
-    "id": "lyricbox"
    }
   },
   {
@@ -27208,29 +26916,6 @@
    }
   },
   {
-   "t": 149.675,
-   "type": "fakeDialog",
-   "params": {
-    "id": "lyricbox",
-    "anchor": "center",
-    "level": "floating",
-    "animate": "none",
-    "frame": [
-     0,
-     0,
-     540,
-     200
-    ],
-    "title": "need your love",
-    "body": "what I want\nI told you that i need your love so give it to me",
-    "buttons": [
-     "not now",
-     "ok"
-    ],
-    "icon": "critical"
-   }
-  },
-  {
    "beat": 319.719,
    "type": "openWindow",
    "params": {
@@ -27403,13 +27088,6 @@
    }
   },
   {
-   "t": 150.142,
-   "type": "closeWindow",
-   "params": {
-    "id": "lyricbox"
-   }
-  },
-  {
    "beat": 320.727,
    "type": "openWindow",
    "params": {
@@ -27514,28 +27192,6 @@
    }
   },
   {
-   "t": 150.376,
-   "type": "fakeDialog",
-   "params": {
-    "id": "lyricbox",
-    "anchor": "center",
-    "level": "floating",
-    "animate": "none",
-    "frame": [
-     0,
-     0,
-     540,
-     200
-    ],
-    "title": "so give it to me",
-    "body": "what I want\nI told you that i need your love so give it to me",
-    "buttons": [
-     "ok"
-    ],
-    "icon": "critical"
-   }
-  },
-  {
    "beat": 321.406,
    "type": "openWindow",
    "params": {
@@ -27585,25 +27241,11 @@
    }
   },
   {
-   "beat": 322.0,
-   "type": "closeWindow",
-   "params": {
-    "id": "segswarm"
-   }
-  },
-  {
    "t": 150.789,
    "type": "screenFlash",
    "params": {
     "color": "#68BDF8",
     "durationSeconds": 0.09
-   }
-  },
-  {
-   "t": 150.959,
-   "type": "closeWindow",
-   "params": {
-    "id": "lyricbox"
    }
   },
   {
@@ -27787,6 +27429,13 @@
    }
   },
   {
+   "t": 151.523,
+   "type": "closeWindow",
+   "params": {
+    "id": "segswarm"
+   }
+  },
+  {
    "t": 151.543,
    "type": "fakeDialog",
    "params": {
@@ -27803,7 +27452,6 @@
     "title": "running up",
     "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
     "buttons": [
-     "more",
      "ok"
     ],
     "icon": "caution"
@@ -28014,7 +27662,8 @@
     "title": "my currents",
     "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
     "buttons": [
-     "ok"
+     "ok",
+     "more"
     ],
     "icon": "caution"
    }
@@ -28134,8 +27783,8 @@
     "title": "I can\u2019t get enough",
     "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
     "buttons": [
-     "ok",
-     "more"
+     "not now",
+     "ok"
     ],
     "icon": "caution"
    }
@@ -28360,7 +28009,6 @@
     "title": "of this feeling baby",
     "body": "running up\nmy currents i can\u2019t get enough of this feeling baby",
     "buttons": [
-     "not now",
      "ok"
     ],
     "icon": "caution"
@@ -28575,6 +28223,7 @@
     "title": "all I got",
     "body": "all i got\ni\u2019m giving that so give it up",
     "buttons": [
+     "more",
      "ok"
     ],
     "icon": "info"
@@ -28636,7 +28285,6 @@
     "title": "I\u2019m giving that",
     "body": "all i got\ni\u2019m giving that so give it up",
     "buttons": [
-     "more",
      "ok"
     ],
     "icon": "info"
@@ -28820,7 +28468,8 @@
     "title": "so give it up",
     "body": "all i got\ni\u2019m giving that so give it up",
     "buttons": [
-     "ok"
+     "ok",
+     "more"
     ],
     "icon": "info"
    }
@@ -29086,8 +28735,8 @@
     "title": "I told you that I",
     "body": "i told you that I\nneed your love\nso give it to me",
     "buttons": [
-     "ok",
-     "more"
+     "not now",
+     "ok"
     ],
     "icon": "critical"
    }
@@ -29305,7 +28954,6 @@
     "title": "need your love",
     "body": "i told you that I\nneed your love\nso give it to me",
     "buttons": [
-     "not now",
      "ok"
     ],
     "icon": "critical"
@@ -29478,6 +29126,7 @@
     "title": "so give it to me",
     "body": "i told you that I\nneed your love\nso give it to me",
     "buttons": [
+     "more",
      "ok"
     ],
     "icon": "critical"
@@ -29957,6 +29606,13 @@
    "beat": 343.05,
    "type": "closeWindow",
    "params": {
+    "id": "tbd2"
+   }
+  },
+  {
+   "beat": 343.05,
+   "type": "closeWindow",
+   "params": {
     "id": "sl0"
    }
   },
@@ -30035,6 +29691,34 @@
    "type": "closeWindow",
    "params": {
     "id": "sl11"
+   }
+  },
+  {
+   "beat": 344,
+   "type": "fakeDialog",
+   "params": {
+    "id": "lastwords",
+    "anchor": "center",
+    "animate": "none",
+    "frame": [
+     0,
+     0,
+     540,
+     200
+    ],
+    "title": "need your love so give it 2 me",
+    "body": "",
+    "buttons": [
+     "OK"
+    ],
+    "icon": "caution"
+   }
+  },
+  {
+   "beat": 346.95,
+   "type": "closeWindow",
+   "params": {
+    "id": "lastwords"
    }
   },
   {

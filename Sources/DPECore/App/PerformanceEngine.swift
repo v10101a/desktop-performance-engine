@@ -144,6 +144,9 @@ final class PerformanceEngine {
         // Configure the camera session now; device discovery is far too slow for a tick.
         booth.prewarm(for: tl.events)
         credits.prewarm(for: tl.events)
+        // The segmenter's clip player and its sixty panels — built on the beat, they
+        // were a visible second of nothing on the vocal pickup.
+        segSwarm.prewarm(for: tl.events)
     }
 
     /// The resolved events, for whoever needs to know what the show is going to ask
@@ -220,6 +223,7 @@ final class PerformanceEngine {
         // wipe clears them). Still before the clock starts, so no mid-show stall.
         windows.prewarm(for: tl.events)
         photos.prewarm(for: tl.events)
+        segSwarm.prewarm(for: tl.events)
         // Only touch (and prompt for) desktop icons if the show actually uses them.
         iconsArmed = tl.usesIcons
         if iconsArmed { icons.snapshot() }
@@ -373,6 +377,7 @@ final class PerformanceEngine {
         if isPlaying {
             for executor in executors { executor.closeAll() }
             windows.prewarm(for: tl.events)
+            segSwarm.prewarm(for: tl.events)
             scheduler.seek(to: t)
             clock.seek(to: t, playing: !isPaused)   // scrubbing while paused stays paused
             lastFxUpdate = -1.0

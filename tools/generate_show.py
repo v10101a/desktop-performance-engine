@@ -248,7 +248,14 @@ n_cue = len(phrases)
 HOOK_AT = next(when for when, _, line in phrases if line == 6)   # "I told you that I", second time
 
 events = []
+# `erupt(mute_from=…)` flips this for the cards past its mute point: every draw and every
+# counter still happens, so the eruption after it is byte-identical, but nothing lands.
+MUTE = False
 def add(beat, typ, params):
+    if MUTE:
+        if typ in ("openWindow", "fakeDialog"):
+            chaos["muted"] += 1
+        return
     events.append({"beat": round(beat, 3), "type": typ, "params": params})
 def add_t(t, typ, params):
     events.append({"t": round(t, 3), "type": typ, "params": params})
@@ -1926,8 +1933,12 @@ if TORUS2_ACT:
 # the viewer's pointer. Transparent and click-through, so it costs the acts it overlaps
 # nothing but the sight of it.
 SWARM_RAMP = round((B["tbd_136"] - B["torus2"]) * BEAT, 1)
+# FLOATING (2026-09-11). It opened at the normal level, and the eruption — a window every
+# fifth of a beat — had it buried within a bar: ninety pointers chasing the mouse and the
+# artist could not see them do it. Over the cards and the flashes now, like the shoal;
+# still click-through.
 add(t2 + 0.5, "openWindow", {
-    "id": "tbd2", "frame": fullscreen(),
+    "id": "tbd2", "frame": fullscreen(), "level": "floating",
     "content": {"kind": "cursors", "seed": 3136, "intensity": 1.0,
                 "spawnSeconds": SWARM_RAMP,
                 "chrome": "none", "title": "pointer"},
@@ -2002,6 +2013,30 @@ for wid in clock_ids + (["torus"] if TORUS2_ACT else []):
 if DOOMVID_ACT:
     add(B["tbd_136"], "closeWindow", {"id": "doomvid"})
 
+# THE SHOAL HANDS OVER (2026-09-11). Cue 21's school (opened below, with its act) has
+# flocked over the eruption since the cut; on the beat the chase swarm is at full
+# strength it leaves, so instrumental B has ONE body of pointers and it is the one that
+# follows the mouse — two flocks over each other and neither reads. Instrumental A is
+# the shoal, the ramp between them is both, B is the chase.
+add(B["tbd_136"], "closeWindow", {"id": "school"})
+
+# …AND THE SHOW MOVES THE POINTER, so the chain is seen trailing whether or not the
+# viewer touches the mouse (2026-09-11). Three legs, one a bar from bar 69 — the bar
+# after the swarm fills — each 3½ beats corner to corner with half a beat still on the
+# bar line, so the swarm piles onto the pointer and is stretched off it again: the
+# pile-up and the stretch are what "following" looks like. Nothing else drives the
+# pointer here — the strobe's warps stop at bar 66. `warp` needs no permission.
+DRIVE_FROM = phrase_beat("instrumentalB") + 16                # bar 69
+DRIVE_LEG = 3.5                                                # beats moving, per bar
+DRIVE_LEGS = [((0.12, 0.15), (0.88, 0.80)),
+              ((0.88, 0.80), (0.12, 0.82)),
+              ((0.12, 0.82), (0.85, 0.18))]
+assert DRIVE_FROM + 4 * len(DRIVE_LEGS) <= B["spam"], "the pointer drive runs into the segmenter"
+for i, (p0, p1) in enumerate(DRIVE_LEGS):
+    add(DRIVE_FROM + 4 * i, "cursorPath", {
+        "path": "linear", "durationBeats": DRIVE_LEG, "easing": "easeInOut", "mode": "warp",
+        "points": [[round(W * p0[0]), round(H * p0[1])], [round(W * p1[0]), round(H * p1[1])]]})
+
 # THE ICON EXPLOSIONS, moved here from cue 10. The video slot has just cut and the only
 # thing left is the pointer swarm, so a shell going up is legible in a way it never was
 # over the spiral. Transparent and full-screen, like it always was; it burns from here
@@ -2023,7 +2058,10 @@ if WORKS_ACT:
 # rings of the wait cursor over the whole screen. Cue 25's swarm chases; this one is
 # fixed and turns.
 # =============================================================================
-add(B["spinner"] - 0.2, "closeWindow", {"id": "tbd2"})
+# The chase swarm no longer closes here (2026-09-11): with the mandala pulled this was a
+# swarm vanishing on a beat with nothing behind it, three bars before the pickup — and
+# most of the chasing it ever got to do. It runs to the 2A pickup and goes with cue 21's
+# act, below.
 # PULLED in the timeline (2026-09-03).
 MANDALA_ACT = False
 if MANDALA_ACT:
@@ -2065,10 +2103,11 @@ if MANDALA_ACT:
 # =============================================================================
 body_colors = PALETTE + ["#0B0E16"]
 chaos_rng = random.Random(7)
-chaos = {"w": 0, "d": 0, "l": 0, "ui": 0, "p": 0, "a": 0, "gone": 0}
+chaos = {"w": 0, "d": 0, "l": 0, "ui": 0, "p": 0, "a": 0, "gone": 0, "muted": 0}
 
 def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, alerts=True,
-          rate_to=None, spread=0.65, evanesce=None):
+          rate_to=None, spread=0.65, evanesce=None, vanish_to=0.0, at=None, rng=None,
+          mute_from=None):
     """~8 events/sec out of (cx, cy) — the explosion, not a ramp.
 
     …unless `rate_to` is given: then the beats between cards slide from `rate` at `b0`
@@ -2117,24 +2156,43 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
     arrive once — spread over every eruption they would be another texture. The gate
     costs no `chaos_rng` draw, so the others scatter exactly as they would; they simply
     show a colour card where cue 28 shows a photograph.
+
+    `at` (2026-09-11) is a GRID: a list of beats, and a card lands on each of them
+    instead of the walk above — chorus 2A's build is cards on the beat, subdividing.
+    On a grid every slot opens something: the alert slot (empty with `alerts=False`)
+    and the jiggle would be a missed beat, and a missed beat in a build of two cards a
+    bar is a bar where nothing happens. The walk keeps its rests. `vanish_to` is the
+    share of cards `evanesce` still takes away at `b1` (0 = by then they all stay; 0.5
+    leaves the act half-empty for the next one to fill). `rng` is the stream the
+    geometry is drawn from; the default is `chaos_rng`, and a build with its OWN stream
+    leaves every eruption after it byte-identical, which is why 2A's has one.
+
+    `mute_from` (2026-09-12) is a beat past which the walk goes on — every draw, every
+    counter, so the next eruption's scatter does not move — but nothing is emitted: the
+    act stops putting windows up while the rng stream stays exactly as long as it was.
+    Cue 21 uses it to fall silent a bar before the pickup so that bar can empty.
     """
+    rng = chaos_rng if rng is None else rng
+    slots = iter(sorted(at)) if at is not None else None
     fade_rng = random.Random(zlib.crc32(b"evanesce"))
     def evanesce_close(wid, b, prog):
         if evanesce is None:
             return
         life0, life1 = evanesce
         life = life0 + (life1 - life0) * prog
-        if fade_rng.random() < 1.0 - prog and b + life < b1 - 0.1:
+        if fade_rng.random() < 1.0 - prog * (1.0 - vanish_to) and b + life < b1 - 0.1:
             add(b + life, "closeWindow", {"id": wid})
             chaos["gone"] += 1
-    b = b0
+    global MUTE
+    b = b0 if slots is None else next(slots, b1)
     while b < b1:
+        MUTE = mute_from is not None and b >= mute_from
         prog = (b - b0) / max(1e-6, b1 - b0)
         u = 0.75 + 0.25 * prog
-        r = 30 + (u ** 1.6) * spread * W * chaos_rng.uniform(0.5, 1.0)
-        ang = chaos_rng.uniform(0, 6.28318)
-        w = round((110 + (u ** 1.7) * 380) * chaos_rng.uniform(0.8, 1.25))
-        h = round(w * chaos_rng.uniform(0.6, 0.85))
+        r = 30 + (u ** 1.6) * spread * W * rng.uniform(0.5, 1.0)
+        ang = rng.uniform(0, 6.28318)
+        w = round((110 + (u ** 1.7) * 380) * rng.uniform(0.8, 1.25))
+        h = round(w * rng.uniform(0.6, 0.85))
         if keep_out:
             # Out of the hole, along the ray it drew — no new draws (see the docstring).
             kw, kh = keep_out
@@ -2146,14 +2204,14 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
                 r = max(r, (kh + h) / 2 / abs(math.sin(ang)))
         x = max(10, min(cx + r * math.cos(ang) - w / 2, W - w - 10))
         y = max(10, min(cy + r * math.sin(ang) - h / 2, H - h - 10))
-        roll = chaos_rng.random()
+        roll = rng.random() * (0.70 if slots is not None else 1.0)   # a grid has no rests
         if roll < 0.42:
             # Both draws happen either way — see the note in cue 15. `chaos_rng` seeds
             # the whole eruption's geometry, so a draw taken on one branch and not the
             # other would re-scatter every window after it.
-            hexc = chaos_rng.choice(body_colors)
-            packed = chaos_rng.random() < ui_chaos
-            animate = {"kind": "none" if chaos_rng.random() < 0.8 else "springIn"}
+            hexc = rng.choice(body_colors)
+            packed = rng.random() < ui_chaos
+            animate = {"kind": "none" if rng.random() < 0.8 else "springIn"}
             # Every ninth flat card comes up TORN instead of blank — the same
             # displacement/chroma-split pass the piece uses at the end, run once over one
             # of the show's own images. Chosen off the window counter, never off
@@ -2228,7 +2286,7 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
         elif roll < 0.70:
             add(b, "openWindow", {"id": f"w{chaos['w'] % 14}",
                 "frame": [round(x), round(y), max(w, 300), h],
-                "content": {"kind": "code", "text": chaos_rng.choice(codes),
+                "content": {"kind": "code", "text": rng.choice(codes),
                             "chrome": "terminal", "title": "haunt.sh"},
                 "animate": {"kind": "none"}, "interactive": True})
             evanesce_close(f"w{chaos['w'] % 14}", b, prog)
@@ -2248,8 +2306,12 @@ def erupt(b0, b1, cx, cy, rate=0.25, ui_chaos=0.0, photos=False, keep_out=None, 
         elif chaos["w"] > 0:
             add(b, "jiggle", {"id": f"w{(chaos['w'] - 1) % 14}", "durationBeats": 1.5,
                 "amplitude": 18, "frequency": 9})
+        if slots is not None:
+            b = next(slots, b1)
+            continue
         step = rate if rate_to is None else rate + (rate_to - rate) * prog
-        b += max(0.15, step * chaos_rng.uniform(0.7, 1.3))
+        b += max(0.15, step * rng.uniform(0.7, 1.3))
+    MUTE = False
 
 sm = B["spam"]                  # the 2A pickup (bar 72) — the CLIP
 gl = B["glitch"]                # the 2B pickup (bar 80) — the ERUPTION
@@ -2292,6 +2354,10 @@ add(sm, "segSwarm", {
 # ON its end beat, so a close placed at −0.1 misses it and that card stands for the rest
 # of the act. A quarter beat is ~90 ms into a swarm that takes a second to build up, so
 # nothing is seen going.
+#
+# A BACKSTOP since 2026-09-12: cue 21's eruption is muted from bar 71 and its pool leaves
+# one card at a time through that bar (see `leaving` there), so by the pickup every one
+# of these is already shut, and a close aimed at a shut window is free.
 for wid in [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]:
     add(sm + 0.25, "closeWindow", {"id": wid})
 
@@ -2342,14 +2408,18 @@ CHORUS2_PICKUP_LEAD = 2                           # beats
 LYRIC_ICONS = ["critical", "caution", "info", "critical"]   # ALERTS' icons, by sentence
 lyric_box_at = []                                 # (beat, text), for the printout
 
-def lyric_box_run(zero, until):
+def lyric_box_run(zero, until, start=None):
     """The centre alert on every sung phrase from `zero`, each replaced by the next.
 
     Phrases landing at or after `until` are dropped: chorus 2B's lyric is cut off by
-    the stop, and its last sung words are "need your love" — cue 30 is `lastwords`."""
+    the stop, and its last sung words are "need your love" — cue 30 is `lastwords`.
+    Phrases before `start` are dropped too: 2B's box begins where the segmenter hands
+    the centre over, not on the pickup."""
     beats_here = [lyric_beat(zero, when) for when, _, _ in phrases]
     for i, (when, text, line) in enumerate(phrases):
         b = beats_here[i]
+        if start is not None and b < start - 1e-6:
+            continue
         if b >= until - 0.5:
             break
         k = len(lyric_box_at)
@@ -2368,49 +2438,79 @@ def lyric_box_run(zero, until):
 
 zero_2A = lyric_zero("chorus2A") - CHORUS2_PICKUP_LEAD
 zero_2B = lyric_zero("chorus2B") - CHORUS2_PICKUP_LEAD
-# CHORUS 2A IS THE SEGMENTER'S (2026-09-11, later the same day). The box and the build-up
-# below were put over 2A while the clip was missing from this machine and the half read
-# as empty. With the clip in, the artist wants the segmenter alone there and the centre
-# to START at 2B. Kept behind CENTRE_2A_ACT, one line to bring back.
+# CHORUS 2A IS THE SEGMENTER'S. The box — and a build under it, twice over on
+# 2026-09-11 — was put over this half and pulled both times: with the clip on the
+# machine the artist wants the video alone there, nothing breaking it up. Kept behind
+# CENTRE_2A_ACT, one line to bring back.
 CENTRE_2A_ACT = False
 if CENTRE_2A_ACT:
     lyric_box_run(zero_2A, zero_2B)  # over the segmenter; the last line holds into 2B
-lyric_box_run(zero_2B, lw)           # over the eruption; the last line holds to the stop
+# …AND 2B'S CENTRE STARTS WHEN THE CLIP RUNS OUT (2026-09-12). The box used to land
+# dead centre on the pickup, on top of the video's busiest region, and the video read as
+# ending there when it was in fact still minting panels under the box for a bar and a
+# half. The clip is 18.4 s and opens on the 2A pickup, so it runs out two bars into 2B,
+# on "running up" — the start of a sentence, a hair before a bar line — and that is the
+# handover: the eruption rings the video for those two bars (`keep_out` holds the middle
+# clear for it), the panels are swept on the line, and the box takes the centre on the
+# same frame. Nothing here is timed to the clip's length by number: move the segmenter
+# and the handover stays on its line, and the clip loops under it if it has to.
+SEG_HANDOVER_LINE = "running up"
+SEG_HANDOVER = next(lyric_beat(zero_2B, when) for when, text, _ in phrases
+                    if text == SEG_HANDOVER_LINE and lyric_beat(zero_2B, when) > gl)
+lyric_box_run(zero_2B, lw, start=SEG_HANDOVER)   # over the eruption; the last line holds to the stop
 
-# --- cue 27's BUILD-UP (2026-09-11): cards pop round the box and vanish, then less and less
-# The box alone over 2A read as dry, and the segmenter is not a given (a machine without
-# the clip shows nothing there). The first pass thickened the RATE from a card every beat
-# and a half — too slow, too even. Now the pops are lively from the first bar, a card
-# every third to half a beat close round the hole, and the build is in what STAYS: at the
-# pickup every card is taken away again half a beat after it lands, so the middle is a
-# few things popping and going round the words; across the eight bars the share that goes
-# falls to none and the ones that go last longer (to three beats), so the ring fills in
-# by itself and cue 28 arrives on a screen that is already the eruption. Same pool, same
-# hole, no alerts (the centre is the alert); it starts half a beat in, behind the
-# quarter-beat sweep of cue 21's cards above, so the sweep never eats its first one.
-BUILD_FROM = sm + 0.5
-BUILD_RATE = (0.45, 0.3)          # beats between cards: at the pickup → at the 2B pickup
-BUILD_SPREAD = 0.45               # closer in than the eruption's 0.65: round the box
-BUILD_LIFE = (0.5, 3.0)           # beats a vanishing card stays, at the pickup → at 2B
+# --- chorus 2A's BUILD (2026-09-11, evening) — PULLED the same night, behind CENTRE_2A_ACT:
+# the artist heard it breaking the video up, and the video is the point of the half.
+# Kept as it was tuned, for a cut that wants a build here: cards ON THE BEAT, subdividing to the hook.
+# The earlier build walked the eruption's own jittered cadence, thickening from a card
+# every half beat to one every third, and the half read as the eruption arriving early
+# rather than as something of its own. This one is a RHYTHM: every card lands on the
+# grid, and the grid subdivides — a card every two beats through bars 72–73, every beat
+# from bar 74, every half beat from the hook in bar 78 (`BUILD_BARS`, one entry per bar
+# of the eight). So 2A pulses with the track where 2B sprays over it, and the doubling
+# lands where the ear expects it. The cards still VANISH — half a beat after landing at
+# first, two beats by the end — and the share that goes falls from all of them to half,
+# so the half stays airy round the words and the segmenter shows through: 2B is what
+# arrives when nothing goes any more. Same pool, same hole, no alerts (the centre is the
+# alert). Its own RNG, so cue 28's scatter is byte-identical to before the build existed;
+# it starts on beat 2 of the pickup bar, behind the quarter-beat sweep of cue 21's cards.
+BUILD_BARS = [2, 2, 1, 1, 1, 1, 0.5, 0.5]   # beats between cards, bar 72 → bar 79
+BUILD_FROM = sm + 1                        # beat 2 of the pickup bar
+BUILD_SPREAD = 0.45                        # closer in than the eruption's 0.65: round the box
+BUILD_LIFE = (0.5, 2.0)                    # beats a vanishing card stays, at the pickup → at 2B
+BUILD_VANISH_TO = 0.5                      # the share still taken away again at the 2B pickup
+assert len(BUILD_BARS) * 4 == gl - sm, "one BUILD_BARS entry per bar of chorus 2A"
+build_at = []
+for k, gap in enumerate(BUILD_BARS):
+    b = max(sm + 4 * k, BUILD_FROM)
+    while b < sm + 4 * (k + 1) - 1e-6:
+        build_at.append(round(b, 3))
+        b += gap
+build_rng = random.Random(zlib.crc32(b"chorus 2A build"))
 w_before, gone_before = chaos["w"], chaos["gone"]
 if CENTRE_2A_ACT:
-    erupt(BUILD_FROM, gl, W / 2, H / 2, rate=BUILD_RATE[0], rate_to=BUILD_RATE[1],
-          ui_chaos=0.25, keep_out=LYRIC_HOLE, alerts=False, spread=BUILD_SPREAD, evanesce=BUILD_LIFE)
+    erupt(sm, gl, W / 2, H / 2, ui_chaos=0.25, keep_out=LYRIC_HOLE, alerts=False,
+          spread=BUILD_SPREAD, evanesce=BUILD_LIFE, vanish_to=BUILD_VANISH_TO,
+          at=build_at, rng=build_rng)
 n_build, n_gone = chaos["w"] - w_before, chaos["gone"] - gone_before
 
 # --- cue 28, the 2B pickup: THE ERUPTION, over it and then instead of it ---------
 add(gl, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True, keep_out=LYRIC_HOLE, alerts=False)
 
-# The swarm is not closed on the boundary. It is left running a bar and a half INTO the
-# eruption, being buried a card at a time, and only then swept — which is the whole
-# difference between the popups replacing the video and the popups cutting to it.
+# The swarm is not closed on the boundary. It is left running INTO the eruption — ringed
+# by its cards, the middle kept clear, buried a panel at a time at the edges — and swept
+# on `SEG_HANDOVER`, the line the clip runs out on, where the centre box takes over (see
+# the centre, above). That overlap is the whole difference between the popups replacing
+# the video and the popups cutting to it. The sweep lands a hair before the box's own
+# lead, so the box comes up on a clean centre. (It was a fixed bar and a half, `SEG_BURY`,
+# until 2026-09-12.)
 #
 # It cannot be ramped down instead: `SegSwarmController.begin` calls `closeAll()` first,
 # so a second `segSwarm` on the same id would tear every panel down AND restart the clip
 # from the top. Burial is the mechanism available, and it is the better-looking one.
-SEG_BURY = 6.0                  # beats of overlap — 1.5 bars, about 2.8 s
-add(gl + SEG_BURY, "closeWindow", {"id": "segswarm"})
+SEG_SWEEP_T = secs(SEG_HANDOVER) - LYRIC_BOX_LEAD - 0.02
+add_t(SEG_SWEEP_T, "closeWindow", {"id": "segswarm"})
 
 # The ground flashes on every kick underneath the eruption.
 flash_colors = ["#FEFEFE", BLUE, "#020202", "#68BDF8"]
@@ -2544,7 +2644,11 @@ ascii_plane(3, {"source": "windows", "bg": DJ_BLUE, "strobe": 3.0, "hz": 12,
 # =============================================================================
 gl2 = B["horse"]
 ERUPT_END = B["spam"]              # the vocal pickup takes the screen back for cue 27
-erupt(gl2, ERUPT_END, W / 2, H / 2, rate=0.18, ui_chaos=0.25)
+# THE LAST BAR EMPTIES (2026-09-12). The eruption's last card lands before bar 71 — the
+# walk goes on muted, so cue 28's scatter is untouched — and through that bar its windows
+# LEAVE one at a time (below), so the screen drains into the pickup instead of cutting.
+LEAVE_FROM = ERUPT_END - 4         # bar 71, the last before the vocal pickup
+erupt(gl2, ERUPT_END, W / 2, H / 2, rate=0.18, ui_chaos=0.25, mute_from=LEAVE_FROM)
 ERUPT_P0 = phrase_beat("instrumentalA") + 12       # bar 60: INSTRUMENTAL A + 3.0, the cut's bar
 ERUPT_PHRASE = 8                                    # two bars
 ERUPT_PHRASES = 4                                   # to bar 68
@@ -2667,11 +2771,37 @@ add(gl2, "openWindow", {
                 "chrome": "none", "title": "school"},
     "animate": {"kind": "none"}})
 
-# The eruption's own furniture goes with it. `w0…w13` and `d0…d3` are a POOL that cue 27
-# re-opens under the same ids, so they are closed at the end of cue 27 instead (below);
-# everything here belongs to this act alone and stops when it stops.
-for wid in sorted(strobe_ids) + ["school"] + slide_ids:
-    add(ERUPT_END - 0.1, "closeWindow", {"id": wid})
+# THE LAST BAR EMPTIES ONE WINDOW AT A TIME (2026-09-12). Fifty windows used to close
+# on one frame at the pickup — the strobe's furniture, the crossing windows, the pool —
+# and then the segmenter opened: fifty window-server round trips on the beat the video
+# is meant to land on, and a cut where the artist wanted a build. So the eruption falls
+# silent at `LEAVE_FROM` (its walk is muted, above) and through bar 71 the windows go in
+# a seeded order, about three frames apart at first and two a frame by the end — the
+# gaps shrink geometrically, sparse then dense, so the screen drains faster and faster
+# into the pickup without ever collapsing into a single-frame cut at the end. The
+# strobe's furniture has been still since bar 68 (its file ran out), so any order is
+# safe; a slider closed mid-lap simply stops, since a move aimed at a closed window is
+# dropped. The chase swarm is the LAST thing to go, a tenth of a beat before the pickup:
+# the pointer's last leg runs to half a beat before it, and the chain crossing an
+# emptying screen is the picture this bar is for. (The shoal went at cue 25; its close
+# here is a backstop.) The pool ids are cue 27's to re-open, which is why they used to be
+# swept there; now nothing opens them after `LEAVE_FROM`, and cue 27's sweep is a backstop.
+LEAVE_UNTIL = ERUPT_END - 0.1
+LEAVE_GAPS = (3.0, 0.5)            # frames between departures: the first gap → the last
+leaving = sorted(strobe_ids) + slide_ids + [f"w{i}" for i in range(14)] + [f"d{i}" for i in range(4)]
+random.Random(zlib.crc32(b"leaving")).shuffle(leaving)
+n_leave = len(leaving)
+ratio = (LEAVE_GAPS[1] / LEAVE_GAPS[0]) ** (1 / (n_leave - 2))
+gaps = [LEAVE_GAPS[0] * ratio ** i for i in range(n_leave - 1)]
+gaps = [g * (LEAVE_UNTIL - LEAVE_FROM) / sum(gaps) for g in gaps]   # scaled to fill the bar
+leave_at, b = [], LEAVE_FROM
+for i, wid in enumerate(leaving):
+    add(b, "closeWindow", {"id": wid})
+    leave_at.append(b)
+    if i < n_leave - 1:
+        b += gaps[i]
+for wid in ["school", "tbd2"]:
+    add(LEAVE_UNTIL, "closeWindow", {"id": wid})
 
 # =============================================================================
 # Cue 28 (2:28) — the eruption, and it closes the piece. Both halves of the second chorus
@@ -2680,7 +2810,7 @@ for wid in sorted(strobe_ids) + ["school"] + slide_ids:
 #
 # Nothing to emit here. What used to be in this slot — the segmenter opening on the 2B
 # pickup and the eruption's pool closing a quarter-beat after it — has moved: the swarm
-# now opens on the 2A pickup and is swept `SEG_BURY` beats into the eruption, and the
+# now opens on the 2A pickup and is swept on `SEG_HANDOVER`, two bars into the eruption, and the
 # pool (`w0…w13`, `d0…d3`) runs all the way to the stop, where cue 30 closes it with
 # everything else.
 #
@@ -2715,8 +2845,22 @@ add(lw, "screenFlash", {"color": WHITE, "durationBeats": 1.0})
 # `openWindow` ON its end beat: measured, `w8` opened 42 ms past a close placed at −0.1
 # and stood there through the whole ending.
 for wid in (["segswarm", LYRIC_BOX] + sorted(strobe_ids) + [f"w{i}" for i in range(14)]
-            + [f"d{i}" for i in range(4)] + ascii_ids + ["school"] + slide_ids):
+            + [f"d{i}" for i in range(4)] + ascii_ids + ["school", "tbd2"] + slide_ids):
     add(lw + 0.05, "closeWindow", {"id": wid})
+
+# THE LAST WORDS (2026-09-12). The four beats of blue used to carry nothing; the artist
+# wants one thing on them — a single warning box with the line the song stops on. It
+# lands a beat after the sweep, as the stop's flash finishes, dead centre at the centre
+# box's size with no spring, and is taken away a hair before the card so nothing is
+# standing when the ending comes up (`lint_show.py` checks that). Its words are
+# docs/copy/last_words.txt — a title and buttons; a `body:` line there adds small text.
+LAST = copy_fields("last_words")
+LAST_AT = lw + 1
+add(LAST_AT, "fakeDialog", {"id": "lastwords", "anchor": "center", "animate": "none",
+    "frame": [0, 0, LYRIC_BOX_W, LYRIC_BOX_H],
+    "title": LAST["title"], "body": LAST.get("body") or "",
+    "buttons": LAST["buttons"], "icon": "caution"})
+add(B["ending"] - 0.05, "closeWindow", {"id": "lastwords"})
 
 # =============================================================================
 # Cue 31 (2:49) — the ending, once the song has actually finished. The photo the booth
@@ -2923,10 +3067,10 @@ if HORSE_ACT:
           f"exits beat {horse_exit:.0f}")
 else:
     print(f"  segswarm assets/giveit2meclip.mp4, motion, up to 60 windows, normal level, "
-          f"f {frame_at(secs(sm))} → f {frame_at(secs(gl + SEG_BURY))} "
-          f"(alone f {frame_at(secs(sm + 0.25))} to f {frame_at(secs(gl))}, then buried by "
-          f"the eruption over the last "
-          f"{SEG_BURY * BEAT:.1f}s; no keyline; the horse is cut — HORSE_ACT = False)")
+          f"f {frame_at(secs(sm))} → f {frame_at(SEG_SWEEP_T)} "
+          f"(alone f {frame_at(secs(sm + 0.25))} to f {frame_at(secs(gl))}, then ringed by "
+          f"the eruption for {SEG_HANDOVER - gl:.2f} beats and swept on \"{SEG_HANDOVER_LINE}\", "
+          f"where the box begins; no keyline; the horse is cut — HORSE_ACT = False)")
 print(f"  deskanim {1 + len(sat_ids)} clips: the centre f {frame_at(secs(B['tbd_099']))}, corners f "
       + ", ".join(str(frame_at(secs(B['tbd_099'] + 0.4 * i))) for i in range(len(sat_ids)))
       + f", all gone for the camera at f {frame_at(secs(bo - BOOTH_WARMUP - 0.3))}")
@@ -2934,8 +3078,11 @@ print(f"  hydra2   breakdown sketch over the picture: cursor walks f {frame_at(s
       f"spawns f {frame_at(secs(hb + 3))}, runs f {frame_at(secs(HYB_RUN))}, cut f {frame_at(secs(hs - 0.2))}")
 print(f"  booth    window f {frame_at(secs(bo - BOOTH_WARMUP))} (camera warm-up, {BOOTH_WARMUP:g} beats), "
       f"count starts f {frame_at(secs(bo))}, shutter f {frame_at(secs(B['wall']))}")
-print(f"  swarm    90 pointers, one every {SWARM_RAMP / 90:.2f}s over {SWARM_RAMP:g}s, "
-      f"f {frame_at(secs(t2 + 0.5))} → full at f {frame_at(secs(t2 + 0.5) + SWARM_RAMP)}")
+print(f"  swarm    90 pointers, one every {SWARM_RAMP / 90:.2f}s over {SWARM_RAMP:g}s, floating, "
+      f"f {frame_at(secs(t2 + 0.5))} → full at f {frame_at(secs(t2 + 0.5) + SWARM_RAMP)}, "
+      f"chasing to f {frame_at(secs(B['spam'] - 0.1))}; the pointer is driven {len(DRIVE_LEGS)} legs "
+      f"of {DRIVE_LEG:g} beats, one a bar from bar 69: f {frame_at(secs(DRIVE_FROM))} → "
+      f"f {frame_at(secs(DRIVE_FROM + 4 * (len(DRIVE_LEGS) - 1) + DRIVE_LEG))}")
 if TORUS2_ACT:
     print(f"  ring     {len(clock_ids)} windows round the torus ({FACE_RING - len(HYDRA_SLOTS)} faces, "
           f"{len(HYDRA_SLOTS)} live hydra), one a beat, "
@@ -2949,11 +3096,15 @@ print(f"  lyricbox {len(lyric_box_at)} centre alerts, {LYRIC_BOX_W}x{LYRIC_BOX_H
       f"or to {LYRIC_BOX_GAP:g} before the next, no spring; zeros {CHORUS2_PICKUP_LEAD:g} beats ahead of chorus 1's "
       f"tuning; cue 28's ring keeps a {LYRIC_HOLE[0]}x{LYRIC_HOLE[1]} hole round it, no scattered alerts")
 if CENTRE_2A_ACT:
-    print(f"  buildup  {n_build} cards over chorus 2A, f {frame_at(secs(BUILD_FROM))} → f {frame_at(secs(gl))}, "
-          f"{BUILD_RATE[0]:g} → {BUILD_RATE[1]:g} beats apart within {BUILD_SPREAD:.0%} of the width; "
-          f"{n_gone} of them vanish again after {BUILD_LIFE[0]:g} → {BUILD_LIFE[1]:g} beats, the rest stay")
+    print(f"  buildup  {n_build} cards on the grid over chorus 2A, f {frame_at(secs(build_at[0]))} → "
+          f"f {frame_at(secs(build_at[-1]))}, {'/'.join(f'{g:g}' for g in BUILD_BARS)} beats apart bar by bar "
+          f"(eighths from the hook, bar 78), within {BUILD_SPREAD:.0%} of the width; {n_gone} vanish again "
+          f"after {BUILD_LIFE[0]:g} → {BUILD_LIFE[1]:g} beats (all of them at first, {BUILD_VANISH_TO:.0%} by 2B), "
+          f"the rest stay")
 else:
-    print("  buildup  pulled (CENTRE_2A_ACT = False) — chorus 2A is the segmenter alone; the centre starts at 2B")
+    print("  buildup  pulled (CENTRE_2A_ACT = False) — chorus 2A is the segmenter alone; the centre starts where the clip runs out")
+print(f"  lastword one alert on the blue, \"{LAST['title']}\", f {frame_at(secs(LAST_AT))} → "
+      f"f {frame_at(secs(B['ending'] - 0.05))}, {LYRIC_BOX_W}x{LYRIC_BOX_H} centred, no spring")
 print(f"  photos   {chaos['p']} broken-screen photographs, bar 72 only, "
       f"{min(chaos['p'], len(BROKEN_SCREENS))} of {len(BROKEN_SCREENS)} pictures seen "
       f"(every 10th card; {BROKEN_SRC} → {BROKEN_DIR})")
@@ -2964,9 +3115,13 @@ if DOOMVID_ACT:
 else:
     print("  doom     pulled (DOOMVID_ACT = False) — the video slot is empty again")
 print(f"  slide    {SLIDE_N} windows crossing f {frame_at(secs(SLIDE_FROM))} → "
-      f"f {frame_at(secs(B['lastwords']))}, laps 2.4-3.6 beats, both directions, looping")
+      f"the last bar, laps 2.4-3.6 beats, both directions, looping")
+print(f"  leaving  {len(leaving)} windows leave one at a time through bar 71, f {frame_at(secs(leave_at[0]))} → "
+      f"f {frame_at(secs(leave_at[-1]))} (gaps shrinking from {(leave_at[1] - leave_at[0]) * BEAT * 30:.1f} frames "
+      f"to {(leave_at[-1] - leave_at[-2]) * BEAT * 30:.2f}); the chase swarm last, f {frame_at(secs(LEAVE_UNTIL))}; "
+      f"the eruption is muted from f {frame_at(secs(LEAVE_FROM))} ({chaos['muted']} cards drawn but not opened)")
 print(f"  school   54 pointers on a {2.5:g}-turn spiral, flocking behind the eruption "
-      f"f {frame_at(secs(gl2))} → f {frame_at(secs(ERUPT_END - 0.1))}")
+      f"f {frame_at(secs(gl2))} → f {frame_at(secs(B['tbd_136']))}, where it hands over to the chase")
 print(f"  strobe   {n_strobe} of {len(strobe['events'])} strobe events from the cut (f {frame_at(strobe_at)}), "
       f"{ERUPT_PHRASES} two-bar phrases from bar 60: windows + {n_cursor} cursor paths in the first bars, "
       f"{n_flash} flashes in the second bars "

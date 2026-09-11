@@ -21,6 +21,13 @@ protocol SegCamSource: AnyObject {
     var onStatus: ((String?) -> Void)? { get set }
     func start()
     func stop()
+    /// Whatever `start()` does that can be done before the cue. Optional: the camera
+    /// and the window source have nothing worth doing early.
+    func prepare()
+}
+
+extension SegCamSource {
+    func prepare() {}
 }
 
 /// The machine's own camera. Trimmed from segcam's `Camera`: the device cycling, the
@@ -124,6 +131,10 @@ final class SegCamFile: SegCamSource {
     private let url: URL
     private let hz: Double
     private var looper: Any?
+    private var item: AVPlayerItem?
+
+    /// Whether `prepare()` found the file and built the player item.
+    var isPrepared: Bool { item != nil }
 
     init(url: URL, hz: Double = 30) {
         self.url = url
@@ -133,22 +144,36 @@ final class SegCamFile: SegCamSource {
         ])
     }
 
-    func start() {
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            onStatus?("no clip at \(url.lastPathComponent)")
-            return
-        }
+    /// Everything `start()` does that can be done BEFORE the cue: the item, its output,
+    /// the loop, and — the part that costs — the player loading the asset and readying
+    /// its decoder, which for a 20 Mbps 1080p file is a few hundred milliseconds of
+    /// nothing on screen when it happens on the beat. Done at load by
+    /// `SegSwarmController.prewarm`, so the cue has only `play()` left. Idempotent; a
+    /// missing file prepares nothing, and `start()` reports it the way it always did.
+    func prepare() {
+        guard item == nil, FileManager.default.fileExists(atPath: url.path) else { return }
         let item = AVPlayerItem(url: url)
         item.add(videoOutput)
         player.replaceCurrentItem(with: item)
         player.isMuted = true                 // the show has its own soundtrack
         player.actionAtItemEnd = .none
+        // A local file: start on the frame `play()` is called, never wait to buffer.
+        player.automaticallyWaitsToMinimizeStalling = false
         // Loop. A cue outlives the clip and the picture must not stop dead when it does.
         looper = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main) { [weak self] _ in
                 self?.player.seek(to: .zero)
                 self?.player.play()
             }
+        self.item = item
+    }
+
+    func start() {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            onStatus?("no clip at \(url.lastPathComponent)")
+            return
+        }
+        prepare()
         player.play()
         onStatus?(nil)
 

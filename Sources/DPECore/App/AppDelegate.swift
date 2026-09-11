@@ -310,8 +310,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                                          : "assets/giveit2meclip.mp4"
             let swarm = SegSwarmController()
             NSLog("[DPE] segswarm: %@", clip)
-            swarm.begin(SegSwarmParams(id: "t", path: clip, mode: "motion",
-                                       intensity: 0.62, mirror: false, maxWindows: 60))
+            let params = SegSwarmParams(id: "t", path: clip, mode: "motion",
+                                        intensity: 0.62, mirror: false, maxWindows: 60)
+            // Prewarmed first, the way the show does it at load: the player readied and
+            // the sixty panels built before the cue, so this measures the real path.
+            swarm.prewarm(params)
+            swarm.begin(params)
             for wait in [2.0, 5.0] {
                 DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
                     NSLog("[DPE] segswarm: %.0fs — %d window(s)", wait, swarm.windowCountForTesting)

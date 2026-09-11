@@ -67,6 +67,25 @@ enum SegCamTests {
             t.expect(!swarm.isRunning, "closeAll stops the source")
             t.equal(swarm.windowCountForTesting, 0, "…and leaves nothing on the desktop")
 
+            // PREWARM (2026-09-12). The pile's panels are built before the clock runs and
+            // the clip's player is readied, so the cue only starts playback and
+            // re-dresses windows that exist. A clip that is not there prepares no
+            // player, the cue reports it as it always did, and the panels are kept,
+            // hidden, across a clear.
+            let warm = SegSwarmController()
+            let warmParams = SegSwarmParams(id: "t", path: "assets/no-such-clip.mov",
+                                            mode: "motion", maxWindows: 5)
+            MainActor.assumeIsolated { warm.prewarm(warmParams) }
+            t.equal(warm.sparePanelCountForTesting, 5, "prewarm builds the pile's panels ahead of the cue")
+            t.expect(!warm.isPreparedForTesting, "a clip that is not there prepares no player")
+            MainActor.assumeIsolated { warm.prewarm(warmParams) }
+            t.equal(warm.sparePanelCountForTesting, 5, "a second prewarm builds nothing more")
+            MainActor.assumeIsolated { warm.begin(warmParams) }
+            t.equal(warm.windowCountForTesting, 0, "…and the cue after it still spawns nothing")
+            MainActor.assumeIsolated { warm.closeAll() }
+            t.equal(warm.windowCountForTesting, 0, "closeAll leaves nothing on the desktop")
+            t.equal(warm.sparePanelCountForTesting, 5, "…and keeps the panels, hidden, for the next run")
+
             // The content kind is reachable from a timeline, with the two sources the
             // import was asked for and no third one: the Syphon feed is gone.
             let spec = ContentSpec(kind: "segcam", mode: "motion")

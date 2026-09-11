@@ -15,6 +15,13 @@
 //  Both are upstream's own properties now (`SegmentSwarm.level`, `SegmentSwarm.border`,
 //  with `SegmentPanel.defaultLevel` and `.defaultBorder` as the defaults), so the file is
 //  the original again and `SegSwarmController` sets them the same way it always did.
+//
+//  ONE DIVERGENCE AGAIN (2026-09-12), to go upstream when ~/segcam is next to hand: a pool
+//  of SPARE panels. `prewarm(count:)` builds panels ahead of time, hidden; `update` takes
+//  one before creating one; `clear` hides the pile and keeps it as spares instead of
+//  closing it; `SegmentPanel.blank()` drops a spare's picture. Everything else is as
+//  imported. The first second of a pile used to be sixty real windows being created on
+//  the main thread as the motion appeared, and on a cue that is a visible stall.
 
 import AppKit
 import QuartzCore
@@ -64,6 +71,14 @@ final class SegmentPanel: NSPanel {
         setBorder(SegmentPanel.defaultBorder)
     }
 
+    /// Drop the picture: a panel going back into the spare pool holds no frame.
+    func blank() {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer.contents = nil
+        CATransaction.commit()
+    }
+
     /// The keyline, or none at all.
     func setBorder(_ color: NSColor?) {
         borderLayer.borderWidth = color == nil ? 0 : 2
@@ -95,6 +110,12 @@ final class SegmentPanel: NSPanel {
 /// oldest recycled away once the pile is full.
 final class SegmentSwarm {
     private var panels: [SegmentPanel] = []     // oldest first
+    /// Panels built ahead of time and hidden, taken before a new one is created. The
+    /// first second of a pile used to be sixty `SegmentPanel()` calls on the main
+    /// thread as the motion appeared — real windows, each a round trip to the window
+    /// server — and it showed. `prewarm` fills this before the clock runs and `clear`
+    /// refills it, so a pile is only ever re-dressing windows that already exist.
+    private var spares: [SegmentPanel] = []
     /// Instances already given a window. Segments can be republished across frames (Vision
     /// runs at half rate and its results are reused), and a repeat is the same instance, not
     /// a new one.
@@ -124,6 +145,12 @@ final class SegmentSwarm {
     private let minHeight: CGFloat = 28
 
     var panelCount: Int { panels.count }
+    var spareCount: Int { spares.count }
+
+    /// Build panels now, hidden, until `count` exist between the pile and the spares.
+    func prewarm(count: Int) {
+        while spares.count + panels.count < count { spares.append(SegmentPanel()) }
+    }
 
     func update(segments: [Segment], crops: [SegmentID: CGImage], screenFrame: CGRect) {
         for segment in segments where !spawned.contains(segment.id) {
@@ -140,7 +167,8 @@ final class SegmentSwarm {
                 rect.size.height = minHeight
             }
 
-            let panel = panels.count >= maxBlobs ? panels.removeFirst() : SegmentPanel()
+            let panel = panels.count >= maxBlobs ? panels.removeFirst()
+                      : (spares.popLast() ?? SegmentPanel())
             panel.level = level
             panel.setBorder(border)
             panel.adopt(title: segment.label, image: crops[segment.id],
@@ -149,11 +177,15 @@ final class SegmentSwarm {
         }
     }
 
+    /// Take the pile off the screen. The panels are hidden and kept as spares rather
+    /// than closed, so the next pile — a second run, a seek back over the cue — starts
+    /// with its windows already built; nothing about them is visible in between.
     func clear() {
         for panel in panels {
             panel.orderOut(nil)
-            panel.close()
+            panel.blank()
         }
+        spares += panels
         panels.removeAll()
         spawned.removeAll()
     }

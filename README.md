@@ -843,15 +843,26 @@ the screen while it runs. It ends on `closeWindow` with the same `id`, and `clos
 sweeps every panel — `TimelineTests` fails a `segSwarm` the timeline never closes, and
 `SegCamTests` pins that the controller leaves nothing behind.
 
+**It is prewarmed.** `PerformanceEngine.loadTimeline` hands the timeline's `segSwarm`
+events to `SegSwarmController.prewarm` before the clock runs (and again before each play
+and after a seek, like the window pools): the pile's `maxWindows` panels are created then,
+hidden, and the clip's player is built and readied, so the cue itself only starts playback
+and re-dresses windows that already exist. Without it the first second of the act was the
+decoder spinning up and sixty real windows being created on the main thread — a visible
+stall on the beat. `clear` hides the panels and keeps them rather than closing them, so a
+second run in the same process costs nothing either; a missing clip prepares no player and
+the cue reports it as before. `SegCamTests` pins the count of panels a prewarm builds and
+that a cue after it still leaves nothing on the desktop.
+
 ```bash
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm            # a clip filling the desktop
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm="assets/other.mov"
 swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # a map window run through it, whole
 ```
 
-puts it up for six seconds against the show's own clip and reports the count as it fills
-— 54 windows at two seconds, the 60 cap by five, zero after it clears. There is no way to
-check this one that does not look like the act.
+puts it up for six seconds against the show's own clip — prewarmed first, the way the
+show does it — and reports the count at two and five seconds as it fills, and zero
+after it clears. There is no way to check this one that does not look like the act.
 
 ### `particles` content
 

@@ -16,6 +16,30 @@ final class SegSwarmController {
     private let engine = SegmentEngine()
     private let swarm = SegmentSwarm()
     private var screenFrame: CGRect = .zero
+    /// A file source built and readied at load, waiting for the cue that names its path.
+    private var prepared: (path: String, source: SegCamFile)?
+
+    // MARK: - Prewarm
+
+    /// What `begin` would otherwise build on the beat, built now: the pile's panels
+    /// (hidden) and the clip's player, loaded and ready to play. `PerformanceEngine`
+    /// calls this from `loadTimeline` and again before each play and after a seek, like
+    /// the window pools; it is cheap when there is nothing left to do. Without it the
+    /// first second of the act was the decoder spinning up and sixty real windows
+    /// being created on the main thread — a stall, on the vocal pickup of all places.
+    func prewarm(for events: [ResolvedEvent]) {
+        for ev in events {
+            if case .segSwarm(let p) = ev.action { prewarm(p) }
+        }
+    }
+
+    func prewarm(_ p: SegSwarmParams) {
+        swarm.prewarm(count: max(1, p.maxWindows ?? 60))
+        guard p.window == nil, let path = p.path, prepared?.path != path else { return }
+        let file = SegCamFile(url: URL(fileURLWithPath: resolveResourcePath(path)), hz: p.hz ?? 30)
+        file.prepare()
+        if file.isPrepared { prepared = (path, file) }
+    }
 
     // MARK: - Lifecycle
 
@@ -63,8 +87,15 @@ final class SegSwarmController {
             NSLog("[DPE] segswarm: no window \(named) to segment")
             source = nil
         } else if let path = p.path {
-            source = SegCamFile(url: URL(fileURLWithPath: resolveResourcePath(path)),
-                                hz: p.hz ?? 30)
+            // The prepared player if the cue names its clip; otherwise the cold path,
+            // which still works and still says so in the log when the file is missing.
+            if let ready = prepared, ready.path == path {
+                source = ready.source
+                prepared = nil
+            } else {
+                source = SegCamFile(url: URL(fileURLWithPath: resolveResourcePath(path)),
+                                    hz: p.hz ?? 30)
+            }
         } else {
             source = SegCamCamera()
         }
@@ -97,4 +128,6 @@ final class SegSwarmController {
 
     var isRunning: Bool { source != nil }
     var windowCountForTesting: Int { swarm.panelCount }
+    var sparePanelCountForTesting: Int { swarm.spareCount }
+    var isPreparedForTesting: Bool { prepared != nil }
 }

@@ -14,6 +14,7 @@ timing are `tools/lyrics.py`, and `docs/LYRICS.md` explains them.
 | `torus_oracle.txt` | the torus's question card and its answers (cue 13) | fields |
 | `locate.txt` | the terminal tracing the viewer's location (cue 14) | one line per line typed |
 | `location_found.txt` | the alert once the map has landed (cue 14) | fields |
+| `last_words.txt` | the one alert on the blue after the stop (cue 30) | fields |
 | `credits.txt` | the end card (cue 31) | one line per line typed, a beat each; blank lines are kept |
 
 **Shapes.** *Lines* are typed exactly as written, including leading spaces, so keep them
