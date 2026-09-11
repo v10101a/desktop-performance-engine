@@ -667,9 +667,9 @@
     "id": "probe4",
     "linesPerBeat": 6,
     "focus": [
-     "contacts"
+     "hardware"
     ],
-    "title": "./scan_contacts",
+    "title": "./scan_hardware",
     "hex": "#020AF5",
     "fg": "#F2F4FE",
     "frame": [
@@ -8331,17 +8331,80 @@
      468
     ],
     "content": {
-     "kind": "shader",
-     "path": "assets/shaders/graphic.frag",
-     "drop": 0.0,
-     "spin": 8,
+     "kind": "video",
+     "path": "assets/desktop_animation3.mp4",
      "chrome": "mixed",
-     "title": "graphic.frag"
+     "title": "desktop_animation3.mp4"
     },
     "animate": {
      "kind": "springIn"
+    }
+   }
+  },
+  {
+   "beat": 192.0,
+   "type": "openWindow",
+   "params": {
+    "id": "anim_tl",
+    "frame": [
+     158,
+     99,
+     317,
+     178
+    ],
+    "content": {
+     "kind": "video",
+     "path": "assets/desktop_animation1.mp4",
+     "chrome": "mixed",
+     "title": "desktop_animation1.mp4"
     },
-    "interactive": true
+    "animate": {
+     "kind": "springIn"
+    }
+   }
+  },
+  {
+   "beat": 192.4,
+   "type": "openWindow",
+   "params": {
+    "id": "anim_tr",
+    "frame": [
+     965,
+     117,
+     317,
+     178
+    ],
+    "content": {
+     "kind": "video",
+     "path": "assets/desktop_animation2.mp4",
+     "chrome": "mixed",
+     "title": "desktop_animation2.mp4"
+    },
+    "animate": {
+     "kind": "springIn"
+    }
+   }
+  },
+  {
+   "beat": 192.8,
+   "type": "openWindow",
+   "params": {
+    "id": "anim_br",
+    "frame": [
+     950,
+     594,
+     317,
+     178
+    ],
+    "content": {
+     "kind": "video",
+     "path": "assets/desktop_animation3.mp4",
+     "chrome": "mixed",
+     "title": "desktop_animation3.mp4"
+    },
+    "animate": {
+     "kind": "springIn"
+    }
    }
   },
   {
@@ -8529,6 +8592,27 @@
    "type": "closeWindow",
    "params": {
     "id": "tbd1"
+   }
+  },
+  {
+   "beat": 204.2,
+   "type": "closeWindow",
+   "params": {
+    "id": "anim_tl"
+   }
+  },
+  {
+   "beat": 204.2,
+   "type": "closeWindow",
+   "params": {
+    "id": "anim_tr"
+   }
+  },
+  {
+   "beat": 204.2,
+   "type": "closeWindow",
+   "params": {
+    "id": "anim_br"
    }
   },
   {

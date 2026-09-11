@@ -530,6 +530,11 @@ func makeEffectContentView(_ content: ContentSpec, size: NSSize) -> NSView {
                 if let value { sv.setUniform(name, value) }
             }
         }
+    case "video":
+        // A looping, muted clip — a desktop animation as scenery. `path` is the file.
+        let vv = VideoContentView(size: body.size, content: content)
+        vv.autoresizingMask = [.width, .height]
+        view.addSubview(vv)
     case "automaton":
         let av = AutomatonView(size: body.size,
                                rule: content.rule ?? 30,
@@ -653,8 +658,26 @@ enum DialogIcon: String {
     }
 }
 
+/// Relays a dialog button click to a closure. `NSControl.target` is weak, so the relay
+/// is added as a zero-size subview of the dialog's root — retained by the view hierarchy
+/// for the window's life, and (being an `NSView`, not an `NSButton`) invisible to the
+/// button-scanning that `OutroController` and the credits card do.
+private final class DialogButtonRelay: NSView {
+    let onButton: (String) -> Void
+    init(_ onButton: @escaping (String) -> Void) {
+        self.onButton = onButton
+        super.init(frame: .zero)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+    @objc func fire(_ sender: NSButton) { onButton(sender.title) }
+}
+
+/// `onButton`, if given, is called with a button's label when it is clicked — the caller
+/// wires it to close/dismiss the dialog. Absent, the buttons are inert (a caller that
+/// wires its own targets afterward, like `OutroController`, passes nothing).
 func makeDialogContentView(title: String, message: String, buttons: [String],
-                           icon: DialogIcon = .caution, size: NSSize) -> NSView {
+                           icon: DialogIcon = .caution, size: NSSize,
+                           onButton: ((String) -> Void)? = nil) -> NSView {
     // Solid, manual-frame panel — no NSVisualEffectView blur or autolayout, both of
     // which are far too expensive when dozens of dialogs spawn during a show.
     let root = NSView(frame: NSRect(origin: .zero, size: size))
@@ -696,9 +719,13 @@ func makeDialogContentView(title: String, message: String, buttons: [String],
     root.addSubview(titleLabel)
     root.addSubview(body)
 
+    let relay = onButton.map { DialogButtonRelay($0) }
+    if let relay { root.addSubview(relay) }
+
     var bx = size.width - 20
     for (i, label) in buttons.reversed().enumerated() {
-        let b = NSButton(title: label, target: nil, action: nil)
+        let b = NSButton(title: label, target: relay,
+                         action: relay != nil ? #selector(DialogButtonRelay.fire(_:)) : nil)
         b.bezelStyle = .rounded
         b.controlSize = .regular
         b.font = .systemFont(ofSize: NSFont.systemFontSize)
@@ -859,6 +886,7 @@ final class EffectWindow: BaseEffectWindow {
         case "glitch":   return "recovered.jpg"
         case "automaton": return "automaton"
         case "shader":   return "shader.frag"
+        case "video":    return "QuickTime Player"
         case "uichaos":  return "Finder"
         case "fileworks": return "Desktop"
         case "cursors":  return "pointer"
@@ -1114,13 +1142,13 @@ final class HostedEffectWindow: BaseEffectWindow {
 /// A deliberately comedic fake dialog window.
 final class FakeDialogWindow: BaseEffectWindow {
     init(contentRect: NSRect, title: String, message: String, buttons: [String],
-         icon: DialogIcon = .caution) {
+         icon: DialogIcon = .caution, onButton: ((String) -> Void)? = nil) {
         // Borderless on purpose: a real macOS alert has no title bar either.
         super.init(contentRect: contentRect)
         ignoresMouseEvents = false
         contentView = makeDialogContentView(title: title, message: message,
                                             buttons: buttons, icon: icon,
-                                            size: contentRect.size)
+                                            size: contentRect.size, onButton: onButton)
     }
 }
 

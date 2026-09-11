@@ -108,7 +108,8 @@ final class OracleController {
 
         o.window.contentView = OracleController.makeAnswerView(size: o.window.frame.size,
                                                                question: question, answer: answer,
-                                                               icon: o.icon)
+                                                               icon: o.icon,
+                                                               onOk: { [weak self] in self?.teardown() })
         oracle = o
 
         // The answer needs no keyboard: give it back.
@@ -196,9 +197,13 @@ final class OracleController {
     }
 
     /// The answer card: the question quoted in the title, the answer big and pink.
-    static func makeAnswerView(size: NSSize, question: String, answer: String, icon: DialogIcon) -> NSView {
+    /// `onOk` (the live show passes `teardown`) closes the oracle when its `ok` is
+    /// clicked; the still renderer passes nothing and the button stays inert.
+    static func makeAnswerView(size: NSSize, question: String, answer: String, icon: DialogIcon,
+                               onOk: (() -> Void)? = nil) -> NSView {
         let title = question.isEmpty ? "you didn't ask. the torus says:" : "“\(question)” — the torus says:"
-        let root = makeDialogContentView(title: title, message: "", buttons: ["ok"], icon: icon, size: size)
+        let root = makeDialogContentView(title: title, message: "", buttons: ["ok"], icon: icon, size: size,
+                                         onButton: onOk.map { cb in { _ in cb() } })
         let x = textX(for: size, icon: icon)
         let big = NSTextField(wrappingLabelWithString: answer)
         big.textColor = NSColor(hex: "#FF2D95") ?? .systemPink

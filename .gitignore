@@ -44,6 +44,11 @@ assets/*.aiff
 # video the show loads, LFS-tracked like the mp3 (see .gitattributes). Without this
 # exception a fresh clone's segSwarm cue opens on nothing.
 !assets/giveit2meclip.mp4
+# ...and cue 17's desktop animations: the breakdown centre and the three clips
+# scattered around its corners. LFS-tracked like the rest (see .gitattributes).
+!assets/desktop_animation1.mp4
+!assets/desktop_animation2.mp4
+!assets/desktop_animation3.mp4
 
 # Python (tools/)
 __pycache__/

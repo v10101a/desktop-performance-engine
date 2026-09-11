@@ -539,9 +539,10 @@ struct DeskWallpaperParams: Decodable {
 /// editing the report doesn't retime the scene. The window stays up until `closeWindow`
 /// by `id` unless a duration is given.
 ///
-/// The identity section reads the Contacts "me" card and asks Location Services for a
-/// fix, so this event — and only this event — triggers those two prompts. Refused, those
-/// lines read `<unavailable>` and the rest of the report is unaffected.
+/// The geolocation section asks Location Services for a fix, so this event — and only
+/// this event — triggers that prompt. Refused, those lines read `<unavailable>` and the
+/// rest of the report is unaffected. (Nothing reads Contacts; the ex-`contacts` panel is
+/// now a hardware readout.)
 struct SystemProbeParams: Decodable {
     let id: String
     var linesPerBeat: Double? = nil   // reveal rate (default 24)
@@ -562,7 +563,7 @@ struct SystemProbeParams: Decodable {
     /// Fired at an id that is already on screen: the terminal is cleared and ONLY these
     /// sections are read out again, every line of them highlighted — the machine going
     /// back to the parts that matter. Names: `geolocation`, `network`, `identity`,
-    /// `machine`, `contacts`. A new window with `focus` set reads out just those.
+    /// `machine`, `hardware`. A new window with `focus` set reads out just those.
     var focus: [String]? = nil
 }
 

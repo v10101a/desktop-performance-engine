@@ -505,11 +505,20 @@ final class WindowManager {
     /// Hand a window to the viewer if the event asked for it: draggable, and closable
     /// by its fake traffic lights. A `respawn` window comes straight back.
     private func arm(_ win: EffectWindow, _ p: OpenWindowParams, size: NSSize) {
-        guard p.interactive == true else {
+        let interactive = p.interactive == true
+        // A window with a real title bar gets a live close button even when it is
+        // otherwise scenery — clicking the traffic light closes it. A bare (`chrome:
+        // "none"`) window has no close button, so it stays click-through unless the event
+        // asked for `interactive`.
+        guard interactive || win.isNativeChrome else {
             win.onUserClose = nil
             return
         }
-        win.makeInteractive(size: size)
+        if interactive {
+            win.makeInteractive(size: size)         // drag + mouse (native drags by its bar)
+        } else {
+            win.ignoresMouseEvents = false          // enough to reach the native close button
+        }
         win.onUserClose = { [weak self] in
             guard let self = self else { return }
             let again = self.respawns[p.id]
@@ -540,11 +549,14 @@ final class WindowManager {
         }
         jiggles[p.id] = nil
         moves[p.id] = nil
+        // Any button dismisses the dialog — OK, Cancel, or whatever the cue named.
+        let dismiss: (String) -> Void = { [weak self] _ in self?.close(id: p.id) }
         if let existing = windows[p.id] as? FakeDialogWindow {
             existing.setFrame(frame, display: false)
             existing.contentView = makeDialogContentView(title: p.title, message: p.body,
                                                          buttons: p.buttons ?? ["OK"],
-                                                         icon: p.dialogIcon, size: frame.size)
+                                                         icon: p.dialogIcon, size: frame.size,
+                                                         onButton: dismiss)
             existing.present(animate: "none")
             return
         }
@@ -553,7 +565,8 @@ final class WindowManager {
                                    title: p.title,
                                    message: p.body,
                                    buttons: p.buttons ?? ["OK"],
-                                   icon: p.dialogIcon)
+                                   icon: p.dialogIcon,
+                                   onButton: dismiss)
         windows[p.id] = win
         win.present(animate: "springIn")
     }

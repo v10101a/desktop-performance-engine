@@ -487,6 +487,56 @@ enum TimelineTests {
                              "shader \(p.id) is pure ASCII (comments included)")
                     t.expect(src.contains("void main"), "shader \(p.id) has a main()")
                 }
+
+                // The desktop-animation windows (cue 17): each names an .mp4 by path,
+                // which has to be there — a missing clip is a black box — and the "video"
+                // kind has to build the looping view. The harness runs on main, so the
+                // view build is safe to assume-isolated; only the first is built, to keep
+                // the test to one AVPlayer.
+                var videos = 0
+                var builtVideo = false
+                for ev in tl.events {
+                    guard case .openWindow(let p) = ev.action,
+                          p.content.kind == "video" else { continue }
+                    videos += 1
+                    let clip = resolveResourcePath(p.content.path ?? "")
+                    let there = FileManager.default.fileExists(atPath: clip)
+                    t.expect(there, "video \(p.id) resolves \(p.content.path ?? "")")
+                    if there && !builtVideo {
+                        builtVideo = true
+                        let view = MainActor.assumeIsolated {
+                            makeEffectContentView(p.content, size: NSSize(width: 320, height: 200))
+                        }
+                        let vv = view.subviews.compactMap { $0 as? VideoContentView }.first
+                        t.expect(vv?.hasClipForTesting == true,
+                                 "openWindow · video builds the looping view on its clip")
+                    }
+                }
+                t.expect(videos >= 4,
+                         "the breakdown opens its desktop animations (\(videos) video windows)")
+
+                // Cue 4's fifth probe panel scans HARDWARE now, not contacts (which the
+                // show isn't entitled for). The generator names the section and the Swift
+                // `Probe.gatherFocused` renders it; a rename in one place only would read
+                // out "unknown section".
+                var probeFocuses = Set<String>()
+                for ev in tl.events {
+                    if case .systemProbe(let p) = ev.action { p.focus?.forEach { probeFocuses.insert($0) } }
+                }
+                t.expect(probeFocuses.contains("hardware"), "the probe scans hardware")
+                t.expect(!probeFocuses.contains("contacts"), "…and no longer scans contacts")
+                let hw = hardwareDeepSection(displays: [])
+                t.expect(hw.count >= 8, "the hardware section reads out a deep block (\(hw.count) lines)")
+
+                // Dialog buttons close their window now: openDialog/makeDialogContentView
+                // wire each NSButton to a target/action, where they used to be inert.
+                let dialog = makeDialogContentView(title: "t", message: "m", buttons: ["OK", "Cancel"],
+                                                   size: NSSize(width: 320, height: 160), onButton: { _ in })
+                let dialogButtons = dialog.subviews.compactMap { $0 as? NSButton }
+                t.expect(dialogButtons.count == 2, "the dialog draws its buttons")
+                t.expect(dialogButtons.allSatisfy { $0.target != nil && $0.action != nil },
+                         "…and each button is wired to an action")
+
                 // Cue 7's desktop is a BAKED wallpaper (assets/pixelface_desktop.jpg,
                 // written by the generator), not the raw artwork stretched over the
                 // screen. It used to be composed at run time from `pixelface.jpg` plus a

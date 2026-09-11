@@ -1120,7 +1120,7 @@ or the next run.
 second window tore the first one down — which is why a probe act could not be split
 across windows until now.
 A window opened with `focus` reads out only the sections named (`identity`, `machine`,
-`network`, `geolocation`, `contacts`), so five windows running five focused scans is the
+`network`, `geolocation`, `hardware`), so five windows running five focused scans is the
 same probe five times over rather than five different things.
 
 ### `fileworks` content
@@ -1228,6 +1228,32 @@ Run it after adding anything that ticks. The mandala once read 8.3 here.
 `--test-shader=out.png` puts the show's own shader on a real GL canvas, waits for it to
 compile and draw, and reports how much of the frame is lit — "it built" proves nothing
 when a failed compile and a black shader look identical.
+
+### `video` content
+
+A video file at `path`, looping and muted, playing in the window as scenery.
+
+```jsonc
+{ "kind": "video", "path": "assets/desktop_animation3.mp4",
+  "chrome": "mixed", "title": "desktop_animation3.mp4" }
+```
+
+`VideoContentView` is an `AVPlayerLayer` fed by an `AVQueuePlayer` + `AVPlayerLooper`, so
+the loop is seamless (seeking to zero on the end notification drops a frame at the seam).
+It is **muted** — the show has its own soundtrack, the same rule the segmenter's file
+source follows — and the picture is `resizeAspectFill`, so it covers the window edge to
+edge rather than letterboxing. Like every other live surface here it is scenery: clicks
+fall through (`hitTest` returns nil), and the player pauses when the window closes so a
+gone window is not still decoding.
+
+This is **not** segcam — `segcam` also takes a file, but it *segments* it into boxes;
+`video` just plays it. And it is not the WebGL host either: it is native `AVFoundation`,
+so any container/codec macOS plays works, and there is nothing to compile.
+
+The one place it runs is **cue 17**, the breakdown: `desktop_animation3.mp4` at 52% of the
+screen with `desktop_animation1/2/3.mp4` scattered around three of its corners. The clips
+are LFS-tracked (see `.gitattributes`) and travel in the `.app` the way every other
+`assets/*.mp4` does (`bundle.sh` copies them; `--check` audits them).
 
 ### `automaton` content
 
@@ -1835,7 +1861,7 @@ permission prompt would be a bad citizen.
 **`focus`** — fired at an id that is already on screen, the terminal clears and reads
 out ONLY the named sections again, every line drawn over a highlighter-yellow marker:
 the machine going back to the parts that matter. Names: `geolocation`, `network`,
-`identity`, `machine`. On a new window it reads out just those.
+`identity`, `machine`, `hardware`. On a new window it reads out just those.
 
 ```jsonc
 { "beat": 160, "type": "systemProbe", "params": { "id": "probe", "linesPerBeat": 3,

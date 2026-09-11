@@ -422,7 +422,7 @@ PROBE_SECTIONS = [
     ("machine",     "./scan_machine",    0.55, 0.04, 0.41, 0.34),
     ("network",     "./scan_network",    0.30, 0.36, 0.38, 0.30),
     ("geolocation", "./scan_where",      0.02, 0.52, 0.36, 0.32),
-    ("contacts",    "./scan_contacts",   0.60, 0.46, 0.37, 0.36),
+    ("hardware",    "./scan_hardware",   0.60, 0.46, 0.37, 0.36),
 ]
 probe_ids = []
 for i, (section, title, fx, fy, fw, fh) in enumerate(PROBE_SECTIONS):
@@ -1694,24 +1694,38 @@ if fill_ids:
         add(bk + 0.2 + close_span * i / max(1, len(fill_ids) - 1), "closeWindow", {"id": wid})
 
 # =============================================================================
-# Cue 17 (1:30) — the artist's GLSL raymarcher, alone on the emptied screen until
-# Photo Booth. The shader (`assets/shaders/graphic.frag`, second of the three in the
-# artist's code.txt) has its feedback line commented out in their own source, so it
-# needs only `u_time` and `u_resolution`. `drop` scales its internal time
-# (`u_time * mix(1., 4., drop)`); the breakdown runs it at 0.
+# Cue 17 (1:30) — a desktop animation, alone on the emptied screen until Photo Booth,
+# with three smaller ones scattered around its corners. This slot used to hold the
+# artist's GLSL raymarcher (`assets/shaders/graphic.frag`); the centre is now
+# `assets/desktop_animation3.mp4` and the corners loop 1, 2 and 3 — each a muted clip on
+# its own seamless loop. The breakdown is the one still passage in the piece, so nothing
+# here is cut on the beat: the clips simply play until Photo Booth takes the screen.
 # =============================================================================
-SHADER_W, SHADER_H = round(W * 0.52), round(H * 0.52)
+VID_W, VID_H = round(W * 0.52), round(H * 0.52)
 add(B["tbd_099"], "openWindow", {
     "id": "tbd1", "anchor": "center",
-    "frame": [0, 0, SHADER_W, SHADER_H],
-    "content": {"kind": "shader", "path": "assets/shaders/graphic.frag", "drop": 0.0,
-                # It turns. 8°/s is about 170° over the time it is up — you can see it
-                # moving without ever watching it come back round, which is the point:
-                # the breakdown is the one still passage in the piece and a shot that
-                # holds perfectly still for twenty seconds reads as a freeze.
-                "spin": 8,
-                "chrome": "mixed", "title": "graphic.frag"},
-    "animate": {"kind": "springIn"}, "interactive": True})
+    "frame": [0, 0, VID_W, VID_H],
+    "content": {"kind": "video", "path": "assets/desktop_animation3.mp4",
+                "chrome": "mixed", "title": "desktop_animation3.mp4"},
+    "animate": {"kind": "springIn"}})
+
+# Three of its four corners, one clip each. The lower-left is left empty on purpose:
+# the hydra sketch below is set up and dragged around exactly there. They open with the
+# centre, a breath apart, and are cut with it just before Photo Booth (cue 18).
+SAT_W = round(W * 0.22)
+SAT_H = round(SAT_W * 9 / 16)                     # the clips are 1280x720
+satellites = [
+    ("anim_tl", "assets/desktop_animation1.mp4", [round(W * 0.11), round(H * 0.11), SAT_W, SAT_H]),
+    ("anim_tr", "assets/desktop_animation2.mp4", [round(W * 0.67), round(H * 0.13), SAT_W, SAT_H]),
+    ("anim_br", "assets/desktop_animation3.mp4", [round(W * 0.66), round(H * 0.66), SAT_W, SAT_H]),
+]
+sat_ids = [sid for sid, _, _ in satellites]
+for i, (sid, clip, frame) in enumerate(satellites):
+    add(B["tbd_099"] + 0.4 * i, "openWindow", {
+        "id": sid, "frame": frame,
+        "content": {"kind": "video", "path": clip, "chrome": "mixed",
+                    "title": clip.split("/")[-1]},
+        "animate": {"kind": "springIn"}})
 
 # Somebody is still using the computer: over the raymarcher, one hydra sketch is set
 # up BY HAND, taking its time — the cursor walks over first, the sketch spawns under
@@ -1771,6 +1785,9 @@ bo = B["booth"]
 # still lands on the cue, a bar apart from 2 and 1, and the shutter on cue 19.
 BOOTH_WARMUP = 4
 add(bo - BOOTH_WARMUP - 0.3, "closeWindow", {"id": "tbd1"})
+# The corner clips go with the centre.
+for sid in sat_ids:
+    add(bo - BOOTH_WARMUP - 0.3, "closeWindow", {"id": sid})
 BOOTH_W = round(min(W * 0.52, 760))
 BOOTH_H = round(BOOTH_W * 0.78)
 add(bo - BOOTH_WARMUP, "photoBooth", {"id": "booth",

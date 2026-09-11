@@ -93,6 +93,11 @@ final class Probe: ObservableObject {
                 gather(highlight: true) { identitySection() }
             case "machine":
                 gather(highlight: true) { machineSection() }
+            case "hardware":
+                // `displayLines()` is @MainActor and we're on main here; capture it and
+                // hand it to the off-main builder (as `devicesSection` does).
+                let displays = displayLines()
+                gather(highlight: true) { hardwareDeepSection(displays: displays) }
             default:
                 queue.append(warn("  unknown section \"\(name)\" — skipped"))
             }

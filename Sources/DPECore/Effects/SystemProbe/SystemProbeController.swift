@@ -8,9 +8,11 @@ import SwiftUI
 /// - The window wears real macOS chrome but is a non-activating panel that refuses key
 ///   and ignores the mouse; it closes on `closeWindow` by `id`.
 ///
-/// **Permissions.** The `identity` section reads the Contacts "me" card and asks
-/// Location Services for a fix — the only two TCC prompts this show triggers; refused,
-/// those lines read `<unavailable>` and the report runs on.
+/// **Permissions.** The `geolocation` section asks Location Services for a fix — the only
+/// TCC prompt this event triggers; refused, those lines read `<unavailable>` and the
+/// report runs on. Nothing here reads Contacts: the `identity` section reads the local
+/// account (`getpwuid`/`NSFullUserName`), and the ex-`contacts` panel is now a hardware
+/// readout (`hardwareDeepSection`).
 ///
 /// **Reversibility.** One window; nothing on disk, nothing in system state.
 ///
@@ -76,6 +78,14 @@ final class SystemProbeController {
         window.contentView = NSHostingView(
             rootView: TerminalView().environmentObject(probe))
         window.orderFront(nil)
+
+        // A live close button: clicking the report's traffic light dismisses that report.
+        // (makeReportWindow defaults to click-through so it stays testable in isolation;
+        // the live show hands the window to the viewer here, where the id exists.)
+        if let base = window as? BaseEffectWindow {
+            base.ignoresMouseEvents = false
+            base.onUserClose = { [weak self] in self?.teardown(id: p.id) }
+        }
 
         let duration = Beats.seconds(p.durationBeats, or: p.durationSeconds, bpm: bpm)
         reports[p.id] = Report(id: p.id, probe: probe, window: window,

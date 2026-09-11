@@ -1,5 +1,6 @@
 import Foundation
 import IOKit
+import Metal
 import Darwin
 
 // MARK: - low level accessors
@@ -94,6 +95,64 @@ func machineSection() -> [TermLine] {
     if let b = bootDate() {
         out.append(kv("last boot", stamp(b)))
         out.append(kv("time since boot", duration(Date().timeIntervalSince(b))))
+    }
+    return out
+}
+
+/// A deeper, nicher read than `machineSection` — the internals and peripherals the
+/// "hardware fingerprint" panel doesn't cover: the GPU, the CPU's caches and clocks, the
+/// displays, the USB bus, and the battery. Every field is `sysctl`/IOKit/Metal, so it
+/// needs no entitlement (which is why the ex-`contacts` panel became this).
+///
+/// `displays` is passed in because `displayLines()` is `@MainActor` and this builder runs
+/// off the main thread inside `Probe.gather` — the same reason `devicesSection` takes it.
+func hardwareDeepSection(displays: [TermLine]) -> [TermLine] {
+    var out = section("deep hardware scan")
+
+    // The GPU. `MTLCreateSystemDefaultDevice()` is thread-safe, so it's fine off-main.
+    if let gpu = MTLCreateSystemDefaultDevice() {
+        out.append(TermLine(text: "  ── graphics ──", kind: .section))
+        out.append(kv("  gpu", gpu.name, kind: .alert))
+        out.append(kv("    vram budget", bytes(gpu.recommendedMaxWorkingSetSize)))
+        out.append(kv("    memory model", gpu.hasUnifiedMemory ? "unified (shared with system RAM)" : "discrete"))
+    }
+
+    // The parts of the CPU the "machine" panel's core count doesn't reach.
+    out.append(TermLine(text: "  ── processor internals ──", kind: .section))
+    if let pk = sysctlInt("hw.packages") { out.append(kv("  cpu packages", "\(pk)")) }
+    if let cl = sysctlInt("hw.cachelinesize") { out.append(kv("  cache line", "\(cl) bytes")) }
+    if let l1i = sysctlInt("hw.l1icachesize") { out.append(kv("  l1 instruction", bytes(l1i))) }
+    if let l1d = sysctlInt("hw.l1dcachesize") { out.append(kv("  l1 data", bytes(l1d))) }
+    if let l2 = sysctlInt("hw.l2cachesize") ?? sysctlInt("hw.perflevel0.l2cachesize") {
+        out.append(kv("  l2 cache", bytes(l2)))
+    }
+    if let l3 = sysctlInt("hw.l3cachesize"), l3 > 0 { out.append(kv("  l3 cache", bytes(l3))) }
+    if let pg = sysctlInt("hw.pagesize") ?? sysctlInt("vm.pagesize") { out.append(kv("  page size", "\(pg) bytes")) }
+    if let tb = sysctlInt("hw.tbfrequency"), tb > 0 {
+        out.append(kv("  timebase", String(format: "%.2f MHz", Double(tb) / 1_000_000)))
+    }
+    if let cpuf = sysctlInt("hw.cpufrequency"), cpuf > 0 {
+        out.append(kv("  cpu frequency", String(format: "%.2f GHz", Double(cpuf) / 1e9)))
+    }
+    let thermal: String
+    switch ProcessInfo.processInfo.thermalState {
+    case .nominal:  thermal = "nominal"
+    case .fair:     thermal = "fair"
+    case .serious:  thermal = "serious"
+    case .critical: thermal = "critical"
+    @unknown default: thermal = "unknown"
+    }
+    out.append(kv("  thermal state", thermal, kind: thermal == "nominal" ? .plain : .warn))
+
+    // Displays (gathered on main and handed in), the USB bus, and the battery.
+    out.append(TermLine(text: "  ── displays ──", kind: .section))
+    out.append(contentsOf: displays)
+    out.append(TermLine(text: "  ── usb bus ──", kind: .section))
+    out.append(contentsOf: usbLines())
+    let battery = batteryHealthLines()
+    if !battery.isEmpty {
+        out.append(TermLine(text: "  ── power ──", kind: .section))
+        out.append(contentsOf: battery)
     }
     return out
 }
