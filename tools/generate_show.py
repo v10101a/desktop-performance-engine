@@ -2344,18 +2344,16 @@ add(sm, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 # something the eruption can climb on top of.
 # THE PILE LEAVES OVER A SECOND (2026-09-12): `clearSeconds` takes it down oldest-first
 # on the close, so the video goes panel by panel under the box rather than on a frame.
-# It does NOT ramp in. `rampSeconds` exists and was measured at 1, 2 and 3 s: the pile
-# fills in about a second on its own, and a ramp only moved the same sixty first
-# appearances into the seconds after the pickup, where more is going on — the pump was
-# worse with every ramp than without. What made the pickup cheap was the engine
-# releasing finished windows (see the changelog); the sixty births now cost a beat at
-# ~25 Hz instead of a second at 2.
-SEG_RAMP = 0.0
+# It does NOT ramp in: growing the pile's cap over 1, 2 or 3 s was measured and made the
+# pickup worse — a window's first appearance is paid per run-loop commit, and spreading
+# the sixty only multiplied it (see README, "Closing many windows at once"). What made
+# the pickup cheap was the engine releasing finished windows; the sixty births now cost
+# a beat at ~25 Hz instead of a second at 2.
 SEG_CLEAR = 1.0
 add(sm, "segSwarm", {
     "id": "segswarm", "path": "assets/giveit2meclip.mp4", "mode": "motion",
     "intensity": 0.62, "maxWindows": 60, "mirror": False,
-    "rampSeconds": SEG_RAMP, "clearSeconds": SEG_CLEAR,
+    "clearSeconds": SEG_CLEAR,
     "level": "normal",
     # No keyline. Upstream rings every panel green to mark it as a detection; here the
     # panels ARE the picture, and sixty green rectangles read as a debug overlay laid
@@ -2529,10 +2527,9 @@ n_build, n_gone = chaos["w"] - w_before, chaos["gone"] - gone_before
 # The ring reaches the same density by the handover; the flashes, the video and the box
 # are untouched.
 OVERLAP_RATE = 0.5
-OVERLAP_UI = 0.25
 add(gl, "screenFlash", {"color": WHITE, "durationBeats": 0.4})
 erupt(gl, lw, W / 2, H / 2, ui_chaos=0.25, photos=True, keep_out=LYRIC_HOLE, alerts=False,
-      until=SEG_HANDOVER, rate_before=OVERLAP_RATE, ui_chaos_before=OVERLAP_UI)
+      until=SEG_HANDOVER, rate_before=OVERLAP_RATE)
 
 # The swarm is not closed on the boundary. It is left running INTO the eruption — ringed
 # by its cards, the middle kept clear, buried a panel at a time at the edges — and swept

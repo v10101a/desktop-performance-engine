@@ -323,12 +323,6 @@ final class WindowManager {
             }
         }
         HydraWeb.prewarm(count: liveSketches + 2)
-        if events.contains(where: {
-            if case .openWindow(let p) = $0.action, (p.content.fontCycleHz ?? 0) > 0 { return true }
-            return false
-        }) {
-            LyricFontPool.warm()
-        }
 
         for ev in events {
             switch ev.action {

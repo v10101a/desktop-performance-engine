@@ -24,12 +24,13 @@
 //  the main thread as the motion appeared, and on a cue that is a visible stall. With it:
 //  `clearGradually` (the cue's close takes the pile down a few panels per run-loop pass —
 //  sixty `orderOut`s in one call measured as a 200 ms stall) and `clearOver(seconds:)`
-//  (the same, paced over a given time, oldest first); `rampSeconds` (the cap grows in
-//  over that long — measured not to help the pickup, kept as a dial); and `adopted`, a
-//  counter the controller reads for its stats. Tried and dropped, each measured: parking
-//  the spares ordered in at zero alpha, borderless panels, no shadow, pre-displaying the
-//  title bars — none of them is what a new window costs. Idle windows elsewhere in the
-//  app were (240 of them doubled it), and that is fixed in `WindowManager.close`.
+//  (the same, paced over a given time, oldest first); and `adopted`, a counter the
+//  controller reads for its stats. Tried and dropped, each measured: ramping the pile's
+//  cap in over 1–3 s, parking the spares ordered in at zero alpha, borderless panels, no
+//  shadow, pre-displaying the title bars — none of them is what a new window costs.
+//  Idle windows elsewhere in the app were (240 of them doubled it), and that is fixed
+//  in `WindowManager.close`; and a first appearance is paid per run-loop commit, so
+//  spreading births only multiplies it.
 
 import AppKit
 import QuartzCore
@@ -144,11 +145,6 @@ final class SegmentSwarm {
             }
         }
     }
-    /// The pile fills over this many seconds: the cap it may grow to rises from
-    /// `rampFloor` to `maxBlobs` across them. 0 is the full cap at once.
-    var rampSeconds = 0.0
-    private let rampFloor = 6
-    private var rampStart: CFTimeInterval?
     /// What the pile sits at. `SegmentPanel.defaultLevel` is above everything.
     var level = SegmentPanel.defaultLevel
     /// The keyline round each panel, or nil for none. Applied as panels are adopted, so a
@@ -175,20 +171,7 @@ final class SegmentSwarm {
     }
 
     func update(segments: [Segment], crops: [SegmentID: CGImage], screenFrame: CGRect) {
-        // The cap this frame: the whole pile, or — on a ramp — the part of it reached.
-        // A segment that finds the pile at its cap while the cap is still growing is
-        // simply not spawned; nothing is tracked, so the motion mints a new one next
-        // frame and the pile catches up as the cap rises.
-        var cap = maxBlobs
-        if rampSeconds > 0 {
-            let now = CACurrentMediaTime()
-            let start = rampStart ?? now
-            rampStart = start
-            let u = min(1.0, (now - start) / rampSeconds)
-            cap = min(maxBlobs, max(rampFloor, Int(Double(maxBlobs) * u)))
-        }
         for segment in segments where !spawned.contains(segment.id) {
-            if panels.count >= cap && cap < maxBlobs { continue }
             spawned.insert(segment.id)
             if spawned.count > 8192 { spawned = [segment.id] }
 
@@ -202,7 +185,7 @@ final class SegmentSwarm {
                 rect.size.height = minHeight
             }
 
-            let panel = panels.count >= cap ? panels.removeFirst()
+            let panel = panels.count >= maxBlobs ? panels.removeFirst()
                       : (spares.popLast() ?? SegmentPanel())
             panel.level = level
             panel.setBorder(border)
@@ -237,7 +220,6 @@ final class SegmentSwarm {
         spawned.removeAll()
         generation += 1
         let mine = generation
-        rampStart = nil
         let total = panels.count
         let t0 = CACurrentMediaTime()
         var gone = 0
@@ -268,7 +250,6 @@ final class SegmentSwarm {
     /// with its windows already built; nothing about them is visible in between.
     func clear() {
         generation += 1
-        rampStart = nil
         for panel in panels {
             panel.orderOut(nil)
             panel.blank()

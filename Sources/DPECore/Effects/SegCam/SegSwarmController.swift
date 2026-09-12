@@ -62,7 +62,6 @@ final class SegSwarmController {
         screenFrame = screen.frame
         swarm.mirrored = p.mirror ?? (p.path == nil)
         swarm.maxBlobs = max(1, p.maxWindows ?? 60)
-        swarm.rampSeconds = max(0, p.rampSeconds ?? 0)
         clearSeconds = max(0, p.clearSeconds ?? 0)
         swarm.level = p.level.map(WindowManager.level) ?? SegmentPanel.defaultLevel
         swarm.border = p.border.map { $0 == "none" ? nil : NSColor(hex: $0) }
@@ -137,9 +136,9 @@ final class SegSwarmController {
             var byClass: [String: Int] = [:]
             for w in NSApp.windows { byClass[String(describing: type(of: w)), default: 0] += 1 }
             let classes = byClass.sorted { $0.value > $1.value }.map { "\($0.key) \($0.value)" }.joined(separator: ", ")
-            NSLog("[DPE] segswarm profile: %d frames @%.0f fps, %.1f seg/frame, %d re-dressed, pile %d (ramp %.1fs), %.0f ms on main; app has %d windows (%@)",
+            NSLog("[DPE] segswarm profile: %d frames @%.0f fps, %.1f seg/frame, %d re-dressed, pile %d, %.0f ms on main; app has %d windows (%@)",
                   s.results, s.fps, s.results > 0 ? Double(s.segments) / Double(s.results) : 0,
-                  s.adopted, self.swarm.panelCount, self.swarm.rampSeconds, s.mainMs, NSApp.windows.count, classes)
+                  s.adopted, self.swarm.panelCount, s.mainMs, NSApp.windows.count, classes)
             self.resetStats()
         }
     }
@@ -152,6 +151,8 @@ final class SegSwarmController {
         source = nil
         engine.onResult = nil
         if clearSeconds > 0 { swarm.clearOver(seconds: clearSeconds) } else { swarm.clearGradually() }
+        profileTimer?.invalidate()
+        profileTimer = nil
         id = nil
     }
 
@@ -162,6 +163,8 @@ final class SegSwarmController {
         source = nil
         engine.onResult = nil
         swarm.clear()
+        profileTimer?.invalidate()
+        profileTimer = nil
         id = nil
     }
 

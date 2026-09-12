@@ -78,20 +78,15 @@ The lyric visuals (spiral, desktop words) are timed by `tools/lyrics.py`, not by
   cost (opens by content kind) at stop; `DPE_EVENT_CLOCK=0` reverts. See "The event
   clock" in README. **Rehearse with a release build** — `tools/run_show.sh` does — a debug
   build is several times slower in the segmenter's pixel loops.
-- **Nothing runs before it is on screen.** `WindowManager.prewarm` builds every
-  `openWindow` at load, content views included, so a timer a view starts on joining its
-  window starts at load. The ASCII window map doing that — and sorting the app's windows
-  with a window-server query per comparison, twelve times a second, for the whole show —
-  was 61% of the main thread and the pump at 5 Hz under the segmenter (2026-09-12).
-  Timer-driven views follow `WindowVisibility` (occlusion); a new one must too. **Closed
-  windows are `close()`d, not just ordered out** — AppKit keeps an un-closed window alive,
-  and idle windows double what a new one costs to bring up — and a play from partway in
-  prunes what it will never reach. When something is laggy, `sample <pid>` the main
-  thread before touching a cue. **Births batch:** a window's first appearance costs one
-  run-loop commit however many windows share it, so many windows born on one frame cost
-  one bad second and the same windows born one per frame cost one bad second each —
-  measured on the segmenter's pickup (three ramp lengths) and the brick rack (38 Hz at
-  once, 3 Hz spread). Closes are the opposite: pace them a few per pass.
+- **Windows: the four rules** (measured 2026-09-12; the story is in README under
+  "Windows are released" and "Closing many windows at once", the numbers in the changelog).
+  Every `openWindow` is built at load, so a timer-driven view must follow
+  `WindowVisibility` and idle until its window is on screen. A closed window is
+  `close()`d, never just ordered out — AppKit keeps the rest alive, and idle windows
+  double what a new one costs. Windows meant to appear together appear on one frame —
+  a first appearance is paid per run-loop commit, and spreading births multiplies it.
+  Closes are the opposite: pace them a few per pass. When something is laggy,
+  `sample <pid>` the main thread before touching a cue.
 - `swift run dpe-tests` is the test suite — a plain executable with a real exit code, not
   `swift test` (this toolchain ships no XCTest). It must stay green.
 - `./bundle.sh` packages the `.app`; `./ship.sh` builds the distributable.

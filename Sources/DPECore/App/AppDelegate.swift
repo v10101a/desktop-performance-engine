@@ -314,7 +314,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             let params = SegSwarmParams(id: "t", path: clip, mode: "motion",
                                         intensity: 0.62, mirror: false, maxWindows: 60,
                                         hz: env["DPE_SEG_HZ"].flatMap(Double.init),
-                                        rampSeconds: env["DPE_SEG_RAMP"].flatMap(Double.init),
                                         clearSeconds: env["DPE_SEG_CLEAR"].flatMap(Double.init))
             // DPE_SEG_DUMMY=<n>: that many hidden windows alive first, the way the show
             // keeps its prewarmed pools — to see whether they tax the pile's first second.

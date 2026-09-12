@@ -47,26 +47,6 @@ enum LyricFontPool {
         return usable.sorted()
     }()
 
-    /// Lay the probe out once in every usable family, off the main thread, so no card
-    /// pays for a family's first use mid-show. Measured (2026-09-12, DPE_PROFILE): a
-    /// `lyric` card open cost 10 ms on average and 170–246 ms at worst, the worst being
-    /// a big face's tables loading on its first layout. `WindowManager.prewarm` calls
-    /// this when the timeline cycles fonts anywhere; it is idempotent.
-    private static var warmed = false
-    static func warm() {
-        guard !warmed else { return }
-        warmed = true
-        let names = families
-        DispatchQueue.global(qos: .utility).async {
-            let t0 = CACurrentMediaTime()
-            for family in names {
-                guard let font = NSFont(name: family, size: 40) else { continue }
-                _ = NSAttributedString(string: probe, attributes: [.font: font]).size()
-            }
-            NSLog("[DPE] lyric font pool: warmed \(names.count) families in %.1fs", CACurrentMediaTime() - t0)
-        }
-    }
-
     /// The face for step `n` of a cycle, or the show's own Hack Bold if the machine has
     /// somehow nothing usable.
     static func font(step: Int, seed: UInt64, ofSize pt: CGFloat) -> NSFont {

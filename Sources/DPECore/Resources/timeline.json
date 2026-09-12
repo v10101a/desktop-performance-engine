@@ -25724,7 +25724,6 @@
     "intensity": 0.62,
     "maxWindows": 60,
     "mirror": false,
-    "rampSeconds": 0.0,
     "clearSeconds": 1.0,
     "level": "normal",
     "border": "none"

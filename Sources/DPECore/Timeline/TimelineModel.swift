@@ -90,11 +90,6 @@ struct SegSwarmParams: Decodable {
     /// to play on top of it. Absent, it is segcam's own — above everything.
     var level: String? = nil
     var hz: Double? = nil          // file pull rate (default 30)
-    /// The pile FILLS over this many seconds: its cap grows from a handful to
-    /// `maxWindows` across the ramp, so the sixty first appearances — the expensive
-    /// part, ~30 ms of blocked main thread each — are spread rather than landed on one
-    /// beat. 0 (default) is the cap from the first frame.
-    var rampSeconds: Double? = nil
     /// The pile LEAVES over this many seconds on its close, oldest panel first, instead
     /// of on one frame. 0 (default) is a few panels per run-loop pass — quick, but not
     /// one stall.

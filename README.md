@@ -846,10 +846,10 @@ re-dressed rather than closed and rebuilt, because at thirty frames a second of 
 instances, churning real windows costs far more than changing what one shows.
 `clearSeconds` takes the pile down over that long on its close, oldest panel first, at
 the display's pace — the act leaving rather than being switched off; absent, it comes
-down a few panels per run-loop pass, which is quick but never one stall. `rampSeconds`
-grows the pile's cap in from a handful over that long; measured (2026-09-12), it does not
-make the first second cheaper — the same first appearances just land later — so it is a
-look, not a fix, and the show does not set it.
+down a few panels per run-loop pass, which is quick but never one stall. There is no
+ramp *in*: growing the pile's cap over one to three seconds was measured (2026-09-12) and
+made the first second worse, since a window's first appearance is paid per run-loop
+commit and spreading the sixty only multiplied it.
 
 **Nothing is tracked between frames**, which is the whole effect: a thing that simply
 keeps moving mints a new instance — and a new window — every frame, so the screen fills
@@ -875,8 +875,8 @@ that a cue after it still leaves nothing on the desktop.
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm            # a clip filling the desktop
 swift run GiveIt2Me_DJ_Dave_malware --test-segswarm="assets/other.mov"
 swift run GiveIt2Me_DJ_Dave_malware --test-mapseg              # a map window run through it, whole
-DPE_SEG_HZ=15 DPE_SEG_RAMP=2 DPE_SEG_CLEAR=1 DPE_SEG_DUMMY=240 …   # pull rate, the two ramps,
-                                                                  # and N idle windows alive first
+DPE_SEG_HZ=15 DPE_SEG_CLEAR=1 DPE_SEG_DUMMY=240 …   # pull rate, the paced close, and N idle
+                                                    # windows alive first
 ```
 
 Each second it reports the count, the frames segmented, segments per frame, panels
